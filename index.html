@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v131 (Outlook Batch)</title>
+    <title>Greenleaf Pro v132 (Admin Control)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -33,16 +33,15 @@
         /* LISTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
         
         /* BATCH & ACTION BAR */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 20px; height: 20px; margin-right: 12px; accent-color: var(--brand-green); }
+        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
         #action-bar.visible { transform: translateY(0); }
-        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        .action-btn i { font-size: 20px; }
+        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        .action-btn i { font-size: 22px; }
 
         /* DETAIL TABS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
@@ -63,11 +62,16 @@
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
 
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
+        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         .camera-btn.loading { background-color: #e5e7eb; border-color: #9ca3af; color: #4b5563; pointer-events: none; }
 
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
+        
+        /* HEADER BATCH BTN */
+        #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -98,9 +102,12 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
-                <div class="font-bold text-lg"><span id="header-user">User</span></div>
+                <div class="flex flex-col">
+                    <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v132</div>
+                </div>
             </div>
-            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v131</div>
+            <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -128,10 +135,7 @@
             </div>
 
             <div id="view-drive" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-400 uppercase">Inventory Browse</h2>
-                    <button id="batch-btn" class="bg-[#e3a000] text-white px-3 py-1 rounded text-xs font-bold" onclick="toggleBatch()">Batch Mode</button>
-                </div>
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Inventory Browse</h2>
                 <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
                 <div id="drive-content"></div>
             </div>
@@ -162,7 +166,7 @@
 
                 <div id="det-overview-content" class="py-4">
                     <div id="user-data-box" class="bg-green-50 p-4 rounded-lg border border-green-200 mb-6 hidden">
-                        <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Your Latest Field Updates</h3>
+                        <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Latest Field Updates</h3>
                         <div id="dynamic-user-grid" class="overview-grid"></div>
                     </div>
                     <div class="task-info-grid">
@@ -186,19 +190,16 @@
                         <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
                     </div>
                     
-                    <label id="btn-cam" class="camera-btn">
+                    <label id="btn-cam" class="camera-btn hidden">
                         <i class="ph-fill ph-camera text-3xl"></i>
                         <span id="cam-text" class="font-bold">Take Field Photo</span>
                         <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
                     </label>
 
-                    <div class="input-stack">
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95"></div>
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch"></div>
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing"></div>
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes..."></textarea></div>
-                    </div>
-                    <button class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE UPDATES</button>
+                    <div id="input-container" class="input-stack">
+                        </div>
+                    
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
                 </div>
             </div>
         </div>
@@ -234,11 +235,13 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v131_storage";
+        const STORAGE_KEY = "greenleaf_v132_storage";
+        const ADMINS = ["Dylan", "J.D."];
 
         let fullInventory = [];
         let activeItem = null;
         let currentUser = null;
+        let isAdmin = false;
         let currentTab = 'season';
         let isBatch = false;
         let selectedIdx = [];
@@ -246,6 +249,7 @@
 
         function selectUser(u) {
             currentUser = u;
+            isAdmin = ADMINS.includes(u);
             document.getElementById('login-buttons').classList.add('hidden');
             document.getElementById('pin-container').classList.remove('hidden');
             document.getElementById('pin-code').style.display = 'block';
@@ -281,7 +285,6 @@
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                 
-                // Smart ID Generation
                 let idCounters = {};
                 fullInventory = jsonData.map((row, index) => {
                     let obj = {};
@@ -330,6 +333,14 @@
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
+            
+            // ADMIN UI CHECKS
+            if(isAdmin) {
+                document.getElementById('header-batch-btn').style.display = 'block';
+            } else {
+                document.getElementById('header-batch-btn').style.display = 'none';
+            }
+            
             switchView('home');
         }
 
@@ -347,20 +358,18 @@
             });
         }
 
-        // --- BATCH REPORTING (TEXT & EMAIL) ---
+        // --- BATCH REPORTING ---
         function getBatchReport() {
             let report = "";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
                 report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
                 report += `Loc: ${item.LOCATIONCODE || 'N/A'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
-                
                 if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
                 if(item.SAVED_SPEC) report += `Spec: ${item.SAVED_SPEC}\n`;
                 if(item.SAVED_PICK) report += `Pick Note: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE) report += `Gen Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                
                 report += "\n----------------\n\n";
             });
             return report;
@@ -368,13 +377,13 @@
 
         function batchText() {
             const txt = getBatchReport();
-            // iOS generally prefers &body=, Android ?body=. Using ? usually works for most modern devices
-            window.location.href = "sms:?body=" + encodeURIComponent(txt);
+            // Encode safely for SMS
+            window.location.href = "sms:&body=" + encodeURIComponent(txt);
         }
 
         function batchEmail() {
             const txt = getBatchReport();
-            const subject = "Inventory Notes Update - " + new Date().toLocaleDateString();
+            const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
         }
 
@@ -398,13 +407,7 @@
             container.innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
                 items.map(item => {
                     const idx = fullInventory.indexOf(item);
-                    return `<div class="batch-row">
-                        ${isBatch ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                        <div class="inv-card flex-grow" onclick="if(!isBatch) openDetail(${idx}, 'drive')">
-                            <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
-                            <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
-                        </div>
-                    </div>`;
+                    return createRowHtml(item, idx, 'drive');
                 }).join('');
         }
 
@@ -428,10 +431,7 @@
             container.innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
                 items.map(item => {
                     const idx = fullInventory.indexOf(item);
-                    return `<div class="inv-card" onclick="openDetail(${idx}, 'viewer')">
-                            <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
-                            <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
-                        </div>`;
+                    return createRowHtml(item, idx, 'viewer');
                 }).join('');
         }
 
@@ -441,11 +441,24 @@
             const items = fullInventory.filter(i => i.ASSIGNEDTO === currentUser);
             document.getElementById('task-content').innerHTML = items.map(item => {
                 const idx = fullInventory.indexOf(item);
-                return `<div class="inv-card" onclick="openDetail(${idx}, 'tasks')">
-                    <div class="font-bold">${item.COMMONNAME}</div>
-                    <div class="text-xs text-gray-500">${item.CONTSIZE} • ${item.LOCATIONCODE}</div>
-                </div>`;
+                return createRowHtml(item, idx, 'tasks');
             }).join('');
+        }
+
+        // Helper to Create Row HTML (Handles Batch Checkboxes universally)
+        function createRowHtml(item, idx, source) {
+            // Checkbox only visible if Batch is ON and User is ADMIN
+            const showCheck = isBatch && isAdmin;
+            const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
+            
+            return `
+            <div class="batch-row">
+                ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                <div class="inv-card flex-grow" ${clickAction}>
+                    <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                    <div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                </div>
+            </div>`;
         }
 
         // --- DETAILS ---
@@ -455,6 +468,7 @@
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
+            // Basic Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -463,10 +477,29 @@
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
-            document.getElementById('in-match').value = activeItem.SAVED_MATCH || "";
-            document.getElementById('in-spec').value = activeItem.SAVED_SPEC || "";
-            document.getElementById('in-pick').value = activeItem.SAVED_PICK || "";
-            document.getElementById('in-note').value = activeItem.SAVED_NOTE || "";
+            // PERMISSION BASED RENDERING
+            const cont = document.getElementById('input-container');
+            if(isAdmin) {
+                // Render Inputs
+                document.getElementById('btn-cam').classList.remove('hidden');
+                document.getElementById('btn-save').classList.remove('hidden');
+                cont.innerHTML = `
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
+                `;
+            } else {
+                // Render Read-Only Text
+                document.getElementById('btn-cam').classList.add('hidden');
+                document.getElementById('btn-save').classList.add('hidden');
+                cont.innerHTML = `
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded h-24 overflow-y-auto">${activeItem.SAVED_NOTE||'-'}</div></div>
+                `;
+            }
 
             // Hide Excel Columns in Viewer Mode
             if (originView === 'viewer') {
@@ -512,7 +545,7 @@
                 const btnText = document.getElementById('cam-text');
                 
                 btn.classList.add('loading');
-                btnText.innerText = "UPLOADING TO DRIVE...";
+                btnText.innerText = "UPLOADING...";
 
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -545,7 +578,7 @@
                                 activeItem.SAVED_PHOTO_BASE64 = dataUrl;
                                 renderOverviewData();
                                 saveData(true); 
-                                alert("Photo Uploaded to Google Drive!");
+                                alert("Photo Uploaded!");
                             } else {
                                 alert("Upload Error: " + data.message);
                             }
@@ -561,6 +594,8 @@
         }
 
         function saveData(silent = false) {
+            if(!isAdmin) return; // Security check
+            
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
             activeItem.SAVED_PICK = document.getElementById('in-pick').value;
@@ -607,10 +642,22 @@
 
         // --- BATCH & UTILS ---
         function toggleBatch() {
+            if(!isAdmin) return;
             isBatch = !isBatch;
-            document.getElementById('batch-btn').innerText = isBatch ? "Done" : "Batch Mode";
+            document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE";
+            document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000";
+            
             if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
-            renderDriveNames();
+            
+            // Re-render current view to show/hide checkboxes
+            const views = ['drive','tasks','viewer'];
+            views.forEach(v => {
+                if(!document.getElementById('view-'+v).classList.contains('hidden')) {
+                    if(v === 'drive') renderDriveNames(); // Resets to top level
+                    if(v === 'tasks') renderTasks();
+                    if(v === 'viewer') renderViewerNames();
+                }
+            });
         }
 
         function updateSelected() {
