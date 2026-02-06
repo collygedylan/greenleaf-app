@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v133 (Report Fix)</title>
+    <title>Greenleaf Pro v134 (Storage Fix)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -104,7 +104,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v133</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v134</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -185,8 +185,9 @@
 
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-4 hidden">
-                        <p class="text-[10px] font-bold text-blue-600 mb-1">CURRENT PHOTO</p>
-                        <img id="img-prev" class="w-full h-48 object-cover rounded-lg border">
+                        <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
+                        <img id="img-prev" class="w-full h-48 object-cover rounded-lg border hidden">
+                        <div id="img-placeholder" class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border rounded-lg">Photo stored on Cloud</div>
                         <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
                     </div>
                     
@@ -234,7 +235,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v133_storage";
+        const STORAGE_KEY = "greenleaf_v134_storage"; // Updated to prevent data conflicts
         const ADMINS = ["Dylan", "J.D."];
 
         let fullInventory = [];
@@ -265,7 +266,7 @@
 
         async function fetchData() {
             try {
-                pruneOldData(); // Auto Clean > 10 Days
+                pruneOldData(); 
 
                 const res = await fetch('inventory.xlsx?v=' + Date.now());
                 if (!res.ok) throw new Error();
@@ -333,7 +334,6 @@
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
             
-            // ADMIN UI CHECKS
             if(isAdmin) {
                 document.getElementById('header-batch-btn').style.display = 'block';
             } else {
@@ -357,7 +357,7 @@
             });
         }
 
-        // --- NEW IMPROVED BATCH REPORTING ---
+        // --- BATCH REPORTING ---
         function getBatchReport() {
             let report = "";
             if(selectedIdx.length === 0) return "No items selected.";
@@ -365,26 +365,21 @@
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
                 
-                // HEADER: QTY - Name - Size
                 report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
                 
-                // INFO LINE: Loc, Lot, Caliper
                 let details = [];
                 details.push(`Loc: ${item.LOCATIONCODE || '-'}`);
                 details.push(`Lot: ${item.LOTCODE || '-'}`);
-                // Try to find Caliper field (various spellings)
                 if(item.CALIPER) details.push(`Cal: ${item.CALIPER}`);
                 else if(item.CAL) details.push(`Cal: ${item.CAL}`);
                 
                 report += details.join(' | ') + "\n";
 
-                // USER INPUTS (Specific check for requested fields)
                 if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
                 if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
                 if(item.SAVED_PICK)  report += `Pick Note: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 
-                // PHOTO LINK (Crucial)
                 if(item.SAVED_PHOTO_LINK) {
                     report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
                 }
@@ -396,7 +391,6 @@
 
         function batchText() {
             const txt = getBatchReport();
-            // Use generic body param for broader compatibility
             window.location.href = "sms:?body=" + encodeURIComponent(txt);
         }
 
@@ -464,12 +458,9 @@
             }).join('');
         }
 
-        // Helper to Create Row HTML (Handles Batch Checkboxes universally)
         function createRowHtml(item, idx, source) {
-            // Checkbox only visible if Batch is ON and User is ADMIN
             const showCheck = isBatch && isAdmin;
             const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
-            
             return `
             <div class="batch-row">
                 ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
@@ -487,7 +478,7 @@
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
-            // Basic Info
+            // Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -496,10 +487,9 @@
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
-            // PERMISSION BASED RENDERING
+            // PERMISSIONS
             const cont = document.getElementById('input-container');
             if(isAdmin) {
-                // Render Inputs
                 document.getElementById('btn-cam').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
                 cont.innerHTML = `
@@ -509,7 +499,6 @@
                     <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
                 `;
             } else {
-                // Render Read-Only Text
                 document.getElementById('btn-cam').classList.add('hidden');
                 document.getElementById('btn-save').classList.add('hidden');
                 cont.innerHTML = `
@@ -520,7 +509,6 @@
                 `;
             }
 
-            // Hide Excel Columns in Viewer Mode
             if (originView === 'viewer') {
                 document.getElementById('expand-section').classList.add('hidden');
             } else {
@@ -536,6 +524,8 @@
             const box = document.getElementById('user-data-box');
             const grid = document.getElementById('dynamic-user-grid');
             const photoDiv = document.getElementById('photo-preview');
+            const imgPrev = document.getElementById('img-prev');
+            const imgPlace = document.getElementById('img-placeholder');
             const linkBtn = document.getElementById('photo-link-btn');
 
             let h = "";
@@ -546,10 +536,19 @@
             
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
+                
                 photoDiv.classList.remove('hidden');
-                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO_BASE64 || '';
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                linkBtn.classList.remove('hidden');
+                
+                // STORAGE FIX: Only show preview if we just took it (in memory), otherwise show placeholder
+                if(activeItem.TEMP_PHOTO_BASE64) {
+                    imgPrev.src = activeItem.TEMP_PHOTO_BASE64;
+                    imgPrev.classList.remove('hidden');
+                    imgPlace.classList.add('hidden');
+                } else {
+                    imgPrev.classList.add('hidden');
+                    imgPlace.classList.remove('hidden');
+                }
             } else {
                 photoDiv.classList.add('hidden');
             }
@@ -594,7 +593,7 @@
                         .then(data => {
                             if(data.status === 'success') {
                                 activeItem.SAVED_PHOTO_LINK = data.url;
-                                activeItem.SAVED_PHOTO_BASE64 = dataUrl;
+                                activeItem.TEMP_PHOTO_BASE64 = dataUrl; // Keep in memory only
                                 renderOverviewData();
                                 saveData(true); 
                                 alert("Photo Uploaded!");
@@ -613,7 +612,7 @@
         }
 
         function saveData(silent = false) {
-            if(!isAdmin) return; // Security check
+            if(!isAdmin) return;
             
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
@@ -623,17 +622,22 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
             
+            // STORAGE FIX: Do NOT save base64 to localStorage to prevent crash
             storage[id] = { 
                 m: activeItem.SAVED_MATCH, 
                 s: activeItem.SAVED_SPEC, 
                 p: activeItem.SAVED_PICK, 
                 n: activeItem.SAVED_NOTE, 
                 pl: activeItem.SAVED_PHOTO_LINK, 
-                pb: activeItem.SAVED_PHOTO_BASE64,
                 t: Date.now()
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-            if(!silent) { alert("Data Saved"); renderOverviewData(); }
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+                if(!silent) { alert("Data Saved"); renderOverviewData(); }
+            } catch(e) {
+                alert("Storage Full! Text notes saved, but old data might be overwritten.");
+            }
         }
 
         function loadSavedData() {
@@ -646,7 +650,6 @@
                     item.SAVED_PICK = storage[id].p;
                     item.SAVED_NOTE = storage[id].n;
                     item.SAVED_PHOTO_LINK = storage[id].pl;
-                    item.SAVED_PHOTO_BASE64 = storage[id].pb;
                 }
             });
         }
@@ -654,7 +657,7 @@
         function renderAllFields() {
             const cont = document.getElementById('expand-content');
             cont.innerHTML = Object.keys(activeItem).map(k => {
-                if(k.startsWith('SAVED_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID') return "";
+                if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID') return "";
                 return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
             }).join('');
         }
@@ -665,10 +668,8 @@
             isBatch = !isBatch;
             document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE";
             document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000";
-            
             if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
             
-            // Re-render current view to show/hide checkboxes
             const views = ['drive','tasks','viewer'];
             views.forEach(v => {
                 if(!document.getElementById('view-'+v).classList.contains('hidden')) {
