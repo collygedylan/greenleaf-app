@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v118</title>
+    <title>Greenleaf Pro Cloud v119</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -49,14 +49,7 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
-        
-        /* RESTORED INPUT STYLES */
-        .input-stack { display: flex; flex-direction: column; gap: 16px; }
-        .input-group { width: 100%; }
-        .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
-
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
@@ -81,6 +74,13 @@
         /* PHOTO LINK */
         .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
         .photo-link-box.visible { display: block; }
+        
+        /* OVERVIEW GRID */
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .overview-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-word; }
+        .full-width { grid-column: span 2; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -180,16 +180,8 @@
                     
                     <div id="detail-content-overview" class="detail-padding">
                         <div id="readonly-collected-data" class="hidden mb-6 bg-green-50 border border-green-100 rounded-lg p-4">
-                            <h3 class="text-xs font-bold text-green-800 uppercase mb-3 border-b border-green-200 pb-1">Collected Data</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Sales Note</div><div class="text-sm font-bold text-gray-800" id="ro-sales">--</div></div>
-                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Hold Code</div><div class="text-sm font-bold text-red-600" id="ro-hold">--</div></div>
-                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">User Note (10-Day)</div><div class="text-sm text-gray-800 bg-white p-2 rounded border border-gray-100" id="ro-note">--</div></div>
-                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Caliper</div><div class="text-sm font-bold text-gray-800" id="ro-caliper">--</div></div>
-                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Match %</div><div class="text-sm font-bold text-gray-800" id="ro-match">--</div></div>
-                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Spec</div><div class="text-sm font-bold text-gray-800" id="ro-spec">--</div></div>
-                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">Photo Link</div><div id="ro-photo-link" class="text-xs text-blue-600 break-all cursor-pointer">--</div></div>
-                            </div>
+                            <h3 class="text-xs font-bold text-green-800 uppercase mb-3 border-b border-green-200 pb-1">Saved User Data</h3>
+                            <div id="overview-dynamic-grid" class="overview-grid"></div>
                         </div>
                         <div class="task-info-grid">
                             <div class="task-info-item"><div class="task-info-label">Item Code</div><div class="task-info-val" id="ov-info-item">--</div></div>
@@ -199,7 +191,7 @@
                             <div class="task-info-item task-info-full"><div class="task-info-label">Sales Note</div><div class="task-info-val" id="ov-info-sales">--</div></div>
                         </div>
                         <div id="expand-section-overview">
-                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-overview')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
+                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-overview')"><span><i class="ph-bold ph-list-dashes"></i> View All Excel Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
                             <div class="expand-content" id="dynamic-details-overview"></div>
                         </div>
                     </div>
@@ -216,10 +208,6 @@
                             <div class="input-group"><label class="input-label">General Note / Update</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
                         </div>
                         <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg mt-6 shadow-sm uppercase" onclick="saveLocalChange(true)">Save Updates</button>
-                        <div id="expand-section-actions" class="mt-6">
-                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-actions')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
-                            <div class="expand-content" id="dynamic-details-actions"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -500,27 +488,18 @@
             
             // PHOTO LINK
             document.getElementById("photo-link-display").style.display = "none";
-            document.getElementById("ro-photo-link").innerHTML = "--";
             if(item.UPDATED_PHOTO) {
                document.getElementById("photo-link-display").innerHTML = `<strong>Image Saved:</strong> <a href="${item.UPDATED_PHOTO}" target="_blank">View Image</a>`;
                document.getElementById("photo-link-display").style.display = "block";
-               document.getElementById("ro-photo-link").innerHTML = `<a href="${item.UPDATED_PHOTO}" target="_blank" class="text-blue-600 underline">View Saved Image</a>`;
             }
 
             // READ ONLY TOGGLE
             if (source === 'viewer') {
                 document.getElementById("detail-tabs-container").classList.add("hidden");
-                document.getElementById("readonly-collected-data").classList.remove("hidden");
-                document.getElementById("ro-sales").innerText = item.SALESNOTE || "N/A";
-                document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
-                document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
-                document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
-                document.getElementById("ro-match").innerText = item.UPDATED_MATCH || "--";
-                document.getElementById("ro-spec").innerText = item.UPDATED_SPEC || "--";
             } else {
                 document.getElementById("detail-tabs-container").classList.remove("hidden");
-                document.getElementById("readonly-collected-data").classList.add("hidden");
             }
+            document.getElementById("readonly-collected-data").classList.remove("hidden");
 
             document.getElementById("detail-common").innerText = item.COMMONNAME || "Unknown";
             document.getElementById("detail-size").innerText = item.CONTSIZE || "--";
@@ -543,7 +522,33 @@
             const calGroup = document.getElementById("group-caliper");
             if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
             
-            // BUILD DYNAMIC DETAILS
+            // BUILD DYNAMIC OVERVIEW (SHOW ALL SAVED DATA)
+            let overviewHtml = "";
+            const savedFields = [
+                {k: 'UPDATED_NOTE', l: 'Gen Note'}, 
+                {k: 'UPDATED_CALIPER', l: 'Caliper'}, 
+                {k: 'UPDATED_MATCH', l: 'Match %'}, 
+                {k: 'UPDATED_SPEC', l: 'Spec'}, 
+                {k: 'UPDATED_PICK', l: 'Pick Note'}, 
+                {k: 'UPDATED_LOC_NOTE', l: 'Loc Note'}
+            ];
+            
+            let hasData = false;
+            savedFields.forEach(field => {
+                if(item[field.k]) {
+                    hasData = true;
+                    overviewHtml += `<div class="overview-card ${field.l === 'Gen Note' ? 'full-width' : ''}"><div class="overview-label">${field.l}</div><div class="overview-val">${item[field.k]}</div></div>`;
+                }
+            });
+            if(item.UPDATED_PHOTO) {
+                hasData = true;
+                overviewHtml += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val"><a href="${item.UPDATED_PHOTO}" target="_blank" class="text-blue-600 underline">View Photo</a></div></div>`;
+            }
+            
+            if(!hasData) overviewHtml = `<div class="text-xs text-gray-400 italic p-2">No user data saved yet.</div>`;
+            document.getElementById("overview-dynamic-grid").innerHTML = overviewHtml;
+
+            // BUILD EXCEL DATA EXPANDER
             let fullDataHtml = "";
             const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO', 'UPDATED_MATCH', 'UPDATED_SPEC', 'UPDATED_PICK', 'UPDATED_LOC_NOTE'];
             Object.keys(item).sort().forEach(key => {
@@ -552,7 +557,6 @@
                 }
             });
             document.getElementById("dynamic-details-overview").innerHTML = fullDataHtml;
-            document.getElementById("dynamic-details-actions").innerHTML = fullDataHtml;
 
             switchDetailTab('overview');
         }
@@ -614,7 +618,7 @@
                 timestamp: Date.now() 
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-            if(alertUser) alert("Saved!");
+            if(alertUser) { alert("Saved!"); openDetail(activeItem, 'task'); } // Re-render overview
         }
 
         function applySavedChanges() {
