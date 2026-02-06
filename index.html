@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v123 (Row 2 Fix)</title>
+    <title>Greenleaf Pro v124 (Viewer + AutoSync)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -13,7 +13,7 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); }
         .nav-header { background: var(--brand-green); color: white; }
         
-        /* LOGIN & LOADING */
+        /* LOGIN & USER SELECT */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
@@ -23,7 +23,7 @@
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* MENU & DRAWER */
+        /* DRAWER & MENU */
         .menu-btn { font-size: 24px; cursor: pointer; padding: 4px; border-radius: 4px; margin-right: 10px; }
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; display: flex; flex-direction: column; }
         #side-drawer.open { left: 0; }
@@ -32,21 +32,18 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* LISTS */
+        /* LISTS & UI */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 10px; background: white; }
         .task-tab { flex: 1; text-align: center; padding: 12px 4px; font-size: 11px; font-weight: 800; color: #6b7280; border-bottom: 3px solid transparent; cursor: pointer; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
-
-        /* DRIVE */
+        
+        /* DRIVE TOGGLES */
         .view-toggle { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
         .toggle-btn { flex: 0 0 auto; text-align: center; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #6b7280; border-radius: 20px; cursor: pointer; transition: all 0.2s; background: #f3f4f6; border: 1px solid #e5e7eb; white-space: nowrap; }
         .toggle-btn.active { background: var(--brand-green); color: white; border-color: var(--brand-green); box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
-        .cat-btn { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; text-align: center; font-weight: 800; color: #374151; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.1s; font-size: 14px; display: flex; align-items: center; justify-content: center; min-height: 60px; word-break: break-word; }
-        .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
         /* DETAILS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
@@ -57,20 +54,25 @@
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
         
+        /* ACCORDION */
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+        .expanded .chevron { transform: rotate(180deg); }
+        .chevron { transition: transform 0.2s; }
+        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; word-break: break-all; margin-top: 2px; }
+
+        /* INPUTS */
         .input-stack { display: flex; flex-direction: column; gap: 16px; }
         .input-group { width: 100%; }
         .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
-
-        /* ACCORDION */
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; word-break: break-all; margin-top: 2px; }
-
+        .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
+        .photo-link-box.visible { display: block; }
+        
         /* BATCH & REVIEW */
         .select-check { width: 24px; height: 24px; margin-right: 16px; accent-color: var(--brand-green); cursor: pointer; display: none; }
         .review-mode .select-check { display: block; }
@@ -84,15 +86,6 @@
         /* MODAL */
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        
-        /* PHOTO & OVERVIEW GRID */
-        .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
-        .photo-link-box.visible { display: block; }
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-word; }
-        .full-width { grid-column: span 2; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -154,7 +147,6 @@
             </div>
 
             <div id="view-drive" class="hidden">
-                <div id="manager-upload-section" class="hidden mb-6"><div class="flex justify-between items-center mb-2"><h1 class="text-sm font-bold text-gray-500 uppercase">Manager Tools</h1><button id="btn-batch-toggle" class="text-xs bg-[#e3a000] text-white px-3 py-1 rounded font-bold" onclick="toggleBatchMode()">Batch Mode</button></div></div>
                 <input type="text" id="search-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 shadow-sm" placeholder="Search Global Inventory..." onkeyup="renderDriveList()">
                 <div class="view-toggle">
                     <div id="toggle-name" class="toggle-btn active" onclick="setDriveMode('name')">Name</div>
@@ -190,6 +182,9 @@
                 <div id="task-container" class="space-y-2"></div>
             </div>
 
+            <div id="view-sales" class="hidden"><h1 class="text-xl font-bold text-gray-800 mb-4">Sales Office Dashboard</h1><div class="bg-white p-6 rounded-lg shadow-sm text-center border border-gray-200"><i class="ph-duotone ph-briefcase text-4xl text-gray-300 mb-2"></i><p class="text-gray-500">Sales metrics here.</p></div></div>
+            <div id="view-soc" class="hidden"><h1 class="text-xl font-bold text-gray-800 mb-4">Sales Order Confirmation</h1><div class="bg-white p-6 rounded-lg shadow-sm text-center border border-gray-200"><i class="ph-duotone ph-file-text text-4xl text-gray-300 mb-2"></i><p class="text-gray-500">SOC content.</p></div></div>
+
             <div id="view-review" class="hidden review-mode"><h1 class="text-xl font-bold text-gray-800 mb-4">Manager Review</h1><div id="review-container" class="space-y-2"></div><div style="height: 80px;"></div></div>
 
             <div id="view-detail" class="hidden bg-white rounded-lg border border-gray-200 shadow-sm p-0 overflow-hidden">
@@ -206,8 +201,14 @@
                     
                     <div id="detail-content-overview" class="detail-padding">
                         <div id="readonly-collected-data" class="hidden mb-6 bg-green-50 border border-green-100 rounded-lg p-4">
-                            <h3 class="text-xs font-bold text-green-800 uppercase mb-3 border-b border-green-200 pb-1">Saved User Data</h3>
-                            <div id="overview-dynamic-grid" class="overview-grid"></div>
+                            <h3 class="text-xs font-bold text-green-800 uppercase mb-3 border-b border-green-200 pb-1">Collected Data</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Sales Note</div><div class="text-sm font-bold text-gray-800" id="ro-sales">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Hold Code</div><div class="text-sm font-bold text-red-600" id="ro-hold">--</div></div>
+                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">User Note (10-Day)</div><div class="text-sm text-gray-800 bg-white p-2 rounded border border-gray-100" id="ro-note">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Caliper</div><div class="text-sm font-bold text-gray-800" id="ro-caliper">--</div></div>
+                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">Photo Link</div><div id="ro-photo-link" class="text-xs text-blue-600 break-all cursor-pointer">--</div></div>
+                            </div>
                         </div>
                         <div class="task-info-grid">
                             <div class="task-info-item"><div class="task-info-label">Item Code</div><div class="task-info-val" id="ov-info-item">--</div></div>
@@ -217,7 +218,7 @@
                             <div class="task-info-item task-info-full"><div class="task-info-label">Sales Note</div><div class="task-info-val" id="ov-info-sales">--</div></div>
                         </div>
                         <div id="expand-section-overview">
-                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-overview')"><span><i class="ph-bold ph-list-dashes"></i> View All Excel Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
+                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-overview')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
                             <div class="expand-content" id="dynamic-details-overview"></div>
                         </div>
                     </div>
@@ -227,13 +228,13 @@
                         <label class="camera-btn mb-4"><i class="ph-fill ph-camera text-3xl mb-2"></i><span class="font-bold text-sm">Take Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
                         <div class="input-stack space-y-4">
                             <div id="group-caliper" class="hidden"><label class="input-label text-[#e3a000]">Caliper (Inches)</label><input type="number" class="input-field border-[#e3a000]" id="input-caliper" placeholder="e.g. 2.5" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">Match %</label><input type="number" id="input-match" class="input-field" placeholder="e.g. 95" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">Spec</label><input type="text" id="input-spec" class="input-field" placeholder="e.g. 24-30 inch" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">Pick Note</label><input type="text" id="input-pick" class="input-field" placeholder="e.g. Pick from back" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">Loc Comments</label><input type="text" id="input-loc-note" class="input-field" placeholder="e.g. Needs spacing" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">General Note / Update</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
+                            <div class="input-group"><label class="input-label">Update Sales Note</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
                         </div>
                         <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg mt-6 shadow-sm uppercase" onclick="saveLocalChange(true)">Save Updates</button>
+                        <div id="expand-section-actions" class="mt-6">
+                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-actions')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
+                            <div class="expand-content" id="dynamic-details-actions"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -263,6 +264,8 @@
                 <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive</div>
                 <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer (Read Only)</div>
                 <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+                <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-file-text"></i> SOC</div>
+                <div class="drawer-item" onclick="switchView('sales'); toggleMenu();"><i class="ph-bold ph-briefcase"></i> Sales Office</div>
                 <div class="drawer-item" id="menu-item-review" style="display:none;" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-list-checks"></i> <strong>Manager Review</strong></div>
                 <hr class="my-2 border-gray-100">
                 <div class="drawer-item text-blue-600" onclick="location.reload()"><i class="ph-bold ph-arrows-clockwise"></i> Force Sync Data</div>
@@ -279,7 +282,7 @@
         const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
         let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; let selectedReviewItems = []; let currentTaskTab = 'season';
         let taskDrillState = { level: 0, user: null, block: null, loc: null };
-        let driveViewMode = 'name'; let isBatchMode = false; let currentDriveItems = [];
+        let driveViewMode = 'name';
 
         // --- AUTH & AUTO-SYNC ---
         function selectUser(user) {
@@ -314,24 +317,22 @@
             .then(data => {
                 if(!data) return; 
                 const workbook = XLSX.read(data, {type: 'array'});
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // --- ROW 2 FIX (HEADER SCANNER) ---
-                const jsonDataRaw = XLSX.utils.sheet_to_json(sheet, {header: 1});
-                let headerIndex = -1;
-                for(let i=0; i<Math.min(jsonDataRaw.length, 25); i++) {
-                    let rowStr = JSON.stringify(jsonDataRaw[i]).toUpperCase();
-                    if (rowStr.includes("ITEMCODE") || rowStr.includes("ITEM CODE") || rowStr.includes("SKU") || rowStr.includes("COMMONNAME") || rowStr.includes("DESCRIPTION")) { 
-                        headerIndex = i; break; 
+                // --- SMART HEADER SCANNER (ROW 2 FIX) ---
+                const rawData = XLSX.utils.sheet_to_json(sheet, {header: 1});
+                let headerRow = 0;
+                for(let i=0; i<Math.min(rawData.length, 25); i++) {
+                    const rowStr = JSON.stringify(rawData[i]).toUpperCase();
+                    if(rowStr.includes("ITEMCODE") || rowStr.includes("ITEM CODE") || rowStr.includes("SKU") || rowStr.includes("COMMONNAME") || rowStr.includes("DESCRIPTION")) {
+                        headerRow = i; break;
                     }
                 }
-                if (headerIndex === -1) headerIndex = 0; // Fallback to 0
-
-                // Parse again starting from the found header row
-                const jsonData = XLSX.utils.sheet_to_json(sheet, {range: headerIndex});
                 
+                // Parse using found header row
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {range: headerRow});
                 parseInventory(jsonData);
+                
                 if(fullInventory.length === 0) {
                     alert("ERROR: File loaded but 0 items found. Check Excel headers.");
                     resetLogin();
@@ -377,14 +378,13 @@
             
             isManager = (currentUser === 'J.D.' || currentUser === 'Dylan');
             if(isManager) {
-                document.getElementById("manager-upload-section").classList.remove("hidden");
+                // Keep manager tools mostly hidden for auto-sync but available if needed
                 document.getElementById("menu-item-review").style.display = "flex";
             }
             
             fetchWeather();
             applySavedChanges(); 
             processSalesLogic(); assignTasks(); renderTasks(); renderDriveList(); renderViewerList();
-            renderDriveCats('BLOCKALPHA', 'Block');
             if(isManager) renderReviewView();
             switchView('home');
         }
@@ -435,7 +435,7 @@
 
         // --- UI & NAVIGATION ---
         function switchView(view) {
-            ["view-home", "view-drive", "view-tasks", "view-viewer", "view-detail", "view-review"].forEach(id => document.getElementById(id).classList.add("hidden"));
+            ["view-home", "view-drive", "view-tasks", "view-viewer", "view-detail", "view-review", "view-sales", "view-soc"].forEach(id => document.getElementById(id).classList.add("hidden"));
             document.getElementById("view-" + view).classList.remove("hidden");
             ["home", "drive", "tasks"].forEach(v => {
                 const icon = document.getElementById("nav-icon-" + v);
@@ -444,87 +444,9 @@
                 icon.className = (v === view && v === "tasks") ? `ph-fill ph-clipboard-text text-2xl ${color}` : `ph ph-${v === 'tasks' ? 'clipboard-text' : (v==='home'?'house':'car')} text-2xl ${color}`;
                 text.className = `text-[10px] font-bold ${color}`;
             });
-            if(view === 'drive') {
-                if(driveViewMode === 'name') renderDriveList();
-                else if(driveViewMode === 'block') renderDriveCats('BLOCKALPHA', 'Block');
-                else if(driveViewMode === 'group') renderDriveCats('PLANTGROUPCODE', 'Group');
-                else if(driveViewMode === 'size') renderDriveCats('CONTSIZE', 'Size');
-            }
+            if(view === 'drive') { if(driveViewMode === 'name') renderDriveList(); else if(driveViewMode === 'block') renderDriveCats('BLOCKALPHA', 'Block'); else if(driveViewMode === 'group') renderDriveCats('PLANTGROUPCODE', 'Group'); else if(driveViewMode === 'size') renderDriveCats('CONTSIZE', 'Size'); }
+            if(view === 'viewer') { renderViewerList(); }
         }
-
-        // --- DRIVE MODE & CATEGORIES ---
-        function setDriveMode(mode) {
-            driveViewMode = mode;
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('toggle-'+mode).classList.add('active');
-            
-            document.getElementById("drive-name-view").classList.add("hidden");
-            document.getElementById("drive-cat-view").classList.add("hidden");
-            
-            if(mode === 'name') {
-                document.getElementById("drive-name-view").classList.remove("hidden");
-                renderDriveList();
-            } else {
-                document.getElementById("drive-cat-view").classList.remove("hidden");
-                const field = mode === 'block' ? 'BLOCKALPHA' : (mode === 'group' ? 'PLANTGROUPCODE' : 'CONTSIZE');
-                renderDriveCats(field, mode);
-            }
-        }
-
-        function renderDriveCats(field, label) {
-            const vals = [...new Set(fullInventory.map(i => i[field] || "N/A"))].sort();
-            document.getElementById("drive-cat-list").innerHTML = vals.map(v => 
-                `<div class="cat-btn" onclick="selectDriveCat('${field}', '${v.replace(/'/g,"\\'")}')">${v}</div>`
-            ).join("");
-            document.getElementById("drive-cat-list").classList.remove("hidden");
-            document.getElementById("drive-row-list").classList.add("hidden");
-            document.getElementById("drive-sub-list").classList.add("hidden");
-        }
-
-        function selectDriveCat(field, value) {
-            const items = fullInventory.filter(i => (i[field]||"N/A") == value);
-            document.getElementById("drive-cat-list").classList.add("hidden");
-            
-            if (field === 'BLOCKALPHA') {
-                // SPECIAL BLOCK LOGIC (Group by Row)
-                const rows = [...new Set(items.map(i => {
-                    const p = String(i.LOCATIONCODE).split('.');
-                    return p.length >= 2 ? `${p[0]}.${p[1]}.000` : i.LOCATIONCODE;
-                }))].sort();
-                
-                let html = `<div class="back-btn" onclick="resetDriveCatView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">Block ${value}</h2>`;
-                html += rows.map(r => `<div class="drill-item" onclick="selectDriveRow('${r}', '${field}', '${value}')"><span class="font-mono text-[#007a4d] font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
-                
-                document.getElementById("drive-row-list").innerHTML = html;
-                document.getElementById("drive-row-list").classList.remove("hidden");
-            } else {
-                // STANDARD LOGIC (Group/Size)
-                document.getElementById("drive-sub-list").innerHTML = 
-                    `<div class="back-btn" onclick="resetDriveCatView()"><i class="ph-bold ph-arrow-left"></i> Back</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">${value}</h2>` +
-                    items.map(item => 
-                        `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'drive')">
-                            <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
-                            <div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>${item.LOCATIONCODE}</span></div>
-                        </div>`
-                    ).join("");
-                document.getElementById("drive-sub-list").classList.remove("hidden");
-            }
-        }
-
-        function selectDriveRow(baseRow, origField, origVal) {
-            document.getElementById("drive-row-list").classList.add("hidden");
-            // Simple string matching for rows
-            const items = fullInventory.filter(i => String(i.LOCATIONCODE).startsWith(baseRow.substring(0, baseRow.lastIndexOf('.'))));
-            items.sort((a,b) => String(a.LOCATIONCODE).localeCompare(String(b.LOCATIONCODE)));
-            
-            document.getElementById("drive-sub-list").innerHTML = 
-                `<div class="back-btn" onclick="selectDriveCat('${origField}', '${origVal}')"><i class="ph-bold ph-arrow-left"></i> Back to ${origVal}</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">${baseRow}</h2>` +
-                items.map(item => 
-                    `<div class="batch-leaf"><div class="flex-grow inv-card mb-0 shadow-none border-0" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'drive')"><div class="font-bold text-gray-800">${item.COMMONNAME}</div><div class="text-xs text-gray-500">${item.CONTSIZE} • ${item.LOCATIONCODE}</div></div></div>`
-                ).join("");
-            document.getElementById("drive-sub-list").classList.remove("hidden");
-        }
-        function resetDriveCatView() { document.getElementById("drive-cat-list").classList.remove("hidden"); document.getElementById("drive-row-list").classList.add("hidden"); document.getElementById("drive-sub-list").classList.add("hidden"); }
 
         // --- TASK RENDERER ---
         function renderTasks() {
@@ -586,13 +508,53 @@
         }
         function handleViewerSearch() { renderViewerList(); }
 
-        // --- DRIVE LIST (NAME SEARCH) ---
+        // --- DRIVE LIST ---
         function renderDriveList() {
             const term = document.getElementById("search-input").value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && String(n).toLowerCase().includes(term)).sort().slice(0,50);
             document.getElementById("list-names").innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(fullInventory.find(i=>i.COMMONNAME==='${n.replace(/'/g,"\\'")}'))"><span class="font-bold text-gray-800">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
         }
-        function handleSearch() { if(driveViewMode !== 'name') setDriveMode('name'); renderDriveList(); }
+        
+        // --- DRIVE CATS ---
+        function setDriveMode(mode) {
+            driveViewMode = mode;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('toggle-'+mode).classList.add('active');
+            
+            document.getElementById("drive-name-view").classList.add("hidden");
+            document.getElementById("drive-cat-view").classList.add("hidden");
+            
+            if(mode === 'name') {
+                document.getElementById("drive-name-view").classList.remove("hidden");
+                renderDriveList();
+            } else {
+                document.getElementById("drive-cat-view").classList.remove("hidden");
+                const field = mode === 'block' ? 'BLOCKALPHA' : (mode === 'group' ? 'PLANTGROUPCODE' : 'CONTSIZE');
+                renderDriveCats(field, mode);
+            }
+        }
+        function renderDriveCats(field, label) {
+            const vals = [...new Set(fullInventory.map(i => i[field] || "N/A"))].sort();
+            document.getElementById("drive-cat-list").innerHTML = vals.map(v => 
+                `<div class="cat-btn" onclick="selectDriveCat('${field}', '${v.replace(/'/g,"\\'")}')">${v}</div>`
+            ).join("");
+            document.getElementById("drive-cat-list").classList.remove("hidden");
+            document.getElementById("drive-sub-list").classList.add("hidden");
+        }
+        function selectDriveCat(field, value) {
+            const items = fullInventory.filter(i => (i[field]||"N/A") == value);
+            document.getElementById("drive-cat-list").classList.add("hidden");
+            document.getElementById("drive-sub-list").innerHTML = 
+                `<div class="back-btn" onclick="resetDriveCatView()"><i class="ph-bold ph-arrow-left"></i> Back</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">${value}</h2>` +
+                items.map(item => 
+                    `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'drive')">
+                        <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
+                        <div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>${item.LOCATIONCODE}</span></div>
+                    </div>`
+                ).join("");
+            document.getElementById("drive-sub-list").classList.remove("hidden");
+        }
+        function resetDriveCatView() { document.getElementById("drive-cat-list").classList.remove("hidden"); document.getElementById("drive-sub-list").classList.add("hidden"); }
 
         // --- DETAIL & SAVING ---
         function openDetail(item, source) {
@@ -615,6 +577,10 @@
             if (source === 'viewer') {
                 document.getElementById("detail-tabs-container").classList.add("hidden");
                 document.getElementById("readonly-collected-data").classList.remove("hidden");
+                document.getElementById("ro-sales").innerText = item.SALESNOTE || "N/A";
+                document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
+                document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
+                document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
             } else {
                 document.getElementById("detail-tabs-container").classList.remove("hidden");
                 document.getElementById("readonly-collected-data").classList.add("hidden");
@@ -629,47 +595,15 @@
                 document.getElementById(p+"info-user").innerText = item.ASSIGNEDTO || "--";
                 document.getElementById(p+"info-sales").innerText = item.SALESNOTE || "--";
             });
-            
-            // FILL INPUTS
             document.getElementById("input-gen-note").value = item.UPDATED_NOTE || "";
             document.getElementById("input-caliper").value = item.UPDATED_CALIPER || "";
-            document.getElementById("input-match").value = item.UPDATED_MATCH || "";
-            document.getElementById("input-spec").value = item.UPDATED_SPEC || "";
-            document.getElementById("input-pick").value = item.UPDATED_PICK || "";
-            document.getElementById("input-loc-note").value = item.UPDATED_LOC_NOTE || "";
             
             const calGroup = document.getElementById("group-caliper");
             if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
             
-            // BUILD DYNAMIC OVERVIEW (SHOW ALL SAVED DATA)
-            let overviewHtml = "";
-            const savedFields = [
-                {k: 'UPDATED_NOTE', l: 'Gen Note'}, 
-                {k: 'UPDATED_CALIPER', l: 'Caliper'}, 
-                {k: 'UPDATED_MATCH', l: 'Match %'}, 
-                {k: 'UPDATED_SPEC', l: 'Spec'}, 
-                {k: 'UPDATED_PICK', l: 'Pick Note'}, 
-                {k: 'UPDATED_LOC_NOTE', l: 'Loc Note'}
-            ];
-            
-            let hasData = false;
-            savedFields.forEach(field => {
-                if(item[field.k]) {
-                    hasData = true;
-                    overviewHtml += `<div class="overview-card ${field.l === 'Gen Note' ? 'full-width' : ''}"><div class="overview-label">${field.l}</div><div class="overview-val">${item[field.k]}</div></div>`;
-                }
-            });
-            if(item.UPDATED_PHOTO) {
-                hasData = true;
-                overviewHtml += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val"><a href="${item.UPDATED_PHOTO}" target="_blank" class="text-blue-600 underline">View Photo</a></div></div>`;
-            }
-            
-            if(!hasData) overviewHtml = `<div class="text-xs text-gray-400 italic p-2">No user data saved yet.</div>`;
-            document.getElementById("overview-dynamic-grid").innerHTML = overviewHtml;
-
-            // BUILD EXCEL DATA EXPANDER
+            // BUILD DYNAMIC DETAILS
             let fullDataHtml = "";
-            const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO', 'UPDATED_MATCH', 'UPDATED_SPEC', 'UPDATED_PICK', 'UPDATED_LOC_NOTE'];
+            const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO'];
             Object.keys(item).sort().forEach(key => {
                 if (!excludeFields.includes(key)) {
                     fullDataHtml += `<div class="dynamic-stack"><div class="dynamic-label">${key}</div><div class="dynamic-val">${item[key]}</div></div>`;
@@ -708,37 +642,14 @@
 
         function saveLocalChange(alertUser) {
             if(!activeItem) return;
-            // GET VALUES
             const note = document.getElementById("input-gen-note").value;
             const caliper = document.getElementById("input-caliper").value;
-            const match = document.getElementById("input-match").value;
-            const spec = document.getElementById("input-spec").value;
-            const pick = document.getElementById("input-pick").value;
-            const locNote = document.getElementById("input-loc-note").value;
-
-            // UPDATE RUNTIME
-            activeItem.UPDATED_NOTE = note; 
-            activeItem.UPDATED_CALIPER = caliper;
-            activeItem.UPDATED_MATCH = match;
-            activeItem.UPDATED_SPEC = spec;
-            activeItem.UPDATED_PICK = pick;
-            activeItem.UPDATED_LOC_NOTE = locNote;
-
-            // SAVE TO STORAGE
+            activeItem.UPDATED_NOTE = note; activeItem.UPDATED_CALIPER = caliper;
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const key = (activeItem.ITEMCODE||"") + "_" + (activeItem.LOCATIONCODE||"") + "_" + (activeItem.LOTCODE||"");
-            stored[key] = { 
-                note: note, 
-                caliper: caliper, 
-                match: match,
-                spec: spec,
-                pick: pick,
-                locNote: locNote,
-                photo: activeItem.UPDATED_PHOTO, 
-                timestamp: Date.now() 
-            };
+            stored[key] = { note: note, caliper: caliper, photo: activeItem.UPDATED_PHOTO, timestamp: Date.now() };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-            if(alertUser) { alert("Saved!"); openDetail(activeItem, 'task'); } // Re-render overview
+            if(alertUser) alert("Saved!");
         }
 
         function applySavedChanges() {
@@ -748,15 +659,7 @@
                 if (now - stored[key].timestamp > TEN_DAYS_MS) delete stored[key];
                 else {
                     const item = fullInventory.find(i => ((i.ITEMCODE||"") + "_" + (i.LOCATIONCODE||"") + "_" + (i.LOTCODE||"")) === key);
-                    if(item) { 
-                        item.UPDATED_NOTE = stored[key].note; 
-                        item.UPDATED_CALIPER = stored[key].caliper; 
-                        item.UPDATED_MATCH = stored[key].match;
-                        item.UPDATED_SPEC = stored[key].spec;
-                        item.UPDATED_PICK = stored[key].pick;
-                        item.UPDATED_LOC_NOTE = stored[key].locNote;
-                        item.UPDATED_PHOTO = stored[key].photo; 
-                    }
+                    if(item) { item.UPDATED_NOTE = stored[key].note; item.UPDATED_CALIPER = stored[key].caliper; item.UPDATED_PHOTO = stored[key].photo; }
                 }
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
@@ -769,39 +672,18 @@
              .then(r=>r.json()).then(d=>{ document.getElementById("weather-temp").innerText = Math.round(d.current.temperature_2m) + "°"; });
         }
         function toggleFullDetails(id) { document.getElementById(id).classList.toggle('expanded'); }
-        function toggleBatchMode() {
-            isBatchMode = !isBatchMode;
-            const btn = document.getElementById("btn-batch-toggle");
-            const driveContainer = document.getElementById("view-drive");
-            if (isBatchMode) { btn.innerText = "Disable Batch Mode"; btn.classList.replace("bg-[#e3a000]", "bg-gray-500"); driveContainer.classList.add("batch-mode"); } 
-            else { btn.innerText = "Enable Batch Mode"; btn.classList.replace("bg-gray-500", "bg-[#e3a000]"); driveContainer.classList.remove("batch-mode"); document.getElementById("action-bar").classList.remove("visible"); }
-        }
-        function handleMultiSelect(context) {
-            let checkboxes;
-            if(context === 'drive') checkboxes = document.querySelectorAll('#view-drive .select-check:checked');
-            else checkboxes = document.querySelectorAll('#review-container .select-check:checked');
-            selectedReviewItems = Array.from(checkboxes).map(cb => parseInt(cb.value));
-            const bar = document.getElementById("action-bar");
-            if (selectedReviewItems.length > 0) bar.classList.add("visible"); else bar.classList.remove("visible");
-        }
+        function toggleBatchMode() { isBatchMode = !isBatchMode; const btn = document.getElementById("btn-batch-toggle"); if(isBatchMode) { btn.innerText = "Disable Batch Mode"; btn.classList.replace("bg-[#e3a000]", "bg-gray-500"); document.getElementById("view-drive").classList.add("batch-mode"); } else { btn.innerText = "Enable Batch Mode"; btn.classList.replace("bg-gray-500", "bg-[#e3a000]"); document.getElementById("view-drive").classList.remove("batch-mode"); document.getElementById("action-bar").classList.remove("visible"); } }
+        function handleMultiSelect(context) { let checkboxes = document.querySelectorAll('#view-drive .select-check:checked'); selectedReviewItems = Array.from(checkboxes).map(cb => parseInt(cb.value)); const bar = document.getElementById("action-bar"); if(selectedReviewItems.length > 0) bar.classList.add("visible"); else bar.classList.remove("visible"); }
         function openAssignModal() { if(selectedReviewItems.length === 0) return; document.getElementById("assign-modal").style.display = "flex"; }
         function closeAssignModal() { document.getElementById("assign-modal").style.display = "none"; }
         function confirmAssignment() {
-            const kayla = document.getElementById("check-kayla").checked;
-            const morgan = document.getElementById("check-morgan").checked;
             const note = document.getElementById("assign-note").value;
-            let assignee = "";
-            if (kayla && morgan) assignee = "Kayla & Morgan";
-            else if (kayla) assignee = "Kayla";
-            else if (morgan) assignee = "Morgan";
-            else { alert("Select at least one user."); return; }
             selectedReviewItems.forEach(idx => {
                 const item = fullInventory[idx];
-                item.ASSIGNEDTO = assignee; item.isNew = true;
-                if (note) { item.UPDATED_NOTE = (item.UPDATED_NOTE ? item.UPDATED_NOTE + " | " : "") + "MGR: " + note; }
+                item.ASSIGNEDTO = "Manager";
+                if(note) item.UPDATED_NOTE = (item.UPDATED_NOTE ? item.UPDATED_NOTE + " | " : "") + "MGR: " + note;
             });
-            closeAssignModal(); if(isBatchMode) toggleBatchMode(); renderTasks(); if(isManager) renderReviewView(); alert(`Assigned ${selectedReviewItems.length} items.`);
-            if(driveViewMode === 'name') renderDriveList(); else setDriveMode(driveViewMode); 
+            closeAssignModal(); toggleBatchMode(); renderTasks(); alert("Assignments Updated");
         }
     </script>
 </body>
