@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v126 (Full Feature)</title>
+    <title>Greenleaf Pro v127 (Unique Row Fix)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -98,7 +98,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="font-bold text-lg"><span id="header-user">User</span></div>
             </div>
-            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v126</div>
+            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v127</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -227,7 +227,7 @@
         let currentTab = 'season';
         let isBatch = false;
         let selectedIdx = [];
-        const STORAGE_KEY = "greenleaf_v126_storage";
+        const STORAGE_KEY = "greenleaf_v127_storage"; // Updated key for v127
 
         function selectUser(u) {
             currentUser = u;
@@ -264,13 +264,19 @@
                 }
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
-                fullInventory = jsonData.map(row => {
+                
+                // --- MODIFIED MAPPING TO INCLUDE UNIQUE ROW ID ---
+                fullInventory = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => {
                         let cleanK = k.toString().replace(/\s+/g, '').toUpperCase();
                         obj[cleanK] = row[k];
                     });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
+                    
+                    // Creates a unique ID based on the Row Number to prevent duplicates
+                    obj.UNIQUE_ROW_ID = "ROW_" + index + "_" + (obj.ITEMCODE || "NOC");
+
                     return obj;
                 });
 
@@ -278,6 +284,7 @@
                 loadSavedData();
                 launchApp();
             } catch (e) {
+                console.error(e);
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('status-msg').innerText = "Sync Failed: inventory.xlsx not found";
                 document.getElementById('status-msg').classList.remove('hidden');
@@ -296,11 +303,9 @@
             let i = 0;
             fullInventory.forEach(item => {
                 const group = (item.PLANTGROUPCODE || "").toString();
-                const size = (item.CONTSIZE || "").toString();
                 if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan";
                 else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla";
                 else {
-                    // WEIGHTED ROUND ROBIN (60/20/20)
                     const weight = i % 5;
                     item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan");
                     i++;
@@ -394,7 +399,7 @@
         function renderAllFields() {
             const cont = document.getElementById('expand-content');
             cont.innerHTML = Object.keys(activeItem).map(k => {
-                if(k.startsWith('SAVED_') || k === 'ASSIGNEDTO') return "";
+                if(k.startsWith('SAVED_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID') return "";
                 return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
             }).join('');
         }
@@ -406,7 +411,11 @@
             activeItem.SAVED_NOTE = document.getElementById('in-note').value;
             
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            const id = activeItem.ITEMCODE + "_" + activeItem.LOCATIONCODE + "_" + activeItem.LOTCODE;
+            
+            // --- UPDATED SAVE ID LOGIC ---
+            // Uses the UNIQUE_ROW_ID instead of valid fields to prevent duplicates
+            const id = activeItem.UNIQUE_ROW_ID;
+            
             storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, ph: activeItem.SAVED_PHOTO, t: Date.now() };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
             
@@ -467,7 +476,9 @@
         function loadSavedData() {
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             fullInventory.forEach(item => {
-                const id = item.ITEMCODE + "_" + item.LOCATIONCODE + "_" + item.LOTCODE;
+                // --- UPDATED LOAD ID LOGIC ---
+                const id = item.UNIQUE_ROW_ID;
+                
                 if(storage[id]) {
                     item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s;
                     item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n;
