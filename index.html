@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v125 (Drill-Down Fix)</title>
+    <title>Greenleaf Pro v126 (Full Feature)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -13,44 +13,59 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
+        /* LOGIN & LOADING */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
-        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; }
+        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; display: flex; flex-direction: column; }
+        /* MENU */
+        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
         #drawer-overlay.open { display: block; }
-        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; }
+        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
+        /* LISTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
+        
+        /* BATCH & ACTION BAR */
+        .batch-row { display: flex; align-items: center; padding: 0 4px; }
+        .select-check { width: 20px; height: 20px; margin-right: 12px; accent-color: var(--brand-green); }
+        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
+        #action-bar.visible { transform: translateY(0); }
+        .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; font-weight: 700; color: white; cursor: pointer; }
 
+        /* DETAIL TABS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
-        .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
+        .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; }
-        .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; }
-
+        /* DATA GRID */
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
         .full-width { grid-column: span 2; }
 
-        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; background-color: #fff; margin-bottom: 10px; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+        /* EXPANDER */
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+
+        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
+
+        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -58,19 +73,21 @@
     <div id="view-login">
         <div class="login-card">
             <div class="text-4xl text-[#007a4d] font-bold mb-6 flex items-center justify-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</div>
+            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             <div id="login-buttons">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
-                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D.</button>
+                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Manager)</button>
             </div>
             <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input" placeholder="PIN" maxlength="4" inputmode="numeric">
+                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
+                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing Server Data...</div>
+                <div class="text-white font-bold text-sm mt-3">Syncing Server...</div>
             </div>
         </div>
     </div>
@@ -78,10 +95,10 @@
     <div id="app-wrapper" class="hidden h-full flex flex-col">
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
-                <i class="ph-bold ph-list menu-btn cursor-pointer" onclick="toggleMenu()"></i>
+                <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="font-bold text-lg"><span id="header-user">User</span></div>
             </div>
-            <div class="text-xs font-bold opacity-80" id="version-tag">v125</div>
+            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v126</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -89,25 +106,30 @@
             <div class="drawer-header">Greenleaf Menu</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
-            <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-            <hr>
+            <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
+            <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
         </div>
 
-        <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-24">
+        <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32">
+            
             <div id="view-home" class="hidden">
-                <div class="bg-[#007a4d] text-white p-6 rounded-xl mb-4 shadow-lg">
-                    <h1 class="text-2xl font-bold">Greenleaf Pro</h1>
-                    <p class="opacity-90">Cloud Inventory System</p>
+                <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg">
+                    <h1 class="text-3xl font-bold">Park Hill</h1>
+                    <p class="opacity-80">Inventory Management</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <button onclick="switchView('tasks')" class="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center gap-2"><i class="ph-bold ph-clipboard-text text-2xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></button>
-                    <button onclick="switchView('drive')" class="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center gap-2"><i class="ph-bold ph-car text-2xl text-blue-600"></i><span class="font-bold">Drive</span></button>
+                    <div onclick="switchView('tasks')" class="bg-white p-6 rounded-xl border flex flex-col items-center gap-2 shadow-sm active:bg-gray-50"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
+                    <div onclick="switchView('drive')" class="bg-white p-6 rounded-xl border flex flex-col items-center gap-2 shadow-sm active:bg-gray-50"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive</span></div>
                 </div>
             </div>
 
             <div id="view-drive" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-gray-400 uppercase">Inventory Browse</h2>
+                    <button id="batch-btn" class="bg-[#e3a000] text-white px-3 py-1 rounded text-xs font-bold" onclick="toggleBatch()">Batch Mode</button>
+                </div>
                 <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
                 <div id="drive-content"></div>
             </div>
@@ -121,7 +143,8 @@
             </div>
 
             <div id="view-viewer" class="hidden">
-                <input type="text" id="viewer-search" class="input-field mb-4" placeholder="Read-Only Search..." onkeyup="renderViewerNames()">
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Read-Only Viewer</h2>
+                <input type="text" id="viewer-search" class="input-field mb-4" placeholder="Quick Search..." onkeyup="renderViewerNames()">
                 <div id="viewer-content"></div>
             </div>
 
@@ -132,39 +155,50 @@
                 
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
-                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Actions</div>
+                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
                 </div>
 
                 <div id="det-overview-content" class="py-4">
-                    <div id="user-data-box" class="bg-green-50 p-4 rounded-lg border border-green-100 mb-4 hidden">
-                        <h3 class="text-[10px] font-bold text-green-800 uppercase mb-2">My Saved Data</h3>
+                    <div id="user-data-box" class="bg-green-50 p-4 rounded-lg border border-green-200 mb-6 hidden">
+                        <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Your Latest Field Updates</h3>
                         <div id="dynamic-user-grid" class="overview-grid"></div>
                     </div>
                     <div class="task-info-grid">
                         <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Available</div><div id="ov-avail" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Item Code</div><div id="ov-item" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
+                        <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                     </div>
-                    <div id="expand-section" class="mt-4">
-                        <div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Fields</span><i class="ph-bold ph-caret-down"></i></div>
+                    <div id="expand-section" class="mt-6">
+                        <div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div>
                         <div id="expand-content" class="expand-content"></div>
                     </div>
                 </div>
 
                 <div id="det-actions-content" class="hidden py-4">
-                    <label class="camera-btn mb-4"><i class="ph-fill ph-camera text-2xl"></i><span class="font-bold">Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(this)"></label>
-                    <input type="number" id="in-match" class="input-field" placeholder="Match %">
-                    <input type="text" id="in-spec" class="input-field" placeholder="Spec (e.g. 24-30'')">
-                    <input type="text" id="in-pick" class="input-field" placeholder="Pick Note">
-                    <textarea id="in-note" class="input-field h-24" placeholder="General Observations..."></textarea>
-                    <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg shadow-md" onclick="saveData()">SAVE UPDATES</button>
+                    <div id="photo-preview" class="mb-4 hidden">
+                        <p class="text-[10px] font-bold text-blue-600 mb-1">IMAGE CACHED</p>
+                        <img id="img-prev" class="w-full h-48 object-cover rounded-lg border">
+                    </div>
+                    <label class="camera-btn"><i class="ph-fill ph-camera text-3xl"></i><span class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(this)"></label>
+                    <div class="input-stack">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes..."></textarea></div>
+                    </div>
+                    <button class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE UPDATES</button>
                 </div>
             </div>
         </div>
 
-        <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-lg z-50">
+        <div id="action-bar">
+            <div class="action-btn bg-blue-600" onclick="alert('Texting selection...')"><i class="ph-bold ph-chat-text"></i> Text</div>
+            <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus"></i> Assign</div>
+        </div>
+
+        <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
             <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
             <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
@@ -172,12 +206,28 @@
         </nav>
     </div>
 
+    <div id="assign-modal">
+        <div class="modal-card">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Assign Tasks</h2>
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label>
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label>
+            </div>
+            <div class="flex gap-3">
+                <button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
+                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let fullInventory = [];
         let activeItem = null;
         let currentUser = null;
         let currentTab = 'season';
-        const STORAGE_KEY = "greenleaf_v125_storage";
+        let isBatch = false;
+        let selectedIdx = [];
+        const STORAGE_KEY = "greenleaf_v126_storage";
 
         function selectUser(u) {
             currentUser = u;
@@ -192,33 +242,35 @@
                 document.getElementById('pin-container').classList.add('hidden');
                 document.getElementById('loading-spinner').classList.remove('hidden');
                 fetchData();
-            } else { alert("Wrong PIN"); }
+            } else { alert("Incorrect PIN"); }
         }
 
         async function fetchData() {
             try {
                 const res = await fetch('inventory.xlsx?v=' + Date.now());
-                const arrayBuffer = await res.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
+                if (!res.ok) throw new Error();
+                const buffer = await res.arrayBuffer();
+                const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // HEADER SCANNER (ROW 2 FIX)
+                // SMARTER HEADER SCANNER (ROW 2 COMPATIBLE)
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 let headerRow = 0;
-                for(let i=0; i<Math.min(rows.length, 20); i++){
+                for(let i=0; i<Math.min(rows.length, 25); i++){
                     const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
+                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME") || str.includes("SKU")) { 
+                        headerRow = i; break; 
+                    }
                 }
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                 fullInventory = jsonData.map(row => {
                     let obj = {};
                     Object.keys(row).forEach(k => {
-                        let cleanK = k.replace(/\s+/g, '').toUpperCase();
+                        let cleanK = k.toString().replace(/\s+/g, '').toUpperCase();
                         obj[cleanK] = row[k];
                     });
-                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown";
+                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
                     return obj;
                 });
 
@@ -226,7 +278,10 @@
                 loadSavedData();
                 launchApp();
             } catch (e) {
-                alert("File Load Failed. Make sure inventory.xlsx is on GitHub.");
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('status-msg').innerText = "Sync Failed: inventory.xlsx not found";
+                document.getElementById('status-msg').classList.remove('hidden');
+                setTimeout(resetLogin, 3000);
             }
         }
 
@@ -241,9 +296,11 @@
             let i = 0;
             fullInventory.forEach(item => {
                 const group = (item.PLANTGROUPCODE || "").toString();
+                const size = (item.CONTSIZE || "").toString();
                 if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan";
                 else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla";
                 else {
+                    // WEIGHTED ROUND ROBIN (60/20/20)
                     const weight = i % 5;
                     item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan");
                     i++;
@@ -251,7 +308,7 @@
             });
         }
 
-        // --- DRILL DOWN LOGIC (NAME > SIZE > LOC) ---
+        // --- DRILL DOWN (DRIVE) ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
@@ -272,26 +329,22 @@
             container.innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
                 items.map(item => {
                     const idx = fullInventory.indexOf(item);
-                    return `<div class="inv-card" onclick="openDetail(${idx})">
-                        <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
-                        <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
+                    return `
+                    <div class="batch-row">
+                        ${isBatch ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                        <div class="inv-card flex-grow" onclick="if(!isBatch) openDetail(${idx})">
+                            <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
+                        </div>
                     </div>`;
                 }).join('');
         }
 
         // --- TASKS ---
-        function setTaskTab(t) {
-            currentTab = t;
-            document.querySelectorAll('.task-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('ttab-'+t).classList.add('active');
-            renderTasks();
-        }
-
+        function setTaskTab(t) { currentTab = t; renderTasks(); }
         function renderTasks() {
             const items = fullInventory.filter(i => i.ASSIGNEDTO === currentUser);
-            const container = document.getElementById('task-content');
-            // Simplified task list for assignment focus
-            container.innerHTML = items.map(item => {
+            document.getElementById('task-content').innerHTML = items.map(item => {
                 const idx = fullInventory.indexOf(item);
                 return `<div class="inv-card" onclick="openDetail(${idx})">
                     <div class="font-bold">${item.COMMONNAME}</div>
@@ -300,13 +353,11 @@
             }).join('');
         }
 
-        // --- DETAILS & UI ---
+        // --- DETAILS ---
         function openDetail(idx) {
             activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
-            document.getElementById('view-drive').classList.add('hidden');
-            document.getElementById('view-tasks').classList.add('hidden');
-            document.getElementById('view-viewer').classList.add('hidden');
+            ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
@@ -316,7 +367,7 @@
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
-            // Inputs
+            // Saved Field Values
             document.getElementById('in-match').value = activeItem.SAVED_MATCH || "";
             document.getElementById('in-spec').value = activeItem.SAVED_SPEC || "";
             document.getElementById('in-pick').value = activeItem.SAVED_PICK || "";
@@ -330,20 +381,20 @@
         function renderOverviewData() {
             const box = document.getElementById('user-data-box');
             const grid = document.getElementById('dynamic-user-grid');
-            let html = "";
-            if(activeItem.SAVED_MATCH) html += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
-            if(activeItem.SAVED_SPEC) html += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
-            if(activeItem.SAVED_PICK) html += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
-            if(activeItem.SAVED_NOTE) html += `<div class="overview-card full-width"><div class="overview-label">Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            let h = "";
+            if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
+            if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
+            if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
+            if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            if(activeItem.SAVED_PHOTO) h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO}')">View Field Photo</div></div>`;
             
-            if(html) { grid.innerHTML = html; box.classList.remove('hidden'); }
-            else { box.classList.add('hidden'); }
+            if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
         function renderAllFields() {
-            const container = document.getElementById('expand-content');
-            container.innerHTML = Object.keys(activeItem).map(k => {
-                if(k.startsWith('SAVED_')) return "";
+            const cont = document.getElementById('expand-content');
+            cont.innerHTML = Object.keys(activeItem).map(k => {
+                if(k.startsWith('SAVED_') || k === 'ASSIGNEDTO') return "";
                 return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
             }).join('');
         }
@@ -356,11 +407,61 @@
             
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.ITEMCODE + "_" + activeItem.LOCATIONCODE + "_" + activeItem.LOTCODE;
-            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, t: Date.now() };
+            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, ph: activeItem.SAVED_PHOTO, t: Date.now() };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
             
-            alert("Data Saved Locally");
+            alert("Data Saved to Cache");
             openDetail(fullInventory.indexOf(activeItem));
+        }
+
+        function handlePhoto(input) {
+            if(input.files && input.files[0]) {
+                activeItem.SAVED_PHOTO = URL.createObjectURL(input.files[0]);
+                document.getElementById('photo-preview').classList.remove('hidden');
+                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO;
+            }
+        }
+
+        // --- BATCH & UTILS ---
+        function toggleBatch() {
+            isBatch = !isBatch;
+            document.getElementById('batch-btn').innerText = isBatch ? "Done" : "Batch Mode";
+            if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
+            renderDriveNames();
+        }
+
+        function updateSelected() {
+            const checks = document.querySelectorAll('.select-check:checked');
+            selectedIdx = Array.from(checks).map(c => parseInt(c.value));
+            document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0);
+        }
+
+        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
+
+        function batchAssign() {
+            const k = document.getElementById('chk-kayla').checked;
+            const m = document.getElementById('chk-morgan').checked;
+            let target = k && m ? "Kayla & Morgan" : (k ? "Kayla" : "Morgan");
+            selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
+            document.getElementById('assign-modal').style.display='none';
+            toggleBatch();
+            alert("Items Re-assigned");
+        }
+
+        function switchView(v) {
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            if(v==='drive') renderDriveNames();
+            if(v==='tasks') renderTasks();
+            if(v==='viewer') renderViewerNames();
+        }
+
+        function switchDetailTab(t) {
+            document.getElementById('det-overview-content').classList.toggle('hidden', t !== 'overview');
+            document.getElementById('det-actions-content').classList.toggle('hidden', t !== 'actions');
+            document.getElementById('dtab-overview').classList.add('active');
+            document.getElementById('dtab-actions').classList.remove('active');
+            if(t==='actions') { document.getElementById('dtab-actions').classList.add('active'); document.getElementById('dtab-overview').classList.remove('active'); }
         }
 
         function loadSavedData() {
@@ -368,32 +469,23 @@
             fullInventory.forEach(item => {
                 const id = item.ITEMCODE + "_" + item.LOCATIONCODE + "_" + item.LOTCODE;
                 if(storage[id]) {
-                    item.SAVED_MATCH = storage[id].m;
-                    item.SAVED_SPEC = storage[id].s;
-                    item.SAVED_PICK = storage[id].p;
-                    item.SAVED_NOTE = storage[id].n;
+                    item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s;
+                    item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n;
+                    item.SAVED_PHOTO = storage[id].ph;
                 }
             });
         }
 
-        function switchView(v) {
-            ['view-home', 'view-drive', 'view-tasks', 'view-viewer', 'view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('view-'+v).classList.remove('hidden');
-            if(v === 'drive') renderDriveNames();
-            if(v === 'tasks') renderTasks();
-            if(v === 'viewer') renderViewerNames();
-        }
-
-        function switchDetailTab(t) {
-            document.getElementById('det-overview-content').classList.toggle('hidden', t !== 'overview');
-            document.getElementById('det-actions-content').classList.toggle('hidden', t !== 'actions');
-            document.getElementById('dtab-overview').classList.toggle('active', t === 'overview');
-            document.getElementById('dtab-actions').classList.toggle('active', t === 'actions');
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
+            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(${fullInventory.indexOf(fullInventory.find(i=>i.COMMONNAME===n))})"><span>${n}</span></div>`).join('');
         }
 
         function closeDetail() { document.getElementById('view-detail').classList.add('hidden'); switchView('drive'); }
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
         function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
+        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
     </script>
 </body>
 </html>
