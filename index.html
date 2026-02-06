@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v119</title>
+    <title>Greenleaf Pro Cloud v120</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -13,7 +13,7 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); }
         .nav-header { background: var(--brand-green); color: white; }
         
-        /* LOGIN & LOADING */
+        /* LAYOUT & LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
@@ -32,7 +32,7 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* UI ELEMENTS */
+        /* LISTS & UI */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
@@ -41,6 +41,13 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
         
+        /* DRIVE TOGGLES & CATS */
+        .view-toggle { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .toggle-btn { flex: 0 0 auto; text-align: center; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #6b7280; border-radius: 20px; cursor: pointer; transition: all 0.2s; background: #f3f4f6; border: 1px solid #e5e7eb; white-space: nowrap; }
+        .toggle-btn.active { background: var(--brand-green); color: white; border-color: var(--brand-green); box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
+        .cat-btn { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; text-align: center; font-weight: 800; color: #374151; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.1s; font-size: 14px; display: flex; align-items: center; justify-content: center; min-height: 60px; word-break: break-word; }
+        .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
         /* DETAIL & ACTIONS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
@@ -49,7 +56,13 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
+        .input-stack { display: flex; flex-direction: column; gap: 16px; }
+        .input-group { width: 100%; }
+        .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+
+        /* EXPANDABLE DATA */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
@@ -71,11 +84,9 @@
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         
-        /* PHOTO LINK */
+        /* PHOTO & OVERVIEW GRID */
         .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
         .photo-link-box.visible { display: block; }
-        
-        /* OVERVIEW GRID */
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
@@ -144,8 +155,21 @@
             <div id="view-drive" class="hidden">
                 <div id="manager-upload-section" class="hidden mb-6"><div class="flex justify-between items-center mb-2"><h1 class="text-sm font-bold text-gray-500 uppercase">Manager Tools</h1><button id="btn-batch-toggle" class="text-xs bg-[#e3a000] text-white px-3 py-1 rounded font-bold" onclick="toggleBatchMode()">Batch Mode</button></div></div>
                 <input type="text" id="search-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 shadow-sm" placeholder="Search Global Inventory..." onkeyup="renderDriveList()">
-                <div id="list-names" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"></div>
-                <div id="list-inventory" class="space-y-2 mt-4 hidden"></div>
+                <div class="view-toggle">
+                    <div id="toggle-name" class="toggle-btn active" onclick="setDriveMode('name')">Name</div>
+                    <div id="toggle-block" class="toggle-btn" onclick="setDriveMode('block')">Block</div>
+                    <div id="toggle-group" class="toggle-btn" onclick="setDriveMode('group')">Group</div>
+                    <div id="toggle-size" class="toggle-btn" onclick="setDriveMode('size')">Size</div>
+                </div>
+                <div id="drive-name-view">
+                    <div id="list-names" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"></div>
+                    <div id="list-sizes" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mt-4 hidden"></div>
+                    <div id="list-inventory" class="space-y-2 mt-4 hidden"></div>
+                </div>
+                <div id="drive-cat-view" class="hidden">
+                    <div id="drive-cat-list" class="cat-grid mb-6"></div>
+                    <div id="drive-row-list" class="hidden space-y-2"></div>
+                </div>
             </div>
 
             <div id="view-viewer" class="hidden">
@@ -251,7 +275,8 @@
     <script>
         const STORAGE_KEY = "greenleaf_changes_v1";
         const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
-        let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; let selectedReviewItems = []; let currentTaskTab = 'season';
+        let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; 
+        let currentTaskTab = 'season'; let driveViewMode = 'name';
         let taskDrillState = { level: 0, user: null, block: null, loc: null };
 
         // --- AUTH & AUTO-SYNC ---
@@ -350,6 +375,7 @@
             fetchWeather();
             applySavedChanges(); 
             processSalesLogic(); assignTasks(); renderTasks(); renderDriveList(); renderViewerList();
+            renderDriveCats('BLOCKALPHA', 'Block'); // Default Drive View
             if(isManager) renderReviewView();
             switchView('home');
         }
@@ -409,6 +435,54 @@
                 icon.className = (v === view && v === "tasks") ? `ph-fill ph-clipboard-text text-2xl ${color}` : `ph ph-${v === 'tasks' ? 'clipboard-text' : (v==='home'?'house':'car')} text-2xl ${color}`;
                 text.className = `text-[10px] font-bold ${color}`;
             });
+            if(view === 'drive') {
+                if(driveViewMode === 'name') renderDriveList();
+                else if(driveViewMode === 'block') renderDriveCats('BLOCKALPHA', 'Block');
+                else if(driveViewMode === 'group') renderDriveCats('PLANTGROUPCODE', 'Group');
+                else if(driveViewMode === 'size') renderDriveCats('CONTSIZE', 'Size');
+            }
+        }
+
+        // --- DRIVE MODE & CATEGORIES (RESTORED) ---
+        function setDriveMode(mode) {
+            driveViewMode = mode;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('toggle-'+mode).classList.add('active');
+            
+            document.getElementById("drive-name-view").classList.add("hidden");
+            document.getElementById("drive-cat-view").classList.add("hidden");
+            
+            if(mode === 'name') {
+                document.getElementById("drive-name-view").classList.remove("hidden");
+                renderDriveList();
+            } else {
+                document.getElementById("drive-cat-view").classList.remove("hidden");
+                const field = mode === 'block' ? 'BLOCKALPHA' : (mode === 'group' ? 'PLANTGROUPCODE' : 'CONTSIZE');
+                renderDriveCats(field, mode);
+            }
+        }
+
+        function renderDriveCats(field, label) {
+            const vals = [...new Set(fullInventory.map(i => i[field] || "N/A"))].sort();
+            document.getElementById("drive-cat-list").innerHTML = vals.map(v => 
+                `<div class="cat-btn" onclick="selectDriveCat('${field}', '${v.replace(/'/g,"\\'")}')">${v}</div>`
+            ).join("");
+            document.getElementById("drive-cat-list").classList.remove("hidden");
+            document.getElementById("drive-row-list").classList.add("hidden");
+        }
+
+        function selectDriveCat(field, value) {
+            const items = fullInventory.filter(i => (i[field]||"N/A") == value);
+            document.getElementById("drive-cat-list").classList.add("hidden");
+            document.getElementById("drive-row-list").innerHTML = 
+                `<div class="back-btn" onclick="renderDriveCats('${field}', 'Back')"><i class="ph-bold ph-arrow-left"></i> Back</div>` +
+                items.map(item => 
+                    `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'drive')">
+                        <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
+                        <div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>${item.LOCATIONCODE}</span></div>
+                    </div>`
+                ).join("");
+            document.getElementById("drive-row-list").classList.remove("hidden");
         }
 
         // --- TASK RENDERER ---
@@ -471,7 +545,7 @@
         }
         function handleViewerSearch() { renderViewerList(); }
 
-        // --- DRIVE LIST ---
+        // --- DRIVE LIST (NAME SEARCH) ---
         function renderDriveList() {
             const term = document.getElementById("search-input").value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && String(n).toLowerCase().includes(term)).sort().slice(0,50);
@@ -488,18 +562,27 @@
             
             // PHOTO LINK
             document.getElementById("photo-link-display").style.display = "none";
+            document.getElementById("ro-photo-link").innerHTML = "--";
             if(item.UPDATED_PHOTO) {
                document.getElementById("photo-link-display").innerHTML = `<strong>Image Saved:</strong> <a href="${item.UPDATED_PHOTO}" target="_blank">View Image</a>`;
                document.getElementById("photo-link-display").style.display = "block";
+               document.getElementById("ro-photo-link").innerHTML = `<a href="${item.UPDATED_PHOTO}" target="_blank" class="text-blue-600 underline">View Saved Image</a>`;
             }
 
             // READ ONLY TOGGLE
             if (source === 'viewer') {
                 document.getElementById("detail-tabs-container").classList.add("hidden");
+                document.getElementById("readonly-collected-data").classList.remove("hidden");
+                document.getElementById("ro-sales").innerText = item.SALESNOTE || "N/A";
+                document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
+                document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
+                document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
+                document.getElementById("ro-match").innerText = item.UPDATED_MATCH || "--";
+                document.getElementById("ro-spec").innerText = item.UPDATED_SPEC || "--";
             } else {
                 document.getElementById("detail-tabs-container").classList.remove("hidden");
+                document.getElementById("readonly-collected-data").classList.add("hidden");
             }
-            document.getElementById("readonly-collected-data").classList.remove("hidden");
 
             document.getElementById("detail-common").innerText = item.COMMONNAME || "Unknown";
             document.getElementById("detail-size").innerText = item.CONTSIZE || "--";
