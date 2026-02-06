@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v132 (Admin Control)</title>
+    <title>Greenleaf Pro v133 (Report Fix)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -104,7 +104,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v132</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v133</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -196,8 +196,7 @@
                         <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
                     </label>
 
-                    <div id="input-container" class="input-stack">
-                        </div>
+                    <div id="input-container" class="input-stack"></div>
                     
                     <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
                 </div>
@@ -235,7 +234,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v132_storage";
+        const STORAGE_KEY = "greenleaf_v133_storage";
         const ADMINS = ["Dylan", "J.D."];
 
         let fullInventory = [];
@@ -358,27 +357,47 @@
             });
         }
 
-        // --- BATCH REPORTING ---
+        // --- NEW IMPROVED BATCH REPORTING ---
         function getBatchReport() {
             let report = "";
+            if(selectedIdx.length === 0) return "No items selected.";
+
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
-                report += `Loc: ${item.LOCATIONCODE || 'N/A'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
+                
+                // HEADER: QTY - Name - Size
+                report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
+                
+                // INFO LINE: Loc, Lot, Caliper
+                let details = [];
+                details.push(`Loc: ${item.LOCATIONCODE || '-'}`);
+                details.push(`Lot: ${item.LOTCODE || '-'}`);
+                // Try to find Caliper field (various spellings)
+                if(item.CALIPER) details.push(`Cal: ${item.CALIPER}`);
+                else if(item.CAL) details.push(`Cal: ${item.CAL}`);
+                
+                report += details.join(' | ') + "\n";
+
+                // USER INPUTS (Specific check for requested fields)
                 if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
-                if(item.SAVED_SPEC) report += `Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK) report += `Pick Note: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE) report += `Gen Note: ${item.SAVED_NOTE}\n`;
-                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                report += "\n----------------\n\n";
+                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
+                if(item.SAVED_PICK)  report += `Pick Note: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
+                
+                // PHOTO LINK (Crucial)
+                if(item.SAVED_PHOTO_LINK) {
+                    report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
+                }
+
+                report += `\n----------------\n\n`;
             });
             return report;
         }
 
         function batchText() {
             const txt = getBatchReport();
-            // Encode safely for SMS
-            window.location.href = "sms:&body=" + encodeURIComponent(txt);
+            // Use generic body param for broader compatibility
+            window.location.href = "sms:?body=" + encodeURIComponent(txt);
         }
 
         function batchEmail() {
@@ -653,7 +672,7 @@
             const views = ['drive','tasks','viewer'];
             views.forEach(v => {
                 if(!document.getElementById('view-'+v).classList.contains('hidden')) {
-                    if(v === 'drive') renderDriveNames(); // Resets to top level
+                    if(v === 'drive') renderDriveNames(); 
                     if(v === 'tasks') renderTasks();
                     if(v === 'viewer') renderViewerNames();
                 }
