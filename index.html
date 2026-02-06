@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v115</title>
+    <title>Greenleaf Pro Cloud v117</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -13,7 +13,7 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); }
         .nav-header { background: var(--brand-green); color: white; }
         
-        /* LOGIN & USER SELECT */
+        /* LOGIN & LOADING */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
@@ -32,7 +32,7 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* LISTS & UI */
+        /* UI ELEMENTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
@@ -41,9 +41,7 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
         
-        /* DETAIL VIEW */
-        .detail-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; padding: 0; overflow: hidden; }
-        .detail-padding { padding: 20px; }
+        /* DETAIL & ACTIONS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -51,28 +49,17 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
-        
-        /* INPUTS */
-        .input-stack { display: flex; flex-direction: column; gap: 16px; }
-        .input-group { width: 100%; }
-        .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
-        
-        /* ACCORDION */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
-        .expanded .chevron { transform: rotate(180deg); }
-        .chevron { transition: transform 0.2s; }
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; word-break: break-all; margin-top: 2px; }
-        
+
         /* BATCH & REVIEW */
-        .batch-leaf { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; background: white; }
         .select-check { width: 24px; height: 24px; margin-right: 16px; accent-color: var(--brand-green); cursor: pointer; display: none; }
-        .batch-mode .select-check { display: block; } .review-mode .select-check { display: block; }
+        .review-mode .select-check { display: block; }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; }
@@ -80,11 +67,11 @@
         .btn-text { background-color: #3b82f6; color: white; }
         .btn-assign { background-color: var(--brand-gold); color: white; }
 
-        /* ASSIGN MODAL */
+        /* MODAL */
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         
-        /* PHOTO LINK STYLE */
+        /* PHOTO LINK */
         .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
         .photo-link-box.visible { display: block; }
     </style>
@@ -95,9 +82,7 @@
         <div class="login-card">
             <div class="text-4xl text-[#007a4d] font-bold mb-6 flex items-center justify-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</div>
             <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Select User</h2>
-            
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
-
             <div id="login-buttons">
                 <button class="user-btn manager" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Manager)</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
@@ -110,7 +95,6 @@
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
-            
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
                 <div class="text-white font-bold text-sm mt-3">Syncing with Server...</div>
@@ -198,7 +182,6 @@
                                 <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">Photo Link</div><div id="ro-photo-link" class="text-xs text-blue-600 break-all cursor-pointer">--</div></div>
                             </div>
                         </div>
-
                         <div class="task-info-grid">
                             <div class="task-info-item"><div class="task-info-label">Item Code</div><div class="task-info-val" id="ov-info-item">--</div></div>
                             <div class="task-info-item"><div class="task-info-label">Location</div><div class="task-info-val" id="ov-info-loc">--</div></div>
@@ -245,6 +228,23 @@
             <div class="flex flex-col items-center pt-1" onclick="switchView('viewer')"><i id="nav-icon-viewer" class="ph ph-eye text-2xl text-gray-500"></i><span class="text-[10px] font-bold text-gray-500">Viewer</span></div>
             <div class="flex flex-col items-center pt-1" onclick="switchView('tasks')"><i id="nav-icon-tasks" class="ph-fill ph-clipboard-text text-2xl text-[#007a4d]"></i><span class="text-[10px] font-bold text-[#007a4d]">Tasks</span></div>
         </nav>
+        
+        <div id="side-drawer">
+            <div class="drawer-header"><span>Menu</span><i class="ph-bold ph-x cursor-pointer" onclick="toggleMenu()"></i></div>
+            <div class="flex-grow overflow-y-auto">
+                <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
+                <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive</div>
+                <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer (Read Only)</div>
+                <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+                <div class="drawer-item" id="menu-item-review" style="display:none;" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-list-checks"></i> <strong>Manager Review</strong></div>
+                <hr class="my-2 border-gray-100">
+                <div class="drawer-item text-blue-600" onclick="location.reload()"><i class="ph-bold ph-arrows-clockwise"></i> Force Sync Data</div>
+                <div class="drawer-item" onclick="logout()"><i class="ph-bold ph-sign-out"></i> Sign Out</div>
+                <div class="p-4 mt-auto">
+                    <div id="data-source-badge" class="bg-gray-100 text-xs font-bold p-2 text-center rounded text-gray-500">No Data</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -267,35 +267,57 @@
                 document.getElementById("pin-container").classList.add("hidden");
                 document.getElementById("loading-spinner").classList.remove("hidden");
                 
-                // AUTO-FETCH FROM SERVER
-                fetch('inventory.xlsx?v=' + Date.now()) // ?v= prevents caching
-                .then(response => {
-                    if(!response.ok) throw new Error("File not found");
-                    return response.arrayBuffer();
-                })
-                .then(data => {
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-                    parseInventory(jsonData);
+                // AUTO-FETCH: Try lowercase first, then uppercase if failed
+                fetchInventory('inventory.xlsx');
+            } else { alert("Incorrect PIN"); }
+        }
+
+        function fetchInventory(filename) {
+            fetch(filename + '?v=' + Date.now()) 
+            .then(response => {
+                if(!response.ok) {
+                    if (filename === 'inventory.xlsx') {
+                        console.log("Lower case failed, trying Uppercase...");
+                        fetchInventory('Inventory.xlsx'); // TRY UPPERCASE
+                        return null;
+                    }
+                    throw new Error("File not found");
+                }
+                return response.arrayBuffer();
+            })
+            .then(data => {
+                if(!data) return; // Wait for the recursive call
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+                parseInventory(jsonData);
+                
+                if(fullInventory.length === 0) {
+                    alert("ERROR: File loaded but 0 items found. Check Excel headers.");
+                    resetLogin();
+                } else {
                     launchApp();
-                })
-                .catch(err => {
-                    console.error(err);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (filename === 'Inventory.xlsx') { // If both failed
                     document.getElementById("loading-spinner").classList.add("hidden");
                     const status = document.getElementById("status-msg");
-                    status.innerText = "⚠️ Server Sync Failed. File 'inventory.xlsx' not found.";
+                    status.innerText = "⚠️ Server Sync Failed. File not found on GitHub.";
                     status.classList.remove("hidden");
-                    setTimeout(() => { resetLogin(); status.classList.add("hidden"); }, 3000);
-                });
-
-            } else { alert("Incorrect PIN"); }
+                    setTimeout(() => { resetLogin(); status.classList.add("hidden"); }, 4000);
+                }
+            });
         }
 
         function parseInventory(jsonData) {
             let headerIndex = -1;
+            // STRONG PARSER (Restored)
             for(let i=0; i<Math.min(jsonData.length, 25); i++) {
                 let rowStr = JSON.stringify(jsonData[i]).toUpperCase();
-                if (rowStr.includes("ITEMCODE") || rowStr.includes("ITEM CODE")) { headerIndex = i; break; }
+                if (rowStr.includes("ITEMCODE") || rowStr.includes("ITEM CODE") || rowStr.includes("SKU") || rowStr.includes("COMMONNAME") || rowStr.includes("DESCRIPTION")) { 
+                    headerIndex = i; break; 
+                }
             }
             if (headerIndex === -1) headerIndex = 0;
             const rawHeaders = jsonData[headerIndex];
@@ -310,7 +332,7 @@
                         obj[cleanKey] = (row[index] !== undefined) ? row[index] : ""; 
                     }
                 });
-                if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown";
+                if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || obj.DESCRIPTION || "Unknown";
                 fullInventory.push(obj);
             }
         }
@@ -335,8 +357,9 @@
             switchView('home');
         }
 
-        function resetLogin() { document.getElementById("pin-container").classList.add("hidden"); document.getElementById("login-buttons").classList.remove("hidden"); document.getElementById("pin-code").value = ""; }
+        function resetLogin() { document.getElementById("pin-container").classList.add("hidden"); document.getElementById("login-buttons").classList.remove("hidden"); document.getElementById("pin-code").value = ""; document.getElementById("loading-spinner").classList.add("hidden"); }
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
+        function logout() { location.reload(); }
 
         // --- CORE LOGIC ---
         function processSalesLogic() {
@@ -503,6 +526,17 @@
             const calGroup = document.getElementById("group-caliper");
             if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
             
+            // BUILD DYNAMIC DETAILS
+            let fullDataHtml = "";
+            const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO'];
+            Object.keys(item).sort().forEach(key => {
+                if (!excludeFields.includes(key)) {
+                    fullDataHtml += `<div class="dynamic-stack"><div class="dynamic-label">${key}</div><div class="dynamic-val">${item[key]}</div></div>`;
+                }
+            });
+            document.getElementById("dynamic-details-overview").innerHTML = fullDataHtml;
+            document.getElementById("dynamic-details-actions").innerHTML = fullDataHtml;
+
             switchDetailTab('overview');
         }
         
