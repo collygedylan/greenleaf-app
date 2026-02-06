@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v129 (Live Sync)</title>
+    <title>Greenleaf Pro v130 (Smart Sync)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -99,7 +99,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="font-bold text-lg"><span id="header-user">User</span></div>
             </div>
-            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v129</div>
+            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v130</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -171,6 +171,7 @@
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                     </div>
+                    
                     <div id="expand-section" class="mt-6">
                         <div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div>
                         <div id="expand-content" class="expand-content"></div>
@@ -231,7 +232,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v129_storage";
+        const STORAGE_KEY = "greenleaf_v130_storage";
 
         let fullInventory = [];
         let activeItem = null;
@@ -259,6 +260,9 @@
 
         async function fetchData() {
             try {
+                // AUTO PRUNE OLD DATA (>10 DAYS)
+                pruneOldData();
+
                 const res = await fetch('inventory.xlsx?v=' + Date.now());
                 if (!res.ok) throw new Error();
                 const buffer = await res.arrayBuffer();
@@ -275,6 +279,12 @@
                 }
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                
+                // --- SMART ID GENERATION ---
+                // This creates a unique ID based on Content + Instance Order.
+                // It survives row insertions/shifts better than pure Row Index.
+                let idCounters = {};
+
                 fullInventory = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => {
@@ -283,8 +293,16 @@
                     });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
                     
-                    // UNIQUE ROW ID GENERATION
-                    obj.UNIQUE_ROW_ID = "ROW_" + index + "_" + (obj.ITEMCODE || "NOC");
+                    // Create base key from content
+                    const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
+                    
+                    // Count how many times we've seen this exact item/loc/lot combo
+                    if(!idCounters[baseKey]) idCounters[baseKey] = 0;
+                    const instanceNum = idCounters[baseKey];
+                    idCounters[baseKey]++;
+
+                    // Final ID: Item_Loc_Lot_Instance (e.g., BOXWOOD_A1_0, BOXWOOD_A1_1)
+                    obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
                     
                     return obj;
                 });
@@ -298,6 +316,25 @@
                 document.getElementById('status-msg').innerText = "Sync Failed: inventory.xlsx not found";
                 document.getElementById('status-msg').classList.remove('hidden');
                 setTimeout(resetLogin, 3000);
+            }
+        }
+
+        function pruneOldData() {
+            const now = Date.now();
+            const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
+            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            let changed = false;
+            
+            Object.keys(storage).forEach(key => {
+                if(storage[key].t && (now - storage[key].t > tenDaysMs)) {
+                    delete storage[key];
+                    changed = true;
+                }
+            });
+
+            if(changed) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+                console.log("Pruned old data (>10 days)");
             }
         }
 
@@ -414,6 +451,14 @@
             document.getElementById('in-pick').value = activeItem.SAVED_PICK || "";
             document.getElementById('in-note').value = activeItem.SAVED_NOTE || "";
 
+            // UI VIEW LOGIC
+            // If Viewer Mode: Hide the big excel list, just show main info + notes
+            if (originView === 'viewer') {
+                document.getElementById('expand-section').classList.add('hidden');
+            } else {
+                document.getElementById('expand-section').classList.remove('hidden');
+            }
+
             renderOverviewData();
             renderAllFields();
             switchDetailTab('overview');
@@ -520,7 +565,8 @@
                 p: activeItem.SAVED_PICK, 
                 n: activeItem.SAVED_NOTE, 
                 pl: activeItem.SAVED_PHOTO_LINK, 
-                pb: activeItem.SAVED_PHOTO_BASE64 
+                pb: activeItem.SAVED_PHOTO_BASE64,
+                t: Date.now() // Timestamp for 10-day cleanup
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
             
