@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v117</title>
+    <title>Greenleaf Pro Cloud v118</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -49,7 +49,14 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
+        
+        /* RESTORED INPUT STYLES */
+        .input-stack { display: flex; flex-direction: column; gap: 16px; }
+        .input-group { width: 100%; }
+        .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
@@ -179,6 +186,8 @@
                                 <div><div class="text-[10px] text-gray-500 uppercase font-bold">Hold Code</div><div class="text-sm font-bold text-red-600" id="ro-hold">--</div></div>
                                 <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">User Note (10-Day)</div><div class="text-sm text-gray-800 bg-white p-2 rounded border border-gray-100" id="ro-note">--</div></div>
                                 <div><div class="text-[10px] text-gray-500 uppercase font-bold">Caliper</div><div class="text-sm font-bold text-gray-800" id="ro-caliper">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Match %</div><div class="text-sm font-bold text-gray-800" id="ro-match">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Spec</div><div class="text-sm font-bold text-gray-800" id="ro-spec">--</div></div>
                                 <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">Photo Link</div><div id="ro-photo-link" class="text-xs text-blue-600 break-all cursor-pointer">--</div></div>
                             </div>
                         </div>
@@ -200,7 +209,11 @@
                         <label class="camera-btn mb-4"><i class="ph-fill ph-camera text-3xl mb-2"></i><span class="font-bold text-sm">Take Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
                         <div class="input-stack space-y-4">
                             <div id="group-caliper" class="hidden"><label class="input-label text-[#e3a000]">Caliper (Inches)</label><input type="number" class="input-field border-[#e3a000]" id="input-caliper" placeholder="e.g. 2.5" onchange="saveLocalChange()"></div>
-                            <div class="input-group"><label class="input-label">Update Sales Note</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
+                            <div class="input-group"><label class="input-label">Match %</label><input type="number" id="input-match" class="input-field" placeholder="e.g. 95" onchange="saveLocalChange()"></div>
+                            <div class="input-group"><label class="input-label">Spec</label><input type="text" id="input-spec" class="input-field" placeholder="e.g. 24-30 inch" onchange="saveLocalChange()"></div>
+                            <div class="input-group"><label class="input-label">Pick Note</label><input type="text" id="input-pick" class="input-field" placeholder="e.g. Pick from back" onchange="saveLocalChange()"></div>
+                            <div class="input-group"><label class="input-label">Loc Comments</label><input type="text" id="input-loc-note" class="input-field" placeholder="e.g. Needs spacing" onchange="saveLocalChange()"></div>
+                            <div class="input-group"><label class="input-label">General Note / Update</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
                         </div>
                         <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg mt-6 shadow-sm uppercase" onclick="saveLocalChange(true)">Save Updates</button>
                         <div id="expand-section-actions" class="mt-6">
@@ -266,8 +279,6 @@
             if(document.getElementById("pin-code").value === "1234") {
                 document.getElementById("pin-container").classList.add("hidden");
                 document.getElementById("loading-spinner").classList.remove("hidden");
-                
-                // AUTO-FETCH: Try lowercase first, then uppercase if failed
                 fetchInventory('inventory.xlsx');
             } else { alert("Incorrect PIN"); }
         }
@@ -278,7 +289,7 @@
                 if(!response.ok) {
                     if (filename === 'inventory.xlsx') {
                         console.log("Lower case failed, trying Uppercase...");
-                        fetchInventory('Inventory.xlsx'); // TRY UPPERCASE
+                        fetchInventory('Inventory.xlsx'); 
                         return null;
                     }
                     throw new Error("File not found");
@@ -286,11 +297,10 @@
                 return response.arrayBuffer();
             })
             .then(data => {
-                if(!data) return; // Wait for the recursive call
+                if(!data) return; 
                 const workbook = XLSX.read(data, {type: 'array'});
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
                 parseInventory(jsonData);
-                
                 if(fullInventory.length === 0) {
                     alert("ERROR: File loaded but 0 items found. Check Excel headers.");
                     resetLogin();
@@ -300,7 +310,7 @@
             })
             .catch(err => {
                 console.error(err);
-                if (filename === 'Inventory.xlsx') { // If both failed
+                if (filename === 'Inventory.xlsx') { 
                     document.getElementById("loading-spinner").classList.add("hidden");
                     const status = document.getElementById("status-msg");
                     status.innerText = "⚠️ Server Sync Failed. File not found on GitHub.";
@@ -312,7 +322,6 @@
 
         function parseInventory(jsonData) {
             let headerIndex = -1;
-            // STRONG PARSER (Restored)
             for(let i=0; i<Math.min(jsonData.length, 25); i++) {
                 let rowStr = JSON.stringify(jsonData[i]).toUpperCase();
                 if (rowStr.includes("ITEMCODE") || rowStr.includes("ITEM CODE") || rowStr.includes("SKU") || rowStr.includes("COMMONNAME") || rowStr.includes("DESCRIPTION")) { 
@@ -506,6 +515,8 @@
                 document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
                 document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
                 document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
+                document.getElementById("ro-match").innerText = item.UPDATED_MATCH || "--";
+                document.getElementById("ro-spec").innerText = item.UPDATED_SPEC || "--";
             } else {
                 document.getElementById("detail-tabs-container").classList.remove("hidden");
                 document.getElementById("readonly-collected-data").classList.add("hidden");
@@ -520,15 +531,21 @@
                 document.getElementById(p+"info-user").innerText = item.ASSIGNEDTO || "--";
                 document.getElementById(p+"info-sales").innerText = item.SALESNOTE || "--";
             });
+            
+            // FILL INPUTS
             document.getElementById("input-gen-note").value = item.UPDATED_NOTE || "";
             document.getElementById("input-caliper").value = item.UPDATED_CALIPER || "";
+            document.getElementById("input-match").value = item.UPDATED_MATCH || "";
+            document.getElementById("input-spec").value = item.UPDATED_SPEC || "";
+            document.getElementById("input-pick").value = item.UPDATED_PICK || "";
+            document.getElementById("input-loc-note").value = item.UPDATED_LOC_NOTE || "";
             
             const calGroup = document.getElementById("group-caliper");
             if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
             
             // BUILD DYNAMIC DETAILS
             let fullDataHtml = "";
-            const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO'];
+            const excludeFields = ['isNew', 'isSeasonNote', 'isLocationNote', 'isPrime', 'UPDATED_NOTE', 'UPDATED_CALIPER', 'UPDATED_PHOTO', 'UPDATED_MATCH', 'UPDATED_SPEC', 'UPDATED_PICK', 'UPDATED_LOC_NOTE'];
             Object.keys(item).sort().forEach(key => {
                 if (!excludeFields.includes(key)) {
                     fullDataHtml += `<div class="dynamic-stack"><div class="dynamic-label">${key}</div><div class="dynamic-val">${item[key]}</div></div>`;
@@ -567,12 +584,35 @@
 
         function saveLocalChange(alertUser) {
             if(!activeItem) return;
+            // GET VALUES
             const note = document.getElementById("input-gen-note").value;
             const caliper = document.getElementById("input-caliper").value;
-            activeItem.UPDATED_NOTE = note; activeItem.UPDATED_CALIPER = caliper;
+            const match = document.getElementById("input-match").value;
+            const spec = document.getElementById("input-spec").value;
+            const pick = document.getElementById("input-pick").value;
+            const locNote = document.getElementById("input-loc-note").value;
+
+            // UPDATE RUNTIME
+            activeItem.UPDATED_NOTE = note; 
+            activeItem.UPDATED_CALIPER = caliper;
+            activeItem.UPDATED_MATCH = match;
+            activeItem.UPDATED_SPEC = spec;
+            activeItem.UPDATED_PICK = pick;
+            activeItem.UPDATED_LOC_NOTE = locNote;
+
+            // SAVE TO STORAGE
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const key = (activeItem.ITEMCODE||"") + "_" + (activeItem.LOCATIONCODE||"") + "_" + (activeItem.LOTCODE||"");
-            stored[key] = { note: note, caliper: caliper, photo: activeItem.UPDATED_PHOTO, timestamp: Date.now() };
+            stored[key] = { 
+                note: note, 
+                caliper: caliper, 
+                match: match,
+                spec: spec,
+                pick: pick,
+                locNote: locNote,
+                photo: activeItem.UPDATED_PHOTO, 
+                timestamp: Date.now() 
+            };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
             if(alertUser) alert("Saved!");
         }
@@ -584,7 +624,15 @@
                 if (now - stored[key].timestamp > TEN_DAYS_MS) delete stored[key];
                 else {
                     const item = fullInventory.find(i => ((i.ITEMCODE||"") + "_" + (i.LOCATIONCODE||"") + "_" + (i.LOTCODE||"")) === key);
-                    if(item) { item.UPDATED_NOTE = stored[key].note; item.UPDATED_CALIPER = stored[key].caliper; item.UPDATED_PHOTO = stored[key].photo; }
+                    if(item) { 
+                        item.UPDATED_NOTE = stored[key].note; 
+                        item.UPDATED_CALIPER = stored[key].caliper; 
+                        item.UPDATED_MATCH = stored[key].match;
+                        item.UPDATED_SPEC = stored[key].spec;
+                        item.UPDATED_PICK = stored[key].pick;
+                        item.UPDATED_LOC_NOTE = stored[key].locNote;
+                        item.UPDATED_PHOTO = stored[key].photo; 
+                    }
                 }
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
