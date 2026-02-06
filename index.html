@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#007a4d">
     <meta name="apple-mobile-web-app-title" content="Greenleaf">
 
-    <title>Greenleaf Pro Cloud v113</title>
+    <title>Greenleaf Pro Cloud v114</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,6 +46,7 @@
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 10px; background: white; }
         .task-tab { flex: 1; text-align: center; padding: 12px 4px; font-size: 11px; font-weight: 800; color: #6b7280; border-bottom: 3px solid transparent; cursor: pointer; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
         
         /* BATCH & REVIEW */
         .batch-leaf { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; background: white; }
@@ -66,6 +67,9 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
+        .input-stack { display: flex; flex-direction: column; gap: 16px; }
+        .input-group { width: 100%; }
+        .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
 
         /* ASSIGN MODAL */
@@ -181,8 +185,14 @@
                     
                     <div id="detail-content-actions" class="detail-padding hidden">
                         <div class="input-stack space-y-4">
-                            <div id="group-caliper" class="hidden"><label class="text-xs font-bold text-[#e3a000]">Caliper</label><input type="number" class="input-field border-[#e3a000]" id="input-caliper" onchange="saveLocalChange()"></div>
-                            <div><label class="text-xs font-bold text-gray-700">Note</label><textarea id="input-gen-note" class="input-field" rows="3" onchange="saveLocalChange()"></textarea></div>
+                            <div id="group-caliper" class="hidden">
+                                <label class="input-label text-[#e3a000]">Caliper (Inches)</label>
+                                <input type="number" class="input-field border-[#e3a000]" id="input-caliper" placeholder="e.g. 2.5" onchange="saveLocalChange()">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Update Sales Note</label>
+                                <textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea>
+                            </div>
                         </div>
                         <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg mt-6 shadow-sm uppercase" onclick="saveLocalChange(true)">Save Updates</button>
                     </div>
@@ -211,6 +221,9 @@
         const STORAGE_KEY = "greenleaf_changes_v1";
         const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
         let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; let selectedReviewItems = []; let currentTaskTab = 'season';
+        
+        // DRILL DOWN STATE RESTORED
+        let taskDrillState = { level: 0, user: null, block: null, loc: null };
 
         // --- AUTH & AUTO-SYNC ---
         function selectUser(user) {
@@ -337,7 +350,7 @@
             });
         }
 
-        // --- UI ---
+        // --- UI & NAVIGATION ---
         function switchView(view) {
             ["view-home", "view-drive", "view-tasks", "view-detail", "view-review"].forEach(id => document.getElementById(id).classList.add("hidden"));
             document.getElementById("view-" + view).classList.remove("hidden");
@@ -350,19 +363,44 @@
             });
         }
 
+        // --- TASK RENDERER (DRILL DOWN RESTORED) ---
         function renderTasks() {
             const container = document.getElementById("task-container");
             container.innerHTML = "";
             let items = fullInventory.filter(i => i.PRIORITY != null && String(i.PRIORITY).trim() !== "");
             items = items.filter(i => currentTaskTab === 'season' ? i.isSeasonNote : i.isLocationNote);
-            ['Dylan','Kayla','Morgan'].forEach(user => {
-                if (!isManager && currentUser !== user) return; 
-                const count = items.filter(i => i.ASSIGNEDTO === user).length;
-                if (count > 0 || isManager) container.innerHTML += `<div class="task-user-btn" onclick="alert('Drilldown coming soon')"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-[#007a4d] font-bold text-lg">${user[0]}</div><span class="text-lg font-bold text-gray-800">${user}</span></div><span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-bold text-sm">${count}</span></div>`;
-            });
+
+            if (taskDrillState.level === 0) {
+                // LEVEL 0: USERS
+                ['Dylan','Kayla','Morgan'].forEach(user => {
+                    if (!isManager && currentUser !== user) return; 
+                    const count = items.filter(i => i.ASSIGNEDTO === user).length;
+                    if (count > 0 || isManager) container.innerHTML += `<div class="task-user-btn" onclick="selectTaskUser('${user}')"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-[#007a4d] font-bold text-lg">${user[0]}</div><span class="text-lg font-bold text-gray-800">${user}</span></div><span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-bold text-sm">${count}</span></div>`;
+                });
+            } else if (taskDrillState.level === 1) {
+                // LEVEL 1: BLOCKS
+                const uItems = items.filter(i => i.ASSIGNEDTO === taskDrillState.user);
+                const blocks = [...new Set(uItems.map(i => i.BLOCKALPHA))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>`;
+                blocks.forEach(b => container.innerHTML += `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">Block ${b}</span><span class="text-sm font-bold text-gray-500">${uItems.filter(i=>i.BLOCKALPHA===b).length}</span></div>`);
+            } else if (taskDrillState.level === 2) {
+                // LEVEL 2: LOCATIONS
+                const bItems = items.filter(i => i.ASSIGNEDTO === taskDrillState.user && i.BLOCKALPHA === taskDrillState.block);
+                const locs = [...new Set(bItems.map(i => i.LOCATIONCODE))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>`;
+                locs.forEach(l => container.innerHTML += `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-mono font-bold text-[#007a4d] text-lg">${l}</span></div>`);
+            } else {
+                // LEVEL 3: ITEMS
+                const final = items.filter(i => i.ASSIGNEDTO === taskDrillState.user && i.BLOCKALPHA === taskDrillState.block && i.LOCATIONCODE === taskDrillState.loc);
+                container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>`;
+                final.forEach(item => container.innerHTML += `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}])"><div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div><div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>Qty: ${item.PTRAVAILABLE}</span></div></div>`);
+            }
         }
-        
-        function setTaskTab(t){ currentTaskTab=t; document.querySelectorAll('.task-tab').forEach(e=>e.classList.remove('active')); document.getElementById('ttab-'+t).classList.add('active'); renderTasks(); }
+        function selectTaskUser(u){ taskDrillState.user=u; taskDrillState.level=1; renderTasks(); }
+        function selectTaskBlock(b){ taskDrillState.block=b; taskDrillState.level=2; renderTasks(); }
+        function selectTaskLoc(l){ taskDrillState.loc=l; taskDrillState.level=3; renderTasks(); }
+        function taskBack(){ taskDrillState.level--; renderTasks(); }
+        function setTaskTab(t){ currentTaskTab=t; document.querySelectorAll('.task-tab').forEach(e=>e.classList.remove('active')); document.getElementById('ttab-'+t).classList.add('active'); taskDrillState.level=0; renderTasks(); }
 
         function renderDriveList() {
             const term = document.getElementById("search-input").value.toLowerCase();
@@ -370,6 +408,7 @@
             document.getElementById("list-names").innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(fullInventory.find(i=>i.COMMONNAME==='${n.replace(/'/g,"\\'")}'))"><span class="font-bold text-gray-800">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
         }
 
+        // --- DETAIL VIEW LOGIC ---
         function openDetail(item) {
             activeItem = item;
             document.getElementById("view-detail").classList.remove("hidden");
@@ -383,10 +422,19 @@
                 document.getElementById(p+"info-user").innerText = item.ASSIGNEDTO || "--";
                 document.getElementById(p+"info-sales").innerText = item.SALESNOTE || "--";
             });
+            
+            // FILL INPUTS
             document.getElementById("input-gen-note").value = item.UPDATED_NOTE || "";
             document.getElementById("input-caliper").value = item.UPDATED_CALIPER || "";
+            
+            // LOGIC: Show Caliper if Tree/Fruit
             const calGroup = document.getElementById("group-caliper");
-            if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
+            if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300") || item.PLANTGROUPCODE.includes("250"))) {
+                calGroup.classList.remove("hidden");
+            } else {
+                calGroup.classList.add("hidden");
+            }
+            
             switchDetailTab('overview');
         }
         function closeDetail() { document.getElementById("view-detail").classList.add("hidden"); switchView('drive'); }
