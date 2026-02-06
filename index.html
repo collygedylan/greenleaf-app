@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v130 (Smart Sync)</title>
+    <title>Greenleaf Pro v131 (Outlook Batch)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -41,7 +41,8 @@
         .select-check { width: 20px; height: 20px; margin-right: 12px; accent-color: var(--brand-green); }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
         #action-bar.visible { transform: translateY(0); }
-        .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; font-weight: 700; color: white; cursor: pointer; }
+        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        .action-btn i { font-size: 20px; }
 
         /* DETAIL TABS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
@@ -99,7 +100,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="font-bold text-lg"><span id="header-user">User</span></div>
             </div>
-            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v130</div>
+            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v131</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -203,7 +204,8 @@
         </div>
 
         <div id="action-bar">
-            <div class="action-btn bg-blue-600" onclick="alert('Texting selection...')"><i class="ph-bold ph-chat-text"></i> Text</div>
+            <div class="action-btn bg-blue-600" onclick="batchText()"><i class="ph-bold ph-chat-text"></i> Text</div>
+            <div class="action-btn bg-purple-600" onclick="batchEmail()"><i class="ph-bold ph-envelope"></i> Email</div>
             <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus"></i> Assign</div>
         </div>
 
@@ -232,7 +234,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v130_storage";
+        const STORAGE_KEY = "greenleaf_v131_storage";
 
         let fullInventory = [];
         let activeItem = null;
@@ -260,8 +262,7 @@
 
         async function fetchData() {
             try {
-                // AUTO PRUNE OLD DATA (>10 DAYS)
-                pruneOldData();
+                pruneOldData(); // Auto Clean > 10 Days
 
                 const res = await fetch('inventory.xlsx?v=' + Date.now());
                 if (!res.ok) throw new Error();
@@ -280,11 +281,8 @@
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                 
-                // --- SMART ID GENERATION ---
-                // This creates a unique ID based on Content + Instance Order.
-                // It survives row insertions/shifts better than pure Row Index.
+                // Smart ID Generation
                 let idCounters = {};
-
                 fullInventory = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => {
@@ -293,15 +291,10 @@
                     });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
                     
-                    // Create base key from content
                     const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
-                    
-                    // Count how many times we've seen this exact item/loc/lot combo
                     if(!idCounters[baseKey]) idCounters[baseKey] = 0;
                     const instanceNum = idCounters[baseKey];
                     idCounters[baseKey]++;
-
-                    // Final ID: Item_Loc_Lot_Instance (e.g., BOXWOOD_A1_0, BOXWOOD_A1_1)
                     obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
                     
                     return obj;
@@ -324,18 +317,13 @@
             const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             let changed = false;
-            
             Object.keys(storage).forEach(key => {
                 if(storage[key].t && (now - storage[key].t > tenDaysMs)) {
                     delete storage[key];
                     changed = true;
                 }
             });
-
-            if(changed) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-                console.log("Pruned old data (>10 days)");
-            }
+            if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
         }
 
         function launchApp() {
@@ -357,6 +345,37 @@
                     i++;
                 }
             });
+        }
+
+        // --- BATCH REPORTING (TEXT & EMAIL) ---
+        function getBatchReport() {
+            let report = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                report += `Loc: ${item.LOCATIONCODE || 'N/A'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
+                
+                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
+                if(item.SAVED_SPEC) report += `Spec: ${item.SAVED_SPEC}\n`;
+                if(item.SAVED_PICK) report += `Pick Note: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE) report += `Gen Note: ${item.SAVED_NOTE}\n`;
+                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
+                
+                report += "\n----------------\n\n";
+            });
+            return report;
+        }
+
+        function batchText() {
+            const txt = getBatchReport();
+            // iOS generally prefers &body=, Android ?body=. Using ? usually works for most modern devices
+            window.location.href = "sms:?body=" + encodeURIComponent(txt);
+        }
+
+        function batchEmail() {
+            const txt = getBatchReport();
+            const subject = "Inventory Notes Update - " + new Date().toLocaleDateString();
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
         }
 
         // --- DRIVE MODE (Drill Down) ---
@@ -389,7 +408,7 @@
                 }).join('');
         }
 
-        // --- VIEWER MODE (Drill Down - Same as Drive) ---
+        // --- VIEWER MODE ---
         function renderViewerNames() {
             const term = document.getElementById('viewer-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
@@ -429,14 +448,13 @@
             }).join('');
         }
 
-        // --- DETAILS & PHOTO UPLOAD ---
+        // --- DETAILS ---
         function openDetail(idx, originView) {
             lastView = originView;
             activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
-            // Populate Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -445,14 +463,12 @@
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
-            // Saved Field Values
             document.getElementById('in-match').value = activeItem.SAVED_MATCH || "";
             document.getElementById('in-spec').value = activeItem.SAVED_SPEC || "";
             document.getElementById('in-pick').value = activeItem.SAVED_PICK || "";
             document.getElementById('in-note').value = activeItem.SAVED_NOTE || "";
 
-            // UI VIEW LOGIC
-            // If Viewer Mode: Hide the big excel list, just show main info + notes
+            // Hide Excel Columns in Viewer Mode
             if (originView === 'viewer') {
                 document.getElementById('expand-section').classList.add('hidden');
             } else {
@@ -476,11 +492,10 @@
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
             
-            // Photo Logic
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
                 photoDiv.classList.remove('hidden');
-                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO_BASE64 || ''; // Fallback for preview
+                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO_BASE64 || '';
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
                 linkBtn.classList.remove('hidden');
             } else {
@@ -496,11 +511,9 @@
                 const btn = document.getElementById('btn-cam');
                 const btnText = document.getElementById('cam-text');
                 
-                // UI Loading State
                 btn.classList.add('loading');
                 btnText.innerText = "UPLOADING TO DRIVE...";
 
-                // Resize and Compress Image before upload
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function(e) {
@@ -508,22 +521,19 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024; // Limit width to prevent crash
+                        const MAX_WIDTH = 1024; 
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         
-                        // Get Base64 without the prefix
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                         const base64Data = dataUrl.split(',')[1];
                         
-                        // Create Filename
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
 
-                        // Send to Google Script
                         fetch(GOOGLE_SCRIPT_URL, {
                             method: "POST",
                             body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename })
@@ -532,9 +542,9 @@
                         .then(data => {
                             if(data.status === 'success') {
                                 activeItem.SAVED_PHOTO_LINK = data.url;
-                                activeItem.SAVED_PHOTO_BASE64 = dataUrl; // Cache small version locally for preview
+                                activeItem.SAVED_PHOTO_BASE64 = dataUrl;
                                 renderOverviewData();
-                                saveData(true); // Auto save
+                                saveData(true); 
                                 alert("Photo Uploaded to Google Drive!");
                             } else {
                                 alert("Upload Error: " + data.message);
@@ -566,14 +576,10 @@
                 n: activeItem.SAVED_NOTE, 
                 pl: activeItem.SAVED_PHOTO_LINK, 
                 pb: activeItem.SAVED_PHOTO_BASE64,
-                t: Date.now() // Timestamp for 10-day cleanup
+                t: Date.now()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-            
-            if(!silent) {
-                alert("Data Saved");
-                renderOverviewData();
-            }
+            if(!silent) { alert("Data Saved"); renderOverviewData(); }
         }
 
         function loadSavedData() {
