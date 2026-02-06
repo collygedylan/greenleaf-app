@@ -3,63 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#007a4d">
-    <meta name="apple-mobile-web-app-title" content="Greenleaf">
-
-    <title>Greenleaf Pro Cloud v114</title>
+    <title>Greenleaf Pro Cloud v115</title>
     <link rel="manifest" href="manifest.json">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
-        .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
+        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); }
+        .nav-header { background: var(--brand-green); color: white; }
         
-        /* LOGIN & LOADING */
+        /* LOGIN & USER SELECT */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
+        .user-btn.manager { border-color: #007a4d; background-color: #f0fdf4; color: #007a4d; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; font-weight: 700; color: #374151; display: none; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* DRAWER & MENU */
-        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); }
+        .menu-btn { font-size: 24px; cursor: pointer; padding: 4px; border-radius: 4px; margin-right: 10px; }
+        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; display: flex; flex-direction: column; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
         #drawer-overlay.open { display: block; }
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* UI ELEMENTS */
-        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
+        /* LISTS & UI */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
+        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 10px; background: white; }
         .task-tab { flex: 1; text-align: center; padding: 12px 4px; font-size: 11px; font-weight: 800; color: #6b7280; border-bottom: 3px solid transparent; cursor: pointer; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
         
-        /* BATCH & REVIEW */
-        .batch-leaf { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; background: white; }
-        .select-check { width: 24px; height: 24px; margin-right: 16px; accent-color: var(--brand-green); cursor: pointer; display: none; }
-        .batch-mode .select-check { display: block; } .review-mode .select-check { display: block; }
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
-        #action-bar.visible { transform: translateY(0); }
-        .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-        .btn-email { background-color: var(--brand-green); color: white; }
-        .btn-text { background-color: #3b82f6; color: white; }
-        .btn-assign { background-color: var(--brand-gold); color: white; }
-
         /* DETAIL VIEW */
+        .detail-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; padding: 0; overflow: hidden; }
+        .detail-padding { padding: 20px; }
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -67,14 +51,42 @@
         .task-info-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .task-info-val { font-size: 13px; color: #0f172a; font-weight: 600; }
         .task-info-full { grid-column: span 2; }
+        
+        /* INPUTS */
         .input-stack { display: flex; flex-direction: column; gap: 16px; }
         .input-group { width: 100%; }
         .input-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+        
+        /* ACCORDION */
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+        .expanded .chevron { transform: rotate(180deg); }
+        .chevron { transition: transform 0.2s; }
+        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; word-break: break-all; margin-top: 2px; }
+        
+        /* BATCH & REVIEW */
+        .batch-leaf { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; background: white; }
+        .select-check { width: 24px; height: 24px; margin-right: 16px; accent-color: var(--brand-green); cursor: pointer; display: none; }
+        .batch-mode .select-check { display: block; } .review-mode .select-check { display: block; }
+        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); }
+        #action-bar.visible { transform: translateY(0); }
+        .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .btn-email { background-color: var(--brand-green); color: white; }
+        .btn-text { background-color: #3b82f6; color: white; }
+        .btn-assign { background-color: var(--brand-gold); color: white; }
 
         /* ASSIGN MODAL */
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        /* PHOTO LINK STYLE */
+        .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
+        .photo-link-box.visible { display: block; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -110,31 +122,18 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-white text-2xl cursor-pointer" onclick="toggleMenu()"></i>
-                <div class="font-bold text-lg flex items-center gap-2"><i class="ph-fill ph-plant"></i> <span id="header-user">User</span></div>
+                <div class="font-bold text-lg flex items-center gap-2">
+                    <i class="ph-fill ph-plant"></i> <span id="header-user">User</span>
+                </div>
             </div>
             <div class="hidden md:flex gap-6 text-sm font-bold opacity-90">
                 <span onclick="switchView('home')" class="cursor-pointer hover:text-white/80">HOME</span>
                 <span onclick="switchView('drive')" class="cursor-pointer hover:text-white/80">DRIVE</span>
+                <span onclick="switchView('viewer')" class="cursor-pointer hover:text-white/80">VIEWER</span>
                 <span onclick="switchView('tasks')" class="cursor-pointer hover:text-white/80">MY TASKS</span>
+                <span id="desk-nav-review" class="cursor-pointer hover:text-white/80 hidden" onclick="switchView('review')">REVIEW</span>
             </div>
         </header>
-
-        <div id="drawer-overlay" onclick="toggleMenu()"></div>
-        <div id="side-drawer">
-            <div class="drawer-header"><span>Menu</span><i class="ph-bold ph-x cursor-pointer" onclick="toggleMenu()"></i></div>
-            <div class="flex-grow overflow-y-auto">
-                <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-                <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive</div>
-                <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-                <div class="drawer-item" id="menu-item-review" style="display:none;" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-list-checks"></i> <strong>Manager Review</strong></div>
-                <hr class="my-2 border-gray-100">
-                <div class="drawer-item text-blue-600" onclick="location.reload()"><i class="ph-bold ph-arrows-clockwise"></i> Force Sync Data</div>
-                <div class="drawer-item" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Sign Out</div>
-                <div class="p-4 mt-auto">
-                    <div id="data-source-badge" class="bg-gray-100 text-xs font-bold p-2 text-center rounded text-gray-500">No Data</div>
-                </div>
-            </div>
-        </div>
 
         <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-24">
             <div id="view-home" class="hidden p-4">
@@ -158,6 +157,16 @@
                 <div id="list-inventory" class="space-y-2 mt-4 hidden"></div>
             </div>
 
+            <div id="view-viewer" class="hidden">
+                <h1 class="text-xl font-bold text-gray-800 mb-4">Data Viewer</h1>
+                <input type="text" id="viewer-search-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 shadow-sm" placeholder="Search for Read-Only View..." onkeyup="handleViewerSearch(this)">
+                <div id="viewer-name-view">
+                    <div id="viewer-list-names" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"></div>
+                    <div id="viewer-list-sizes" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mt-4 hidden"></div>
+                    <div id="viewer-list-inventory" class="space-y-2 mt-4 hidden"></div>
+                </div>
+            </div>
+
             <div id="view-tasks">
                 <h1 class="text-xl font-bold text-gray-800 mb-2">My Assignments</h1>
                 <div class="task-tabs"><div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Notes</div><div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Loc Sales Notes</div></div>
@@ -171,9 +180,25 @@
                 <div class="p-4">
                     <h1 class="text-2xl font-bold text-[#007a4d]" id="detail-common">--</h1>
                     <span class="bg-gray-100 px-2 py-1 rounded text-sm font-bold text-gray-700 mb-4 inline-block" id="detail-size">--</span>
-                    <div class="detail-tabs mt-4"><div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div><div id="dtab-actions" class="detail-tab" onclick="switchDetailTab('actions')">Actions</div></div>
+                    <div id="prime-badge" class="hidden bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded inline-block ml-2 border border-yellow-300">⭐ PRIME PICK</div>
+                    
+                    <div id="detail-tabs-container" class="detail-tabs mt-4">
+                        <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
+                        <div id="dtab-actions" class="detail-tab" onclick="switchDetailTab('actions')">Notes & Actions</div>
+                    </div>
                     
                     <div id="detail-content-overview" class="detail-padding">
+                        <div id="readonly-collected-data" class="hidden mb-6 bg-green-50 border border-green-100 rounded-lg p-4">
+                            <h3 class="text-xs font-bold text-green-800 uppercase mb-3 border-b border-green-200 pb-1">Collected Data</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Sales Note</div><div class="text-sm font-bold text-gray-800" id="ro-sales">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Hold Code</div><div class="text-sm font-bold text-red-600" id="ro-hold">--</div></div>
+                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">User Note (10-Day)</div><div class="text-sm text-gray-800 bg-white p-2 rounded border border-gray-100" id="ro-note">--</div></div>
+                                <div><div class="text-[10px] text-gray-500 uppercase font-bold">Caliper</div><div class="text-sm font-bold text-gray-800" id="ro-caliper">--</div></div>
+                                <div class="col-span-2"><div class="text-[10px] text-gray-500 uppercase font-bold">Photo Link</div><div id="ro-photo-link" class="text-xs text-blue-600 break-all cursor-pointer">--</div></div>
+                            </div>
+                        </div>
+
                         <div class="task-info-grid">
                             <div class="task-info-item"><div class="task-info-label">Item Code</div><div class="task-info-val" id="ov-info-item">--</div></div>
                             <div class="task-info-item"><div class="task-info-label">Location</div><div class="task-info-val" id="ov-info-loc">--</div></div>
@@ -181,20 +206,24 @@
                             <div class="task-info-item"><div class="task-info-label">Assigned</div><div class="task-info-val text-[#007a4d]" id="ov-info-user">--</div></div>
                             <div class="task-info-item task-info-full"><div class="task-info-label">Sales Note</div><div class="task-info-val" id="ov-info-sales">--</div></div>
                         </div>
+                        <div id="expand-section-overview">
+                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-overview')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
+                            <div class="expand-content" id="dynamic-details-overview"></div>
+                        </div>
                     </div>
                     
                     <div id="detail-content-actions" class="detail-padding hidden">
+                        <div id="photo-link-display" class="photo-link-box"></div>
+                        <label class="camera-btn mb-4"><i class="ph-fill ph-camera text-3xl mb-2"></i><span class="font-bold text-sm">Take Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
                         <div class="input-stack space-y-4">
-                            <div id="group-caliper" class="hidden">
-                                <label class="input-label text-[#e3a000]">Caliper (Inches)</label>
-                                <input type="number" class="input-field border-[#e3a000]" id="input-caliper" placeholder="e.g. 2.5" onchange="saveLocalChange()">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">Update Sales Note</label>
-                                <textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea>
-                            </div>
+                            <div id="group-caliper" class="hidden"><label class="input-label text-[#e3a000]">Caliper (Inches)</label><input type="number" class="input-field border-[#e3a000]" id="input-caliper" placeholder="e.g. 2.5" onchange="saveLocalChange()"></div>
+                            <div class="input-group"><label class="input-label">Update Sales Note</label><textarea id="input-gen-note" class="input-field" rows="3" placeholder="Add observations..." onchange="saveLocalChange()"></textarea></div>
                         </div>
                         <button class="w-full bg-[#e3a000] text-white font-bold py-4 rounded-lg mt-6 shadow-sm uppercase" onclick="saveLocalChange(true)">Save Updates</button>
+                        <div id="expand-section-actions" class="mt-6">
+                            <div class="expand-trigger" onclick="toggleFullDetails('expand-section-actions')"><span><i class="ph-bold ph-list-dashes"></i> View All Data Fields</span><i class="ph-bold ph-caret-down chevron"></i></div>
+                            <div class="expand-content" id="dynamic-details-actions"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,9 +239,10 @@
             </div>
         </div>
 
-        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 grid grid-cols-3 py-2 z-50 md:hidden shadow-lg pb-safe">
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 grid grid-cols-4 py-2 z-50 md:hidden shadow-lg pb-safe">
             <div class="flex flex-col items-center pt-1" onclick="switchView('home')"><i id="nav-icon-home" class="ph ph-house text-2xl text-gray-500"></i><span class="text-[10px] font-bold text-gray-500">Home</span></div>
             <div class="flex flex-col items-center pt-1" onclick="switchView('drive')"><i id="nav-icon-drive" class="ph ph-car text-2xl text-gray-500"></i><span class="text-[10px] font-bold text-gray-500">Drive</span></div>
+            <div class="flex flex-col items-center pt-1" onclick="switchView('viewer')"><i id="nav-icon-viewer" class="ph ph-eye text-2xl text-gray-500"></i><span class="text-[10px] font-bold text-gray-500">Viewer</span></div>
             <div class="flex flex-col items-center pt-1" onclick="switchView('tasks')"><i id="nav-icon-tasks" class="ph-fill ph-clipboard-text text-2xl text-[#007a4d]"></i><span class="text-[10px] font-bold text-[#007a4d]">Tasks</span></div>
         </nav>
     </div>
@@ -221,8 +251,6 @@
         const STORAGE_KEY = "greenleaf_changes_v1";
         const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
         let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; let selectedReviewItems = []; let currentTaskTab = 'season';
-        
-        // DRILL DOWN STATE RESTORED
         let taskDrillState = { level: 0, user: null, block: null, loc: null };
 
         // --- AUTH & AUTO-SYNC ---
@@ -302,7 +330,7 @@
             
             fetchWeather();
             applySavedChanges(); 
-            processSalesLogic(); assignTasks(); renderTasks(); renderDriveList();
+            processSalesLogic(); assignTasks(); renderTasks(); renderDriveList(); renderViewerList();
             if(isManager) renderReviewView();
             switchView('home');
         }
@@ -352,7 +380,7 @@
 
         // --- UI & NAVIGATION ---
         function switchView(view) {
-            ["view-home", "view-drive", "view-tasks", "view-detail", "view-review"].forEach(id => document.getElementById(id).classList.add("hidden"));
+            ["view-home", "view-drive", "view-tasks", "view-viewer", "view-detail", "view-review"].forEach(id => document.getElementById(id).classList.add("hidden"));
             document.getElementById("view-" + view).classList.remove("hidden");
             ["home", "drive", "tasks"].forEach(v => {
                 const icon = document.getElementById("nav-icon-" + v);
@@ -363,7 +391,7 @@
             });
         }
 
-        // --- TASK RENDERER (DRILL DOWN RESTORED) ---
+        // --- TASK RENDERER ---
         function renderTasks() {
             const container = document.getElementById("task-container");
             container.innerHTML = "";
@@ -371,29 +399,25 @@
             items = items.filter(i => currentTaskTab === 'season' ? i.isSeasonNote : i.isLocationNote);
 
             if (taskDrillState.level === 0) {
-                // LEVEL 0: USERS
                 ['Dylan','Kayla','Morgan'].forEach(user => {
                     if (!isManager && currentUser !== user) return; 
                     const count = items.filter(i => i.ASSIGNEDTO === user).length;
                     if (count > 0 || isManager) container.innerHTML += `<div class="task-user-btn" onclick="selectTaskUser('${user}')"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-[#007a4d] font-bold text-lg">${user[0]}</div><span class="text-lg font-bold text-gray-800">${user}</span></div><span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-bold text-sm">${count}</span></div>`;
                 });
             } else if (taskDrillState.level === 1) {
-                // LEVEL 1: BLOCKS
                 const uItems = items.filter(i => i.ASSIGNEDTO === taskDrillState.user);
                 const blocks = [...new Set(uItems.map(i => i.BLOCKALPHA))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>`;
                 blocks.forEach(b => container.innerHTML += `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">Block ${b}</span><span class="text-sm font-bold text-gray-500">${uItems.filter(i=>i.BLOCKALPHA===b).length}</span></div>`);
             } else if (taskDrillState.level === 2) {
-                // LEVEL 2: LOCATIONS
                 const bItems = items.filter(i => i.ASSIGNEDTO === taskDrillState.user && i.BLOCKALPHA === taskDrillState.block);
                 const locs = [...new Set(bItems.map(i => i.LOCATIONCODE))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>`;
                 locs.forEach(l => container.innerHTML += `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-mono font-bold text-[#007a4d] text-lg">${l}</span></div>`);
             } else {
-                // LEVEL 3: ITEMS
                 const final = items.filter(i => i.ASSIGNEDTO === taskDrillState.user && i.BLOCKALPHA === taskDrillState.block && i.LOCATIONCODE === taskDrillState.loc);
                 container.innerHTML = `<div class="back-btn" onclick="taskBack()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>`;
-                final.forEach(item => container.innerHTML += `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}])"><div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div><div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>Qty: ${item.PTRAVAILABLE}</span></div></div>`);
+                final.forEach(item => container.innerHTML += `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'task')"><div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div><div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>Qty: ${item.PTRAVAILABLE}</span></div></div>`);
             }
         }
         function selectTaskUser(u){ taskDrillState.user=u; taskDrillState.level=1; renderTasks(); }
@@ -402,48 +426,111 @@
         function taskBack(){ taskDrillState.level--; renderTasks(); }
         function setTaskTab(t){ currentTaskTab=t; document.querySelectorAll('.task-tab').forEach(e=>e.classList.remove('active')); document.getElementById('ttab-'+t).classList.add('active'); taskDrillState.level=0; renderTasks(); }
 
+        // --- VIEWER MODE ---
+        function renderViewerList() {
+            const container = document.getElementById("viewer-list-names");
+            container.innerHTML = "";
+            const term = document.getElementById("viewer-search-input").value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && String(n).toLowerCase().includes(term)).sort().slice(0,50);
+            container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-gray-800">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
+            document.getElementById("viewer-list-names").classList.remove("hidden");
+            document.getElementById("viewer-list-sizes").classList.add("hidden");
+            document.getElementById("viewer-list-inventory").classList.add("hidden");
+        }
+        function selectViewerName(n) {
+            document.getElementById("viewer-list-names").classList.add("hidden");
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === n).map(i => i.CONTSIZE))].sort();
+            document.getElementById("viewer-list-sizes").innerHTML = `<div class="back-btn" onclick="renderViewerList()"><i class="ph-bold ph-arrow-left"></i> Back</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${n.replace(/'/g,"\\'")}', '${s}')"><span class="font-bold text-gray-800">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
+            document.getElementById("viewer-list-sizes").classList.remove("hidden");
+        }
+        function selectViewerSize(n, s) {
+            document.getElementById("viewer-list-sizes").classList.add("hidden");
+            const items = fullInventory.filter(i => i.COMMONNAME === n && i.CONTSIZE === s);
+            document.getElementById("viewer-list-inventory").innerHTML = `<div class="back-btn" onclick="selectViewerName('${n.replace(/'/g,"\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back</div>` + items.map(item => `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'viewer')"><div class="font-bold text-[#007a4d]">${item.LOCATIONCODE}</div><div class="text-sm">Avail: ${item.PTRAVAILABLE} | Lot: ${item.LOTCODE||'-'}</div></div>`).join("");
+            document.getElementById("viewer-list-inventory").classList.remove("hidden");
+        }
+        function handleViewerSearch() { renderViewerList(); }
+
+        // --- DRIVE LIST ---
         function renderDriveList() {
             const term = document.getElementById("search-input").value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && String(n).toLowerCase().includes(term)).sort().slice(0,50);
             document.getElementById("list-names").innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(fullInventory.find(i=>i.COMMONNAME==='${n.replace(/'/g,"\\'")}'))"><span class="font-bold text-gray-800">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
         }
 
-        // --- DETAIL VIEW LOGIC ---
-        function openDetail(item) {
+        // --- DETAIL & SAVING ---
+        function openDetail(item, source) {
             activeItem = item;
+            document.getElementById("view-tasks").classList.add("hidden");
+            document.getElementById("view-drive").classList.add("hidden");
+            document.getElementById("view-viewer").classList.add("hidden");
             document.getElementById("view-detail").classList.remove("hidden");
-            ["view-drive","view-tasks"].forEach(v=>document.getElementById(v).classList.add("hidden"));
+            
+            // PHOTO LINK
+            document.getElementById("photo-link-display").style.display = "none";
+            document.getElementById("ro-photo-link").innerHTML = "--";
+            if(item.UPDATED_PHOTO) {
+               document.getElementById("photo-link-display").innerHTML = `<strong>Image Saved:</strong> <a href="${item.UPDATED_PHOTO}" target="_blank">View Image</a>`;
+               document.getElementById("photo-link-display").style.display = "block";
+               document.getElementById("ro-photo-link").innerHTML = `<a href="${item.UPDATED_PHOTO}" target="_blank" class="text-blue-600 underline">View Saved Image</a>`;
+            }
+
+            // READ ONLY TOGGLE
+            if (source === 'viewer') {
+                document.getElementById("detail-tabs-container").classList.add("hidden");
+                document.getElementById("readonly-collected-data").classList.remove("hidden");
+                document.getElementById("ro-sales").innerText = item.SALESNOTE || "N/A";
+                document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
+                document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
+                document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
+            } else {
+                document.getElementById("detail-tabs-container").classList.remove("hidden");
+                document.getElementById("readonly-collected-data").classList.add("hidden");
+            }
+
             document.getElementById("detail-common").innerText = item.COMMONNAME || "Unknown";
             document.getElementById("detail-size").innerText = item.CONTSIZE || "--";
-            ["ov-"].forEach(p => {
+            ["ov-", "act-"].forEach(p => {
                 document.getElementById(p+"info-item").innerText = item.ITEMCODE || "--";
                 document.getElementById(p+"info-loc").innerText = item.LOCATIONCODE || "--";
                 document.getElementById(p+"info-avail").innerText = item.PTRAVAILABLE || "--";
                 document.getElementById(p+"info-user").innerText = item.ASSIGNEDTO || "--";
                 document.getElementById(p+"info-sales").innerText = item.SALESNOTE || "--";
             });
-            
-            // FILL INPUTS
             document.getElementById("input-gen-note").value = item.UPDATED_NOTE || "";
             document.getElementById("input-caliper").value = item.UPDATED_CALIPER || "";
             
-            // LOGIC: Show Caliper if Tree/Fruit
             const calGroup = document.getElementById("group-caliper");
-            if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300") || item.PLANTGROUPCODE.includes("250"))) {
-                calGroup.classList.remove("hidden");
-            } else {
-                calGroup.classList.add("hidden");
-            }
+            if (item.PLANTGROUPCODE && (item.PLANTGROUPCODE.includes("330") || item.PLANTGROUPCODE.includes("300"))) calGroup.classList.remove("hidden"); else calGroup.classList.add("hidden");
             
             switchDetailTab('overview');
         }
-        function closeDetail() { document.getElementById("view-detail").classList.add("hidden"); switchView('drive'); }
+        
+        function closeDetail() { 
+            document.getElementById("view-detail").classList.add("hidden"); 
+            if (!document.getElementById("view-drive").classList.contains("hidden")) switchView('drive'); 
+            else if (!document.getElementById("view-viewer").classList.contains("hidden")) switchView('viewer');
+            else switchView('tasks'); 
+        }
         function switchDetailTab(t) {
             document.querySelectorAll('.detail-tab').forEach(e=>e.classList.remove('active')); document.getElementById('dtab-'+t).classList.add('active');
             document.getElementById("detail-content-overview").classList.add("hidden"); document.getElementById("detail-content-actions").classList.add("hidden");
             document.getElementById("detail-content-"+t).classList.remove("hidden");
         }
         
+        function handlePhotoUpload(input) {
+            if(input.files && input.files[0]) {
+                const file = input.files[0];
+                const fakeUrl = URL.createObjectURL(file);
+                activeItem.UPDATED_PHOTO = fakeUrl;
+                saveLocalChange(false);
+                const linkBox = document.getElementById("photo-link-display");
+                linkBox.innerHTML = `<strong>Image Cached:</strong> <a href="${fakeUrl}" target="_blank">View Image</a>`;
+                linkBox.style.display = "block";
+                alert("Photo cached locally (temporary).");
+            }
+        }
+
         function saveLocalChange(alertUser) {
             if(!activeItem) return;
             const note = document.getElementById("input-gen-note").value;
@@ -451,7 +538,7 @@
             activeItem.UPDATED_NOTE = note; activeItem.UPDATED_CALIPER = caliper;
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const key = (activeItem.ITEMCODE||"") + "_" + (activeItem.LOCATIONCODE||"") + "_" + (activeItem.LOTCODE||"");
-            stored[key] = { note: note, caliper: caliper, timestamp: Date.now() };
+            stored[key] = { note: note, caliper: caliper, photo: activeItem.UPDATED_PHOTO, timestamp: Date.now() };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
             if(alertUser) alert("Saved!");
         }
@@ -463,7 +550,7 @@
                 if (now - stored[key].timestamp > TEN_DAYS_MS) delete stored[key];
                 else {
                     const item = fullInventory.find(i => ((i.ITEMCODE||"") + "_" + (i.LOCATIONCODE||"") + "_" + (i.LOTCODE||"")) === key);
-                    if(item) { item.UPDATED_NOTE = stored[key].note; item.UPDATED_CALIPER = stored[key].caliper; }
+                    if(item) { item.UPDATED_NOTE = stored[key].note; item.UPDATED_CALIPER = stored[key].caliper; item.UPDATED_PHOTO = stored[key].photo; }
                 }
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
@@ -475,6 +562,7 @@
              fetch("https://api.open-meteo.com/v1/forecast?latitude=35.86&longitude=-94.96&current=temperature_2m,weather_code&temperature_unit=fahrenheit")
              .then(r=>r.json()).then(d=>{ document.getElementById("weather-temp").innerText = Math.round(d.current.temperature_2m) + "°"; });
         }
+        function toggleFullDetails(id) { document.getElementById(id).classList.toggle('expanded'); }
     </script>
 </body>
 </html>
