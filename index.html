@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Cloud v120</title>
+    <title>Greenleaf Pro Cloud v121 (Weighted)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -13,7 +13,7 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); }
         .nav-header { background: var(--brand-green); color: white; }
         
-        /* LAYOUT & LOGIN */
+        /* LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
@@ -23,7 +23,7 @@
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* DRAWER & MENU */
+        /* UI ELEMENTS */
         .menu-btn { font-size: 24px; cursor: pointer; padding: 4px; border-radius: 4px; margin-right: 10px; }
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; display: flex; flex-direction: column; }
         #side-drawer.open { left: 0; }
@@ -31,8 +31,7 @@
         #drawer-overlay.open { display: block; }
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: space-between; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
-
-        /* LISTS & UI */
+        
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .task-user-btn { background: white; border: 1px solid #e5e7eb; border-left: 4px solid var(--brand-green); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
@@ -40,15 +39,15 @@
         .task-tab { flex: 1; text-align: center; padding: 12px 4px; font-size: 11px; font-weight: 800; color: #6b7280; border-bottom: 3px solid transparent; cursor: pointer; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
-        
-        /* DRIVE TOGGLES & CATS */
+
+        /* DRIVE VIEW */
         .view-toggle { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
         .toggle-btn { flex: 0 0 auto; text-align: center; padding: 8px 16px; font-size: 12px; font-weight: 700; color: #6b7280; border-radius: 20px; cursor: pointer; transition: all 0.2s; background: #f3f4f6; border: 1px solid #e5e7eb; white-space: nowrap; }
         .toggle-btn.active { background: var(--brand-green); color: white; border-color: var(--brand-green); box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
         .cat-btn { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; text-align: center; font-weight: 800; color: #374151; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.1s; font-size: 14px; display: flex; align-items: center; justify-content: center; min-height: 60px; word-break: break-word; }
         .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-        /* DETAIL & ACTIONS */
+        /* DETAILS & INPUTS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -62,7 +61,7 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; color: #111827; background-color: #fff; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
 
-        /* EXPANDABLE DATA */
+        /* EXPANDERS */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; font-size: 14px; border: 1px solid #e5e7eb; margin-top: 10px; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
@@ -70,7 +69,7 @@
         .dynamic-label { font-size: 10px; color: #6b7280; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .dynamic-val { font-size: 14px; color: #111827; font-weight: 500; word-break: break-all; margin-top: 2px; }
 
-        /* BATCH & REVIEW */
+        /* REVIEW MODE */
         .select-check { width: 24px; height: 24px; margin-right: 16px; accent-color: var(--brand-green); cursor: pointer; display: none; }
         .review-mode .select-check { display: block; }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); }
@@ -84,7 +83,7 @@
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         
-        /* PHOTO & OVERVIEW GRID */
+        /* EXTRAS */
         .photo-link-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; word-break: break-all; display: none; }
         .photo-link-box.visible { display: block; }
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
@@ -154,7 +153,7 @@
 
             <div id="view-drive" class="hidden">
                 <div id="manager-upload-section" class="hidden mb-6"><div class="flex justify-between items-center mb-2"><h1 class="text-sm font-bold text-gray-500 uppercase">Manager Tools</h1><button id="btn-batch-toggle" class="text-xs bg-[#e3a000] text-white px-3 py-1 rounded font-bold" onclick="toggleBatchMode()">Batch Mode</button></div></div>
-                <input type="text" id="search-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 shadow-sm" placeholder="Search Global Inventory..." onkeyup="renderDriveList()">
+                <input type="text" id="search-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 shadow-sm" placeholder="Search Global Inventory..." onkeyup="handleSearch()">
                 <div class="view-toggle">
                     <div id="toggle-name" class="toggle-btn active" onclick="setDriveMode('name')">Name</div>
                     <div id="toggle-block" class="toggle-btn" onclick="setDriveMode('block')">Block</div>
@@ -169,6 +168,7 @@
                 <div id="drive-cat-view" class="hidden">
                     <div id="drive-cat-list" class="cat-grid mb-6"></div>
                     <div id="drive-row-list" class="hidden space-y-2"></div>
+                    <div id="drive-sub-list" class="hidden space-y-2"></div>
                 </div>
             </div>
 
@@ -275,9 +275,9 @@
     <script>
         const STORAGE_KEY = "greenleaf_changes_v1";
         const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
-        let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; 
-        let currentTaskTab = 'season'; let driveViewMode = 'name';
+        let currentUser = null; let isManager = false; let fullInventory = []; let activeItem = null; let selectedReviewItems = []; let currentTaskTab = 'season';
         let taskDrillState = { level: 0, user: null, block: null, loc: null };
+        let driveViewMode = 'name'; let isBatchMode = false; let currentDriveItems = [];
 
         // --- AUTH & AUTO-SYNC ---
         function selectUser(user) {
@@ -375,7 +375,7 @@
             fetchWeather();
             applySavedChanges(); 
             processSalesLogic(); assignTasks(); renderTasks(); renderDriveList(); renderViewerList();
-            renderDriveCats('BLOCKALPHA', 'Block'); // Default Drive View
+            renderDriveCats('BLOCKALPHA', 'Block');
             if(isManager) renderReviewView();
             switchView('home');
         }
@@ -406,20 +406,33 @@
             });
         }
 
+        // --- WEIGHTED ROUND ROBIN (60/20/20) LOGIC RESTORED ---
         function assignTasks() {
+            const dylanSizes = ['#7', '#10', '#15', '#25', '#45', '7DP'];
+            const morganSizes = ['#1', '#1D', '1GP', '8IN', '8DP'];
             let genIndex = 0;
+
             fullInventory.forEach((item) => {
                 let group = (item.PLANTGROUPCODE || "").toUpperCase();
                 let common = (item.COMMONNAME || "").toUpperCase();
                 let size = (item.CONTSIZE || "").toUpperCase();
-                if (group.includes("230") || group.includes("140") || common.includes("BOXWOOD") || ['#7','#10','#15','#25','#45','7DP'].includes(size)) item.ASSIGNEDTO = "Dylan";
-                else if (group.includes("330") || group.includes("300") || group.includes("250")) item.ASSIGNEDTO = "Kayla";
-                else if (group.includes("135") || ['#1','#1D','1GP','8IN','8DP'].includes(size)) item.ASSIGNEDTO = "Morgan";
-                else { 
-                    const r = genIndex % 5;
-                    item.ASSIGNEDTO = (r < 3) ? "Dylan" : (r === 3 ? "Kayla" : "Morgan");
+                
+                // Specific Overrides First
+                if (group.includes("230") || group.includes("140") || common.includes("BOXWOOD") || dylanSizes.includes(size)) {
+                    item.ASSIGNEDTO = "Dylan";
+                } else if (group.includes("330") || group.includes("300") || group.includes("250")) {
+                    item.ASSIGNEDTO = "Kayla";
+                } else if (group.includes("135") || morganSizes.includes(size)) {
+                    item.ASSIGNEDTO = "Morgan";
+                } else {
+                    // WEIGHTED LOGIC FOR REMAINDER
+                    const remainder = genIndex % 5;
+                    if (remainder < 3) item.ASSIGNEDTO = "Dylan"; // 0, 1, 2 = Dylan (60%)
+                    else if (remainder === 3) item.ASSIGNEDTO = "Kayla"; // 3 = Kayla (20%)
+                    else item.ASSIGNEDTO = "Morgan"; // 4 = Morgan (20%)
                     genIndex++;
                 }
+                
                 if(!item.BLOCKALPHA && item.LOCATIONCODE) item.BLOCKALPHA = item.LOCATIONCODE.substring(0,1);
             });
         }
@@ -437,21 +450,20 @@
             });
             if(view === 'drive') {
                 if(driveViewMode === 'name') renderDriveList();
-                else if(driveViewMode === 'block') renderDriveCats('BLOCKALPHA', 'Block');
-                else if(driveViewMode === 'group') renderDriveCats('PLANTGROUPCODE', 'Group');
-                else if(driveViewMode === 'size') renderDriveCats('CONTSIZE', 'Size');
+                else { 
+                    const field = driveViewMode === 'block' ? 'BLOCKALPHA' : (driveViewMode === 'group' ? 'PLANTGROUPCODE' : 'CONTSIZE');
+                    renderDriveCats(field, driveViewMode); 
+                }
             }
         }
 
-        // --- DRIVE MODE & CATEGORIES (RESTORED) ---
+        // --- DRIVE MODE & CATEGORIES ---
         function setDriveMode(mode) {
             driveViewMode = mode;
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('toggle-'+mode).classList.add('active');
-            
             document.getElementById("drive-name-view").classList.add("hidden");
             document.getElementById("drive-cat-view").classList.add("hidden");
-            
             if(mode === 'name') {
                 document.getElementById("drive-name-view").classList.remove("hidden");
                 renderDriveList();
@@ -469,21 +481,47 @@
             ).join("");
             document.getElementById("drive-cat-list").classList.remove("hidden");
             document.getElementById("drive-row-list").classList.add("hidden");
+            document.getElementById("drive-sub-list").classList.add("hidden");
         }
 
         function selectDriveCat(field, value) {
-            const items = fullInventory.filter(i => (i[field]||"N/A") == value);
             document.getElementById("drive-cat-list").classList.add("hidden");
-            document.getElementById("drive-row-list").innerHTML = 
-                `<div class="back-btn" onclick="renderDriveCats('${field}', 'Back')"><i class="ph-bold ph-arrow-left"></i> Back</div>` +
-                items.map(item => 
-                    `<div class="inv-card" onclick="openDetail(fullInventory[${fullInventory.indexOf(item)}], 'drive')">
-                        <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
-                        <div class="flex justify-between mt-1 text-sm text-gray-600"><span>${item.CONTSIZE}</span><span>${item.LOCATIONCODE}</span></div>
-                    </div>`
-                ).join("");
-            document.getElementById("drive-row-list").classList.remove("hidden");
+            currentDriveItems = fullInventory.filter(i => (i[field]||"N/A") == value);
+            if (field === 'BLOCKALPHA') {
+                const rows = [...new Set(currentDriveItems.map(i => {
+                    const p = i.LOCATIONCODE.split('.');
+                    return p.length >= 2 ? `${p[0]}.${p[1]}.000` : i.LOCATIONCODE;
+                }))].sort();
+                let html = `<div class="back-btn" onclick="resetDriveCatView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">Block ${value}</h2>`;
+                html += rows.map(r => `<div class="drill-item" onclick="selectDriveRow('${r}', '${field}', '${value}')"><span class="font-mono text-[#007a4d] font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
+                document.getElementById("drive-row-list").innerHTML = html;
+                document.getElementById("drive-row-list").classList.remove("hidden");
+            } else {
+                renderDriveSubList(currentDriveItems, field, value, false);
+            }
         }
+
+        function selectDriveRow(baseRow, origField, origVal) {
+            document.getElementById("drive-row-list").classList.add("hidden");
+            const itemsInRow = currentDriveItems.filter(i => i.LOCATIONCODE.startsWith(baseRow.substring(0, baseRow.lastIndexOf('.'))));
+            itemsInRow.sort((a,b) => a.LOCATIONCODE.localeCompare(b.LOCATIONCODE));
+            renderDriveSubList(itemsInRow, origField, origVal, true, baseRow);
+        }
+
+        function renderDriveSubList(items, field, val, isRow, rowVal) {
+            const container = document.getElementById("drive-sub-list");
+            let backAction = isRow ? `selectDriveCat('${field}', '${val}')` : `resetDriveCatView()`;
+            let backText = isRow ? `Back to ${val}` : `Back`;
+            let title = isRow ? `Row: ${rowVal}` : `${val}`;
+            let html = `<div class="back-btn" onclick="${backAction}"><i class="ph-bold ph-arrow-left"></i> ${backText}</div><h2 class="text-lg font-bold text-[#007a4d] px-4 mb-2">${title}</h2>`;
+            items.forEach((item) => {
+                const idx = fullInventory.indexOf(item);
+                html += `<div class="batch-leaf"><div class="flex-grow inv-card mb-0 shadow-none border-0" onclick="openDetail(fullInventory[${idx}], 'drive')"><div class="font-bold text-gray-800">${item.COMMONNAME}</div><div class="text-xs text-gray-500">${item.CONTSIZE} • ${item.LOCATIONCODE}</div></div></div>`;
+            });
+            container.innerHTML = html;
+            container.classList.remove("hidden");
+        }
+        function resetDriveCatView() { document.getElementById("drive-cat-list").classList.remove("hidden"); document.getElementById("drive-row-list").classList.add("hidden"); document.getElementById("drive-sub-list").classList.add("hidden"); }
 
         // --- TASK RENDERER ---
         function renderTasks() {
@@ -545,12 +583,13 @@
         }
         function handleViewerSearch() { renderViewerList(); }
 
-        // --- DRIVE LIST (NAME SEARCH) ---
+        // --- DRIVE LIST ---
         function renderDriveList() {
             const term = document.getElementById("search-input").value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && String(n).toLowerCase().includes(term)).sort().slice(0,50);
             document.getElementById("list-names").innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(fullInventory.find(i=>i.COMMONNAME==='${n.replace(/'/g,"\\'")}'))"><span class="font-bold text-gray-800">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join("");
         }
+        function handleSearch() { if(driveViewMode !== 'name') setDriveMode('name'); renderDriveList(); }
 
         // --- DETAIL & SAVING ---
         function openDetail(item, source) {
@@ -573,12 +612,6 @@
             if (source === 'viewer') {
                 document.getElementById("detail-tabs-container").classList.add("hidden");
                 document.getElementById("readonly-collected-data").classList.remove("hidden");
-                document.getElementById("ro-sales").innerText = item.SALESNOTE || "N/A";
-                document.getElementById("ro-hold").innerText = item.HOLDSTOPCODE || "N/A";
-                document.getElementById("ro-note").innerText = item.UPDATED_NOTE || "--";
-                document.getElementById("ro-caliper").innerText = item.UPDATED_CALIPER || "--";
-                document.getElementById("ro-match").innerText = item.UPDATED_MATCH || "--";
-                document.getElementById("ro-spec").innerText = item.UPDATED_SPEC || "--";
             } else {
                 document.getElementById("detail-tabs-container").classList.remove("hidden");
                 document.getElementById("readonly-collected-data").classList.add("hidden");
@@ -640,6 +673,7 @@
                 }
             });
             document.getElementById("dynamic-details-overview").innerHTML = fullDataHtml;
+            document.getElementById("dynamic-details-actions").innerHTML = fullDataHtml;
 
             switchDetailTab('overview');
         }
@@ -671,7 +705,6 @@
 
         function saveLocalChange(alertUser) {
             if(!activeItem) return;
-            // GET VALUES
             const note = document.getElementById("input-gen-note").value;
             const caliper = document.getElementById("input-caliper").value;
             const match = document.getElementById("input-match").value;
@@ -679,7 +712,6 @@
             const pick = document.getElementById("input-pick").value;
             const locNote = document.getElementById("input-loc-note").value;
 
-            // UPDATE RUNTIME
             activeItem.UPDATED_NOTE = note; 
             activeItem.UPDATED_CALIPER = caliper;
             activeItem.UPDATED_MATCH = match;
@@ -687,7 +719,6 @@
             activeItem.UPDATED_PICK = pick;
             activeItem.UPDATED_LOC_NOTE = locNote;
 
-            // SAVE TO STORAGE
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const key = (activeItem.ITEMCODE||"") + "_" + (activeItem.LOCATIONCODE||"") + "_" + (activeItem.LOTCODE||"");
             stored[key] = { 
@@ -701,7 +732,7 @@
                 timestamp: Date.now() 
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-            if(alertUser) { alert("Saved!"); openDetail(activeItem, 'task'); } // Re-render overview
+            if(alertUser) { alert("Saved!"); openDetail(activeItem, 'task'); }
         }
 
         function applySavedChanges() {
@@ -725,13 +756,46 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
         }
 
-        // UTILS
         function groupBy(arr, k) { return arr.reduce((acc, obj) => { (acc[obj[k]] = acc[obj[k]] || []).push(obj); return acc; }, {}); }
         function fetchWeather() {
              fetch("https://api.open-meteo.com/v1/forecast?latitude=35.86&longitude=-94.96&current=temperature_2m,weather_code&temperature_unit=fahrenheit")
              .then(r=>r.json()).then(d=>{ document.getElementById("weather-temp").innerText = Math.round(d.current.temperature_2m) + "°"; });
         }
         function toggleFullDetails(id) { document.getElementById(id).classList.toggle('expanded'); }
+        function toggleBatchMode() {
+            isBatchMode = !isBatchMode;
+            const btn = document.getElementById("btn-batch-toggle");
+            const driveContainer = document.getElementById("view-drive");
+            if (isBatchMode) { btn.innerText = "Disable Batch Mode"; btn.classList.replace("bg-[#e3a000]", "bg-gray-500"); driveContainer.classList.add("batch-mode"); } 
+            else { btn.innerText = "Enable Batch Mode"; btn.classList.replace("bg-gray-500", "bg-[#e3a000]"); driveContainer.classList.remove("batch-mode"); document.getElementById("action-bar").classList.remove("visible"); }
+        }
+        function handleMultiSelect(context) {
+            let checkboxes;
+            if(context === 'drive') checkboxes = document.querySelectorAll('#view-drive .select-check:checked');
+            else checkboxes = document.querySelectorAll('#review-container .select-check:checked');
+            selectedReviewItems = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const bar = document.getElementById("action-bar");
+            if (selectedReviewItems.length > 0) bar.classList.add("visible"); else bar.classList.remove("visible");
+        }
+        function openAssignModal() { if(selectedReviewItems.length === 0) return; document.getElementById("assign-modal").style.display = "flex"; }
+        function closeAssignModal() { document.getElementById("assign-modal").style.display = "none"; }
+        function confirmAssignment() {
+            const kayla = document.getElementById("check-kayla").checked;
+            const morgan = document.getElementById("check-morgan").checked;
+            const note = document.getElementById("assign-note").value;
+            let assignee = "";
+            if (kayla && morgan) assignee = "Kayla & Morgan";
+            else if (kayla) assignee = "Kayla";
+            else if (morgan) assignee = "Morgan";
+            else { alert("Select at least one user."); return; }
+            selectedReviewItems.forEach(idx => {
+                const item = fullInventory[idx];
+                item.ASSIGNEDTO = assignee; item.isNew = true;
+                if (note) { item.UPDATED_NOTE = (item.UPDATED_NOTE ? item.UPDATED_NOTE + " | " : "") + "MGR: " + note; }
+            });
+            closeAssignModal(); if(isBatchMode) toggleBatchMode(); renderTasks(); if(isManager) renderReviewView(); alert(`Assigned ${selectedReviewItems.length} items.`);
+            if(driveViewMode === 'name') renderDriveList(); else setDriveMode(driveViewMode); 
+        }
     </script>
 </body>
 </html>
