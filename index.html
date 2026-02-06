@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v127 (Unique Row Fix)</title>
+    <title>Greenleaf Pro v129 (Live Sync)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -63,6 +63,7 @@
 
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
+        .camera-btn.loading { background-color: #e5e7eb; border-color: #9ca3af; color: #4b5563; pointer-events: none; }
 
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
@@ -98,7 +99,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="font-bold text-lg"><span id="header-user">User</span></div>
             </div>
-            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v127</div>
+            <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">v129</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -149,7 +150,7 @@
             </div>
 
             <div id="view-detail" class="hidden">
-                <div class="back-btn" onclick="closeDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
+                <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
                 
@@ -178,10 +179,17 @@
 
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-4 hidden">
-                        <p class="text-[10px] font-bold text-blue-600 mb-1">IMAGE CACHED</p>
+                        <p class="text-[10px] font-bold text-blue-600 mb-1">CURRENT PHOTO</p>
                         <img id="img-prev" class="w-full h-48 object-cover rounded-lg border">
+                        <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
                     </div>
-                    <label class="camera-btn"><i class="ph-fill ph-camera text-3xl"></i><span class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(this)"></label>
+                    
+                    <label id="btn-cam" class="camera-btn">
+                        <i class="ph-fill ph-camera text-3xl"></i>
+                        <span id="cam-text" class="font-bold">Take Field Photo</span>
+                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
+                    </label>
+
                     <div class="input-stack">
                         <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95"></div>
                         <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch"></div>
@@ -221,13 +229,17 @@
     </div>
 
     <script>
+        // *** CONFIGURATION ***
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
+        const STORAGE_KEY = "greenleaf_v129_storage";
+
         let fullInventory = [];
         let activeItem = null;
         let currentUser = null;
         let currentTab = 'season';
         let isBatch = false;
         let selectedIdx = [];
-        const STORAGE_KEY = "greenleaf_v127_storage"; // Updated key for v127
+        let lastView = 'drive'; 
 
         function selectUser(u) {
             currentUser = u;
@@ -253,19 +265,16 @@
                 const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // SMARTER HEADER SCANNER (ROW 2 COMPATIBLE)
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 let headerRow = 0;
                 for(let i=0; i<Math.min(rows.length, 25); i++){
                     const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME") || str.includes("SKU")) { 
+                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { 
                         headerRow = i; break; 
                     }
                 }
                 
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
-                
-                // --- MODIFIED MAPPING TO INCLUDE UNIQUE ROW ID ---
                 fullInventory = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => {
@@ -274,9 +283,9 @@
                     });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
                     
-                    // Creates a unique ID based on the Row Number to prevent duplicates
+                    // UNIQUE ROW ID GENERATION
                     obj.UNIQUE_ROW_ID = "ROW_" + index + "_" + (obj.ITEMCODE || "NOC");
-
+                    
                     return obj;
                 });
 
@@ -313,12 +322,11 @@
             });
         }
 
-        // --- DRILL DOWN (DRIVE) ---
+        // --- DRIVE MODE (Drill Down) ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            const container = document.getElementById('drive-content');
-            container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
 
         function selectDriveName(name) {
@@ -334,14 +342,40 @@
             container.innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
                 items.map(item => {
                     const idx = fullInventory.indexOf(item);
-                    return `
-                    <div class="batch-row">
+                    return `<div class="batch-row">
                         ${isBatch ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                        <div class="inv-card flex-grow" onclick="if(!isBatch) openDetail(${idx})">
+                        <div class="inv-card flex-grow" onclick="if(!isBatch) openDetail(${idx}, 'drive')">
                             <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
                             <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
                         </div>
                     </div>`;
+                }).join('');
+        }
+
+        // --- VIEWER MODE (Drill Down - Same as Drive) ---
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
+            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+
+        function selectViewerName(name) {
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
+            const container = document.getElementById('viewer-content');
+            container.innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` +
+                sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+
+        function selectViewerSize(name, size) {
+            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
+            const container = document.getElementById('viewer-content');
+            container.innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
+                items.map(item => {
+                    const idx = fullInventory.indexOf(item);
+                    return `<div class="inv-card" onclick="openDetail(${idx}, 'viewer')">
+                            <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="text-sm">Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}</div>
+                        </div>`;
                 }).join('');
         }
 
@@ -351,19 +385,21 @@
             const items = fullInventory.filter(i => i.ASSIGNEDTO === currentUser);
             document.getElementById('task-content').innerHTML = items.map(item => {
                 const idx = fullInventory.indexOf(item);
-                return `<div class="inv-card" onclick="openDetail(${idx})">
+                return `<div class="inv-card" onclick="openDetail(${idx}, 'tasks')">
                     <div class="font-bold">${item.COMMONNAME}</div>
                     <div class="text-xs text-gray-500">${item.CONTSIZE} • ${item.LOCATIONCODE}</div>
                 </div>`;
             }).join('');
         }
 
-        // --- DETAILS ---
-        function openDetail(idx) {
+        // --- DETAILS & PHOTO UPLOAD ---
+        function openDetail(idx, originView) {
+            lastView = originView;
             activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
+            // Populate Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -386,14 +422,127 @@
         function renderOverviewData() {
             const box = document.getElementById('user-data-box');
             const grid = document.getElementById('dynamic-user-grid');
+            const photoDiv = document.getElementById('photo-preview');
+            const linkBtn = document.getElementById('photo-link-btn');
+
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            if(activeItem.SAVED_PHOTO) h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO}')">View Field Photo</div></div>`;
+            
+            // Photo Logic
+            if(activeItem.SAVED_PHOTO_LINK) {
+                h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
+                photoDiv.classList.remove('hidden');
+                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO_BASE64 || ''; // Fallback for preview
+                linkBtn.href = activeItem.SAVED_PHOTO_LINK;
+                linkBtn.classList.remove('hidden');
+            } else {
+                photoDiv.classList.add('hidden');
+            }
             
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
+        }
+
+        function handlePhotoUpload(input) {
+            if(input.files && input.files[0]) {
+                const file = input.files[0];
+                const btn = document.getElementById('btn-cam');
+                const btnText = document.getElementById('cam-text');
+                
+                // UI Loading State
+                btn.classList.add('loading');
+                btnText.innerText = "UPLOADING TO DRIVE...";
+
+                // Resize and Compress Image before upload
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1024; // Limit width to prevent crash
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Get Base64 without the prefix
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        const base64Data = dataUrl.split(',')[1];
+                        
+                        // Create Filename
+                        const dateStr = new Date().toISOString().split('T')[0];
+                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
+
+                        // Send to Google Script
+                        fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.status === 'success') {
+                                activeItem.SAVED_PHOTO_LINK = data.url;
+                                activeItem.SAVED_PHOTO_BASE64 = dataUrl; // Cache small version locally for preview
+                                renderOverviewData();
+                                saveData(true); // Auto save
+                                alert("Photo Uploaded to Google Drive!");
+                            } else {
+                                alert("Upload Error: " + data.message);
+                            }
+                        })
+                        .catch(err => alert("Network Error: " + err))
+                        .finally(() => {
+                            btn.classList.remove('loading');
+                            btnText.innerText = "Take Field Photo";
+                        });
+                    }
+                }
+            }
+        }
+
+        function saveData(silent = false) {
+            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            
+            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            const id = activeItem.UNIQUE_ROW_ID;
+            
+            storage[id] = { 
+                m: activeItem.SAVED_MATCH, 
+                s: activeItem.SAVED_SPEC, 
+                p: activeItem.SAVED_PICK, 
+                n: activeItem.SAVED_NOTE, 
+                pl: activeItem.SAVED_PHOTO_LINK, 
+                pb: activeItem.SAVED_PHOTO_BASE64 
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+            
+            if(!silent) {
+                alert("Data Saved");
+                renderOverviewData();
+            }
+        }
+
+        function loadSavedData() {
+            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            fullInventory.forEach(item => {
+                const id = item.UNIQUE_ROW_ID;
+                if(storage[id]) {
+                    item.SAVED_MATCH = storage[id].m;
+                    item.SAVED_SPEC = storage[id].s;
+                    item.SAVED_PICK = storage[id].p;
+                    item.SAVED_NOTE = storage[id].n;
+                    item.SAVED_PHOTO_LINK = storage[id].pl;
+                    item.SAVED_PHOTO_BASE64 = storage[id].pb;
+                }
+            });
         }
 
         function renderAllFields() {
@@ -402,33 +551,6 @@
                 if(k.startsWith('SAVED_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID') return "";
                 return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
             }).join('');
-        }
-
-        function saveData() {
-            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            
-            // --- UPDATED SAVE ID LOGIC ---
-            // Uses the UNIQUE_ROW_ID instead of valid fields to prevent duplicates
-            const id = activeItem.UNIQUE_ROW_ID;
-            
-            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, ph: activeItem.SAVED_PHOTO, t: Date.now() };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-            
-            alert("Data Saved to Cache");
-            openDetail(fullInventory.indexOf(activeItem));
-        }
-
-        function handlePhoto(input) {
-            if(input.files && input.files[0]) {
-                activeItem.SAVED_PHOTO = URL.createObjectURL(input.files[0]);
-                document.getElementById('photo-preview').classList.remove('hidden');
-                document.getElementById('img-prev').src = activeItem.SAVED_PHOTO;
-            }
         }
 
         // --- BATCH & UTILS ---
@@ -446,7 +568,7 @@
         }
 
         function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
-
+        
         function batchAssign() {
             const k = document.getElementById('chk-kayla').checked;
             const m = document.getElementById('chk-morgan').checked;
@@ -473,27 +595,10 @@
             if(t==='actions') { document.getElementById('dtab-actions').classList.add('active'); document.getElementById('dtab-overview').classList.remove('active'); }
         }
 
-        function loadSavedData() {
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            fullInventory.forEach(item => {
-                // --- UPDATED LOAD ID LOGIC ---
-                const id = item.UNIQUE_ROW_ID;
-                
-                if(storage[id]) {
-                    item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s;
-                    item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n;
-                    item.SAVED_PHOTO = storage[id].ph;
-                }
-            });
+        function goBackFromDetail() { 
+            document.getElementById('view-detail').classList.add('hidden'); 
+            switchView(lastView); 
         }
-
-        function renderViewerNames() {
-            const term = document.getElementById('viewer-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="openDetail(${fullInventory.indexOf(fullInventory.find(i=>i.COMMONNAME===n))})"><span>${n}</span></div>`).join('');
-        }
-
-        function closeDetail() { document.getElementById('view-detail').classList.add('hidden'); switchView('drive'); }
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
         function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
