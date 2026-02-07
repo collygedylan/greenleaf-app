@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v142 (Review Logic)</title>
+    <title>Greenleaf Pro v143 (Batch Restored)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v142</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v143</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -273,7 +273,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v142_storage"; 
+        const STORAGE_KEY = "greenleaf_v143_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -517,24 +517,37 @@
 
         // --- BATCH & UTILS (Shared) ---
         function getBatchReport() {
-            let report = "";
+            let report = "Greenleaf Update:\n\n";
+            if(selectedIdx.length === 0) return "No items selected.";
+
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
-                let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`];
-                if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`);
-                report += details.join(' | ') + "\n";
-                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
-                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
-                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                report += `\n----------------\n\n`;
+                report += `• ${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                report += `  Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE}\n`;
+                
+                // Add your custom fields to report
+                if(item.SAVED_MATCH) report += `  Match: ${item.SAVED_MATCH}%\n`;
+                if(item.SAVED_SPEC)  report += `  Spec: ${item.SAVED_SPEC}\n`;
+                if(item.SAVED_PICK)  report += `  Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE)  report += `  Note: ${item.SAVED_NOTE}\n`;
+                if(item.SAVED_PHOTO_LINK) report += `  Photo: ${item.SAVED_PHOTO_LINK}\n`;
+                
+                report += "\n";
             });
             return report;
         }
-        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
+
+        function batchText() {
+            const txt = getBatchReport();
+            // Use generic body param for broader compatibility
+            window.location.href = "sms:?body=" + encodeURIComponent(txt);
+        }
+
+        function batchEmail() {
+            const txt = getBatchReport();
+            const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
+        }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -586,7 +599,6 @@
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             
-            // ... (rest of detail logic remains same)
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
