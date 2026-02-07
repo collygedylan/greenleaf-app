@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v150 (Review Drill-Down)</title>
+    <title>Greenleaf Pro v151 (Review Logic)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v150</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v151</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -190,7 +190,9 @@
                     <h2 class="text-sm font-bold text-red-500 uppercase">Items for Review</h2>
                     <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
                 </div>
-                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500">Items with no Priority, or no winner found.</div>
+                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">
+                    Items with No Priority OR No Season Winner.
+                </div>
                 <div id="review-content"></div>
             </div>
 
@@ -267,7 +269,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v150_storage"; 
+        const STORAGE_KEY = "greenleaf_v151_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         let deferredPrompt;
