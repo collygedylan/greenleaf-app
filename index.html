@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v134 (Storage Fix)</title>
+    <title>Greenleaf Pro v135 (Team Updates)</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -104,7 +104,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v134</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v135</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -222,6 +222,7 @@
         <div class="modal-card">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Assign Tasks</h2>
             <div class="space-y-3 mb-6">
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Dylan</span></label>
                 <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label>
                 <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label>
             </div>
@@ -235,7 +236,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v134_storage"; // Updated to prevent data conflicts
+        const STORAGE_KEY = "greenleaf_v135_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         let fullInventory = [];
@@ -391,16 +392,18 @@
 
         function batchText() {
             const txt = getBatchReport();
+            // Create ONE single text message string
             window.location.href = "sms:?body=" + encodeURIComponent(txt);
         }
 
         function batchEmail() {
             const txt = getBatchReport();
+            // Create ONE single email body string
             const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
         }
 
-        // --- DRIVE MODE (Drill Down) ---
+        // --- DRIVE MODE ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
@@ -540,7 +543,7 @@
                 photoDiv.classList.remove('hidden');
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
                 
-                // STORAGE FIX: Only show preview if we just took it (in memory), otherwise show placeholder
+                // Keep temp preview if in memory, else placeholder
                 if(activeItem.TEMP_PHOTO_BASE64) {
                     imgPrev.src = activeItem.TEMP_PHOTO_BASE64;
                     imgPrev.classList.remove('hidden');
@@ -622,7 +625,6 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
             
-            // STORAGE FIX: Do NOT save base64 to localStorage to prevent crash
             storage[id] = { 
                 m: activeItem.SAVED_MATCH, 
                 s: activeItem.SAVED_SPEC, 
@@ -689,13 +691,24 @@
         function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
         
         function batchAssign() {
+            const d = document.getElementById('chk-dylan').checked;
             const k = document.getElementById('chk-kayla').checked;
             const m = document.getElementById('chk-morgan').checked;
-            let target = k && m ? "Kayla & Morgan" : (k ? "Kayla" : "Morgan");
+            
+            // Build Assignments Array
+            let selected = [];
+            if(d) selected.push("Dylan");
+            if(k) selected.push("Kayla");
+            if(m) selected.push("Morgan");
+            
+            if(selected.length === 0) { alert("Please select at least one person."); return; }
+            
+            let target = selected.join(" & ");
+            
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
             document.getElementById('assign-modal').style.display='none';
             toggleBatch();
-            alert("Items Re-assigned");
+            alert("Items Assigned to: " + target);
         }
 
         function switchView(v) {
