@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v137</title>
+    <title>Greenleaf Pro v138 (Task Drilldown)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-
     <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkdyZWVubGVhZiBQcm8iLAogICJzaG9ydF9uYW1lIjogIkdyZWVubGVhZiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2E0ZCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzYyOC82MjgyODMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -79,9 +77,7 @@
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         
-        /* HEADER BATCH BTN */
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
-        
         #install-btn { display: none; color: #007a4d; font-weight: bold; }
     </style>
 </head>
@@ -115,7 +111,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v137</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v138</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -124,11 +120,7 @@
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
         <div id="side-drawer">
             <div class="drawer-header">Greenleaf Menu</div>
-            
-            <div id="install-btn" class="drawer-item" onclick="installPWA()">
-                <i class="ph-bold ph-download-simple"></i> Install App
-            </div>
-            
+            <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
@@ -157,9 +149,9 @@
             </div>
 
             <div id="view-tasks" class="hidden">
-                <div class="task-tabs mb-4">
-                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
-                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2>
+                    <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
                 <div id="task-content"></div>
             </div>
@@ -250,26 +242,22 @@
     </div>
 
     <script>
-        // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v137_storage"; 
+        const STORAGE_KEY = "greenleaf_v138_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
-        // *** PWA INSTALL LOGIC ***
+        // PWA Install
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('install-btn').style.display = 'flex';
         });
-
         async function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('install-btn').style.display = 'none';
-                }
+                if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; }
                 deferredPrompt = null;
             }
         }
@@ -278,7 +266,12 @@
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
-        let currentTab = 'season';
+        
+        // Task Drill State
+        let taskViewLevel = 0; // 0=Block, 1=Loc, 2=Items
+        let selectedTaskBlock = null;
+        let selectedTaskLoc = null;
+
         let isBatch = false;
         let selectedIdx = [];
         let lastView = 'drive'; 
@@ -303,22 +296,17 @@
         async function fetchData() {
             try {
                 pruneOldData(); 
-
                 const res = await fetch('inventory.xlsx?v=' + Date.now());
                 if (!res.ok) throw new Error();
                 const buffer = await res.arrayBuffer();
                 const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 let headerRow = 0;
                 for(let i=0; i<Math.min(rows.length, 25); i++){
                     const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { 
-                        headerRow = i; break; 
-                    }
+                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
                 }
-                
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                 
                 let idCounters = {};
@@ -357,10 +345,7 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             let changed = false;
             Object.keys(storage).forEach(key => {
-                if(storage[key].t && (now - storage[key].t > tenDaysMs)) {
-                    delete storage[key];
-                    changed = true;
-                }
+                if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; }
             });
             if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
         }
@@ -369,13 +354,8 @@
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
-            
-            if(isAdmin) {
-                document.getElementById('header-batch-btn').style.display = 'block';
-            } else {
-                document.getElementById('header-batch-btn').style.display = 'none';
-            }
-            
+            if(isAdmin) { document.getElementById('header-batch-btn').style.display = 'block'; }
+            else { document.getElementById('header-batch-btn').style.display = 'none'; }
             switchView('home');
         }
 
@@ -393,33 +373,109 @@
             });
         }
 
+        // --- TASK VIEW DRILL DOWN LOGIC ---
+        function renderTasks() {
+            // Filter my tasks first
+            const myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(currentUser));
+            const container = document.getElementById('task-content');
+            const crumb = document.getElementById('task-crumb');
+
+            // LEVEL 0: BLOCKS
+            if(taskViewLevel === 0) {
+                crumb.innerText = "All Blocks";
+                // Distinct Blocks
+                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                
+                if(blocks.length === 0) {
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks assigned.</div>`;
+                    return;
+                }
+
+                container.innerHTML = blocks.map(b => `
+                    <div class="drill-item" onclick="selectTaskBlock('${b}')">
+                        <span class="font-bold text-lg">${b}</span>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `).join('');
+            }
+            
+            // LEVEL 1: LOCATIONS
+            else if(taskViewLevel === 1) {
+                crumb.innerText = `${selectedTaskBlock} / Locations`;
+                // Filter by Block
+                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
+
+                container.innerHTML = `
+                    <div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>
+                    ${locs.map(l => `
+                        <div class="drill-item" onclick="selectTaskLoc('${l}')">
+                            <span>${l}</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
+            }
+
+            // LEVEL 2: ITEMS
+            else if(taskViewLevel === 2) {
+                crumb.innerText = `${selectedTaskBlock} / ${selectedTaskLoc}`;
+                // Filter by Block AND Loc
+                const finalItems = myItems.filter(i => 
+                    (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && 
+                    (i.LOCATIONCODE || "No Loc") === selectedTaskLoc
+                );
+
+                container.innerHTML = `
+                    <div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>
+                    ${finalItems.map(item => {
+                        const idx = fullInventory.indexOf(item);
+                        return createRowHtml(item, idx, 'tasks');
+                    }).join('')}
+                `;
+            }
+        }
+
+        function selectTaskBlock(b) {
+            selectedTaskBlock = b;
+            taskViewLevel = 1;
+            renderTasks();
+        }
+
+        function selectTaskLoc(l) {
+            selectedTaskLoc = l;
+            taskViewLevel = 2;
+            renderTasks();
+        }
+
+        function backToTaskLocs() {
+            taskViewLevel = 1;
+            selectedTaskLoc = null;
+            renderTasks();
+        }
+
+        function resetTaskView() {
+            taskViewLevel = 0;
+            selectedTaskBlock = null;
+            selectedTaskLoc = null;
+            renderTasks();
+        }
+
         // --- BATCH REPORTING ---
         function getBatchReport() {
             let report = "";
             if(selectedIdx.length === 0) return "No items selected.";
-
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                
                 report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
-                
-                let details = [];
-                details.push(`Loc: ${item.LOCATIONCODE || '-'}`);
-                details.push(`Lot: ${item.LOTCODE || '-'}`);
-                if(item.CALIPER) details.push(`Cal: ${item.CALIPER}`);
-                else if(item.CAL) details.push(`Cal: ${item.CAL}`);
-                
+                let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`];
+                if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`);
                 report += details.join(' | ') + "\n";
-
                 if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
                 if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK)  report += `Pick Note: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                }
-
+                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
                 report += `\n----------------\n\n`;
             });
             return report;
@@ -436,62 +492,33 @@
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
         }
 
-        // --- DRIVE MODE (Drill Down) ---
+        // --- DRIVE & VIEWER ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
             document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
-
         function selectDriveName(name) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            const container = document.getElementById('drive-content');
-            container.innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` +
-                sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
-
         function selectDriveSize(name, size) {
             const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            const container = document.getElementById('drive-content');
-            container.innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
-                items.map(item => {
-                    const idx = fullInventory.indexOf(item);
-                    return createRowHtml(item, idx, 'drive');
-                }).join('');
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join('');
         }
 
-        // --- VIEWER MODE ---
         function renderViewerNames() {
             const term = document.getElementById('viewer-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
             document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
-
         function selectViewerName(name) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            const container = document.getElementById('viewer-content');
-            container.innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` +
-                sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
-
         function selectViewerSize(name, size) {
             const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            const container = document.getElementById('viewer-content');
-            container.innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` +
-                items.map(item => {
-                    const idx = fullInventory.indexOf(item);
-                    return createRowHtml(item, idx, 'viewer');
-                }).join('');
-        }
-
-        // --- TASKS ---
-        function setTaskTab(t) { currentTab = t; renderTasks(); }
-        function renderTasks() {
-            const items = fullInventory.filter(i => i.ASSIGNEDTO === currentUser);
-            document.getElementById('task-content').innerHTML = items.map(item => {
-                const idx = fullInventory.indexOf(item);
-                return createRowHtml(item, idx, 'tasks');
-            }).join('');
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
         }
 
         function createRowHtml(item, idx, source) {
@@ -514,7 +541,6 @@
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
 
-            // Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -523,7 +549,6 @@
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
-            // PERMISSIONS
             const cont = document.getElementById('input-container');
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
@@ -545,11 +570,8 @@
                 `;
             }
 
-            if (originView === 'viewer') {
-                document.getElementById('expand-section').classList.add('hidden');
-            } else {
-                document.getElementById('expand-section').classList.remove('hidden');
-            }
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } 
+            else { document.getElementById('expand-section').classList.remove('hidden'); }
 
             renderOverviewData();
             renderAllFields();
@@ -572,22 +594,11 @@
             
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
-                
                 photoDiv.classList.remove('hidden');
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                
-                // Keep temp preview if in memory, else placeholder
-                if(activeItem.TEMP_PHOTO_BASE64) {
-                    imgPrev.src = activeItem.TEMP_PHOTO_BASE64;
-                    imgPrev.classList.remove('hidden');
-                    imgPlace.classList.add('hidden');
-                } else {
-                    imgPrev.classList.add('hidden');
-                    imgPlace.classList.remove('hidden');
-                }
-            } else {
-                photoDiv.classList.add('hidden');
-            }
+                if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
+                else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
+            } else { photoDiv.classList.add('hidden'); }
             
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
@@ -597,10 +608,7 @@
                 const file = input.files[0];
                 const btn = document.getElementById('btn-cam');
                 const btnText = document.getElementById('cam-text');
-                
-                btn.classList.add('loading');
-                btnText.innerText = "UPLOADING...";
-
+                btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function(e) {
@@ -608,40 +616,22 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024; 
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
+                        const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                         const base64Data = dataUrl.split(',')[1];
-                        
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
-
-                        fetch(GOOGLE_SCRIPT_URL, {
-                            method: "POST",
-                            body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
+                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) })
+                        .then(res => res.json()).then(data => {
                             if(data.status === 'success') {
-                                activeItem.SAVED_PHOTO_LINK = data.url;
-                                activeItem.TEMP_PHOTO_BASE64 = dataUrl; // Keep in memory only
-                                renderOverviewData();
-                                saveData(true); 
-                                alert("Photo Uploaded!");
-                            } else {
-                                alert("Upload Error: " + data.message);
-                            }
+                                activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl;
+                                renderOverviewData(); saveData(true); alert("Photo Uploaded!");
+                            } else { alert("Upload Error: " + data.message); }
                         })
                         .catch(err => alert("Network Error: " + err))
-                        .finally(() => {
-                            btn.classList.remove('loading');
-                            btnText.innerText = "Take Field Photo";
-                        });
+                        .finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
                     }
                 }
             }
@@ -649,31 +639,14 @@
 
         function saveData(silent = false) {
             if(!isAdmin) return;
-            
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
             activeItem.SAVED_PICK = document.getElementById('in-pick').value;
             activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
-            
-            // STORAGE FIX: Do NOT save base64 to localStorage
-            storage[id] = { 
-                m: activeItem.SAVED_MATCH, 
-                s: activeItem.SAVED_SPEC, 
-                p: activeItem.SAVED_PICK, 
-                n: activeItem.SAVED_NOTE, 
-                pl: activeItem.SAVED_PHOTO_LINK, 
-                t: Date.now()
-            };
-            
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-                if(!silent) { alert("Data Saved"); renderOverviewData(); }
-            } catch(e) {
-                alert("Storage Full! Text notes saved, but old data might be overwritten.");
-            }
+            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() };
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
         }
 
         function loadSavedData() {
@@ -681,10 +654,8 @@
             fullInventory.forEach(item => {
                 const id = item.UNIQUE_ROW_ID;
                 if(storage[id]) {
-                    item.SAVED_MATCH = storage[id].m;
-                    item.SAVED_SPEC = storage[id].s;
-                    item.SAVED_PICK = storage[id].p;
-                    item.SAVED_NOTE = storage[id].n;
+                    item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s;
+                    item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n;
                     item.SAVED_PHOTO_LINK = storage[id].pl;
                 }
             });
@@ -698,20 +669,17 @@
             }).join('');
         }
 
-        // --- BATCH & UTILS ---
+        // --- UTILS ---
         function toggleBatch() {
             if(!isAdmin) return;
             isBatch = !isBatch;
             document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE";
             document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000";
             if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
-            
             const views = ['drive','tasks','viewer'];
             views.forEach(v => {
                 if(!document.getElementById('view-'+v).classList.contains('hidden')) {
-                    if(v === 'drive') renderDriveNames(); 
-                    if(v === 'tasks') renderTasks();
-                    if(v === 'viewer') renderViewerNames();
+                    if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames();
                 }
             });
         }
@@ -728,17 +696,10 @@
             const d = document.getElementById('chk-dylan').checked;
             const k = document.getElementById('chk-kayla').checked;
             const m = document.getElementById('chk-morgan').checked;
-            
             let selected = [];
-            if(d) selected.push("Dylan");
-            if(k) selected.push("Kayla");
-            if(m) selected.push("Morgan");
-            
-            if(selected.length === 0) { alert("Please select at least one person."); return; }
-            
-            // Join selected names with "&"
+            if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
+            if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
-            
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
             document.getElementById('assign-modal').style.display='none';
             toggleBatch();
@@ -748,23 +709,17 @@
         function switchView(v) {
             ['view-home','view-drive','view-tasks','view-viewer','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
-            if(v==='drive') renderDriveNames();
-            if(v==='tasks') renderTasks();
-            if(v==='viewer') renderViewerNames();
+            if(v==='drive') renderDriveNames(); if(v==='tasks') renderTasks(); if(v==='viewer') renderViewerNames();
         }
 
         function switchDetailTab(t) {
             document.getElementById('det-overview-content').classList.toggle('hidden', t !== 'overview');
             document.getElementById('det-actions-content').classList.toggle('hidden', t !== 'actions');
-            document.getElementById('dtab-overview').classList.add('active');
-            document.getElementById('dtab-actions').classList.remove('active');
+            document.getElementById('dtab-overview').classList.add('active'); document.getElementById('dtab-actions').classList.remove('active');
             if(t==='actions') { document.getElementById('dtab-actions').classList.add('active'); document.getElementById('dtab-overview').classList.remove('active'); }
         }
 
-        function goBackFromDetail() { 
-            document.getElementById('view-detail').classList.add('hidden'); 
-            switchView(lastView); 
-        }
+        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); switchView(lastView); }
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
         function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
