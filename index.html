@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v160</title>
+    <title>Greenleaf Pro v161 (Non-Blocking)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-    
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkdyZWVubGVhZiBQcm8iLAogICJzaG9ydF9uYW1lIjogIkdyZWVubGVhZiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2E0ZCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzYyOC82MjgyODMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -18,16 +19,16 @@
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
+        .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
         /* LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* MENU */
+        
+        /* DRAWER */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
@@ -39,14 +40,18 @@
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
-        
         .task-tabs, .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab, .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .task-tab.active, .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; position: relative; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
+        .status-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; }
+        .status-dot.loading { background-color: #fbbf24; animation: pulse 1s infinite; }
+        .status-dot.success { background-color: #22c55e; }
+        .status-dot.error { background-color: #ef4444; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
         /* BATCH & ACTION */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
@@ -68,7 +73,6 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
-        .sync-status { font-size: 10px; font-weight: bold; color: #007a4d; text-align: center; margin-bottom: 10px; }
         
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
@@ -95,7 +99,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing Cache...</div>
+                <div class="text-white font-bold text-sm mt-3">Loading Cache...</div>
             </div>
         </div>
     </div>
@@ -106,7 +110,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v160</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v161</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -135,17 +139,32 @@
                     <p class="opacity-80">Inventory Management</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
-                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
+                    <div onclick="switchView('tasks')" class="home-btn">
+                        <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span>
+                        <div id="dot-inventory" class="status-dot"></div>
+                    </div>
+                    <div onclick="switchView('drive')" class="home-btn">
+                        <i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span>
+                    </div>
+                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
+                        <i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span>
+                        <div id="dot-soc" class="status-dot"></div>
+                    </div>
+                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden">
+                        <i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span>
+                        <div id="dot-tracking" class="status-dot"></div>
+                    </div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50">
+                        <i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span>
+                    </div>
+                </div>
+                <div class="mt-8 text-center text-xs text-gray-400">
+                    <p id="sync-logs">System Ready</p>
                 </div>
             </div>
 
             <div id="view-drive" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Inventory Browse</h2>
-                <div id="status-inventory" class="sync-status">Checking Sync...</div>
                 <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
                 <div id="drive-content"></div>
             </div>
@@ -169,17 +188,15 @@
 
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
-                <div id="status-soc" class="sync-status">Checking Sync...</div>
+                <div id="status-soc-text" class="mb-2 text-xs font-bold text-gray-500"></div>
                 <button onclick="forceSync('soc')" class="w-full bg-purple-600 text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Force Refresh SOC</button>
-                <div class="flex justify-between items-center mb-2">
-                    <span id="soc-crumb" class="text-xs font-bold text-gray-500"></span>
-                </div>
+                <div class="flex justify-between items-center mb-2"><span id="soc-crumb" class="text-xs font-bold text-gray-500"></span></div>
                 <div id="soc-content"></div>
             </div>
 
             <div id="view-tracking" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Sales Inventory Tracking</h2>
-                <div id="status-tracking" class="sync-status">Checking Sync...</div>
+                <div id="status-tracking-text" class="mb-2 text-xs font-bold text-gray-500"></div>
                 <button onclick="forceSync('tracking')" class="w-full bg-orange-500 text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Force Refresh Tracking</button>
                 <div id="tracking-content"></div>
             </div>
@@ -315,38 +332,40 @@
             if (document.getElementById('pin-code').value === '1234') {
                 document.getElementById('pin-container').classList.add('hidden');
                 document.getElementById('loading-spinner').classList.remove('hidden');
-                initApp();
+                
+                // DECOUPLED INIT: Show loading UI first, then try to launch immediately if cache exists
+                setTimeout(() => initApp(), 100);
             } else { alert("Incorrect PIN"); }
         }
 
         async function initApp() {
-            // OPTIMISTIC LOAD
+            // 1. Load Local Data
             loadLocalData('inventory');
             loadLocalData('soc');
             loadLocalData('tracking');
 
-            // If we have data, launch immediately
+            // 2. Launch UI if data exists
             if(fullInventory.length > 0) {
                 applyAssignments();
                 loadSavedData();
                 launchApp(); 
-            } else {
-                document.getElementById('loading-spinner').innerText = "Downloading...";
             }
 
-            // Background Sync
-            Promise.all([
+            // 3. Start Background Sync (Non-Blocking)
+            const syncPromises = [
                 syncManager('inventory'),
                 syncManager('soc'),
                 syncManager('tracking')
-            ]).then(() => {
-                // If we were waiting on data
-                if(document.getElementById('view-login').style.display !== 'none') {
-                    applyAssignments();
-                    loadSavedData();
-                    launchApp();
-                }
-            });
+            ];
+
+            // If no data existed, wait for at least one sync to finish before launching
+            if(fullInventory.length === 0) {
+                document.getElementById('loading-spinner').innerText = "Downloading Data...";
+                await Promise.allSettled(syncPromises); // Use allSettled so one failure doesn't block others
+                applyAssignments();
+                loadSavedData();
+                launchApp();
+            }
         }
 
         function loadLocalData(type) {
@@ -355,32 +374,41 @@
                 if(type === 'inventory') fullInventory = local.data;
                 if(type === 'soc') socInventory = local.data;
                 if(type === 'tracking') trackingInventory = local.data;
+                updateDot(type, 'success');
             }
         }
 
         async function syncManager(type) {
-            const statusId = "status-" + type;
+            updateDot(type, 'loading');
             const storageKey = "gl_cache_" + type;
-            const el = document.getElementById(statusId);
             const local = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
-            if(el) el.innerText = "Checking Sync...";
-            
             try {
+                // 1. Check Version (Fast)
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
                 const meta = await res.json();
                 
                 if(meta.status === 'success') {
                     if(!local.lastUpdated || meta.lastUpdated > local.lastUpdated) {
-                        if(el) el.innerText = "Downloading Update...";
+                        console.log(`Update found for ${type}`);
                         await downloadAndCache(type, meta.lastUpdated);
                     } else {
-                        if(el) el.innerText = "Up to Date";
+                        console.log(`${type} is up to date`);
+                        updateDot(type, 'success');
                     }
                 }
             } catch(e) {
-                if(el) el.innerText = "Offline Mode";
+                console.error(`Sync fail ${type}`, e);
+                updateDot(type, 'error');
             }
+        }
+
+        function updateDot(type, status) {
+            const dot = document.getElementById(`dot-${type}`);
+            if(dot) {
+                dot.className = `status-dot ${status}`;
+            }
+            if(status === 'success') document.getElementById('sync-logs').innerText = "System Synced: " + new Date().toLocaleTimeString();
         }
 
         async function downloadAndCache(type, timestamp) {
@@ -432,14 +460,15 @@
                     data: parsed
                 }));
                 
-                const el = document.getElementById("status-" + type);
-                if(el) el.innerText = "Updated!";
+                updateDot(type, 'success');
                 
+                // Refresh View if active
                 if(type === 'soc' && !document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
                 if(type === 'tracking' && !document.getElementById('view-tracking').classList.contains('hidden')) renderTrackingView();
                 if(type === 'inventory') {
                     applyAssignments();
                     if(!document.getElementById('view-drive').classList.contains('hidden')) renderDriveNames();
+                    if(!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
                 }
             }
         }
@@ -464,16 +493,50 @@
 
         function forceSync(type) {
             localStorage.removeItem("gl_cache_" + type);
-            const el = document.getElementById("status-" + type);
-            if(el) el.innerText = "Forcing Update...";
+            updateDot(type, 'loading');
             syncManager(type);
+        }
+
+        function launchApp() {
+            document.getElementById('view-login').style.display = 'none';
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.getElementById('header-user').innerText = currentUser;
+            
+            if(isAdmin) {
+                document.getElementById('header-batch-btn').style.display = 'block';
+                document.getElementById('home-btn-soc').classList.remove('hidden');
+                document.getElementById('home-btn-track').classList.remove('hidden');
+                document.getElementById('home-btn-review').classList.remove('hidden');
+            } else {
+                document.getElementById('header-batch-btn').style.display = 'none';
+                document.getElementById('home-btn-soc').classList.add('hidden');
+                document.getElementById('home-btn-track').classList.add('hidden');
+                document.getElementById('home-btn-review').classList.add('hidden');
+            }
+            switchView('home');
+        }
+
+        function applyAssignments() {
+            let i = 0;
+            fullInventory.forEach(item => {
+                const group = (item.PLANTGROUPCODE || "").toString();
+                if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan";
+                else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla";
+                else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; }
+            });
         }
 
         // --- RENDERERS ---
         function renderSocView() {
             const container = document.getElementById('soc-content');
             const crumb = document.getElementById('soc-crumb');
-            if(socInventory.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">Empty Data.</div>`; return; }
+            const statusText = document.getElementById('status-soc-text');
+            
+            if(socInventory.length === 0) { 
+                container.innerHTML = `<div class="text-center text-gray-400 p-4">Empty Data. Try Force Refresh.</div>`; 
+                return; 
+            }
+            statusText.innerText = "Data Loaded: " + socInventory.length + " rows";
 
             if(socViewLevel === 0) {
                 crumb.innerText = "Sales Reps";
@@ -507,29 +570,12 @@
         }
 
         // --- APP LOGIC ---
-        function launchApp() { 
-            document.getElementById('view-login').style.display = 'none'; 
-            document.getElementById('app-wrapper').classList.remove('hidden'); 
-            document.getElementById('header-user').innerText = currentUser; 
-            if(isAdmin) { 
-                document.getElementById('header-batch-btn').style.display = 'block'; 
-                document.getElementById('home-btn-soc').classList.remove('hidden'); 
-                document.getElementById('home-btn-track').classList.remove('hidden'); 
-                document.getElementById('home-btn-review').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('header-batch-btn').style.display = 'none'; 
-                document.getElementById('home-btn-soc').classList.add('hidden'); 
-                document.getElementById('home-btn-track').classList.add('hidden'); 
-                document.getElementById('home-btn-review').classList.add('hidden'); 
-            } 
-            switchView('home'); 
-        }
-
         function switchView(v) { 
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v==='drive') renderDriveNames(); 
             if(v==='tasks') { 
+                // FIXED LOGIC: Reset to team selector only if at root level
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } 
                 else { renderTasks(); } 
             } 
@@ -563,12 +609,14 @@
             renderTasks();
         }
 
-        // ** FIXED NAVIGATION LOGIC **
+        // ** SAFE NAVIGATION FUNCTION **
         function goBackFromTaskRoot() {
-            if (isAdmin) {
+            if(isAdmin) {
                 renderTeamSelector();
+                taskViewTargetUser = currentUser; // Reset target
             } else {
-                console.log("Already at root");
+                // If not admin, maybe go home?
+                switchView('home');
             }
         }
 
@@ -584,7 +632,9 @@
                     crumb.innerText = `${taskViewTargetUser} / Season / Blocks`;
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                     if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Season items.</div>`; return; }
-                    container.innerHTML = `<div class="back-btn" onclick="goBackFromTaskRoot()"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    container.innerHTML = `
+                    <div class="back-btn" onclick="goBackFromTaskRoot()"><i class="ph-bold ph-arrow-left"></i> Change User</div>
+                    ` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (taskViewLevel === 1) {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                     const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
@@ -600,7 +650,9 @@
                     crumb.innerText = `${taskViewTargetUser} / Locs`;
                     const locs = [...new Set(myItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
                     if(locs.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Location items.</div>`; return; }
-                    container.innerHTML = `<div class="back-btn" onclick="goBackFromTaskRoot()"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    container.innerHTML = `
+                    <div class="back-btn" onclick="goBackFromTaskRoot()"><i class="ph-bold ph-arrow-left"></i> Change User</div>
+                    ` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskLoc}`;
                     const items = myItems.filter(i => (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
@@ -618,51 +670,6 @@
         }
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
-
-        // --- REVIEW VIEW ---
-        function renderReviewItems() {
-            const container = document.getElementById('review-content');
-            const crumb = document.getElementById('review-crumb');
-            const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-
-            if(reviewItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`;
-                crumb.innerText = "";
-                return;
-            }
-
-            if(reviewViewLevel === 0) {
-                crumb.innerText = "All Names";
-                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort();
-                container.innerHTML = names.map(n => 
-                    `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')">
-                        <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i>
-                    </div>`
-                ).join('');
-            } else if(reviewViewLevel === 1) {
-                crumb.innerText = selectedReviewName;
-                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort();
-                container.innerHTML = `
-                    <div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>
-                    ${sizes.map(s => `
-                        <div class="drill-item" onclick="selectReviewSize('${s}')">
-                            <span>${s}</span><i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
-            } else if(reviewViewLevel === 2) {
-                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`;
-                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize);
-                container.innerHTML = `
-                    <div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
-                    ${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}
-                `;
-            }
-        }
-
-        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
-        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
         // --- BATCH & UTILS ---
         function getBatchReport() {
