@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v143 (Batch Restored)</title>
+    <title>Greenleaf Pro v148 (Admin Home)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -84,6 +84,11 @@
         
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; }
+        
+        /* HOME GRID */
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
+        .home-icon { font-size: 32px; margin-bottom: 4px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -116,7 +121,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v143</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v148</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -129,9 +134,9 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-            
+            <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
+            <div class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Sales Inventory Tracking</div>
             <div class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
-            
             <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
@@ -145,8 +150,11 @@
                     <p class="opacity-80">Inventory Management</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div onclick="switchView('tasks')" class="bg-white p-6 rounded-xl border flex flex-col items-center gap-2 shadow-sm active:bg-gray-50"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div onclick="switchView('drive')" class="bg-white p-6 rounded-xl border flex flex-col items-center gap-2 shadow-sm active:bg-gray-50"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive</span></div>
+                    <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
+                    <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    
+                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
+                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                 </div>
             </div>
 
@@ -176,30 +184,19 @@
                 <div id="task-content"></div>
             </div>
 
-            <div id="view-review" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-red-500 uppercase">Items for Review</h2>
-                </div>
-                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500">Items with NO Priority OR items where No Priority met the Season Supply requirement.</div>
-                <div id="review-content"></div>
-            </div>
-
-            <div id="view-viewer" class="hidden">
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Read-Only Viewer</h2>
-                <input type="text" id="viewer-search" class="input-field mb-4" placeholder="Quick Search..." onkeyup="renderViewerNames()">
-                <div id="viewer-content"></div>
-            </div>
+            <div id="view-soc" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC</h2><p class="text-gray-500 text-sm">Sales Order Check Module Active.</p></div>
+            <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><p class="text-gray-500 text-sm">Inventory Tracking Module Active.</p></div>
+            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div id="review-content"></div></div>
+            <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-detail" class="hidden">
                 <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
-                
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
                     <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
                 </div>
-
                 <div id="det-overview-content" class="py-4">
                     <div id="user-data-box" class="bg-green-50 p-4 rounded-lg border border-green-200 mb-6 hidden">
                         <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Latest Field Updates</h3>
@@ -214,13 +211,8 @@
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                     </div>
-                    
-                    <div id="expand-section" class="mt-6">
-                        <div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div>
-                        <div id="expand-content" class="expand-content"></div>
-                    </div>
+                    <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
                 </div>
-
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-4 hidden">
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
@@ -228,15 +220,8 @@
                         <div id="img-placeholder" class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border rounded-lg">Photo stored on Cloud</div>
                         <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
                     </div>
-                    
-                    <label id="btn-cam" class="camera-btn hidden">
-                        <i class="ph-fill ph-camera text-3xl"></i>
-                        <span id="cam-text" class="font-bold">Take Field Photo</span>
-                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
-                    </label>
-
+                    <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
                     <div id="input-container" class="input-stack"></div>
-                    
                     <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
                 </div>
             </div>
@@ -273,7 +258,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v143_storage"; 
+        const STORAGE_KEY = "greenleaf_v148_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -331,7 +316,6 @@
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                 
                 let idCounters = {};
-                // RAW MAPPING
                 let rawItems = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
@@ -344,54 +328,33 @@
                     const instanceNum = idCounters[baseKey];
                     idCounters[baseKey]++;
                     obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
-                    obj.TASK_TAB = 'location'; // Default
+                    obj.TASK_TAB = 'location'; 
                     return obj;
                 });
 
-                // *** LOGIC ENGINE: Determine Winners ***
                 const groupedByItem = {};
-                rawItems.forEach(i => {
-                    if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = [];
-                    groupedByItem[i.ITEMCODE].push(i);
-                });
+                rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
                 Object.keys(groupedByItem).forEach(code => {
                     let items = groupedByItem[code];
-                    
-                    // 1. Check for Missing Priority -> SEND TO REVIEW
                     const hasPriority = items.some(i => i.PRIORITY > 0);
                     if(!hasPriority) {
                         items.forEach(i => i.TASK_TAB = 'review');
                         return;
                     }
-
-                    // 2. Find Winner (Lowest Priority that meets 10% Rule)
                     let winnerPriority = null;
                     const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
-                    
                     for(let p of priorities) {
                         const pItems = items.filter(i => i.PRIORITY === p);
-                        // Check if ANY row in this priority meets criteria
                         const isWinner = pItems.some(i => i.PTRAVAILABLE > (i.SEASONSUPPLY * 0.10));
-                        if(isWinner) {
-                            winnerPriority = p;
-                            break; 
-                        }
+                        if(isWinner) { winnerPriority = p; break; }
                     }
-
-                    // 3. Assign Tabs based on Winner
                     if (winnerPriority !== null) {
                         items.forEach(i => {
-                            if (i.PRIORITY === winnerPriority) {
-                                i.TASK_TAB = 'season';
-                            } else {
-                                i.TASK_TAB = 'location';
-                            }
+                            if (i.PRIORITY === winnerPriority) { i.TASK_TAB = 'season'; } 
+                            else { i.TASK_TAB = 'location'; }
                         });
-                    } else {
-                        // NEW LOGIC: Priorities exist, but NO winner found -> SEND TO REVIEW
-                        items.forEach(i => i.TASK_TAB = 'review');
-                    }
+                    } else { items.forEach(i => i.TASK_TAB = 'review'); }
                 });
 
                 fullInventory = rawItems;
@@ -411,7 +374,18 @@
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
-            document.getElementById('header-batch-btn').style.display = isAdmin ? 'block' : 'none';
+            
+            // ADMIN HOME BUTTONS
+            if(isAdmin) {
+                document.getElementById('header-batch-btn').style.display = 'block';
+                document.getElementById('home-btn-soc').classList.remove('hidden');
+                document.getElementById('home-btn-track').classList.remove('hidden');
+            } else {
+                document.getElementById('header-batch-btn').style.display = 'none';
+                document.getElementById('home-btn-soc').classList.add('hidden');
+                document.getElementById('home-btn-track').classList.add('hidden');
+            }
+            
             switchView('home');
         }
 
@@ -427,11 +401,11 @@
 
         // --- TASK VIEW LOGIC ---
         function switchView(v) {
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
             if(v==='drive') renderDriveNames();
             if(v==='tasks') {
-                if(isAdmin && taskViewTargetUser === currentUser) { renderTeamSelector(); } 
+                if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } 
                 else { renderTasks(); }
             }
             if(v==='viewer') renderViewerNames();
@@ -466,36 +440,35 @@
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
 
-            // 1. Filter by User AND Tab Logic
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
-            // 3. Render Levels based on Tab Type
             if(currentTab === 'season') {
-                // SEASON: Group by BLOCK
                 if(taskViewLevel === 0) {
                     crumb.innerText = `${taskViewTargetUser} / Season / Blocks`;
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                     if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Season items.</div>`; return; }
-                    container.innerHTML = `
-                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
-                    ` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                } else {
-                    // Items in Block
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } 
+                else if (taskViewLevel === 1) {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
-                    const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                    const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` +
+                    locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                }
+                else {
+                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
+                    const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
+                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
             } else {
-                // LOCATION: Group by LOC
                 if(taskViewLevel === 0) {
                     crumb.innerText = `${taskViewTargetUser} / Locs`;
                     const locs = [...new Set(myItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
                     if(locs.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Location items.</div>`; return; }
-                    container.innerHTML = `
-                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
-                    ` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else {
-                    // Items in Loc
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskLoc}`;
                     const items = myItems.filter(i => (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
@@ -505,77 +478,34 @@
 
         function renderReviewItems() {
             const container = document.getElementById('review-content');
-            // Filter review items, optionally filter by user if desired, but Manager usually sees all reviews
             const items = fullInventory.filter(i => i.TASK_TAB === 'review');
             if(items.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; return; }
             container.innerHTML = items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
         }
 
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 1; renderTasks(); }
-        function resetTaskView() { taskViewLevel = 0; renderTasks(); }
+        function selectTaskLoc(l) { 
+            selectedTaskLoc = l; 
+            if(currentTab === 'season') taskViewLevel = 2;
+            else taskViewLevel = 1; 
+            renderTasks(); 
+        }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        // --- BATCH & UTILS (Shared) ---
         function getBatchReport() {
-            let report = "Greenleaf Update:\n\n";
-            if(selectedIdx.length === 0) return "No items selected.";
+            let report = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`; let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`]; if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`); report += details.join(' | ') + "\n"; if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`; if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`; if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`; report += `\n----------------\n\n`; }); return report;
+        }
+        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
+        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
 
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                report += `• ${item.COMMONNAME} (${item.CONTSIZE})\n`;
-                report += `  Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE}\n`;
-                
-                // Add your custom fields to report
-                if(item.SAVED_MATCH) report += `  Match: ${item.SAVED_MATCH}%\n`;
-                if(item.SAVED_SPEC)  report += `  Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK)  report += `  Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE)  report += `  Note: ${item.SAVED_NOTE}\n`;
-                if(item.SAVED_PHOTO_LINK) report += `  Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                
-                report += "\n";
-            });
-            return report;
-        }
+        function renderDriveNames() { const term = document.getElementById('drive-search').value.toLowerCase(); const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort(); document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectDriveName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectDriveSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join(''); }
 
-        function batchText() {
-            const txt = getBatchReport();
-            // Use generic body param for broader compatibility
-            window.location.href = "sms:?body=" + encodeURIComponent(txt);
-        }
-
-        function batchEmail() {
-            const txt = getBatchReport();
-            const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
-            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
-        }
-
-        function renderDriveNames() {
-            const term = document.getElementById('drive-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectDriveName(name) {
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectDriveSize(name, size) {
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join('');
-        }
-
-        function renderViewerNames() {
-            const term = document.getElementById('viewer-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectViewerName(name) {
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectViewerSize(name, size) {
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
-        }
+        function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort(); document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
         function createRowHtml(item, idx, source) {
             const showCheck = isBatch && isAdmin;
@@ -590,15 +520,12 @@
             </div>`;
         }
 
-        // --- DETAILS ---
         function openDetail(idx, originView) {
-            lastView = originView;
-            activeItem = fullInventory[idx];
+            lastView = originView; activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
-            ['view-drive','view-tasks','view-viewer','view-review'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
-            
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
@@ -610,16 +537,13 @@
             const cont = document.getElementById('input-container');
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden');
-                cont.innerHTML = `
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+                cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             } else {
                 document.getElementById('btn-cam').classList.add('hidden'); document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div> <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
+                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
             }
-            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } 
+            else { document.getElementById('expand-section').classList.remove('hidden'); }
             renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
