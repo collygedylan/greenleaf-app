@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v149 (Manager Home)</title>
+    <title>Greenleaf Pro v150 (Review Drill-Down)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v149</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v150</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -185,9 +185,17 @@
                 <div id="task-content"></div>
             </div>
 
+            <div id="view-review" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-red-500 uppercase">Items for Review</h2>
+                    <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
+                </div>
+                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500">Items with no Priority, or no winner found.</div>
+                <div id="review-content"></div>
+            </div>
+
             <div id="view-soc" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC</h2><p class="text-gray-500 text-sm">Sales Order Check Module Active.</p></div>
             <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><p class="text-gray-500 text-sm">Inventory Tracking Module Active.</p></div>
-            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div id="review-content"></div></div>
             <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-detail" class="hidden">
@@ -259,10 +267,9 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v149_storage"; 
+        const STORAGE_KEY = "greenleaf_v150_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
-        // PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
         async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
@@ -277,6 +284,11 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
+
+        // Review Tab State
+        let reviewViewLevel = 0;
+        let selectedReviewName = null;
+        let selectedReviewSize = null;
 
         let isBatch = false;
         let selectedIdx = [];
@@ -376,7 +388,6 @@
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
             
-            // ADMIN HOME BUTTONS
             if(isAdmin) {
                 document.getElementById('header-batch-btn').style.display = 'block';
                 document.getElementById('home-btn-soc').classList.remove('hidden');
@@ -402,7 +413,6 @@
             });
         }
 
-        // --- TASK VIEW LOGIC ---
         function switchView(v) {
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
@@ -412,7 +422,7 @@
                 else { renderTasks(); }
             }
             if(v==='viewer') renderViewerNames();
-            if(v==='review') renderReviewItems();
+            if(v==='review') { reviewViewLevel = 0; renderReviewItems(); }
         }
 
         function renderTeamSelector() {
@@ -479,12 +489,55 @@
             }
         }
 
+        // --- NEW REVIEW DRILL DOWN LOGIC ---
         function renderReviewItems() {
             const container = document.getElementById('review-content');
-            const items = fullInventory.filter(i => i.TASK_TAB === 'review');
-            if(items.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; return; }
-            container.innerHTML = items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
+            const crumb = document.getElementById('review-crumb');
+            const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+
+            if(reviewItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`;
+                crumb.innerText = "";
+                return;
+            }
+
+            // LEVEL 0: COMMON NAMES
+            if(reviewViewLevel === 0) {
+                crumb.innerText = "All Names";
+                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort();
+                container.innerHTML = names.map(n => 
+                    `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')">
+                        <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i>
+                    </div>`
+                ).join('');
+            }
+            // LEVEL 1: SIZES
+            else if(reviewViewLevel === 1) {
+                crumb.innerText = selectedReviewName;
+                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort();
+                container.innerHTML = `
+                    <div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>
+                    ${sizes.map(s => `
+                        <div class="drill-item" onclick="selectReviewSize('${s}')">
+                            <span>${s}</span><i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            // LEVEL 2: ITEMS (LOC + LOT)
+            else if(reviewViewLevel === 2) {
+                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`;
+                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize);
+                container.innerHTML = `
+                    <div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
+                    ${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}
+                `;
+            }
         }
+
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { 
