@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v135 (Team Updates)</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Greenleaf Pro v136 (Android PWA)</title>
+    
+    <meta name="theme-color" content="#007a4d">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Greenleaf Pro","short_name":"Greenleaf","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#007a4d","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/628/628283.png","sizes":"512x512","type":"image/png"}]}'>
+    
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -104,7 +111,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v135</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v136</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -236,7 +243,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v135_storage"; 
+        const STORAGE_KEY = "greenleaf_v136_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         let fullInventory = [];
@@ -392,18 +399,16 @@
 
         function batchText() {
             const txt = getBatchReport();
-            // Create ONE single text message string
             window.location.href = "sms:?body=" + encodeURIComponent(txt);
         }
 
         function batchEmail() {
             const txt = getBatchReport();
-            // Create ONE single email body string
             const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
         }
 
-        // --- DRIVE MODE ---
+        // --- DRIVE MODE (Drill Down) ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
@@ -625,6 +630,7 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
             
+            // STORAGE FIX: Do NOT save base64 to localStorage
             storage[id] = { 
                 m: activeItem.SAVED_MATCH, 
                 s: activeItem.SAVED_SPEC, 
@@ -695,7 +701,6 @@
             const k = document.getElementById('chk-kayla').checked;
             const m = document.getElementById('chk-morgan').checked;
             
-            // Build Assignments Array
             let selected = [];
             if(d) selected.push("Dylan");
             if(k) selected.push("Kayla");
@@ -703,6 +708,7 @@
             
             if(selected.length === 0) { alert("Please select at least one person."); return; }
             
+            // Join selected names with "&"
             let target = selected.join(" & ");
             
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
