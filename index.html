@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v151 (Review Logic)</title>
+    <title>Greenleaf Pro v154</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkdyZWVubGVhZiBQcm8iLAogICJzaG9ydF9uYW1lIjogIkdyZWVubGVhZiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2E0ZCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzYyOC82MjgyODMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
-
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN & LOADING */
+        /* LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* MENU */
+        
+        /* DRAWER */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
@@ -37,58 +35,45 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* LISTS */
+        /* UI ELEMENTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
-        
-        /* TASK TABS */
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-
-        /* BATCH & ACTION BAR */
+        
+        /* BATCH & HOME */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        .action-btn i { font-size: 22px; }
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
+        .home-icon { font-size: 32px; margin-bottom: 4px; }
 
-        /* DETAIL TABS */
+        /* DATA GRID */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        
-        /* DATA GRID */
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
         .full-width { grid-column: span 2; }
-
-        /* EXPANDER */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
-        
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
-        .camera-btn.loading { background-color: #e5e7eb; border-color: #9ca3af; color: #4b5563; pointer-events: none; }
-
+        
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
-        
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
-        #install-btn { display: none; color: #007a4d; font-weight: bold; }
-        
-        /* HOME GRID */
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 4px; }
+        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -121,7 +106,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v151</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v154</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -152,7 +137,6 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
@@ -170,34 +154,30 @@
                     <h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2>
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
-                
                 <div id="team-selector" class="hidden mb-4 grid grid-cols-3 gap-2">
                     <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
                     <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
                     <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
                 </div>
-
                 <div id="task-tabs-container" class="task-tabs hidden">
                     <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Note</div>
                     <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location Sales Note</div>
                 </div>
-
                 <div id="task-content"></div>
             </div>
 
-            <div id="view-review" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-red-500 uppercase">Items for Review</h2>
-                    <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
+            <div id="view-soc" class="hidden">
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
+                <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d]"></div>
+                <button onclick="fetchSocData()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Check for New SOC File</button>
+                <div class="flex justify-between items-center mb-2">
+                    <span id="soc-crumb" class="text-xs font-bold text-gray-500"></span>
                 </div>
-                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">
-                    Items with No Priority OR No Season Winner.
-                </div>
-                <div id="review-content"></div>
+                <div id="soc-content"></div>
             </div>
 
-            <div id="view-soc" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC</h2><p class="text-gray-500 text-sm">Sales Order Check Module Active.</p></div>
             <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><p class="text-gray-500 text-sm">Inventory Tracking Module Active.</p></div>
+            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with No Priority OR No Season Winner.</div><span id="review-crumb" class="text-xs font-bold text-gray-400"></span><div id="review-content"></div></div>
             <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-detail" class="hidden">
@@ -268,15 +248,19 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v151_storage"; 
+        // *** CONFIGURATION ***
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiIAZdL1KjufqtBCD4fUBY02RDxo0ii3cKpTCywOIJO7COB6vV7tnbbHuzhy-bU6qZ/exec"; 
+        const STORAGE_KEY = "greenleaf_v154_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
+        // PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
         async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
 
+        // STATE
         let fullInventory = [];
+        let socInventory = []; 
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
@@ -286,34 +270,23 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
-
-        // Review Tab State
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
+        let socViewLevel = 0;
+        let selectedSocRep = null;
+        let selectedSocCust = null;
 
         let isBatch = false;
         let selectedIdx = [];
         let lastView = 'drive'; 
 
-        function selectUser(u) {
-            currentUser = u;
-            isAdmin = ADMINS.includes(u);
-            taskViewTargetUser = u; 
-            document.getElementById('login-buttons').classList.add('hidden');
-            document.getElementById('pin-container').classList.remove('hidden');
-            document.getElementById('pin-code').style.display = 'block';
-            document.getElementById('pin-code').focus();
-        }
+        // LOGIN
+        function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
+        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
+        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        function verifyPin() {
-            if (document.getElementById('pin-code').value === '1234') {
-                document.getElementById('pin-container').classList.add('hidden');
-                document.getElementById('loading-spinner').classList.remove('hidden');
-                fetchData();
-            } else { alert("Incorrect PIN"); }
-        }
-
+        // FETCH DATA
         async function fetchData() {
             try {
                 pruneOldData(); 
@@ -347,6 +320,7 @@
                     return obj;
                 });
 
+                // LOGIC ENGINE
                 const groupedByItem = {};
                 rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
@@ -377,56 +351,120 @@
             } catch (e) { console.error(e); setTimeout(resetLogin, 3000); }
         }
 
-        function pruneOldData() {
-            const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            let changed = false;
-            Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } });
-            if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+        // SOC LOGIC
+        function fetchSocData() {
+            document.getElementById('soc-status').innerText = "Querying Drive...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getSoc")
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
+                    const workbook = XLSX.read(data.data, {type: 'base64'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
+                        let newRow = {};
+                        Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
+                        return newRow;
+                    });
+                    socViewLevel = 0;
+                    renderSocView();
+                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
+            })
+            .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
-        function launchApp() {
-            document.getElementById('view-login').style.display = 'none';
-            document.getElementById('app-wrapper').classList.remove('hidden');
-            document.getElementById('header-user').innerText = currentUser;
+        function renderSocView() {
+            const container = document.getElementById('soc-content');
+            const crumb = document.getElementById('soc-crumb');
             
-            if(isAdmin) {
-                document.getElementById('header-batch-btn').style.display = 'block';
-                document.getElementById('home-btn-soc').classList.remove('hidden');
-                document.getElementById('home-btn-track').classList.remove('hidden');
-                document.getElementById('home-btn-review').classList.remove('hidden');
-            } else {
-                document.getElementById('header-batch-btn').style.display = 'none';
-                document.getElementById('home-btn-soc').classList.add('hidden');
-                document.getElementById('home-btn-track').classList.add('hidden');
-                document.getElementById('home-btn-review').classList.add('hidden');
+            if(socInventory.length === 0) { 
+                container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data. Tap check button.</div>`; 
+                return; 
             }
-            
-            switchView('home');
+
+            // LEVEL 0: SALES REPS
+            if(socViewLevel === 0) {
+                crumb.innerText = "All Reps";
+                const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
+                container.innerHTML = reps.map(r => `
+                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
+                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `).join('');
+            }
+            // LEVEL 1: CUSTOMERS
+            else if(socViewLevel === 1) {
+                crumb.innerText = selectedSocRep;
+                const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
+                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
+                    ${customers.map(c => `
+                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            // LEVEL 2: ITEMS
+            else if(socViewLevel === 2) {
+                crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
+                const items = socInventory.filter(i => 
+                    (i.SALESREPNAME || "Unknown") === selectedSocRep && 
+                    (i.CUSTOMERNAME || "Unknown") === selectedSocCust
+                );
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
+                    ${items.map(i => `
+                        <div class="inv-card">
+                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
+                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                        </div>
+                    `).join('')}
+                `;
+            }
         }
 
-        function applyAssignments() {
-            let i = 0;
-            fullInventory.forEach(item => {
-                const group = (item.PLANTGROUPCODE || "").toString();
-                if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan";
-                else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla";
-                else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; }
-            });
-        }
+        function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
-        function switchView(v) {
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('view-'+v).classList.remove('hidden');
-            if(v==='drive') renderDriveNames();
-            if(v==='tasks') {
+        // UTILS
+        function pruneOldData() { const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000; const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); let changed = false; Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } }); if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); }
+        function launchApp() { 
+            document.getElementById('view-login').style.display = 'none'; 
+            document.getElementById('app-wrapper').classList.remove('hidden'); 
+            document.getElementById('header-user').innerText = currentUser; 
+            if(isAdmin) { 
+                document.getElementById('header-batch-btn').style.display = 'block'; 
+                document.getElementById('home-btn-soc').classList.remove('hidden'); 
+                document.getElementById('home-btn-track').classList.remove('hidden'); 
+                document.getElementById('home-btn-review').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('header-batch-btn').style.display = 'none'; 
+                document.getElementById('home-btn-soc').classList.add('hidden'); 
+                document.getElementById('home-btn-track').classList.add('hidden'); 
+                document.getElementById('home-btn-review').classList.add('hidden'); 
+            } 
+            switchView('home'); 
+        }
+        function applyAssignments() { let i = 0; fullInventory.forEach(item => { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla"; else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } }); }
+        function switchView(v) { 
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+            if(v==='drive') renderDriveNames(); 
+            if(v==='tasks') { 
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } 
-                else { renderTasks(); }
-            }
-            if(v==='viewer') renderViewerNames();
-            if(v==='review') { reviewViewLevel = 0; renderReviewItems(); }
+                else { renderTasks(); } 
+            } 
+            if(v==='viewer') renderViewerNames(); 
+            if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
+            if(v==='soc' && socInventory.length > 0) renderSocView(); 
         }
 
+        // Expanded UI Logic Functions
         function renderTeamSelector() {
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
@@ -438,16 +476,16 @@
             taskViewTargetUser = user;
             document.getElementById('team-selector').classList.add('hidden');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-            taskViewLevel = 0; 
+            taskViewLevel = 0;
             renderTasks();
         }
 
-        function setTaskTab(t) { 
-            currentTab = t; 
+        function setTaskTab(t) {
+            currentTab = t;
             document.getElementById('ttab-season').classList.toggle('active', t === 'season');
             document.getElementById('ttab-location').classList.toggle('active', t === 'location');
-            taskViewLevel = 0; 
-            renderTasks(); 
+            taskViewLevel = 0;
+            renderTasks();
         }
 
         function renderTasks() {
@@ -463,16 +501,12 @@
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                     if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Season items.</div>`; return; }
                     container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                } 
-                else if (taskViewLevel === 1) {
+                } else if (taskViewLevel === 1) {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                     const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                     const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
-                    
-                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` +
-                    locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                }
-                else {
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
                     const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                     container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
@@ -491,7 +525,6 @@
             }
         }
 
-        // --- NEW REVIEW DRILL DOWN LOGIC ---
         function renderReviewItems() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
@@ -503,7 +536,6 @@
                 return;
             }
 
-            // LEVEL 0: COMMON NAMES
             if(reviewViewLevel === 0) {
                 crumb.innerText = "All Names";
                 const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort();
@@ -512,9 +544,7 @@
                         <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i>
                     </div>`
                 ).join('');
-            }
-            // LEVEL 1: SIZES
-            else if(reviewViewLevel === 1) {
+            } else if(reviewViewLevel === 1) {
                 crumb.innerText = selectedReviewName;
                 const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort();
@@ -526,9 +556,7 @@
                         </div>
                     `).join('')}
                 `;
-            }
-            // LEVEL 2: ITEMS (LOC + LOT)
-            else if(reviewViewLevel === 2) {
+            } else if(reviewViewLevel === 2) {
                 crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`;
                 const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize);
                 container.innerHTML = `
@@ -540,7 +568,7 @@
 
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
-
+        
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { 
             selectedTaskLoc = l; 
@@ -552,18 +580,53 @@
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
         function getBatchReport() {
-            let report = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`; let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`]; if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`); report += details.join(' | ') + "\n"; if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`; if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`; if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`; report += `\n----------------\n\n`; }); return report;
+            let report = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
+                let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`];
+                if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`);
+                report += details.join(' | ') + "\n";
+                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
+                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
+                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
+                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
+                report += `\n----------------\n\n`;
+            });
+            return report;
         }
+        
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
         function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
 
-        function renderDriveNames() { const term = document.getElementById('drive-search').value.toLowerCase(); const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort(); document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectDriveName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectDriveSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join(''); }
+        function renderDriveNames() {
+            const term = document.getElementById('drive-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
+            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectDriveName(name) {
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectDriveSize(name, size) {
+            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join('');
+        }
 
-        function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort(); document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
+            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectViewerName(name) {
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectViewerSize(name, size) {
+            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
+        }
 
         function createRowHtml(item, idx, source) {
             const showCheck = isBatch && isAdmin;
@@ -582,6 +645,7 @@
             lastView = originView; activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -594,38 +658,65 @@
 
             const cont = document.getElementById('input-container');
             if(isAdmin) {
-                document.getElementById('btn-cam').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden');
-                cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+                document.getElementById('btn-cam').classList.remove('hidden');
+                document.getElementById('btn-save').classList.remove('hidden');
+                cont.innerHTML = `
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
+                `;
             } else {
-                document.getElementById('btn-cam').classList.add('hidden'); document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
+                document.getElementById('btn-cam').classList.add('hidden');
+                document.getElementById('btn-save').classList.add('hidden');
+                cont.innerHTML = `
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
+                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
+                `;
             }
-            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } 
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); }
             else { document.getElementById('expand-section').classList.remove('hidden'); }
             renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
         function renderOverviewData() {
-            const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid');
-            const photoDiv = document.getElementById('photo-preview'); const imgPrev = document.getElementById('img-prev');
-            const imgPlace = document.getElementById('img-placeholder'); const linkBtn = document.getElementById('photo-link-btn');
+            const box = document.getElementById('user-data-box');
+            const grid = document.getElementById('dynamic-user-grid');
+            const photoDiv = document.getElementById('photo-preview');
+            const imgPrev = document.getElementById('img-prev');
+            const imgPlace = document.getElementById('img-placeholder');
+            const linkBtn = document.getElementById('photo-link-btn');
+            
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
-                photoDiv.classList.remove('hidden'); linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
-                else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
-            } else { photoDiv.classList.add('hidden'); }
+                photoDiv.classList.remove('hidden');
+                linkBtn.href = activeItem.SAVED_PHOTO_LINK;
+                if(activeItem.TEMP_PHOTO_BASE64) {
+                    imgPrev.src = activeItem.TEMP_PHOTO_BASE64;
+                    imgPrev.classList.remove('hidden');
+                    imgPlace.classList.add('hidden');
+                } else {
+                    imgPrev.classList.add('hidden');
+                    imgPlace.classList.remove('hidden');
+                }
+            } else {
+                photoDiv.classList.add('hidden');
+            }
+            
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
-                const file = input.files[0]; const btn = document.getElementById('btn-cam'); const btnText = document.getElementById('cam-text');
+                const file = input.files[0];
+                const btn = document.getElementById('btn-cam');
+                const btnText = document.getElementById('cam-text');
                 btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
                 const reader = new FileReader(); reader.readAsDataURL(file);
                 reader.onload = function(e) {
@@ -670,7 +761,7 @@
         function renderAllFields() {
             const cont = document.getElementById('expand-content');
             cont.innerHTML = Object.keys(activeItem).map(k => {
-                if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID') return "";
+                if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID' || k === 'TASK_TAB') return "";
                 return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
             }).join('');
         }
