@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v148 (Admin Home)</title>
+    <title>Greenleaf Pro v149 (Manager Home)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v148</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v149</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -155,6 +155,7 @@
                     
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
             </div>
 
@@ -258,7 +259,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v148_storage"; 
+        const STORAGE_KEY = "greenleaf_v149_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -380,10 +381,12 @@
                 document.getElementById('header-batch-btn').style.display = 'block';
                 document.getElementById('home-btn-soc').classList.remove('hidden');
                 document.getElementById('home-btn-track').classList.remove('hidden');
+                document.getElementById('home-btn-review').classList.remove('hidden');
             } else {
                 document.getElementById('header-batch-btn').style.display = 'none';
                 document.getElementById('home-btn-soc').classList.add('hidden');
                 document.getElementById('home-btn-track').classList.add('hidden');
+                document.getElementById('home-btn-review').classList.add('hidden');
             }
             
             switchView('home');
