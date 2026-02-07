@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v154</title>
+    <title>Greenleaf Pro v156 (Smart Name Match)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-    
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkdyZWVubGVhZiBQcm8iLAogICJzaG9ydF9uYW1lIjogIkdyZWVubGVhZiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2E0ZCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzYyOC82MjgyODMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN */
+        /* LOGIN & LOADING */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
-        
-        /* DRAWER */
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #007a4d; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* MENU */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
@@ -35,45 +37,58 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* UI ELEMENTS */
+        /* LISTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
+        
+        /* TASK TABS */
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        
-        /* BATCH & HOME */
+
+        /* BATCH & ACTION BAR */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 4px; }
+        .action-btn i { font-size: 22px; }
 
-        /* DATA GRID */
+        /* DETAIL TABS */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        
+        /* DATA GRID */
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
         .full-width { grid-column: span 2; }
+
+        /* EXPANDER */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
+        .camera-btn.loading { background-color: #e5e7eb; border-color: #9ca3af; color: #4b5563; pointer-events: none; }
+
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
+        
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        
+        /* HOME GRID */
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
+        .home-icon { font-size: 32px; margin-bottom: 4px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -106,7 +121,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v154</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v156</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -248,17 +263,23 @@
     </div>
 
     <script>
-        // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiIAZdL1KjufqtBCD4fUBY02RDxo0ii3cKpTCywOIJO7COB6vV7tnbbHuzhy-bU6qZ/exec"; 
-        const STORAGE_KEY = "greenleaf_v154_storage"; 
+        const STORAGE_KEY = "greenleaf_v156_storage"; 
         const ADMINS = ["Dylan", "J.D."];
+        
+        // ALLOWED REPS LIST (Uppercased for comparison)
+        const SOC_REP_LIST = [
+            "CHANCE ALLDREDGE", "TONY BONO", "BEN BROWN", "TOBY BROWN", "ABBEY BURKA", 
+            "DAVID BRANDT", "ELLEN DEELY", "NATE DOUGLAS", "TRACI EARLE", "KEVIN EFFINGER", 
+            "CHRIS FARROW", "CHRIS GAYDOS", "ANNETE HANCOCK", "BEN HARVESON", "TROY LEE", 
+            "WES LUGAS", "RUDY MARTINEZ", "BEN MASCHINO", "JOSH RINGLEB", "TRACEY TAPSCOTT", 
+            "JESSICA ROBERTSON", "CASEY RUFENER"
+        ];
 
-        // PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
         async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
 
-        // STATE
         let fullInventory = [];
         let socInventory = []; 
         let activeItem = null;
@@ -281,12 +302,22 @@
         let selectedIdx = [];
         let lastView = 'drive'; 
 
-        // LOGIN
-        function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
-        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
+        function selectUser(u) {
+            currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; 
+            document.getElementById('login-buttons').classList.add('hidden');
+            document.getElementById('pin-container').classList.remove('hidden');
+            document.getElementById('pin-code').style.display = 'block';
+            document.getElementById('pin-code').focus();
+        }
 
-        // FETCH DATA
+        function verifyPin() {
+            if (document.getElementById('pin-code').value === '1234') {
+                document.getElementById('pin-container').classList.add('hidden');
+                document.getElementById('loading-spinner').classList.remove('hidden');
+                fetchData();
+            } else { alert("Incorrect PIN"); }
+        }
+
         async function fetchData() {
             try {
                 pruneOldData(); 
@@ -320,7 +351,6 @@
                     return obj;
                 });
 
-                // LOGIC ENGINE
                 const groupedByItem = {};
                 rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
@@ -351,7 +381,7 @@
             } catch (e) { console.error(e); setTimeout(resetLogin, 3000); }
         }
 
-        // SOC LOGIC
+        // SOC LOGIC (FILTERED)
         function fetchSocData() {
             document.getElementById('soc-status').innerText = "Querying Drive...";
             fetch(GOOGLE_SCRIPT_URL + "?action=getSoc")
@@ -363,14 +393,20 @@
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
                         let newRow = {};
-                        Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
+                        Object.keys(row).forEach(k => {
+                            newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k];
+                        });
                         return newRow;
                     });
                     socViewLevel = 0;
                     renderSocView();
-                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
+                } else {
+                    document.getElementById('soc-status').innerText = "Error: " + data.message;
+                }
             })
-            .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
+            .catch(e => {
+                document.getElementById('soc-status').innerText = "Fetch Error: " + e;
+            });
         }
 
         function renderSocView() {
@@ -382,17 +418,30 @@
                 return; 
             }
 
-            // LEVEL 0: SALES REPS
             if(socViewLevel === 0) {
-                crumb.innerText = "All Reps";
-                const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
+                crumb.innerText = "Sales Reps";
+                const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))]
+                    .filter(r => {
+                        // NORMALIZE: "Brown, Ben" -> "BEN BROWN"
+                        const fName = r.toUpperCase().replace(/,/g, '').split(/\s+/).filter(x=>x).sort().join(' ');
+                        return SOC_REP_LIST.some(allowed => {
+                            const aName = allowed.toUpperCase().replace(/,/g, '').split(/\s+/).filter(x=>x).sort().join(' ');
+                            return fName === aName;
+                        });
+                    })
+                    .sort();
+                
+                if(reps.length === 0) {
+                    container.innerHTML = `<div class="p-4 text-center text-red-500">No matching Sales Reps found.</div>`;
+                    return;
+                }
+
                 container.innerHTML = reps.map(r => `
                     <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
                         <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
                     </div>
                 `).join('');
             }
-            // LEVEL 1: CUSTOMERS
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
                 const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
@@ -407,7 +456,6 @@
                     `).join('')}
                 `;
             }
-            // LEVEL 2: ITEMS
             else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
                 const items = socInventory.filter(i => 
@@ -431,7 +479,6 @@
         function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
-        // UTILS
         function pruneOldData() { const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000; const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); let changed = false; Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } }); if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); }
         function launchApp() { 
             document.getElementById('view-login').style.display = 'none'; 
