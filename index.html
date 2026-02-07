@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v139 (Team & Tabs)</title>
+    <title>Greenleaf Pro v142 (Review Logic)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v139</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v142</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -129,6 +129,9 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            
+            <div class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
+            
             <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
@@ -173,6 +176,14 @@
                 <div id="task-content"></div>
             </div>
 
+            <div id="view-review" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-red-500 uppercase">Items for Review</h2>
+                </div>
+                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500">Items with NO Priority OR items where No Priority met the Season Supply requirement.</div>
+                <div id="review-content"></div>
+            </div>
+
             <div id="view-viewer" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Read-Only Viewer</h2>
                 <input type="text" id="viewer-search" class="input-field mb-4" placeholder="Quick Search..." onkeyup="renderViewerNames()">
@@ -199,6 +210,8 @@
                         <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Item Code</div><div id="ov-item" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                     </div>
                     
@@ -260,7 +273,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v139_storage"; 
+        const STORAGE_KEY = "greenleaf_v142_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -273,10 +286,9 @@
         let currentUser = null;
         let isAdmin = false;
         
-        // Task State
-        let taskViewTargetUser = null; // Who are we viewing?
+        let taskViewTargetUser = null; 
         let currentTab = 'season';
-        let taskViewLevel = 0; // 0=Block, 1=Loc, 2=Items
+        let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
 
@@ -287,7 +299,7 @@
         function selectUser(u) {
             currentUser = u;
             isAdmin = ADMINS.includes(u);
-            taskViewTargetUser = u; // Default to self
+            taskViewTargetUser = u; 
             document.getElementById('login-buttons').classList.add('hidden');
             document.getElementById('pin-container').classList.remove('hidden');
             document.getElementById('pin-code').style.display = 'block';
@@ -317,18 +329,72 @@
                     if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
                 }
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                
                 let idCounters = {};
-                fullInventory = jsonData.map((row, index) => {
+                // RAW MAPPING
+                let rawItems = jsonData.map((row, index) => {
                     let obj = {};
                     Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
+                    obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
+                    obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
+                    obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
                     const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
                     if(!idCounters[baseKey]) idCounters[baseKey] = 0;
                     const instanceNum = idCounters[baseKey];
                     idCounters[baseKey]++;
                     obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
+                    obj.TASK_TAB = 'location'; // Default
                     return obj;
                 });
+
+                // *** LOGIC ENGINE: Determine Winners ***
+                const groupedByItem = {};
+                rawItems.forEach(i => {
+                    if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = [];
+                    groupedByItem[i.ITEMCODE].push(i);
+                });
+
+                Object.keys(groupedByItem).forEach(code => {
+                    let items = groupedByItem[code];
+                    
+                    // 1. Check for Missing Priority -> SEND TO REVIEW
+                    const hasPriority = items.some(i => i.PRIORITY > 0);
+                    if(!hasPriority) {
+                        items.forEach(i => i.TASK_TAB = 'review');
+                        return;
+                    }
+
+                    // 2. Find Winner (Lowest Priority that meets 10% Rule)
+                    let winnerPriority = null;
+                    const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
+                    
+                    for(let p of priorities) {
+                        const pItems = items.filter(i => i.PRIORITY === p);
+                        // Check if ANY row in this priority meets criteria
+                        const isWinner = pItems.some(i => i.PTRAVAILABLE > (i.SEASONSUPPLY * 0.10));
+                        if(isWinner) {
+                            winnerPriority = p;
+                            break; 
+                        }
+                    }
+
+                    // 3. Assign Tabs based on Winner
+                    if (winnerPriority !== null) {
+                        items.forEach(i => {
+                            if (i.PRIORITY === winnerPriority) {
+                                i.TASK_TAB = 'season';
+                            } else {
+                                i.TASK_TAB = 'location';
+                            }
+                        });
+                    } else {
+                        // NEW LOGIC: Priorities exist, but NO winner found -> SEND TO REVIEW
+                        items.forEach(i => i.TASK_TAB = 'review');
+                    }
+                });
+
+                fullInventory = rawItems;
                 applyAssignments(); loadSavedData(); launchApp();
             } catch (e) { console.error(e); setTimeout(resetLogin, 3000); }
         }
@@ -361,18 +427,15 @@
 
         // --- TASK VIEW LOGIC ---
         function switchView(v) {
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
             if(v==='drive') renderDriveNames();
             if(v==='tasks') {
-                if(isAdmin && taskViewTargetUser === currentUser) { 
-                    // Show Team Selector initially for Admin
-                    renderTeamSelector();
-                } else {
-                    renderTasks();
-                }
+                if(isAdmin && taskViewTargetUser === currentUser) { renderTeamSelector(); } 
+                else { renderTasks(); }
             }
             if(v==='viewer') renderViewerNames();
+            if(v==='review') renderReviewItems();
         }
 
         function renderTeamSelector() {
@@ -386,7 +449,6 @@
             taskViewTargetUser = user;
             document.getElementById('team-selector').classList.add('hidden');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-            // Reset drill state
             taskViewLevel = 0; 
             renderTasks();
         }
@@ -400,42 +462,53 @@
         }
 
         function renderTasks() {
-            const myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser));
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
 
-            // --- TAB 1: SEASON SALES (Block -> Item) ---
+            // 1. Filter by User AND Tab Logic
+            let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
+
+            // 3. Render Levels based on Tab Type
             if(currentTab === 'season') {
+                // SEASON: Group by BLOCK
                 if(taskViewLevel === 0) {
-                    crumb.innerText = `${taskViewTargetUser} / Blocks`;
+                    crumb.innerText = `${taskViewTargetUser} / Season / Blocks`;
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                    if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks.</div>`; return; }
+                    if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Season items.</div>`; return; }
                     container.innerHTML = `
                     <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
                     ` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else {
+                    // Items in Block
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                     const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
-            }
-            
-            // --- TAB 2: LOCATION SALES (Location -> Item) ---
-            else if(currentTab === 'location') {
+            } else {
+                // LOCATION: Group by LOC
                 if(taskViewLevel === 0) {
-                    crumb.innerText = `${taskViewTargetUser} / Locations`;
+                    crumb.innerText = `${taskViewTargetUser} / Locs`;
                     const locs = [...new Set(myItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
-                    if(locs.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks.</div>`; return; }
+                    if(locs.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No Location items.</div>`; return; }
                     container.innerHTML = `
                     <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
                     ` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else {
+                    // Items in Loc
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskLoc}`;
                     const items = myItems.filter(i => (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
             }
+        }
+
+        function renderReviewItems() {
+            const container = document.getElementById('review-content');
+            // Filter review items, optionally filter by user if desired, but Manager usually sees all reviews
+            const items = fullInventory.filter(i => i.TASK_TAB === 'review');
+            if(items.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; return; }
+            container.innerHTML = items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
         }
 
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
@@ -504,17 +577,22 @@
             </div>`;
         }
 
+        // --- DETAILS ---
         function openDetail(idx, originView) {
             lastView = originView;
             activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
-            ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-viewer','view-review'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
+            
+            // ... (rest of detail logic remains same)
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
+            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
+            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
             const cont = document.getElementById('input-container');
