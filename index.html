@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v138 (Task Drilldown)</title>
+    <title>Greenleaf Pro v139 (Team & Tabs)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -42,6 +42,11 @@
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
         
+        /* TASK TABS */
+        .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
+        .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
+        .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+
         /* BATCH & ACTION BAR */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
@@ -111,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v138</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v139</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -153,6 +158,18 @@
                     <h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2>
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
+                
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-3 gap-2">
+                    <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
+                    <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
+                    <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
+                </div>
+
+                <div id="task-tabs-container" class="task-tabs hidden">
+                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Note</div>
+                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location Sales Note</div>
+                </div>
+
                 <div id="task-content"></div>
             </div>
 
@@ -243,31 +260,22 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyne8ZvqglIU02HazzvKgAM1mvWGNmf90quwtKiEkAmjmiXlaQnk79BK0OpyrRKrRjfJA/exec"; 
-        const STORAGE_KEY = "greenleaf_v138_storage"; 
+        const STORAGE_KEY = "greenleaf_v139_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
-        // PWA Install
+        // PWA
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-btn').style.display = 'flex';
-        });
-        async function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; }
-                deferredPrompt = null;
-            }
-        }
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
+        async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
 
         let fullInventory = [];
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
         
-        // Task Drill State
+        // Task State
+        let taskViewTargetUser = null; // Who are we viewing?
+        let currentTab = 'season';
         let taskViewLevel = 0; // 0=Block, 1=Loc, 2=Items
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
@@ -279,6 +287,7 @@
         function selectUser(u) {
             currentUser = u;
             isAdmin = ADMINS.includes(u);
+            taskViewTargetUser = u; // Default to self
             document.getElementById('login-buttons').classList.add('hidden');
             document.getElementById('pin-container').classList.remove('hidden');
             document.getElementById('pin-code').style.display = 'block';
@@ -308,45 +317,27 @@
                     if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
                 }
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
-                
                 let idCounters = {};
                 fullInventory = jsonData.map((row, index) => {
                     let obj = {};
-                    Object.keys(row).forEach(k => {
-                        let cleanK = k.toString().replace(/\s+/g, '').toUpperCase();
-                        obj[cleanK] = row[k];
-                    });
+                    Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
                     if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
-                    
                     const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
                     if(!idCounters[baseKey]) idCounters[baseKey] = 0;
                     const instanceNum = idCounters[baseKey];
                     idCounters[baseKey]++;
                     obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
-                    
                     return obj;
                 });
-
-                applyAssignments();
-                loadSavedData();
-                launchApp();
-            } catch (e) {
-                console.error(e);
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('status-msg').innerText = "Sync Failed: inventory.xlsx not found";
-                document.getElementById('status-msg').classList.remove('hidden');
-                setTimeout(resetLogin, 3000);
-            }
+                applyAssignments(); loadSavedData(); launchApp();
+            } catch (e) { console.error(e); setTimeout(resetLogin, 3000); }
         }
 
         function pruneOldData() {
-            const now = Date.now();
-            const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
+            const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             let changed = false;
-            Object.keys(storage).forEach(key => {
-                if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; }
-            });
+            Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } });
             if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
         }
 
@@ -354,8 +345,7 @@
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
             document.getElementById('header-user').innerText = currentUser;
-            if(isAdmin) { document.getElementById('header-batch-btn').style.display = 'block'; }
-            else { document.getElementById('header-batch-btn').style.display = 'none'; }
+            document.getElementById('header-batch-btn').style.display = isAdmin ? 'block' : 'none';
             switchView('home');
         }
 
@@ -365,106 +355,96 @@
                 const group = (item.PLANTGROUPCODE || "").toString();
                 if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan";
                 else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla";
-                else {
-                    const weight = i % 5;
-                    item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan");
-                    i++;
-                }
+                else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; }
             });
         }
 
-        // --- TASK VIEW DRILL DOWN LOGIC ---
+        // --- TASK VIEW LOGIC ---
+        function switchView(v) {
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            if(v==='drive') renderDriveNames();
+            if(v==='tasks') {
+                if(isAdmin && taskViewTargetUser === currentUser) { 
+                    // Show Team Selector initially for Admin
+                    renderTeamSelector();
+                } else {
+                    renderTasks();
+                }
+            }
+            if(v==='viewer') renderViewerNames();
+        }
+
+        function renderTeamSelector() {
+            document.getElementById('team-selector').classList.remove('hidden');
+            document.getElementById('task-tabs-container').classList.add('hidden');
+            document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`;
+            document.getElementById('task-crumb').innerText = "Team View";
+        }
+
+        function setTaskUser(user) {
+            taskViewTargetUser = user;
+            document.getElementById('team-selector').classList.add('hidden');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
+            // Reset drill state
+            taskViewLevel = 0; 
+            renderTasks();
+        }
+
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.getElementById('ttab-season').classList.toggle('active', t === 'season');
+            document.getElementById('ttab-location').classList.toggle('active', t === 'location');
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+
         function renderTasks() {
-            // Filter my tasks first
-            const myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(currentUser));
+            const myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser));
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
 
-            // LEVEL 0: BLOCKS
-            if(taskViewLevel === 0) {
-                crumb.innerText = "All Blocks";
-                // Distinct Blocks
-                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                
-                if(blocks.length === 0) {
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks assigned.</div>`;
-                    return;
+            // --- TAB 1: SEASON SALES (Block -> Item) ---
+            if(currentTab === 'season') {
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `${taskViewTargetUser} / Blocks`;
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                    if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks.</div>`; return; }
+                    container.innerHTML = `
+                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
+                    ` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else {
+                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
+                    const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
-
-                container.innerHTML = blocks.map(b => `
-                    <div class="drill-item" onclick="selectTaskBlock('${b}')">
-                        <span class="font-bold text-lg">${b}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                `).join('');
             }
             
-            // LEVEL 1: LOCATIONS
-            else if(taskViewLevel === 1) {
-                crumb.innerText = `${selectedTaskBlock} / Locations`;
-                // Filter by Block
-                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
-
-                container.innerHTML = `
-                    <div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>
-                    ${locs.map(l => `
-                        <div class="drill-item" onclick="selectTaskLoc('${l}')">
-                            <span>${l}</span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
-            }
-
-            // LEVEL 2: ITEMS
-            else if(taskViewLevel === 2) {
-                crumb.innerText = `${selectedTaskBlock} / ${selectedTaskLoc}`;
-                // Filter by Block AND Loc
-                const finalItems = myItems.filter(i => 
-                    (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && 
-                    (i.LOCATIONCODE || "No Loc") === selectedTaskLoc
-                );
-
-                container.innerHTML = `
-                    <div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>
-                    ${finalItems.map(item => {
-                        const idx = fullInventory.indexOf(item);
-                        return createRowHtml(item, idx, 'tasks');
-                    }).join('')}
-                `;
+            // --- TAB 2: LOCATION SALES (Location -> Item) ---
+            else if(currentTab === 'location') {
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `${taskViewTargetUser} / Locations`;
+                    const locs = [...new Set(myItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
+                    if(locs.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No tasks.</div>`; return; }
+                    container.innerHTML = `
+                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>
+                    ` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else {
+                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskLoc}`;
+                    const items = myItems.filter(i => (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
             }
         }
 
-        function selectTaskBlock(b) {
-            selectedTaskBlock = b;
-            taskViewLevel = 1;
-            renderTasks();
-        }
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 1; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; renderTasks(); }
 
-        function selectTaskLoc(l) {
-            selectedTaskLoc = l;
-            taskViewLevel = 2;
-            renderTasks();
-        }
-
-        function backToTaskLocs() {
-            taskViewLevel = 1;
-            selectedTaskLoc = null;
-            renderTasks();
-        }
-
-        function resetTaskView() {
-            taskViewLevel = 0;
-            selectedTaskBlock = null;
-            selectedTaskLoc = null;
-            renderTasks();
-        }
-
-        // --- BATCH REPORTING ---
+        // --- BATCH & UTILS (Shared) ---
         function getBatchReport() {
             let report = "";
-            if(selectedIdx.length === 0) return "No items selected.";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
                 report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
@@ -480,19 +460,9 @@
             });
             return report;
         }
+        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
+        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
 
-        function batchText() {
-            const txt = getBatchReport();
-            window.location.href = "sms:?body=" + encodeURIComponent(txt);
-        }
-
-        function batchEmail() {
-            const txt = getBatchReport();
-            const subject = "Greenleaf Report - " + new Date().toLocaleDateString();
-            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
-        }
-
-        // --- DRIVE & VIEWER ---
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
@@ -534,13 +504,11 @@
             </div>`;
         }
 
-        // --- DETAILS ---
         function openDetail(idx, originView) {
             lastView = originView;
             activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer'].forEach(v => document.getElementById(v).classList.add('hidden'));
-
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -551,87 +519,57 @@
 
             const cont = document.getElementById('input-container');
             if(isAdmin) {
-                document.getElementById('btn-cam').classList.remove('hidden');
-                document.getElementById('btn-save').classList.remove('hidden');
+                document.getElementById('btn-cam').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden');
                 cont.innerHTML = `
                     <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
                     <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
                     <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
-                `;
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             } else {
-                document.getElementById('btn-cam').classList.add('hidden');
-                document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded h-24 overflow-y-auto">${activeItem.SAVED_NOTE||'-'}</div></div>
-                `;
+                document.getElementById('btn-cam').classList.add('hidden'); document.getElementById('btn-save').classList.add('hidden');
+                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div> <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
             }
-
-            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } 
-            else { document.getElementById('expand-section').classList.remove('hidden'); }
-
-            renderOverviewData();
-            renderAllFields();
-            switchDetailTab('overview');
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
+            renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
         function renderOverviewData() {
-            const box = document.getElementById('user-data-box');
-            const grid = document.getElementById('dynamic-user-grid');
-            const photoDiv = document.getElementById('photo-preview');
-            const imgPrev = document.getElementById('img-prev');
-            const imgPlace = document.getElementById('img-placeholder');
-            const linkBtn = document.getElementById('photo-link-btn');
-
+            const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid');
+            const photoDiv = document.getElementById('photo-preview'); const imgPrev = document.getElementById('img-prev');
+            const imgPlace = document.getElementById('img-placeholder'); const linkBtn = document.getElementById('photo-link-btn');
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
-                photoDiv.classList.remove('hidden');
-                linkBtn.href = activeItem.SAVED_PHOTO_LINK;
+                photoDiv.classList.remove('hidden'); linkBtn.href = activeItem.SAVED_PHOTO_LINK;
                 if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
                 else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
             } else { photoDiv.classList.add('hidden'); }
-            
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
-                const file = input.files[0];
-                const btn = document.getElementById('btn-cam');
-                const btnText = document.getElementById('cam-text');
+                const file = input.files[0]; const btn = document.getElementById('btn-cam'); const btnText = document.getElementById('cam-text');
                 btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
+                const reader = new FileReader(); reader.readAsDataURL(file);
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
+                    const img = new Image(); img.src = e.target.result;
                     img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
+                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        const base64Data = dataUrl.split(',')[1];
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
                         fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) })
                         .then(res => res.json()).then(data => {
-                            if(data.status === 'success') {
-                                activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl;
-                                renderOverviewData(); saveData(true); alert("Photo Uploaded!");
-                            } else { alert("Upload Error: " + data.message); }
-                        })
-                        .catch(err => alert("Network Error: " + err))
-                        .finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
+                            if(data.status === 'success') { activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl; renderOverviewData(); saveData(true); alert("Photo Uploaded!"); } 
+                            else { alert("Upload Error: " + data.message); }
+                        }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
                     }
                 }
             }
@@ -653,11 +591,7 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             fullInventory.forEach(item => {
                 const id = item.UNIQUE_ROW_ID;
-                if(storage[id]) {
-                    item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s;
-                    item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n;
-                    item.SAVED_PHOTO_LINK = storage[id].pl;
-                }
+                if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; }
             });
         }
 
@@ -669,57 +603,25 @@
             }).join('');
         }
 
-        // --- UTILS ---
         function toggleBatch() {
-            if(!isAdmin) return;
-            isBatch = !isBatch;
+            if(!isAdmin) return; isBatch = !isBatch;
             document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE";
             document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000";
             if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
             const views = ['drive','tasks','viewer'];
-            views.forEach(v => {
-                if(!document.getElementById('view-'+v).classList.contains('hidden')) {
-                    if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames();
-                }
-            });
+            views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); } });
         }
 
-        function updateSelected() {
-            const checks = document.querySelectorAll('.select-check:checked');
-            selectedIdx = Array.from(checks).map(c => parseInt(c.value));
-            document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0);
-        }
-
+        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
         function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
-        
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked;
-            const k = document.getElementById('chk-kayla').checked;
-            const m = document.getElementById('chk-morgan').checked;
-            let selected = [];
-            if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
+            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked;
+            let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
-            document.getElementById('assign-modal').style.display='none';
-            toggleBatch();
-            alert("Items Assigned to: " + target);
+            document.getElementById('assign-modal').style.display='none'; toggleBatch(); alert("Items Assigned to: " + target);
         }
-
-        function switchView(v) {
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('view-'+v).classList.remove('hidden');
-            if(v==='drive') renderDriveNames(); if(v==='tasks') renderTasks(); if(v==='viewer') renderViewerNames();
-        }
-
-        function switchDetailTab(t) {
-            document.getElementById('det-overview-content').classList.toggle('hidden', t !== 'overview');
-            document.getElementById('det-actions-content').classList.toggle('hidden', t !== 'actions');
-            document.getElementById('dtab-overview').classList.add('active'); document.getElementById('dtab-actions').classList.remove('active');
-            if(t==='actions') { document.getElementById('dtab-actions').classList.add('active'); document.getElementById('dtab-overview').classList.remove('active'); }
-        }
-
-        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); switchView(lastView); }
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
         function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
