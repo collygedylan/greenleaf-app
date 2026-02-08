@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v192</title>
+    <title>Greenleaf Pro v193</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -82,6 +82,8 @@
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -101,6 +103,10 @@
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
+            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
+                <div class="spinner"></div>
+                <div class="text-white font-bold text-sm mt-3">Syncing System Data...</div>
+            </div>
         </div>
     </div>
 
@@ -110,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v192</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v193</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -142,19 +148,19 @@
                     <div onclick="switchView('tasks')" class="home-btn">
                         <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
                         <span class="font-bold">Tasks</span>
-                        <div id="file-label-drive-t" class="file-label">--</div>
-                        <div id="dot-inventory" class="status-dot"></div>
+                        <div id="file-label-drive-t" class="file-label">Syncing...</div>
+                        <div id="dot-inventory" class="status-dot visible loading"></div>
                     </div>
                     <div onclick="switchView('drive')" class="home-btn">
                         <i class="ph-bold ph-car home-icon text-blue-600"></i>
                         <span class="font-bold">Drive Mode</span>
-                        <div id="file-label-drive" class="file-label">--</div>
+                        <div id="file-label-drive" class="file-label">Syncing...</div>
                     </div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
                         <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
                         <span class="font-bold">SOC</span>
-                        <div id="file-label-soc" class="file-label">--</div>
-                        <div id="dot-soc" class="status-dot"></div>
+                        <div id="file-label-soc" class="file-label">Syncing...</div>
+                        <div id="dot-soc" class="status-dot visible loading" onclick="alert('Last Error: ' + lastSocError)"></div>
                     </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
@@ -283,7 +289,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v192_storage"; 
+        const STORAGE_KEY = "greenleaf_v193_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
@@ -322,6 +328,7 @@
         let selectedSocRep = null;
         let selectedSocCommon = null; // Level 1
         let selectedSocCode = null;   // Level 2
+        let lastSocError = "None";
 
         let isBatch = false;
         let selectedIdx = [];
@@ -383,10 +390,14 @@
                         console.log(`${type} is up to date.`);
                         updateStatusUI(type, "success");
                     }
+                } else {
+                    if (type === 'soc') lastSocError = meta.message;
+                    if (!cached) updateStatusUI(type, "error");
                 }
             } catch (e) {
                 console.error(`Sync failed for ${type}:`, e);
-                if(!cached) updateStatusUI(type, "error");
+                if (type === 'soc') lastSocError = e.toString();
+                if (!cached) updateStatusUI(type, "error");
             }
         }
 
