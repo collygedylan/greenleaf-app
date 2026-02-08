@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v171</title>
+    <title>Greenleaf Pro v172</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkdyZWVubGVhZiBQcm8iLAogICJzaG9ydF9uYW1lIjogIkdyZWVubGVhZiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzAwN2E0ZCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzYyOC82MjgyODMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -78,6 +79,7 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
+        .sync-status { font-size: 10px; font-weight: bold; color: #007a4d; text-align: center; margin-bottom: 10px; }
         
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
@@ -111,7 +113,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v171</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v172</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -291,8 +293,9 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiIAZdL1KjufqtBCD4fUBY02RDxo0ii3cKpTCywOIJO7COB6vV7tnbbHuzhy-bU6qZ/exec"; 
-        const STORAGE_KEY = "greenleaf_v171_storage"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWCZ7utBK38YIOMLQq09ur_ijHeA7Awjf3I1mdaQHncuuf6hkHSh2bv3DyKJguOmZb/exec"; 
+        
+        const STORAGE_KEY = "greenleaf_v172_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         const SOC_REP_LIST = [
@@ -995,52 +998,21 @@
             views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); } });
         }
 
-        function updateSelected() { 
-            const checks = document.querySelectorAll('.select-check:checked'); 
-            selectedIdx = Array.from(checks).map(c => parseInt(c.value)); 
-            document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); 
-        }
-        
-        function openAssignModal() { 
-            document.getElementById('assign-modal').style.display='flex'; 
-        }
-        
+        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
+        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; 
-            const k = document.getElementById('chk-kayla').checked; 
-            const m = document.getElementById('chk-morgan').checked;
+            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked;
             let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
             document.getElementById('assign-modal').style.display='none'; toggleBatch(); alert("Items Assigned to: " + target);
         }
-        
-        function toggleMenu() { 
-            document.getElementById('side-drawer').classList.toggle('open'); 
-            document.getElementById('drawer-overlay').classList.toggle('open'); 
-        }
-        
-        function toggleExpand() { 
-            document.getElementById('expand-section').classList.toggle('expanded'); 
-        }
-        
-        function resetLogin() { 
-            document.getElementById('pin-container').classList.add('hidden'); 
-            document.getElementById('login-buttons').classList.remove('hidden'); 
-        }
-        
-        function switchDetailTab(tab) {
-            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview');
-            document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions');
-            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview');
-            document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions');
-        }
-        
-        function goBackFromDetail() {
-            document.getElementById('view-detail').classList.add('hidden');
-            document.getElementById('view-' + lastView).classList.remove('hidden');
-        }
+        function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
+        function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
+        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
+        function switchDetailTab(tab) { document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); }
+        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); }
     </script>
 </body>
 </html>
