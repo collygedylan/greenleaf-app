@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v185</title>
+    <title>Greenleaf Pro v186</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -105,7 +105,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing DriveAround...</div>
+                <div class="text-white font-bold text-sm mt-3">Syncing System Data...</div>
             </div>
         </div>
     </div>
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v185</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v186</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -148,17 +148,17 @@
                     <div onclick="switchView('tasks')" class="home-btn">
                         <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
                         <span class="font-bold">Tasks</span>
-                        <div id="file-label-drive-t" class="file-label">--</div>
+                        <div id="file-label-drive-t" class="file-label">Loading...</div>
                     </div>
                     <div onclick="switchView('drive')" class="home-btn">
                         <i class="ph-bold ph-car home-icon text-blue-600"></i>
                         <span class="font-bold">Drive Mode</span>
-                        <div id="file-label-drive" class="file-label">--</div>
+                        <div id="file-label-drive" class="file-label">Loading...</div>
                     </div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
                         <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
                         <span class="font-bold">SOC</span>
-                        <div id="file-label-soc" class="file-label">--</div>
+                        <div id="file-label-soc" class="file-label">Loading...</div>
                     </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
@@ -192,7 +192,6 @@
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d]"></div>
-                <button onclick="fetchSocData()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Check for New SOC File</button>
                 <div class="flex justify-between items-center mb-2">
                     <span id="soc-crumb" class="text-xs font-bold text-gray-500"></span>
                 </div>
@@ -247,11 +246,23 @@
             <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus"></i> Assign</div>
         </div>
 
-        <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
-            <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
-            <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
-            <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
-            <div onclick="switchView('viewer')"><i class="ph-bold ph-eye text-2xl text-gray-400"></i></div>
+        <nav id="bottom-nav">
+            <div class="nav-item active" id="nav-home" onclick="switchView('home')">
+                <i class="ph-bold ph-house"></i>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" id="nav-drive" onclick="switchView('drive')">
+                <i class="ph-bold ph-car"></i>
+                <div class="nav-label">Drive</div>
+            </div>
+            <div class="nav-item" id="nav-tasks" onclick="switchView('tasks')">
+                <i class="ph-bold ph-clipboard-text"></i>
+                <div class="nav-label">Tasks</div>
+            </div>
+            <div class="nav-item" id="nav-viewer" onclick="switchView('viewer')">
+                <i class="ph-bold ph-eye"></i>
+                <div class="nav-label">Viewer</div>
+            </div>
         </nav>
     </div>
 
@@ -273,17 +284,26 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v185_storage"; 
+        const STORAGE_KEY = "greenleaf_v186_storage"; 
         const ADMINS = ["Dylan", "J.D."];
+        
+        const SOC_REP_LIST = [
+            "CHANCE ALLDREDGE", "TONY BONO", "BEN BROWN", "TOBY BROWN", "ABBEY BURKA", 
+            "DAVID BRANDT", "ELLEN DEELY", "NATE DOUGLAS", "TRACI EARLE", "KEVIN EFFINGER", 
+            "CHRIS FARROW", "CHRIS GAYDOS", "ANNETE HANCOCK", "BEN HARVESON", "TROY LEE", 
+            "WES LUGAS", "RUDY MARTINEZ", "BEN MASCHINO", "JOSH RINGLEB", "TRACEY TAPSCOTT", 
+            "JESSICA ROBERTSON", "CASEY RUFENER"
+        ];
 
-        // PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
         async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
 
-        // STATE
         let fullInventory = [];
         let socInventory = []; 
+        let trackingData = {}; 
+        let currentTrackingTab = "";
+        
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
@@ -299,6 +319,7 @@
         let socViewLevel = 0;
         let selectedSocRep = null;
         let selectedSocCust = null;
+        let selectedSocCommon = null;
 
         let isBatch = false;
         let selectedIdx = [];
@@ -306,20 +327,34 @@
 
         // LOGIN
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
-        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
+        
+        // MODIFIED VERIFY PIN TO LOAD BOTH FILES
+        async function verifyPin() {
+            if (document.getElementById('pin-code').value === '1234') {
+                document.getElementById('pin-container').classList.add('hidden');
+                document.getElementById('loading-spinner').classList.remove('hidden');
+                
+                // LOAD BOTH FILES IN PARALLEL
+                await Promise.allSettled([
+                    fetchData(),     // DRIVE AROUND
+                    fetchSocData()   // SOC
+                ]);
+                
+                launchApp();
+            } else { alert("Incorrect PIN"); }
+        }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
         // FETCH DATA (DRIVE MODE)
         async function fetchData() {
             try {
                 pruneOldData(); 
-                // FETCHING FROM SCRIPT INSTEAD OF LOCAL FILE
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getFile&type=inventory");
                 const data = await res.json();
                 
                 if (data.status !== 'success') { throw new Error(data.message || "Script Error"); }
                 
-                // UPDATE LABEL
+                // UPDATE LABEL IMMEDIATELY
                 document.getElementById('file-label-drive').innerText = data.filename || "Loaded";
                 document.getElementById('file-label-drive-t').innerText = data.filename || "Loaded";
 
@@ -350,17 +385,13 @@
                     return obj;
                 });
 
-                // LOGIC ENGINE
                 const groupedByItem = {};
                 rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
                 Object.keys(groupedByItem).forEach(code => {
                     let items = groupedByItem[code];
                     const hasPriority = items.some(i => i.PRIORITY > 0);
-                    if(!hasPriority) {
-                        items.forEach(i => i.TASK_TAB = 'review');
-                        return;
-                    }
+                    if(!hasPriority) { items.forEach(i => i.TASK_TAB = 'review'); return; }
                     let winnerPriority = null;
                     const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
                     for(let p of priorities) {
@@ -377,24 +408,23 @@
                 });
 
                 fullInventory = rawItems;
-                applyAssignments(); loadSavedData(); launchApp();
+                applyAssignments(); loadSavedData();
             } catch (e) { 
                 console.error(e); 
-                alert("Error loading data: " + e.message);
-                setTimeout(resetLogin, 3000); 
+                alert("Error loading Drive data: " + e.message);
             }
         }
 
-        // SOC LOGIC
-        function fetchSocData() {
-            document.getElementById('soc-status').innerText = "Querying Drive...";
-            // UPDATED FETCH URL FOR SOC
-            fetch(GOOGLE_SCRIPT_URL + "?action=getFile&type=soc")
-            .then(res => res.json())
-            .then(data => {
+        // FETCH SOC DATA (AUTO)
+        async function fetchSocData() {
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getFile&type=soc");
+                const data = await res.json();
+                
                 if(data.status === 'success') {
-                    document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
-                    document.getElementById('file-label-soc').innerText = data.filename; // UPDATE HOME LABEL
+                    // UPDATE LABEL IMMEDIATELY
+                    document.getElementById('file-label-soc').innerText = data.filename || "Loaded";
+                    
                     const workbook = XLSX.read(data.data, {type: 'base64'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
@@ -403,10 +433,13 @@
                         return newRow;
                     });
                     socViewLevel = 0;
-                    renderSocView();
-                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
-            })
-            .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
+                } else {
+                    document.getElementById('file-label-soc').innerText = "Error";
+                }
+            } catch(e) {
+                console.log("SOC Fetch Error: " + e);
+                document.getElementById('file-label-soc').innerText = "Failed";
+            }
         }
 
         function renderSocView() {
@@ -414,53 +447,23 @@
             const crumb = document.getElementById('soc-crumb');
             
             if(socInventory.length === 0) { 
-                container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data. Tap check button.</div>`; 
+                container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data Loaded.</div>`; 
                 return; 
             }
 
-            // LEVEL 0: SALES REPS
             if(socViewLevel === 0) {
                 crumb.innerText = "All Reps";
                 const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
-                container.innerHTML = reps.map(r => `
-                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
-                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                `).join('');
-            }
-            // LEVEL 1: CUSTOMERS
-            else if(socViewLevel === 1) {
+                container.innerHTML = reps.map(r => `<div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')"><span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
                 const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
                 const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
-                    ${customers.map(c => `
-                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
-                            <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
-            }
-            // LEVEL 2: ITEMS
-            else if(socViewLevel === 2) {
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>` + customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
-                const items = socInventory.filter(i => 
-                    (i.SALESREPNAME || "Unknown") === selectedSocRep && 
-                    (i.CUSTOMERNAME || "Unknown") === selectedSocCust
-                );
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
-                    ${items.map(i => `
-                        <div class="inv-card">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
-                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
-                        </div>
-                    `).join('')}
-                `;
+                const items = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep && (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>` + items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('');
             }
         }
 
@@ -524,7 +527,7 @@
             renderTasks();
         }
 
-        // *** UPDATED RENDER TASKS ***
+        // *** UPDATED: BOTH TABS USE BLOCK -> LOCATION LOGIC ***
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -532,23 +535,37 @@
 
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
-            // BOTH TABS NOW FOLLOW THE BLOCK -> LOCATION -> ITEM STRUCTURE
+            // BOTH tabs now share the exact same drill-down logic:
             if(taskViewLevel === 0) {
+                // LEVEL 0: SHOW BLOCKS
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                 if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
                 container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (taskViewLevel === 1) {
+                // LEVEL 1: SHOW LOCATIONS INSIDE BLOCK
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                 const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
+                // LEVEL 2: SHOW ITEMS INSIDE LOCATION
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
                 const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                 container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
             }
         }
+
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        
+        function selectTaskLoc(l) { 
+            selectedTaskLoc = l; 
+            taskViewLevel = 2; // Both tabs now go to Level 2
+            renderTasks(); 
+        }
+        
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
         function renderReviewItems() {
             const container = document.getElementById('review-content');
@@ -594,15 +611,6 @@
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
         
-        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { 
-            selectedTaskLoc = l; 
-            taskViewLevel = 2; // Always level 2 now for both tabs
-            renderTasks(); 
-        }
-        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
-        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
-
         function getBatchReport() {
             let report = "";
             selectedIdx.forEach(idx => {
