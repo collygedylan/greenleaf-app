@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v193</title>
+    <title>Greenleaf Pro v194</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v193</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v194</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -160,7 +160,7 @@
                         <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
                         <span class="font-bold">SOC</span>
                         <div id="file-label-soc" class="file-label">Syncing...</div>
-                        <div id="dot-soc" class="status-dot visible loading" onclick="alert('Last Error: ' + lastSocError)"></div>
+                        <div id="dot-soc" class="status-dot visible loading"></div>
                     </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
@@ -289,7 +289,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v193_storage"; 
+        const STORAGE_KEY = "greenleaf_v194_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
@@ -352,7 +352,7 @@
         }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        // *** SMART SYNC MANAGER ***
+        // *** SMART SYNC MANAGER (V194: JSON CACHING) ***
         async function syncManager(type) {
             updateStatusUI(type, "loading");
             
@@ -360,34 +360,91 @@
             const cached = loadLocalCache(type);
             if (cached) {
                 console.log(`Loaded ${type} from cache.`);
-                if(type === 'inventory') processInventoryData(cached.data, cached.filename);
-                if(type === 'soc') processSocData(cached.data, cached.filename);
-                updateStatusUI(type, "success"); // Show green dot temporarily while checking server
+                if(type === 'inventory') {
+                    fullInventory = cached.data;
+                    runLogicEngine(fullInventory);
+                    applyAssignments();
+                    loadSavedData();
+                    document.getElementById('file-label-drive').innerText = cached.filename;
+                    document.getElementById('file-label-drive-t').innerText = cached.filename;
+                }
+                if(type === 'soc') {
+                    socInventory = cached.data;
+                    document.getElementById('file-label-soc').innerText = cached.filename;
+                    renderSocView();
+                }
+                updateStatusUI(type, "success"); 
             }
 
             // 2. Check Server for Updates
             try {
-                console.log(`Checking server for ${type}...`);
                 const checkRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
                 const meta = await checkRes.json();
                 
                 if (meta.status === 'success') {
                     // If server is newer than cache, download it
                     if (!cached || meta.lastUpdated > cached.lastUpdated) {
-                        console.log(`New version found for ${type}. Downloading...`);
-                        updateStatusUI(type, "loading"); // Turn dot yellow
+                        updateStatusUI(type, "loading"); 
                         
                         const fileRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getFile&type=${type}`);
                         const fileData = await fileRes.json();
                         
                         if (fileData.status === 'success') {
-                            saveLocalCache(type, fileData);
-                            if(type === 'inventory') processInventoryData(fileData.data, fileData.filename);
-                            if(type === 'soc') processSocData(fileData.data, fileData.filename);
+                            // PROCESS DATA FIRST
+                            let processedData = [];
+                            const workbook = XLSX.read(fileData.data, { type: 'base64' });
+                            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                            let headerRow = 0;
+                            // Smart Header Detection
+                            for(let i=0; i<Math.min(rows.length, 25); i++){
+                                const str = JSON.stringify(rows[i]).toUpperCase();
+                                if(type === 'inventory' && (str.includes("ITEMCODE") || str.includes("COMMONNAME"))) { headerRow = i; break; }
+                                if(type === 'soc' && (str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME"))) { headerRow = i; break; }
+                            }
+                            
+                            // Parse & Clean
+                            const rawData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                            processedData = rawData.map((row, index) => {
+                                let obj = {};
+                                Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
+                                
+                                // Specific cleaning per type
+                                if(type === 'inventory') {
+                                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
+                                    obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
+                                    obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
+                                    obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
+                                    const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
+                                    obj.UNIQUE_ROW_ID = baseKey + "_" + index; // Simple ID
+                                }
+                                return obj;
+                            });
+
+                            // SAVE JSON TO CACHE (Not Base64)
+                            saveLocalCache(type, {
+                                lastUpdated: fileData.lastUpdated,
+                                filename: fileData.filename,
+                                data: processedData
+                            });
+
+                            // UPDATE APP STATE
+                            if(type === 'inventory') {
+                                fullInventory = processedData;
+                                runLogicEngine(fullInventory);
+                                applyAssignments();
+                                loadSavedData();
+                                document.getElementById('file-label-drive').innerText = fileData.filename;
+                                document.getElementById('file-label-drive-t').innerText = fileData.filename;
+                            }
+                            if(type === 'soc') {
+                                socInventory = processedData;
+                                document.getElementById('file-label-soc').innerText = fileData.filename;
+                                renderSocView();
+                            }
                             updateStatusUI(type, "success");
                         }
                     } else {
-                        console.log(`${type} is up to date.`);
                         updateStatusUI(type, "success");
                     }
                 } else {
@@ -403,15 +460,15 @@
 
         // *** CACHE UTILS ***
         function loadLocalCache(type) {
-            const json = localStorage.getItem(CACHE_KEYS[type]);
-            return json ? JSON.parse(json) : null;
+            try {
+                const json = localStorage.getItem(CACHE_KEYS[type]);
+                return json ? JSON.parse(json) : null;
+            } catch(e) { console.log("Cache Read Error"); return null; }
         }
         function saveLocalCache(type, data) {
-            localStorage.setItem(CACHE_KEYS[type], JSON.stringify({
-                lastUpdated: data.lastUpdated,
-                filename: data.filename,
-                data: data.data // Base64 string
-            }));
+            try {
+                localStorage.setItem(CACHE_KEYS[type], JSON.stringify(data));
+            } catch(e) { console.log("Cache Write Error (Quota?)"); }
         }
         function updateStatusUI(type, status) {
             const dot = document.getElementById(`dot-${type}`);
@@ -426,91 +483,22 @@
             }
         }
 
-        // *** PROCESSORS ***
-        function processInventoryData(base64, filename) {
-            try {
-                const workbook = XLSX.read(base64, { type: 'base64' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                let headerRow = 0;
-                for(let i=0; i<Math.min(rows.length, 25); i++){
-                    const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
+        function runLogicEngine(items) {
+            const grouped = {};
+            items.forEach(i => { if(!grouped[i.ITEMCODE]) grouped[i.ITEMCODE] = []; grouped[i.ITEMCODE].push(i); });
+            Object.keys(grouped).forEach(code => {
+                let grp = grouped[code];
+                const hasPriority = grp.some(i => i.PRIORITY > 0);
+                if(!hasPriority) { grp.forEach(i => i.TASK_TAB = 'review'); return; }
+                let winner = null;
+                const priorities = [...new Set(grp.map(i => i.PRIORITY).filter(p=>p>0))].sort((a,b)=>a-b);
+                for(let p of priorities) {
+                    if(grp.filter(i=>i.PRIORITY===p).some(i=>i.PTRAVAILABLE > (i.SEASONSUPPLY*0.10))) { winner = p; break; }
                 }
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
-                
-                let idCounters = {};
-                let rawItems = jsonData.map((row, index) => {
-                    let obj = {};
-                    Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
-                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
-                    obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
-                    obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
-                    obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
-                    const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
-                    if(!idCounters[baseKey]) idCounters[baseKey] = 0;
-                    const instanceNum = idCounters[baseKey];
-                    idCounters[baseKey]++;
-                    obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
-                    obj.TASK_TAB = 'location'; 
-                    return obj;
-                });
-
-                const groupedByItem = {};
-                rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
-
-                Object.keys(groupedByItem).forEach(code => {
-                    let items = groupedByItem[code];
-                    const hasPriority = items.some(i => i.PRIORITY > 0);
-                    if(!hasPriority) { items.forEach(i => i.TASK_TAB = 'review'); return; }
-                    let winnerPriority = null;
-                    const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
-                    for(let p of priorities) {
-                        const pItems = items.filter(i => i.PRIORITY === p);
-                        const isWinner = pItems.some(i => i.PTRAVAILABLE > (i.SEASONSUPPLY * 0.10));
-                        if(isWinner) { winnerPriority = p; break; }
-                    }
-                    if (winnerPriority !== null) {
-                        items.forEach(i => {
-                            if (i.PRIORITY === winnerPriority) { i.TASK_TAB = 'season'; } 
-                            else { i.TASK_TAB = 'location'; }
-                        });
-                    } else { items.forEach(i => i.TASK_TAB = 'review'); }
-                });
-
-                fullInventory = rawItems;
-                applyAssignments(); loadSavedData();
-                
-                // Update UI Labels
-                document.getElementById('file-label-drive').innerText = filename;
-                document.getElementById('file-label-drive-t').innerText = filename;
-                
-            } catch (e) { console.error("Inventory Process Error", e); }
-        }
-
-        function processSocData(base64, filename) {
-            try {
-                const workbook = XLSX.read(base64, {type: 'base64'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                let headerRow = 0;
-                for(let i=0; i<Math.min(rows.length, 25); i++){
-                    const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME")) { headerRow = i; break; }
-                }
-                
-                socInventory = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
-                    let newRow = {};
-                    Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
-                    return newRow;
-                });
-                
-                socViewLevel = 0;
-                document.getElementById('file-label-soc').innerText = filename;
-                renderSocView();
-                
-            } catch(e) { console.error("SOC Process Error", e); }
+                if(winner !== null) {
+                    grp.forEach(i => { if(i.PRIORITY===winner) i.TASK_TAB='season'; else i.TASK_TAB='location'; });
+                } else { grp.forEach(i => i.TASK_TAB = 'review'); }
+            });
         }
 
         // *** NEW SOC RENDERER (V189 LOGIC) ***
@@ -530,14 +518,11 @@
             // LEVEL 1: COMMON NAMES (Filter by selected Rep)
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
-                
-                // Flexible matching logic
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const repItems = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
                     return repParts.some(part => dataName.includes(part));
                 });
-
                 const commons = [...new Set(repItems.map(i => i.COMMONNAME || "Unknown"))].sort();
                 
                 if (commons.length === 0) {
@@ -556,13 +541,11 @@
             // LEVEL 2: PRINTED CONTAINER CODES (Sizes)
             else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCommon}`;
-                
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const items = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
                     return repParts.some(part => dataName.includes(part)) && (i.COMMONNAME || "Unknown") === selectedSocCommon;
                 });
-
                 const codes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || "Unknown"))].sort();
                 
                 container.innerHTML = `
@@ -577,7 +560,6 @@
             // LEVEL 3: CUSTOMER DETAILS (Final List)
             else if(socViewLevel === 3) {
                 crumb.innerText = `${selectedSocCommon} / ${selectedSocCode}`;
-                
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const finalItems = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
@@ -658,7 +640,6 @@
             renderTasks();
         }
 
-        // *** UPDATED: BOTH TABS USE BLOCK -> LOCATION LOGIC ***
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -666,21 +647,17 @@
 
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
-            // BOTH tabs now share the exact same drill-down logic:
             if(taskViewLevel === 0) {
-                // LEVEL 0: SHOW BLOCKS
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                 if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
                 container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (taskViewLevel === 1) {
-                // LEVEL 1: SHOW LOCATIONS INSIDE BLOCK
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                 const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                // LEVEL 2: SHOW ITEMS INSIDE LOCATION
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
                 const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                 container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
