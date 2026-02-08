@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v154 (Patched)</title>
+    <title>Greenleaf Pro v155</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -49,9 +49,10 @@
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; height: 120px; justify-content: center; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 4px; }
+        .home-icon { font-size: 32px; margin-bottom: 2px; }
+        .file-label { font-size: 9px; color: #9ca3af; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; margin-top: 2px; }
 
         /* DATA GRID */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
@@ -108,7 +109,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v154-P</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v155</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -137,9 +138,21 @@
                     <p class="opacity-80">Inventory Management</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
+                    <div onclick="switchView('tasks')" class="home-btn">
+                        <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
+                        <span class="font-bold">Tasks</span>
+                        <div id="file-label-drive-t" class="file-label">--</div>
+                    </div>
+                    <div onclick="switchView('drive')" class="home-btn">
+                        <i class="ph-bold ph-car home-icon text-blue-600"></i>
+                        <span class="font-bold">Drive Mode</span>
+                        <div id="file-label-drive" class="file-label">--</div>
+                    </div>
+                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
+                        <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
+                        <span class="font-bold">SOC</span>
+                        <div id="file-label-soc" class="file-label">--</div>
+                    </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
@@ -252,7 +265,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v154_patched_storage"; 
+        const STORAGE_KEY = "greenleaf_v155_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -298,6 +311,10 @@
                 
                 if (data.status !== 'success') { throw new Error(data.message || "Script Error"); }
                 
+                // UPDATE LABEL
+                document.getElementById('file-label-drive').innerText = data.filename || "Loaded";
+                document.getElementById('file-label-drive-t').innerText = data.filename || "Loaded";
+
                 const workbook = XLSX.read(data.data, { type: 'base64' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -369,6 +386,7 @@
             .then(data => {
                 if(data.status === 'success') {
                     document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
+                    document.getElementById('file-label-soc').innerText = data.filename; // UPDATE HOME LABEL
                     const workbook = XLSX.read(data.data, {type: 'base64'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
