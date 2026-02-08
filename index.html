@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v187</title>
+    <title>Greenleaf Pro v188</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v187</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v188</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -284,10 +284,10 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v187_storage"; 
+        const STORAGE_KEY = "greenleaf_v188_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
-        // CUSTOM REP LIST
+        // CUSTOM REP LIST (Exact Order Requested)
         const SOC_REP_LIST = [
             "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
             "Tracey Tapscott", "David Brandt", "Tony Bono", "Ellen Deely", "Chance Alldredge", "Nate Douglas", 
@@ -316,10 +316,12 @@
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
+        
+        // SOC State Variables
         let socViewLevel = 0;
         let selectedSocRep = null;
-        let selectedSocCommon = null; // Changed from Cust to Common
-        let selectedSocCode = null;   // Added Code for level 2
+        let selectedSocCommon = null; // Level 1
+        let selectedSocCode = null;   // Level 2
 
         let isBatch = false;
         let selectedIdx = [];
@@ -433,54 +435,60 @@
             }
         }
 
-        // *** NEW SOC RENDERER ***
+        // *** NEW SOC RENDERER (V188 LOGIC) ***
         function renderSocView() {
             const container = document.getElementById('soc-content');
             const crumb = document.getElementById('soc-crumb');
             
-            if(socInventory.length === 0) { 
-                container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data Loaded.</div>`; 
-                return; 
-            }
+            // NOTE: We do NOT check for empty inventory here anymore.
+            // We want to show the Rep List even if no data loaded yet.
 
-            // LEVEL 0: REPS LIST (Specific Order)
+            // LEVEL 0: REPS LIST (Always show the hardcoded list)
             if(socViewLevel === 0) {
                 crumb.innerText = "All Reps";
-                
-                // Get reps that actually have data
-                const actualReps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))];
-                
-                // Filter and Sort based on SOC_REP_LIST
-                const displayReps = SOC_REP_LIST.filter(r => actualReps.some(ar => ar.toUpperCase().includes(r.toUpperCase())));
-                
-                container.innerHTML = displayReps.map(r => `
+                container.innerHTML = SOC_REP_LIST.map(r => `
                     <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
                         <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
                     </div>
                 `).join('');
             }
-            // LEVEL 1: COMMON NAMES (Items)
+            // LEVEL 1: COMMON NAMES (Filter by selected Rep)
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
-                const repItems = socInventory.filter(i => (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()));
+                
+                // Flexible matching logic: Split rep name and check if parts exist in data
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const repItems = socInventory.filter(i => {
+                    const dataName = (i.SALESREPNAME || "").toUpperCase();
+                    // Check if *any* part of the selected rep name is in the data name (e.g. "Burka" in "BURKA, ABBEY")
+                    return repParts.some(part => dataName.includes(part));
+                });
+
                 const commons = [...new Set(repItems.map(i => i.COMMONNAME || "Unknown"))].sort();
                 
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
-                    ${commons.map(c => `
-                        <div class="drill-item" onclick="selectSocCommon('${c.replace(/'/g, "\\'")}')">
-                            <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
+                if (commons.length === 0) {
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back</div><div class="p-4 text-center text-gray-400">No items found for ${selectedSocRep}</div>`;
+                } else {
+                    container.innerHTML = `
+                        <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
+                        ${commons.map(c => `
+                            <div class="drill-item" onclick="selectSocCommon('${c.replace(/'/g, "\\'")}')">
+                                <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
+                            </div>
+                        `).join('')}
+                    `;
+                }
             }
             // LEVEL 2: PRINTED CONTAINER CODES (Sizes)
             else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCommon}`;
-                const items = socInventory.filter(i => 
-                    (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()) && 
-                    (i.COMMONNAME || "Unknown") === selectedSocCommon
-                );
+                
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const items = socInventory.filter(i => {
+                    const dataName = (i.SALESREPNAME || "").toUpperCase();
+                    return repParts.some(part => dataName.includes(part)) && (i.COMMONNAME || "Unknown") === selectedSocCommon;
+                });
+
                 const codes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || "Unknown"))].sort();
                 
                 container.innerHTML = `
@@ -495,11 +503,14 @@
             // LEVEL 3: CUSTOMER DETAILS (Final List)
             else if(socViewLevel === 3) {
                 crumb.innerText = `${selectedSocCommon} / ${selectedSocCode}`;
-                const finalItems = socInventory.filter(i => 
-                    (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()) && 
-                    (i.COMMONNAME || "Unknown") === selectedSocCommon &&
-                    (i.PRINTEDCONTAINERCODE || "Unknown") === selectedSocCode
-                );
+                
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const finalItems = socInventory.filter(i => {
+                    const dataName = (i.SALESREPNAME || "").toUpperCase();
+                    return repParts.some(part => dataName.includes(part)) && 
+                           (i.COMMONNAME || "Unknown") === selectedSocCommon &&
+                           (i.PRINTEDCONTAINERCODE || "Unknown") === selectedSocCode;
+                });
                 
                 container.innerHTML = `
                     <div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
@@ -549,7 +560,7 @@
             } 
             if(v==='viewer') renderViewerNames(); 
             if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
-            if(v==='soc' && socInventory.length > 0) renderSocView(); 
+            if(v==='soc') renderSocView(); 
         }
 
         // Expanded UI Logic Functions
@@ -576,6 +587,7 @@
             renderTasks();
         }
 
+        // *** UPDATED: BOTH TABS USE BLOCK -> LOCATION LOGIC ***
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -583,7 +595,7 @@
 
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
-            // BOTH TABS NOW USE THE BLOCK -> LOCATION -> ITEM STRUCTURE
+            // BOTH tabs now share the exact same drill-down logic:
             if(taskViewLevel === 0) {
                 // LEVEL 0: SHOW BLOCKS
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
@@ -608,7 +620,7 @@
         
         function selectTaskLoc(l) { 
             selectedTaskLoc = l; 
-            taskViewLevel = 2; 
+            taskViewLevel = 2; // Both tabs now go to Level 2
             renderTasks(); 
         }
         
