@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v194</title>
+    <title>Greenleaf Pro v195</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -103,10 +103,6 @@
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
-            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
-                <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing System Data...</div>
-            </div>
         </div>
     </div>
 
@@ -116,7 +112,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v194</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v195</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -160,7 +156,7 @@
                         <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
                         <span class="font-bold">SOC</span>
                         <div id="file-label-soc" class="file-label">Syncing...</div>
-                        <div id="dot-soc" class="status-dot visible loading"></div>
+                        <div id="dot-soc" class="status-dot visible loading" onclick="alert('Last Error: ' + lastSocError)"></div>
                     </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
@@ -289,7 +285,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v194_storage"; 
+        const STORAGE_KEY = "greenleaf_v195_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
@@ -352,7 +348,7 @@
         }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        // *** SMART SYNC MANAGER (V194: JSON CACHING) ***
+        // *** SMART SYNC MANAGER (V195: DELTA SYNC) ***
         async function syncManager(type) {
             updateStatusUI(type, "loading");
             
@@ -376,81 +372,82 @@
                 updateStatusUI(type, "success"); 
             }
 
-            // 2. Check Server for Updates
+            // 2. Check Server for Updates (Only ask for files newer than what we have)
+            const lastTime = cached ? cached.lastUpdated : 0;
+            
             try {
-                const checkRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
-                const meta = await checkRes.json();
+                // ASK: Do you have a file newer than 'lastTime'?
+                const url = `${GOOGLE_SCRIPT_URL}?action=getFile&type=${type}&lastUpdated=${lastTime}`;
+                const res = await fetch(url);
+                const response = await res.json();
                 
-                if (meta.status === 'success') {
-                    // If server is newer than cache, download it
-                    if (!cached || meta.lastUpdated > cached.lastUpdated) {
-                        updateStatusUI(type, "loading"); 
-                        
-                        const fileRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getFile&type=${type}`);
-                        const fileData = await fileRes.json();
-                        
-                        if (fileData.status === 'success') {
-                            // PROCESS DATA FIRST
-                            let processedData = [];
-                            const workbook = XLSX.read(fileData.data, { type: 'base64' });
-                            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                            let headerRow = 0;
-                            // Smart Header Detection
-                            for(let i=0; i<Math.min(rows.length, 25); i++){
-                                const str = JSON.stringify(rows[i]).toUpperCase();
-                                if(type === 'inventory' && (str.includes("ITEMCODE") || str.includes("COMMONNAME"))) { headerRow = i; break; }
-                                if(type === 'soc' && (str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME"))) { headerRow = i; break; }
-                            }
-                            
-                            // Parse & Clean
-                            const rawData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
-                            processedData = rawData.map((row, index) => {
-                                let obj = {};
-                                Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
-                                
-                                // Specific cleaning per type
-                                if(type === 'inventory') {
-                                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
-                                    obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
-                                    obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
-                                    obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
-                                    const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
-                                    obj.UNIQUE_ROW_ID = baseKey + "_" + index; // Simple ID
-                                }
-                                return obj;
-                            });
-
-                            // SAVE JSON TO CACHE (Not Base64)
-                            saveLocalCache(type, {
-                                lastUpdated: fileData.lastUpdated,
-                                filename: fileData.filename,
-                                data: processedData
-                            });
-
-                            // UPDATE APP STATE
-                            if(type === 'inventory') {
-                                fullInventory = processedData;
-                                runLogicEngine(fullInventory);
-                                applyAssignments();
-                                loadSavedData();
-                                document.getElementById('file-label-drive').innerText = fileData.filename;
-                                document.getElementById('file-label-drive-t').innerText = fileData.filename;
-                            }
-                            if(type === 'soc') {
-                                socInventory = processedData;
-                                document.getElementById('file-label-soc').innerText = fileData.filename;
-                                renderSocView();
-                            }
-                            updateStatusUI(type, "success");
-                        }
-                    } else {
-                        updateStatusUI(type, "success");
+                if (response.status === 'success') {
+                    // SERVER HAS NEW FILE -> PROCESS IT
+                    console.log(`New version found for ${type}. Updating...`);
+                    
+                    // PROCESS DATA
+                    let processedData = [];
+                    const workbook = XLSX.read(response.data, { type: 'base64' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    let headerRow = 0;
+                    
+                    for(let i=0; i<Math.min(rows.length, 25); i++){
+                        const str = JSON.stringify(rows[i]).toUpperCase();
+                        if(type === 'inventory' && (str.includes("ITEMCODE") || str.includes("COMMONNAME"))) { headerRow = i; break; }
+                        if(type === 'soc' && (str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME"))) { headerRow = i; break; }
                     }
+                    
+                    const rawData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                    processedData = rawData.map((row, index) => {
+                        let obj = {};
+                        Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
+                        
+                        if(type === 'inventory') {
+                            if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
+                            obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
+                            obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
+                            obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
+                            const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
+                            obj.UNIQUE_ROW_ID = baseKey + "_" + index; 
+                        }
+                        return obj;
+                    });
+
+                    // SAVE NEW DATA TO CACHE
+                    saveLocalCache(type, {
+                        lastUpdated: response.lastUpdated,
+                        filename: response.filename,
+                        data: processedData
+                    });
+
+                    // UPDATE APP STATE
+                    if(type === 'inventory') {
+                        fullInventory = processedData;
+                        runLogicEngine(fullInventory);
+                        applyAssignments();
+                        loadSavedData();
+                        document.getElementById('file-label-drive').innerText = response.filename;
+                        document.getElementById('file-label-drive-t').innerText = response.filename;
+                    }
+                    if(type === 'soc') {
+                        socInventory = processedData;
+                        document.getElementById('file-label-soc').innerText = response.filename;
+                        renderSocView();
+                    }
+                    updateStatusUI(type, "success");
+
+                } else if (response.status === 'no_update') {
+                    // SERVER HAS NOTHING NEW -> WE ARE GOOD
+                    console.log(`${type} is already up to date.`);
+                    updateStatusUI(type, "success");
+                    
                 } else {
-                    if (type === 'soc') lastSocError = meta.message;
+                    // ERROR
+                    if (type === 'soc') lastSocError = response.message;
                     if (!cached) updateStatusUI(type, "error");
                 }
+                
             } catch (e) {
                 console.error(`Sync failed for ${type}:`, e);
                 if (type === 'soc') lastSocError = e.toString();
@@ -518,11 +515,14 @@
             // LEVEL 1: COMMON NAMES (Filter by selected Rep)
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
+                
+                // Flexible matching logic
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const repItems = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
                     return repParts.some(part => dataName.includes(part));
                 });
+
                 const commons = [...new Set(repItems.map(i => i.COMMONNAME || "Unknown"))].sort();
                 
                 if (commons.length === 0) {
@@ -541,11 +541,13 @@
             // LEVEL 2: PRINTED CONTAINER CODES (Sizes)
             else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCommon}`;
+                
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const items = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
                     return repParts.some(part => dataName.includes(part)) && (i.COMMONNAME || "Unknown") === selectedSocCommon;
                 });
+
                 const codes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || "Unknown"))].sort();
                 
                 container.innerHTML = `
@@ -560,6 +562,7 @@
             // LEVEL 3: CUSTOMER DETAILS (Final List)
             else if(socViewLevel === 3) {
                 crumb.innerText = `${selectedSocCommon} / ${selectedSocCode}`;
+                
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const finalItems = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
@@ -640,6 +643,7 @@
             renderTasks();
         }
 
+        // *** UPDATED: BOTH TABS USE BLOCK -> LOCATION LOGIC ***
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -647,17 +651,21 @@
 
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
+            // BOTH tabs now share the exact same drill-down logic:
             if(taskViewLevel === 0) {
+                // LEVEL 0: SHOW BLOCKS
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                 if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
                 container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (taskViewLevel === 1) {
+                // LEVEL 1: SHOW LOCATIONS INSIDE BLOCK
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                 const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
+                // LEVEL 2: SHOW ITEMS INSIDE LOCATION
                 crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
                 const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
                 container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
