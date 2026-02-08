@@ -3,639 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v198</title>
+    <title>Greenleaf Pro v203</title>
+    
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; }
+        body { font-family: Arial, sans-serif; background-color: #f9fafb; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
-        #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: opacity 0.3s ease; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
-        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
-        .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
-        .login-status { margin-top: 20px; color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; animation: pulse 2s infinite; }
-        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
-        #side-drawer.open { left: 0; }
-        #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
-        #drawer-overlay.open { display: block; }
-        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
-        .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
+        
+        #view-login { position: fixed; inset: 0; background: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; }
+        
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
-        .home-btn { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; position: relative; height: 120px; justify-content: center; }
-        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 2px; }
-        .file-label { font-size: 9px; color: #6b7280; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; margin-top: 4px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-        .status-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; display: none; }
-        .status-dot.visible { display: block; }
-        .status-dot.loading { background-color: #fbbf24; animation: pulse 1s infinite; }
-        .status-dot.success { background-color: #22c55e; }
-        .status-dot.error { background-color: #ef4444; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); pointer-events: none; }
-        #action-bar.visible { transform: translateY(0); pointer-events: auto; }
-        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 3000; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; color: #9ca3af; cursor: pointer; transition: color 0.2s; -webkit-tap-highlight-color: transparent; }
+        
+        .note-input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-top: 8px; background: #fffbeb; transition: background 0.3s; }
+        .note-input:focus { outline: none; border-color: var(--brand-green); background: white; }
+        .complete-btn { float: right; background-color: var(--brand-green); color: white; font-weight: bold; font-size: 10px; padding: 6px 12px; border-radius: 20px; margin-top: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); z-index: 3000; }
+        .nav-item { flex: 1; padding: 12px 0; text-align: center; color: #9ca3af; }
         .nav-item.active { color: var(--brand-green); font-weight: bold; }
-        .nav-item i { font-size: 26px; margin-bottom: 2px; }
+        .nav-item i { font-size: 24px; display: block; margin-bottom: 2px; }
         .nav-label { font-size: 10px; }
-        .detail-tabs, .task-tabs, .track-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; }
-        .detail-tab, .task-tab, .track-tab { flex: 1; min-width: 100px; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active, .task-tab.active, .track-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
-        .full-width { grid-column: span 2; }
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
-        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
-        .sync-status { font-size: 10px; font-weight: bold; color: #007a4d; text-align: center; margin-bottom: 10px; }
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
-        #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
-        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
     </style>
 </head>
-<body class="bg-gray-50 h-screen overflow-hidden">
+<body class="h-screen overflow-hidden flex flex-col">
+
     <div id="view-login">
-        <div class="login-card">
-            <div class="text-4xl text-[#007a4d] font-bold mb-6 flex items-center justify-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</div>
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+            <h1 class="text-3xl font-bold text-[#007a4d] mb-6 flex justify-center items-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</h1>
             <div id="login-buttons">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
-                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Manager)</button>
+                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> Manager</button>
             </div>
             <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
+                <input type="password" id="pin-code" class="w-full p-3 text-center text-2xl border rounded mb-4 tracking-widest" placeholder="PIN" maxlength="4" inputmode="numeric">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
         </div>
-        <div id="login-status-text" class="login-status">Connecting to Database...</div>
+        <div id="sync-status" class="text-white mt-6 text-xs font-bold uppercase tracking-wider animate-pulse hidden">Syncing Database...</div>
     </div>
-    <div id="app-wrapper" class="hidden h-full flex flex-col">
+
+    <div id="app-wrapper" class="hidden flex flex-col h-full">
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-3">
-                <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
-                <div class="flex flex-col">
-                    <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v198 (DB)</div>
-                </div>
+            <div class="flex flex-col">
+                <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v203</div>
             </div>
-            <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
+            <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
-        <div id="drawer-overlay" onclick="toggleMenu()"></div>
-        <div id="side-drawer">
-            <div class="drawer-header">Greenleaf Menu</div>
-            <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
-            <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-            <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
-            <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-            <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
-            <div class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
-            <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
-            <hr class="my-2">
-            <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
-        </div>
-        <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32">
+
+        <main id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-24">
+            
             <div id="view-home" class="hidden">
-                <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg">
-                    <h1 class="text-3xl font-bold">Park Hill</h1>
-                    <p class="opacity-80">Inventory Management</p>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 text-center">
+                    <h1 class="text-2xl font-bold text-gray-800">Inventory Dashboard</h1>
+                    <p class="text-gray-400 text-sm mt-1">Select a mode to begin</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div onclick="switchView('tasks')" class="home-btn">
-                        <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
-                        <span class="font-bold">Tasks</span>
-                        <div id="file-label-drive-t" class="file-label">--</div>
-                        <div id="dot-inventory" class="status-dot visible loading"></div>
+                    <div onclick="switchView('tasks')" class="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-gray-50">
+                        <i class="ph-bold ph-clipboard-text text-4xl text-[#007a4d]"></i>
+                        <span class="font-bold text-gray-700">My Tasks</span>
+                        <span id="task-count" class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">--</span>
                     </div>
-                    <div onclick="switchView('drive')" class="home-btn">
-                        <i class="ph-bold ph-car home-icon text-blue-600"></i>
-                        <span class="font-bold">Drive Mode</span>
-                        <div id="file-label-drive" class="file-label">--</div>
+                    <div onclick="switchView('drive')" class="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-gray-50">
+                        <i class="ph-bold ph-car text-4xl text-blue-600"></i>
+                        <span class="font-bold text-gray-700">Drive Mode</span>
                     </div>
-                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
-                        <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
-                        <span class="font-bold">SOC</span>
-                        <div id="file-label-soc" class="file-label">--</div>
-                        <div id="dot-soc" class="status-dot visible loading"></div>
-                    </div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
-                </div>
-                <div class="mt-8 text-center text-xs text-gray-400">
-                    <p id="sync-status-text">Database Connection Active</p>
                 </div>
             </div>
-            <div id="view-drive" class="hidden">
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Inventory Browse</h2>
-                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
-                <div id="drive-content"></div>
-            </div>
+
             <div id="view-tasks" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2>
-                    <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
+                <div class="flex gap-2 mb-4">
+                    <button id="ttab-season" class="flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" onclick="setTaskTab('season')">Season Sales</button>
+                    <button id="ttab-location" class="flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400" onclick="setTaskTab('location')">Location Sales</button>
                 </div>
-                <div id="team-selector" class="hidden mb-4 grid grid-cols-3 gap-2">
-                    <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
-                    <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
-                    <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
-                </div>
-                <div id="task-tabs-container" class="task-tabs hidden">
-                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Note</div>
-                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location Sales Note</div>
-                </div>
+                <div id="task-crumb" class="text-xs font-bold text-gray-400 mb-2 uppercase"></div>
                 <div id="task-content"></div>
             </div>
-            <div id="view-soc" class="hidden">
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC Database</h2>
-                <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d]"></div>
-                <div class="flex justify-between items-center mb-2">
-                    <span id="soc-crumb" class="text-xs font-bold text-gray-500"></span>
-                </div>
-                <div id="soc-content"></div>
+
+            <div id="view-drive" class="hidden">
+                <input type="text" id="drive-search" class="w-full p-3 border rounded-lg mb-4 shadow-sm" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
+                <div id="drive-content"></div>
             </div>
-            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with No Priority OR No Season Winner.</div><span id="review-crumb" class="text-xs font-bold text-gray-400"></span><div id="review-content"></div></div>
-            <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
-            <div id="view-detail" class="hidden">
-                <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
-                <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
-                <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
-                <div class="detail-tabs">
-                    <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
-                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
-                </div>
-                <div id="det-overview-content" class="py-4">
-                    <div id="user-data-box" class="bg-green-50 p-4 rounded-lg border border-green-200 mb-6 hidden">
-                        <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Latest Field Updates</h3>
-                        <div id="dynamic-user-grid" class="overview-grid"></div>
-                    </div>
-                    <div class="task-info-grid">
-                        <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Item Code</div><div id="ov-item" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
-                    </div>
-                    <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
-                </div>
-                <div id="det-actions-content" class="hidden py-4">
-                    <div id="photo-preview" class="mb-4 hidden">
-                        <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
-                        <img id="img-prev" class="w-full h-48 object-cover rounded-lg border hidden">
-                        <div id="img-placeholder" class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border rounded-lg">Photo stored on Cloud</div>
-                        <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
-                    </div>
-                    <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
-                    <div id="input-container" class="input-stack"></div>
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
-                </div>
-            </div>
-        </div>
-        <div id="action-bar">
-            <div class="action-btn bg-blue-600" onclick="batchText()"><i class="ph-bold ph-chat-text"></i> Text</div>
-            <div class="action-btn bg-purple-600" onclick="batchEmail()"><i class="ph-bold ph-envelope"></i> Email</div>
-            <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus"></i> Assign</div>
-        </div>
+
+        </main>
+
         <nav id="bottom-nav">
             <div class="nav-item active" id="nav-home" onclick="switchView('home')"><i class="ph-bold ph-house"></i><div class="nav-label">Home</div></div>
-            <div class="nav-item" id="nav-drive" onclick="switchView('drive')"><i class="ph-bold ph-car"></i><div class="nav-label">Drive</div></div>
             <div class="nav-item" id="nav-tasks" onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text"></i><div class="nav-label">Tasks</div></div>
-            <div class="nav-item" id="nav-viewer" onclick="switchView('viewer')"><i class="ph-bold ph-eye"></i><div class="nav-label">Viewer</div></div>
+            <div class="nav-item" id="nav-drive" onclick="switchView('drive')"><i class="ph-bold ph-car"></i><div class="nav-label">Drive</div></div>
         </nav>
-    </div>
-    <div id="assign-modal">
-        <div class="modal-card">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Assign Tasks</h2>
-            <div class="space-y-3 mb-6">
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Dylan</span></label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label>
-            </div>
-            <div class="flex gap-3">
-                <button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
-                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">Confirm</button>
-            </div>
-        </div>
     </div>
 
     <script>
-        // *** CONFIGURATION ***
+        // *** PASTE YOUR WEB APP URL HERE ***
         const GOOGLE_SCRIPT_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
-        const STORAGE_KEY = "greenleaf_v198_storage"; 
-        const CACHE_KEYS = { inventory: "gl_cache_inventory_db", soc: "gl_cache_soc_db" };
-        const ADMINS = ["Dylan", "J.D."];
         
-        const SOC_REP_LIST = [
-            "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
-            "Tracey Tapscott", "David Brandt", "Tony Bono", "Ellen Deely", "Chance Alldredge", "Nate Douglas", 
-            "Traci Earle", "Kevin Effinger", "Chris Farrow", "Annette Hancock", "Ben Harveson", 
-            "Brian Hatfield", "InHouse Sales", "Interdivison", "Wes Lugas", "Rudy Martenez", "Ben Machino", "Casey Rufener"
-        ];
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
-        async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
-
+        // APP STATE
         let fullInventory = [];
-        let socInventory = []; 
-        let activeItem = null;
         let currentUser = null;
-        let isAdmin = false;
-        
-        let taskViewTargetUser = null; 
         let currentTab = 'season';
-        let taskViewLevel = 0; 
-        let selectedTaskBlock = null;
-        let selectedTaskLoc = null;
-        let reviewViewLevel = 0;
-        let selectedReviewName = null;
-        let selectedReviewSize = null;
         
-        let socViewLevel = 0;
-        let selectedSocRep = null;
-        let selectedSocCommon = null;
-        let selectedSocCode = null;
+        let taskLevel = 0;
+        let selectedBlock = null;
+        let selectedLoc = null;
 
-        let isBatch = false;
-        let selectedIdx = [];
-        let lastView = 'drive'; 
-
-        // LOGIN AND INIT
-        function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
+        // --- LOGIN LOGIC ---
+        function selectUser(u) { currentUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); }
+        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
         function verifyPin() {
-            if (document.getElementById('pin-code').value === '1234') {
+            if(document.getElementById('pin-code').value === '1234') {
                 document.getElementById('view-login').style.display = 'none';
                 document.getElementById('app-wrapper').classList.remove('hidden');
                 document.getElementById('header-user').innerText = currentUser;
-                launchApp();
+                syncDatabase();
             } else { alert("Incorrect PIN"); }
         }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        function launchApp() { 
-            if(isAdmin) { 
-                document.getElementById('header-batch-btn').style.display = 'block'; 
-                document.getElementById('home-btn-soc').classList.remove('hidden'); 
-                document.getElementById('home-btn-review').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('header-batch-btn').style.display = 'none'; 
-                document.getElementById('home-btn-soc').classList.add('hidden'); 
-                document.getElementById('home-btn-review').classList.add('hidden'); 
-            } 
-            
-            // START DB SYNCS
-            syncManager('inventory');
-            syncManager('soc');
-            
-            switchView('home'); 
-        }
+        // --- SYNC & LOGIC ENGINE ---
+        async function syncDatabase() {
+            const status = document.getElementById('sync-status');
+            status.style.display = 'block';
+            document.getElementById('view-login').style.display = 'flex'; // Loader overlay
 
-        // *** DB SYNC MANAGER ***
-        async function syncManager(type) {
-            updateStatusUI(type, "loading");
-            const url = `${GOOGLE_SCRIPT_URL}?type=${type}`;
-            
             try {
-                const res = await fetch(url);
-                const response = await res.json();
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=inventory");
+                const json = await res.json();
                 
-                if (response.status === 'success') {
-                    if(type === 'inventory') {
-                        fullInventory = processInventory(response.data);
-                        runLogicEngine(fullInventory);
-                        applyAssignments();
-                        loadSavedData();
-                        document.getElementById('file-label-drive').innerText = "Live DB";
-                        document.getElementById('file-label-drive-t').innerText = "Live DB";
-                    }
-                    if(type === 'soc') {
-                        socInventory = response.data;
-                        document.getElementById('file-label-soc').innerText = "Live DB";
-                        renderSocView();
-                    }
-                    updateStatusUI(type, "success");
-                } else {
-                    updateStatusUI(type, "error");
-                    console.error("DB Error:", response.message);
-                }
-            } catch (e) {
-                console.error("Fetch Error:", e);
-                updateStatusUI(type, "error");
+                if(json.status === 'success') {
+                    fullInventory = json.data.map(item => {
+                        // 1. Clean Data
+                        item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
+                        item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0;
+                        item.PRIORITY = parseFloat(item.PRIORITY) || 0;
+                        
+                        // 2. Assign User
+                        const grp = String(item.PLANTGROUPCODE || "");
+                        if(grp.includes("230") || grp.includes("140")) item.ASSIGNED_TO = "Dylan";
+                        else if(grp.includes("330") || grp.includes("300")) item.ASSIGNED_TO = "Kayla";
+                        else item.ASSIGNED_TO = "Morgan";
+
+                        // 3. LOGIC ENGINE
+                        // RULE A: Sold Out (< 10%) -> HIDE
+                        if (item.PTRAVAILABLE < (item.SEASONSUPPLY * 0.10)) {
+                            item.IS_TASK = false;
+                            return item;
+                        }
+
+                        // RULE B: Recently Completed (< 10 Days) -> HIDE
+                        if (item.COMPLETED_AT) {
+                            const daysSince = (new Date() - new Date(item.COMPLETED_AT)) / (1000 * 60 * 60 * 24);
+                            if (daysSince < 10) {
+                                item.IS_TASK = false;
+                                return item;
+                            }
+                        }
+
+                        // RULE C: Priority -> SHOW
+                        if (item.PRIORITY > 0) {
+                            item.IS_TASK = true;
+                            item.TASK_TAB = 'season'; // Default logic
+                        } else {
+                            item.IS_TASK = false;
+                        }
+                        return item;
+                    });
+                    
+                    updateTaskCount();
+                    switchView('home');
+                } else { alert("Database Error: " + json.message); }
+            } catch(e) { alert("Network Error: " + e); }
+            finally { 
+                status.style.display = 'none'; 
+                document.getElementById('view-login').style.display = 'none'; 
             }
         }
 
-        function processInventory(data) {
-            return data.map((item, index) => {
-                item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
-                item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0; 
-                item.PRIORITY = parseFloat(item.PRIORITY) || 0; 
-                const baseKey = (item.ITEMCODE||"") + "_" + (item.LOCATIONCODE||"") + "_" + (item.LOTCODE||"");
-                item.UNIQUE_ROW_ID = baseKey + "_" + index; 
-                return item;
-            });
+        function updateTaskCount() {
+            const count = fullInventory.filter(i => i.IS_TASK && (currentUser === 'J.D.' || i.ASSIGNED_TO === currentUser)).length;
+            document.getElementById('task-count').innerText = count + " Items";
         }
 
-        function updateStatusUI(type, status) {
-            const dot = document.getElementById(`dot-${type}`);
-            if(dot) dot.className = `status-dot visible ${status}`;
-        }
-
-        function runLogicEngine(items) {
-            const grouped = {};
-            items.forEach(i => { if(!grouped[i.ITEMCODE]) grouped[i.ITEMCODE] = []; grouped[i.ITEMCODE].push(i); });
-            Object.keys(grouped).forEach(code => {
-                let grp = grouped[code];
-                const hasPriority = grp.some(i => i.PRIORITY > 0);
-                if(!hasPriority) { grp.forEach(i => i.TASK_TAB = 'review'); return; }
-                let winner = null;
-                const priorities = [...new Set(grp.map(i => i.PRIORITY).filter(p=>p>0))].sort((a,b)=>a-b);
-                for(let p of priorities) {
-                    if(grp.filter(i=>i.PRIORITY===p).some(i=>i.PTRAVAILABLE > (i.SEASONSUPPLY*0.10))) { winner = p; break; }
-                }
-                if(winner !== null) {
-                    grp.forEach(i => { if(i.PRIORITY===winner) i.TASK_TAB='season'; else i.TASK_TAB='location'; });
-                } else { grp.forEach(i => i.TASK_TAB = 'review'); }
-            });
-        }
-
-        // *** SOC RENDERER ***
-        function renderSocView() {
-            const container = document.getElementById('soc-content');
-            const crumb = document.getElementById('soc-crumb');
+        // --- NAVIGATION ---
+        function switchView(v) {
+            ['view-home','view-tasks','view-drive'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(v!=='home') document.getElementById('nav-'+v).classList.add('active');
             
-            if(socViewLevel === 0) {
-                crumb.innerText = "All Reps";
-                container.innerHTML = SOC_REP_LIST.map(r => `
-                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
-                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
+            if(v==='tasks') { taskLevel=0; renderTasks(); }
+            if(v==='drive') { renderDriveNames(); }
+        }
+
+        // --- TASKS VIEW (DRILL DOWN) ---
+        function setTaskTab(t) {
+            currentTab = t;
+            document.getElementById('ttab-season').className = t==='season' ? "flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" : "flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400";
+            document.getElementById('ttab-location').className = t==='location' ? "flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" : "flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400";
+            taskLevel = 0;
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('task-content');
+            const crumb = document.getElementById('task-crumb');
+            let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (currentUser === 'J.D.' || i.ASSIGNED_TO === currentUser));
+            
+            if (myTasks.length === 0) { container.innerHTML = "<div class='p-8 text-center text-gray-400'>No tasks found.</div>"; return; }
+
+            // LEVEL 0: BLOCKS
+            if (taskLevel === 0) {
+                crumb.innerText = "Select Block";
+                const blocks = [...new Set(myTasks.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                container.innerHTML = blocks.map(b => `
+                    <div class="drill-item" onclick="selectBlock('${b}')">
+                        <span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
                     </div>
                 `).join('');
             }
-            else if(socViewLevel === 1) {
-                crumb.innerText = selectedSocRep;
-                const repParts = selectedSocRep.toUpperCase().split(" ");
-                const repItems = socInventory.filter(i => {
-                    const dataName = (i.SALESREPNAME || "").toUpperCase();
-                    return repParts.some(part => dataName.includes(part));
-                });
-                const commons = [...new Set(repItems.map(i => i.COMMONNAME || "Unknown"))].sort();
-                if (commons.length === 0) {
-                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back</div><div class="p-4 text-center text-gray-400">No items found.</div>`;
-                } else {
-                    container.innerHTML = `
-                        <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
-                        ${commons.map(c => `<div class="drill-item" onclick="selectSocCommon('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}
-                    `;
-                }
-            }
-            else if(socViewLevel === 2) {
-                crumb.innerText = `${selectedSocRep} / ${selectedSocCommon}`;
-                const repParts = selectedSocRep.toUpperCase().split(" ");
-                const items = socInventory.filter(i => {
-                    const dataName = (i.SALESREPNAME || "").toUpperCase();
-                    return repParts.some(part => dataName.includes(part)) && (i.COMMONNAME || "Unknown") === selectedSocCommon;
-                });
-                const codes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || "Unknown"))].sort();
+            // LEVEL 1: LOCATIONS
+            else if (taskLevel === 1) {
+                crumb.innerText = `${selectedBlock} / Select Location`;
+                const locs = [...new Set(myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock).map(i => i.LOCATIONCODE))].sort();
                 container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div>
-                    ${codes.map(code => `<div class="drill-item" onclick="selectSocCode('${code.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${code}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}
+                    <div class="back-btn" onclick="taskLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>
+                    ${locs.map(l => `
+                        <div class="drill-item" onclick="selectLoc('${l}')">
+                            <span class="font-bold">${l}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
+                        </div>
+                    `).join('')}
                 `;
             }
-            else if(socViewLevel === 3) {
-                crumb.innerText = `${selectedSocCommon} / ${selectedSocCode}`;
-                const repParts = selectedSocRep.toUpperCase().split(" ");
-                const finalItems = socInventory.filter(i => {
-                    const dataName = (i.SALESREPNAME || "").toUpperCase();
-                    return repParts.some(part => dataName.includes(part)) && 
-                           (i.COMMONNAME || "Unknown") === selectedSocCommon &&
-                           (i.PRINTEDCONTAINERCODE || "Unknown") === selectedSocCode;
-                });
+            // LEVEL 2: ITEMS
+            else if (taskLevel === 2) {
+                crumb.innerText = `${selectedBlock} / ${selectedLoc}`;
+                const items = myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock && i.LOCATIONCODE === selectedLoc);
                 container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
-                    ${finalItems.map(i => `
+                    <div class="back-btn" onclick="taskLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>
+                    ${items.map(item => `
                         <div class="inv-card">
-                            <div class="font-bold text-[#007a4d]">${i.CUSTOMERNAME || 'Unknown'}</div>
-                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
-                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
-                            <div class="text-xs text-gray-400 mt-1">${i.SALESNOTELINE || ''}</div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
+                                    <div class="text-xs text-gray-500 mt-1">Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE}</div>
+                                    <div class="text-xs text-gray-500">Qty: ${item.PTRAVAILABLE}</div>
+                                </div>
+                                <button class="complete-btn" onclick="markComplete('${item.UNIQUE_ID}')">COMPLETE</button>
+                            </div>
+                            <input type="text" class="note-input" placeholder="Add Sales Note..." value="${item.SALES_NOTE || ''}" onchange="saveNote(this, '${item.UNIQUE_ID}')">
                         </div>
                     `).join('')}
                 `;
             }
         }
-        function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
-        function selectSocCommon(c) { selectedSocCommon = c; socViewLevel = 2; renderSocView(); }
-        function selectSocCode(c) { selectedSocCode = c; socViewLevel = 3; renderSocView(); }
+        function selectBlock(b) { selectedBlock = b; taskLevel = 1; renderTasks(); }
+        function selectLoc(l) { selectedLoc = l; taskLevel = 2; renderTasks(); }
 
-        // UTILS & NAVIGATION
-        function applyAssignments() { let i = 0; fullInventory.forEach(item => { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla"; else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } }); }
-        function switchView(v) { 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc'].forEach(id => document.getElementById(id).classList.add('hidden')); 
-            document.getElementById('view-'+v).classList.remove('hidden'); 
-            if(v==='drive') renderDriveNames(); 
-            if(v==='tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
-            if(v==='viewer') renderViewerNames(); 
-            if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
-            if(v==='soc') renderSocView(); 
-        }
-
-        function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
-        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
-        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); taskViewLevel = 0; renderTasks(); }
-
-        function renderTasks() {
-            const container = document.getElementById('task-content');
-            const crumb = document.getElementById('task-crumb');
-            document.getElementById('task-tabs-container').classList.remove('hidden');
-            let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
-
-            if(taskViewLevel === 0) {
-                crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
-                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                if(blocks.length===0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
-                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if (taskViewLevel === 1) {
-                crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`;
-                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else {
-                crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`;
-                const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
-                container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
-            }
-        }
-        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
-        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
-        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
-
-        function renderReviewItems() {
-            const container = document.getElementById('review-content');
-            const crumb = document.getElementById('review-crumb');
-            const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
-            if(reviewViewLevel === 0) {
-                crumb.innerText = "All Names";
-                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort();
-                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(reviewViewLevel === 1) {
-                crumb.innerText = selectedReviewName;
-                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(reviewViewLevel === 2) {
-                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`;
-                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize);
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
-            }
-        }
-        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
-        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
-
+        // --- DRIVE MODE ---
         function renderDriveNames() {
-            const term = document.getElementById('drive-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            const q = document.getElementById('drive-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(q)).sort();
+            document.getElementById('drive-content').innerHTML = names.map(n => `
+                <div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
+                    <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
+                </div>
+            `).join('');
         }
-        function selectDriveName(name) {
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        function selectDriveName(n) {
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === n).map(i => i.CONTSIZE))].sort();
+            document.getElementById('drive-content').innerHTML = `
+                <div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>
+                ${sizes.map(s => `
+                    <div class="drill-item" onclick="selectDriveSize('${n.replace(/'/g, "\\'")}', '${s}')">
+                        <span class="font-bold">${s}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>
+                `).join('')}
+            `;
         }
-        function selectDriveSize(name, size) {
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join('');
-        }
-        
-        function renderViewerNames() {
-            const term = document.getElementById('viewer-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort();
-            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectViewerName(name) {
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-        }
-        function selectViewerSize(name, size) {
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
-        }
-
-        function createRowHtml(item, idx, source) {
-            const showCheck = isBatch && isAdmin;
-            const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
-            return `<div class="batch-row">${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}<div class="inv-card flex-grow" ${clickAction}><div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div><div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div></div></div>`;
-        }
-
-        function openDetail(idx, originView) {
-            lastView = originView; activeItem = fullInventory[idx];
-            document.getElementById('view-detail').classList.remove('hidden');
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME;
-            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
-            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
-            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
-            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
-            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
-            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
-            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
-            document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
-
-            const cont = document.getElementById('input-container');
-            if(isAdmin) {
-                document.getElementById('btn-cam').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden');
-                cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
-            } else {
-                document.getElementById('btn-cam').classList.add('hidden'); document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
-            }
-            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
-            renderOverviewData(); renderAllFields(); switchDetailTab('overview');
+        function selectDriveSize(n, s) {
+            const items = fullInventory.filter(i => i.COMMONNAME === n && i.CONTSIZE === s);
+            document.getElementById('drive-content').innerHTML = `
+                <div class="back-btn" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
+                ${items.map(i => `
+                    <div class="inv-card">
+                        <div class="font-bold text-[#007a4d]">${i.LOCATIONCODE}</div>
+                        <div class="text-sm mt-1">Qty: ${i.PTRAVAILABLE} | Lot: ${i.LOTCODE}</div>
+                    </div>
+                `).join('')}
+            `;
         }
 
-        function renderOverviewData() {
-            const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid'); const photoDiv = document.getElementById('photo-preview'); const imgPrev = document.getElementById('img-prev'); const imgPlace = document.getElementById('img-placeholder'); const linkBtn = document.getElementById('photo-link-btn');
-            let h = "";
-            if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
-            if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
-            if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
-            if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            if(activeItem.SAVED_PHOTO_LINK) {
-                h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
-                photoDiv.classList.remove('hidden'); linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
-            } else { photoDiv.classList.add('hidden'); }
-            if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
+        // --- ACTIONS ---
+        function saveNote(el, uniqueId) {
+            const item = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
+            if(item) item.SALES_NOTE = el.value;
+            el.style.backgroundColor = "#dcfce7"; setTimeout(() => el.style.backgroundColor = "#fffbeb", 1500);
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: uniqueId, note: el.value }) }).catch(e => alert("Save Failed"));
         }
 
-        function handlePhotoUpload(input) {
-            if(input.files && input.files[0]) {
-                const file = input.files[0]; const btn = document.getElementById('btn-cam'); const btnText = document.getElementById('cam-text'); btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = function(e) {
-                    const img = new Image(); img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
-                        const dateStr = new Date().toISOString().split('T')[0]; const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
-                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) }).then(res => res.json()).then(data => {
-                            if(data.status === 'success') { activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl; renderOverviewData(); saveData(true); alert("Photo Uploaded!"); } else { alert("Upload Error: " + data.message); }
-                        }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
-                    }
-                }
-            }
+        function markComplete(uniqueId) {
+            if(!confirm("Mark complete? Disappears for 10 days.")) return;
+            const item = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
+            if(item) item.IS_TASK = false;
+            renderTasks(); updateTaskCount();
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: uniqueId, isComplete: true, user: currentUser }) }).catch(e => alert("Save Failed"));
         }
-
-        function saveData(silent = false) {
-            if(!isAdmin) return;
-            activeItem.SAVED_MATCH = document.getElementById('in-match').value; activeItem.SAVED_SPEC = document.getElementById('in-spec').value; activeItem.SAVED_PICK = document.getElementById('in-pick').value; activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); const id = activeItem.UNIQUE_ROW_ID;
-            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() };
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
-        }
-
-        function loadSavedData() {
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            fullInventory.forEach(item => { const id = item.UNIQUE_ROW_ID; if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; } });
-        }
-
-        function renderAllFields() { const cont = document.getElementById('expand-content'); cont.innerHTML = Object.keys(activeItem).map(k => { if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID' || k === 'TASK_TAB') return ""; return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`; }).join(''); }
-        function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE"; document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000"; if(!isBatch) document.getElementById('action-bar').classList.remove('visible'); const views = ['drive','tasks','viewer']; views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); } }); }
-        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
-        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
-        function batchAssign() { const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked; let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan"); if(selected.length === 0) { alert("Select at least one person."); return; } let target = selected.join(" & "); selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target); document.getElementById('assign-modal').style.display='none'; toggleBatch(); alert("Items Assigned to: " + target); }
-        
-        function getBatchReport() { let report = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`; let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`]; if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`); report += details.join(' | ') + "\n"; if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`; if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`; if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`; report += `\n----------------\n\n`; }); return report; }
-        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
-        
-        function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
-        function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
-        function switchDetailTab(tab) { document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); }
-        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); }
     </script>
 </body>
 </html>
