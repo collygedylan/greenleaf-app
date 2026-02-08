@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v186</title>
+    <title>Greenleaf Pro v187</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v186</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v187</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -284,15 +284,15 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v186_storage"; 
+        const STORAGE_KEY = "greenleaf_v187_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
+        // CUSTOM REP LIST
         const SOC_REP_LIST = [
-            "CHANCE ALLDREDGE", "TONY BONO", "BEN BROWN", "TOBY BROWN", "ABBEY BURKA", 
-            "DAVID BRANDT", "ELLEN DEELY", "NATE DOUGLAS", "TRACI EARLE", "KEVIN EFFINGER", 
-            "CHRIS FARROW", "CHRIS GAYDOS", "ANNETE HANCOCK", "BEN HARVESON", "TROY LEE", 
-            "WES LUGAS", "RUDY MARTINEZ", "BEN MASCHINO", "JOSH RINGLEB", "TRACEY TAPSCOTT", 
-            "JESSICA ROBERTSON", "CASEY RUFENER"
+            "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
+            "Tracey Tapscott", "David Brandt", "Tony Bono", "Ellen Deely", "Chance Alldredge", "Nate Douglas", 
+            "Traci Earle", "Kevin Effinger", "Chris Farrow", "Annette Hancock", "Ben Harveson", 
+            "Brian Hatfield", "InHouse Sales", "Interdivison", "Wes Lugas", "Rudy Martenez", "Ben Machino", "Casey Rufener"
         ];
 
         let deferredPrompt;
@@ -318,8 +318,8 @@
         let selectedReviewSize = null;
         let socViewLevel = 0;
         let selectedSocRep = null;
-        let selectedSocCust = null;
-        let selectedSocCommon = null;
+        let selectedSocCommon = null; // Changed from Cust to Common
+        let selectedSocCode = null;   // Added Code for level 2
 
         let isBatch = false;
         let selectedIdx = [];
@@ -328,18 +328,11 @@
         // LOGIN
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
         
-        // MODIFIED VERIFY PIN TO LOAD BOTH FILES
         async function verifyPin() {
             if (document.getElementById('pin-code').value === '1234') {
                 document.getElementById('pin-container').classList.add('hidden');
                 document.getElementById('loading-spinner').classList.remove('hidden');
-                
-                // LOAD BOTH FILES IN PARALLEL
-                await Promise.allSettled([
-                    fetchData(),     // DRIVE AROUND
-                    fetchSocData()   // SOC
-                ]);
-                
+                await Promise.allSettled([ fetchData(), fetchSocData() ]);
                 launchApp();
             } else { alert("Incorrect PIN"); }
         }
@@ -354,7 +347,6 @@
                 
                 if (data.status !== 'success') { throw new Error(data.message || "Script Error"); }
                 
-                // UPDATE LABEL IMMEDIATELY
                 document.getElementById('file-label-drive').innerText = data.filename || "Loaded";
                 document.getElementById('file-label-drive-t').innerText = data.filename || "Loaded";
 
@@ -422,9 +414,8 @@
                 const data = await res.json();
                 
                 if(data.status === 'success') {
-                    // UPDATE LABEL IMMEDIATELY
-                    document.getElementById('file-label-soc').innerText = data.filename || "Loaded";
-                    
+                    document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
+                    document.getElementById('file-label-soc').innerText = data.filename; 
                     const workbook = XLSX.read(data.data, {type: 'base64'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
@@ -442,6 +433,7 @@
             }
         }
 
+        // *** NEW SOC RENDERER ***
         function renderSocView() {
             const container = document.getElementById('soc-content');
             const crumb = document.getElementById('soc-crumb');
@@ -451,24 +443,81 @@
                 return; 
             }
 
+            // LEVEL 0: REPS LIST (Specific Order)
             if(socViewLevel === 0) {
                 crumb.innerText = "All Reps";
-                const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
-                container.innerHTML = reps.map(r => `<div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')"><span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(socViewLevel === 1) {
+                
+                // Get reps that actually have data
+                const actualReps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))];
+                
+                // Filter and Sort based on SOC_REP_LIST
+                const displayReps = SOC_REP_LIST.filter(r => actualReps.some(ar => ar.toUpperCase().includes(r.toUpperCase())));
+                
+                container.innerHTML = displayReps.map(r => `
+                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
+                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `).join('');
+            }
+            // LEVEL 1: COMMON NAMES (Items)
+            else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
-                const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
-                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>` + customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(socViewLevel === 2) {
-                crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
-                const items = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep && (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>` + items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('');
+                const repItems = socInventory.filter(i => (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()));
+                const commons = [...new Set(repItems.map(i => i.COMMONNAME || "Unknown"))].sort();
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
+                    ${commons.map(c => `
+                        <div class="drill-item" onclick="selectSocCommon('${c.replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            // LEVEL 2: PRINTED CONTAINER CODES (Sizes)
+            else if(socViewLevel === 2) {
+                crumb.innerText = `${selectedSocRep} / ${selectedSocCommon}`;
+                const items = socInventory.filter(i => 
+                    (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()) && 
+                    (i.COMMONNAME || "Unknown") === selectedSocCommon
+                );
+                const codes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || "Unknown"))].sort();
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div>
+                    ${codes.map(code => `
+                        <div class="drill-item" onclick="selectSocCode('${code.replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-sm">${code}</span><i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            // LEVEL 3: CUSTOMER DETAILS (Final List)
+            else if(socViewLevel === 3) {
+                crumb.innerText = `${selectedSocCommon} / ${selectedSocCode}`;
+                const finalItems = socInventory.filter(i => 
+                    (i.SALESREPNAME || "").toUpperCase().includes(selectedSocRep.toUpperCase()) && 
+                    (i.COMMONNAME || "Unknown") === selectedSocCommon &&
+                    (i.PRINTEDCONTAINERCODE || "Unknown") === selectedSocCode
+                );
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
+                    ${finalItems.map(i => `
+                        <div class="inv-card">
+                            <div class="font-bold text-[#007a4d]">${i.CUSTOMERNAME || 'Unknown'}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
+                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                            <div class="text-xs text-gray-400 mt-1">${i.SALESNOTELINE || ''}</div>
+                        </div>
+                    `).join('')}
+                `;
             }
         }
 
         function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
-        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        function selectSocCommon(c) { selectedSocCommon = c; socViewLevel = 2; renderSocView(); }
+        function selectSocCode(c) { selectedSocCode = c; socViewLevel = 3; renderSocView(); }
 
         // UTILS
         function pruneOldData() { const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000; const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); let changed = false; Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } }); if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); }
@@ -527,7 +576,6 @@
             renderTasks();
         }
 
-        // *** UPDATED: BOTH TABS USE BLOCK -> LOCATION LOGIC ***
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -535,7 +583,7 @@
 
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
-            // BOTH tabs now share the exact same drill-down logic:
+            // BOTH TABS NOW USE THE BLOCK -> LOCATION -> ITEM STRUCTURE
             if(taskViewLevel === 0) {
                 // LEVEL 0: SHOW BLOCKS
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
@@ -560,7 +608,7 @@
         
         function selectTaskLoc(l) { 
             selectedTaskLoc = l; 
-            taskViewLevel = 2; // Both tabs now go to Level 2
+            taskViewLevel = 2; 
             renderTasks(); 
         }
         
