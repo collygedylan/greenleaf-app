@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v191</title>
+    <title>Greenleaf Pro v192</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -82,8 +82,6 @@
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         #header-batch-btn { background: #e3a000; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: none; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
-        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -112,7 +110,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v191</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v192</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -144,22 +142,25 @@
                     <div onclick="switchView('tasks')" class="home-btn">
                         <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
                         <span class="font-bold">Tasks</span>
-                        <div id="file-label-drive-t" class="file-label">Syncing...</div>
-                        <div id="dot-inventory" class="status-dot visible loading"></div>
+                        <div id="file-label-drive-t" class="file-label">--</div>
+                        <div id="dot-inventory" class="status-dot"></div>
                     </div>
                     <div onclick="switchView('drive')" class="home-btn">
                         <i class="ph-bold ph-car home-icon text-blue-600"></i>
                         <span class="font-bold">Drive Mode</span>
-                        <div id="file-label-drive" class="file-label">Syncing...</div>
+                        <div id="file-label-drive" class="file-label">--</div>
                     </div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
                         <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
                         <span class="font-bold">SOC</span>
-                        <div id="file-label-soc" class="file-label">Syncing...</div>
-                        <div id="dot-soc" class="status-dot visible loading"></div>
+                        <div id="file-label-soc" class="file-label">--</div>
+                        <div id="dot-soc" class="status-dot"></div>
                     </div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
+                </div>
+                <div class="mt-8 text-center text-xs text-gray-400">
+                    <p id="sync-status-text">Ready</p>
                 </div>
             </div>
 
@@ -282,7 +283,8 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v191_storage"; 
+        const STORAGE_KEY = "greenleaf_v192_storage"; 
+        const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
         // CUSTOM REP LIST (Exact Order Requested)
@@ -328,35 +330,95 @@
         // LOGIN
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
         
-        async function verifyPin() {
+        function verifyPin() {
             if (document.getElementById('pin-code').value === '1234') {
-                // INSTANT LOGIN: HIDE SCREEN IMMEDIATELY
+                // INSTANT ENTRY:
                 document.getElementById('view-login').style.display = 'none';
                 document.getElementById('app-wrapper').classList.remove('hidden');
                 document.getElementById('header-user').innerText = currentUser;
-                launchApp(); 
-
-                // START BACKGROUND LOADING
-                await Promise.allSettled([ fetchData(), fetchSocData() ]);
+                launchApp();
                 
+                // TRIGGER SMART SYNC IN BACKGROUND
+                syncManager('inventory');
+                syncManager('soc');
             } else { alert("Incorrect PIN"); }
         }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        // FETCH DATA (DRIVE MODE)
-        async function fetchData() {
-            try {
-                pruneOldData(); 
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getFile&type=inventory");
-                const data = await res.json();
-                
-                if (data.status !== 'success') { throw new Error(data.message || "Script Error"); }
-                
-                document.getElementById('file-label-drive').innerText = data.filename || "Loaded";
-                document.getElementById('file-label-drive-t').innerText = data.filename || "Loaded";
-                document.getElementById('dot-inventory').className = "status-dot visible success";
+        // *** SMART SYNC MANAGER ***
+        async function syncManager(type) {
+            updateStatusUI(type, "loading");
+            
+            // 1. Load Local Cache First (Instant Display)
+            const cached = loadLocalCache(type);
+            if (cached) {
+                console.log(`Loaded ${type} from cache.`);
+                if(type === 'inventory') processInventoryData(cached.data, cached.filename);
+                if(type === 'soc') processSocData(cached.data, cached.filename);
+                updateStatusUI(type, "success"); // Show green dot temporarily while checking server
+            }
 
-                const workbook = XLSX.read(data.data, { type: 'base64' });
+            // 2. Check Server for Updates
+            try {
+                console.log(`Checking server for ${type}...`);
+                const checkRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
+                const meta = await checkRes.json();
+                
+                if (meta.status === 'success') {
+                    // If server is newer than cache, download it
+                    if (!cached || meta.lastUpdated > cached.lastUpdated) {
+                        console.log(`New version found for ${type}. Downloading...`);
+                        updateStatusUI(type, "loading"); // Turn dot yellow
+                        
+                        const fileRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getFile&type=${type}`);
+                        const fileData = await fileRes.json();
+                        
+                        if (fileData.status === 'success') {
+                            saveLocalCache(type, fileData);
+                            if(type === 'inventory') processInventoryData(fileData.data, fileData.filename);
+                            if(type === 'soc') processSocData(fileData.data, fileData.filename);
+                            updateStatusUI(type, "success");
+                        }
+                    } else {
+                        console.log(`${type} is up to date.`);
+                        updateStatusUI(type, "success");
+                    }
+                }
+            } catch (e) {
+                console.error(`Sync failed for ${type}:`, e);
+                if(!cached) updateStatusUI(type, "error");
+            }
+        }
+
+        // *** CACHE UTILS ***
+        function loadLocalCache(type) {
+            const json = localStorage.getItem(CACHE_KEYS[type]);
+            return json ? JSON.parse(json) : null;
+        }
+        function saveLocalCache(type, data) {
+            localStorage.setItem(CACHE_KEYS[type], JSON.stringify({
+                lastUpdated: data.lastUpdated,
+                filename: data.filename,
+                data: data.data // Base64 string
+            }));
+        }
+        function updateStatusUI(type, status) {
+            const dot = document.getElementById(`dot-${type}`);
+            if(dot) dot.className = `status-dot visible ${status}`;
+            
+            if(status === 'loading') {
+                if(type === 'inventory') {
+                    document.getElementById('file-label-drive').innerText = "Syncing...";
+                    document.getElementById('file-label-drive-t').innerText = "Syncing...";
+                }
+                if(type === 'soc') document.getElementById('file-label-soc').innerText = "Syncing...";
+            }
+        }
+
+        // *** PROCESSORS ***
+        function processInventoryData(base64, filename) {
+            try {
+                const workbook = XLSX.read(base64, { type: 'base64' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 let headerRow = 0;
@@ -407,54 +469,37 @@
 
                 fullInventory = rawItems;
                 applyAssignments(); loadSavedData();
-            } catch (e) { 
-                console.error(e); 
-                document.getElementById('dot-inventory').className = "status-dot visible error";
-                alert("Error loading Drive data: " + e.message);
-            }
+                
+                // Update UI Labels
+                document.getElementById('file-label-drive').innerText = filename;
+                document.getElementById('file-label-drive-t').innerText = filename;
+                
+            } catch (e) { console.error("Inventory Process Error", e); }
         }
 
-        // FETCH SOC DATA (AUTO)
-        async function fetchSocData() {
+        function processSocData(base64, filename) {
             try {
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getFile&type=soc");
-                const data = await res.json();
+                const workbook = XLSX.read(base64, {type: 'base64'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                if(data.status === 'success') {
-                    document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
-                    document.getElementById('file-label-soc').innerText = data.filename; 
-                    document.getElementById('dot-soc').className = "status-dot visible success";
-                    
-                    const workbook = XLSX.read(data.data, {type: 'base64'});
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
-                    // SMART HEADER DETECTION FOR SOC
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    let headerRow = 0;
-                    for(let i=0; i<Math.min(rows.length, 25); i++){
-                        const str = JSON.stringify(rows[i]).toUpperCase();
-                        if(str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME") || str.includes("ITEMCODE")) { 
-                            headerRow = i; 
-                            break; 
-                        }
-                    }
-                    
-                    socInventory = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
-                        let newRow = {};
-                        Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
-                        return newRow;
-                    });
-                    
-                    socViewLevel = 0;
-                } else {
-                    document.getElementById('file-label-soc').innerText = "Error";
-                    document.getElementById('dot-soc').className = "status-dot visible error";
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                let headerRow = 0;
+                for(let i=0; i<Math.min(rows.length, 25); i++){
+                    const str = JSON.stringify(rows[i]).toUpperCase();
+                    if(str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME")) { headerRow = i; break; }
                 }
-            } catch(e) {
-                console.log("SOC Fetch Error: " + e);
-                document.getElementById('file-label-soc').innerText = "Failed";
-                document.getElementById('dot-soc').className = "status-dot visible error";
-            }
+                
+                socInventory = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
+                    let newRow = {};
+                    Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
+                    return newRow;
+                });
+                
+                socViewLevel = 0;
+                document.getElementById('file-label-soc').innerText = filename;
+                renderSocView();
+                
+            } catch(e) { console.error("SOC Process Error", e); }
         }
 
         // *** NEW SOC RENDERER (V189 LOGIC) ***
