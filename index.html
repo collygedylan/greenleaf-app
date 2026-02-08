@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v203</title>
+    <title>Greenleaf Pro v204</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -60,7 +60,7 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex flex-col">
                 <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v203</div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v204</div>
             </div>
             <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
@@ -109,14 +109,14 @@
     </div>
 
     <script>
-        // *** PASTE YOUR WEB APP URL HERE ***
-        const GOOGLE_SCRIPT_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
+        // *** LIVE API CONNECTION ***
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
         
-        // APP STATE
         let fullInventory = [];
         let currentUser = null;
         let currentTab = 'season';
         
+        // Task Drill-Down State
         let taskLevel = 0;
         let selectedBlock = null;
         let selectedLoc = null;
@@ -144,6 +144,7 @@
                 const json = await res.json();
                 
                 if(json.status === 'success') {
+                    // PROCESS DATA WITH LOGIC ENGINE
                     fullInventory = json.data.map(item => {
                         // 1. Clean Data
                         item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
@@ -175,7 +176,7 @@
                         // RULE C: Priority -> SHOW
                         if (item.PRIORITY > 0) {
                             item.IS_TASK = true;
-                            item.TASK_TAB = 'season'; // Default logic
+                            item.TASK_TAB = 'season'; 
                         } else {
                             item.IS_TASK = false;
                         }
@@ -247,7 +248,7 @@
                     `).join('')}
                 `;
             }
-            // LEVEL 2: ITEMS
+            // LEVEL 2: ITEMS (ACTIONABLE)
             else if (taskLevel === 2) {
                 crumb.innerText = `${selectedBlock} / ${selectedLoc}`;
                 const items = myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock && i.LOCATIONCODE === selectedLoc);
@@ -272,7 +273,7 @@
         function selectBlock(b) { selectedBlock = b; taskLevel = 1; renderTasks(); }
         function selectLoc(l) { selectedLoc = l; taskLevel = 2; renderTasks(); }
 
-        // --- DRIVE MODE ---
+        // --- DRIVE MODE LOGIC ---
         function renderDriveNames() {
             const q = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(q)).sort();
