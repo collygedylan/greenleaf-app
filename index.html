@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v177</title>
+    <title>Greenleaf Pro v178</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -112,7 +112,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v177</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v178</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -168,8 +168,10 @@
                         <i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span>
                     </div>
                 </div>
-                <div class="mt-8 text-center text-xs text-gray-400">
-                    <p id="sync-logs">System Ready</p>
+                
+                <div class="mt-8 text-center">
+                    <button onclick="checkDataLoaded()" class="text-xs font-bold text-gray-400 border border-gray-300 rounded px-4 py-2">Check Data (Debug)</button>
+                    <p id="sync-logs" class="mt-2 text-[10px] text-gray-400">System Ready</p>
                 </div>
             </div>
 
@@ -296,8 +298,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxW9XLTulCkRLWC6SgNkbFoUnQLGT5NNyhd2W5hlRpRLFAxqVXeIG146TuwgN_RkVfP/exec"; 
-        
-        const STORAGE_KEY = "greenleaf_v177_storage"; 
+        const STORAGE_KEY = "greenleaf_v178_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         const SOC_REP_LIST = [
@@ -314,7 +315,7 @@
 
         let fullInventory = [];
         let socInventory = []; 
-        let trackingData = {}; // Object for multi-tab
+        let trackingData = {}; 
         let currentTrackingTab = "";
         
         let activeItem = null;
@@ -338,26 +339,15 @@
         let selectedIdx = [];
         let lastView = 'drive'; 
 
-        // *** IMMEDIATE BOOT (Pre-Login) ***
         (async function autoStartSync() {
             document.getElementById('sys-status').innerText = "Syncing Data...";
-            
-            // 1. Load Local Cache immediately
             loadLocalData('inventory');
             loadLocalData('soc');
             loadLocalData('tracking');
-            
-            // 2. Start Background Downloads
-            await Promise.allSettled([
-                syncManager('inventory'),
-                syncManager('soc'),
-                syncManager('tracking')
-            ]);
-            
+            await Promise.allSettled([syncManager('inventory'), syncManager('soc'), syncManager('tracking')]);
             document.getElementById('sys-status').innerText = "System Ready";
         })();
 
-        // LOGIN
         function selectUser(u) {
             currentUser = u; 
             isAdmin = ADMINS.includes(u); 
@@ -378,7 +368,6 @@
             } else { alert("Incorrect PIN"); }
         }
 
-        // --- CACHE & SYNC ---
         function loadLocalData(type) {
             const local = JSON.parse(localStorage.getItem("gl_cache_" + type) || "{}");
             if(local.data) {
@@ -386,7 +375,6 @@
                 if(type === 'soc') socInventory = local.data;
                 if(type === 'tracking') trackingData = local.data;
                 
-                // Set File Labels
                 if(local.filename) {
                     let el = document.getElementById("file-" + type);
                     if(!el && type === 'inventory') {
@@ -394,9 +382,7 @@
                         let d = document.getElementById("file-inventory-d");
                         if(t) t.innerText = local.filename;
                         if(d) d.innerText = local.filename;
-                    } else if(el) {
-                        el.innerText = local.filename;
-                    }
+                    } else if(el) { el.innerText = local.filename; }
                 }
                 updateDot(type, 'success');
             }
@@ -406,25 +392,15 @@
             updateDot(type, 'loading');
             const storageKey = "gl_cache_" + type;
             const local = JSON.parse(localStorage.getItem(storageKey) || "{}");
-
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
                 const meta = await res.json();
-                
                 if(meta.status === 'success') {
                     if(!local.lastUpdated || meta.lastUpdated > local.lastUpdated) {
                         await downloadAndCache(type, meta.lastUpdated);
-                    } else {
-                        updateDot(type, 'success');
-                    }
-                } else {
-                    console.log(meta.message); // Debug Info
-                    updateDot(type, 'error');
-                }
-            } catch(e) {
-                console.log(e);
-                updateDot(type, 'error');
-            }
+                    } else { updateDot(type, 'success'); }
+                } else { updateDot(type, 'error'); }
+            } catch(e) { updateDot(type, 'error'); }
         }
 
         function updateDot(type, status) {
@@ -444,13 +420,10 @@
                 let parsed = (type === 'tracking') ? {} : [];
 
                 if(type === 'inventory') {
-                    // DRIVE AROUND LOGIC
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    let headerRow = 0;
-                    for(let i=0; i<Math.min(rows.length, 25); i++){
-                        if(JSON.stringify(rows[i]).toUpperCase().includes("ITEMCODE")) { headerRow = i; break; }
-                    }
+                    const headerRow = findHeaderRow(rows);
+                    
                     let rawParsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                     let idCounters = {};
                     parsed = rawParsed.map(row => {
@@ -460,12 +433,10 @@
                             if(cleanK === 'SEASON_SUPPLY') cleanK = 'SEASONSUPPLY'; 
                             obj[cleanK] = row[k]; 
                         });
-                        
                         if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown";
                         obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
                         obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0;
                         obj.PRIORITY = parseFloat(obj.PRIORITY) || 0;
-                        
                         const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
                         if(!idCounters[baseKey]) idCounters[baseKey] = 0;
                         const instanceNum = idCounters[baseKey]; idCounters[baseKey]++;
@@ -475,23 +446,20 @@
                     });
                     runLogicEngine(parsed);
                 } else if (type === 'soc') {
-                    // SOC LOGIC - SKIP ROW 1
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    parsed = XLSX.utils.sheet_to_json(sheet, { range: 1 }).map(row => {
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    const headerRow = findHeaderRow(rows);
+                    
+                    parsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
                         let newRow = {};
                         Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
                         return newRow;
                     });
                 } else {
-                    // TRACKING LOGIC - MULTI TABS
                     workbook.SheetNames.forEach(sheetName => {
                         const sheet = workbook.Sheets[sheetName];
                         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        let headerRow = 0;
-                        for(let i=0; i<Math.min(rows.length, 15); i++){
-                            const rowStr = JSON.stringify(rows[i]).toUpperCase();
-                            if(rowStr.includes("ITEM") || rowStr.includes("CODE")) { headerRow = i; break; }
-                        }
+                        const headerRow = findHeaderRow(rows);
                         let tabData = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
                             let newRow = {};
                             Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
@@ -522,12 +490,46 @@
                     let el = document.getElementById("file-" + type);
                     if(el) el.innerText = data.filename;
                 }
-                
                 updateDot(type, 'success');
-                
                 if(type === 'soc' && !document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
                 if(type === 'tracking' && !document.getElementById('view-tracking').classList.contains('hidden')) renderTrackingView();
             }
+        }
+
+        // *** UNIVERSAL HEADER FINDER ***
+        function findHeaderRow(rows) {
+            let bestRow = 0;
+            let maxMatches = 0;
+            // Keywords to identify header rows
+            const keywords = ["ITEM", "CODE", "SKU", "COMMON", "DESCRIPTION", "QTY", "ONHAND", "CUSTOMER", "SALES", "PRICE", "REP"];
+            
+            for(let i=0; i<Math.min(rows.length, 25); i++){
+                const rowStr = JSON.stringify(rows[i]).toUpperCase();
+                let matches = 0;
+                keywords.forEach(k => { if(rowStr.includes(k)) matches++; });
+                if(matches > maxMatches) {
+                    maxMatches = matches;
+                    bestRow = i;
+                }
+            }
+            return bestRow;
+        }
+
+        // *** DATA INSPECTOR (DEBUG) ***
+        function checkDataLoaded() {
+            let msg = "DATA REPORT:\n\n";
+            msg += `INVENTORY (DriveAround):\nRows: ${fullInventory.length}\nSample: ${fullInventory.length>0 ? JSON.stringify(Object.keys(fullInventory[0]).slice(0,3)) : "None"}\n\n`;
+            msg += `SOC:\nRows: ${socInventory.length}\nSample: ${socInventory.length>0 ? JSON.stringify(Object.keys(socInventory[0]).slice(0,3)) : "None"}\n\n`;
+            
+            let trackKeys = Object.keys(trackingData);
+            msg += `TRACKING:\nTabs Found: ${trackKeys.length} (${trackKeys.join(", ")})\n`;
+            if(trackKeys.length > 0) {
+                msg += `First Tab Rows: ${trackingData[trackKeys[0]].length}\n`;
+            } else {
+                msg += "No Data found in Tracking Tabs.\n";
+            }
+            
+            alert(msg);
         }
 
         function runLogicEngine(items) {
@@ -666,6 +668,13 @@
         function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(term)).sort(); document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+        function createRowHtml(item, idx, source) { const showCheck = isBatch && isAdmin; const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : ''; return ` <div class="batch-row"> ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''} <div class="inv-card flex-grow" ${clickAction}> <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div> <div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div> </div> </div>`; }
+        function openDetail(idx, originView) { lastView = originView; activeItem = fullInventory[idx]; document.getElementById('view-detail').classList.remove('hidden'); ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden')); document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; const cont = document.getElementById('input-container'); if(isAdmin) { document.getElementById('btn-cam').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden'); cont.innerHTML = ` <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div> <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div> <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div> <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div> `; } else { document.getElementById('btn-cam').classList.add('hidden'); document.getElementById('btn-save').classList.add('hidden'); cont.innerHTML = ` <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div> <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div> `; } if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); } renderOverviewData(); renderAllFields(); switchDetailTab('overview'); }
+        function renderOverviewData() { const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid'); const photoDiv = document.getElementById('photo-preview'); const imgPrev = document.getElementById('img-prev'); const imgPlace = document.getElementById('img-placeholder'); const linkBtn = document.getElementById('photo-link-btn'); let h = ""; if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`; if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`; if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`; if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`; if(activeItem.SAVED_PHOTO_LINK) { h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`; photoDiv.classList.remove('hidden'); linkBtn.href = activeItem.SAVED_PHOTO_LINK; if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); } } else { photoDiv.classList.add('hidden'); } if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden'); }
+        function handlePhotoUpload(input) { if(input.files && input.files[0]) { const file = input.files[0]; const btn = document.getElementById('btn-cam'); const btnText = document.getElementById('cam-text'); btn.classList.add('loading'); btnText.innerText = "UPLOADING..."; const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1]; const dateStr = new Date().toISOString().split('T')[0]; const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_'); fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) }).then(res => res.json()).then(data => { if(data.status === 'success') { activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl; renderOverviewData(); saveData(true); alert("Photo Uploaded!"); } else { alert("Upload Error: " + data.message); } }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; }); } } } }
+        function saveData(silent = false) { if(!isAdmin) return; activeItem.SAVED_MATCH = document.getElementById('in-match').value; activeItem.SAVED_SPEC = document.getElementById('in-spec').value; activeItem.SAVED_PICK = document.getElementById('in-pick').value; activeItem.SAVED_NOTE = document.getElementById('in-note').value; const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); const id = activeItem.UNIQUE_ROW_ID; storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() }; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); } }
+        function loadSavedData() { const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); fullInventory.forEach(item => { const id = item.UNIQUE_ROW_ID; if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; } }); }
+        function renderAllFields() { const cont = document.getElementById('expand-content'); cont.innerHTML = Object.keys(activeItem).map(k => { if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID' || k === 'TASK_TAB') return ""; return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`; }).join(''); }
         function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.getElementById('header-batch-btn').innerText = isBatch ? "DONE" : "BATCH MODE"; document.getElementById('header-batch-btn').style.backgroundColor = isBatch ? "#dc2626" : "#e3a000"; if(!isBatch) document.getElementById('action-bar').classList.remove('visible'); const views = ['drive','tasks','viewer']; views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); } }); }
         function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
         function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
@@ -675,6 +684,7 @@
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
         function switchDetailTab(tab) { document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); }
         function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); }
+        function getBatchReport() { let report = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`; let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`]; if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`); report += details.join(' | ') + "\n"; if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`; if(item.SAVED_SPEC) report += `Spec: ${item.SAVED_SPEC}\n`; if(item.SAVED_PICK) report += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_NOTE) report += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`; report += `\n----------------\n\n`; }); return report; }
     </script>
 </body>
 </html>
