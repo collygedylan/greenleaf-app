@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v195</title>
+    <title>Greenleaf Pro v196</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -25,6 +25,7 @@
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
+        .login-status { margin-top: 20px; color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; animation: pulse 2s infinite; }
         
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
@@ -104,6 +105,7 @@
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
         </div>
+        <div id="login-status-text" class="login-status">Initializing System...</div>
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
@@ -112,7 +114,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v195</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v196</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -162,7 +164,7 @@
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
                 <div class="mt-8 text-center text-xs text-gray-400">
-                    <p id="sync-status-text">Ready</p>
+                    <p id="sync-status-text">Background Sync Active</p>
                 </div>
             </div>
 
@@ -285,7 +287,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v195_storage"; 
+        const STORAGE_KEY = "greenleaf_v196_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
@@ -330,20 +332,38 @@
         let selectedIdx = [];
         let lastView = 'drive'; 
 
+        // *** PRE-LOGIN SYNC START ***
+        // Starts download immediately when app opens (even before login)
+        (async function autoStartSync() {
+            document.getElementById('login-status-text').innerText = "Connecting to Server...";
+            
+            // 1. Load Local Cache immediately (Instant Data)
+            loadLocalData('inventory');
+            loadLocalData('soc');
+            loadLocalData('tracking');
+            
+            // 2. Start Background Downloads
+            Promise.allSettled([
+                syncManager('inventory'),
+                syncManager('soc'),
+                syncManager('tracking')
+            ]).then(() => {
+                document.getElementById('login-status-text').innerText = "System Ready.";
+                document.getElementById('login-status-text').style.color = "#4ade80"; // Green
+                document.getElementById('login-status-text').style.animation = "none";
+            });
+        })();
+
         // LOGIN
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
         
         function verifyPin() {
             if (document.getElementById('pin-code').value === '1234') {
-                // INSTANT ENTRY:
+                // INSTANT ENTRY
                 document.getElementById('view-login').style.display = 'none';
                 document.getElementById('app-wrapper').classList.remove('hidden');
                 document.getElementById('header-user').innerText = currentUser;
                 launchApp();
-                
-                // TRIGGER SMART SYNC IN BACKGROUND
-                syncManager('inventory');
-                syncManager('soc');
             } else { alert("Incorrect PIN"); }
         }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
@@ -384,6 +404,7 @@
                 if (response.status === 'success') {
                     // SERVER HAS NEW FILE -> PROCESS IT
                     console.log(`New version found for ${type}. Updating...`);
+                    document.getElementById('login-status-text').innerText = `Downloading ${type}...`;
                     
                     // PROCESS DATA
                     let processedData = [];
@@ -456,6 +477,22 @@
         }
 
         // *** CACHE UTILS ***
+        function loadLocalData(type) {
+            const cached = loadLocalCache(type);
+            if (cached) {
+                if(type === 'inventory') {
+                    fullInventory = cached.data;
+                    document.getElementById('file-label-drive').innerText = cached.filename;
+                    document.getElementById('file-label-drive-t').innerText = cached.filename;
+                }
+                if(type === 'soc') {
+                    socInventory = cached.data;
+                    document.getElementById('file-label-soc').innerText = cached.filename;
+                }
+                updateStatusUI(type, "success");
+            }
+        }
+
         function loadLocalCache(type) {
             try {
                 const json = localStorage.getItem(CACHE_KEYS[type]);
