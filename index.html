@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v188</title>
+    <title>Greenleaf Pro v189</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -116,7 +116,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v188</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v189</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -284,7 +284,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v188_storage"; 
+        const STORAGE_KEY = "greenleaf_v189_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         // CUSTOM REP LIST (Exact Order Requested)
@@ -418,16 +418,32 @@
                 if(data.status === 'success') {
                     document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
                     document.getElementById('file-label-soc').innerText = data.filename; 
+                    
                     const workbook = XLSX.read(data.data, {type: 'base64'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
+                    
+                    // SMART HEADER DETECTION FOR SOC (New in v189)
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    let headerRow = 0;
+                    for(let i=0; i<Math.min(rows.length, 25); i++){
+                        const str = JSON.stringify(rows[i]).toUpperCase();
+                        // Look for key columns
+                        if(str.includes("SALESREPNAME") || str.includes("CUSTOMERNAME") || str.includes("ITEMCODE")) { 
+                            headerRow = i; 
+                            break; 
+                        }
+                    }
+                    
+                    socInventory = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
                         let newRow = {};
                         Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
                         return newRow;
                     });
+                    
                     socViewLevel = 0;
                 } else {
                     document.getElementById('file-label-soc').innerText = "Error";
+                    alert("SOC Load Error: " + data.message);
                 }
             } catch(e) {
                 console.log("SOC Fetch Error: " + e);
@@ -435,14 +451,11 @@
             }
         }
 
-        // *** NEW SOC RENDERER (V188 LOGIC) ***
+        // *** NEW SOC RENDERER (V189 LOGIC) ***
         function renderSocView() {
             const container = document.getElementById('soc-content');
             const crumb = document.getElementById('soc-crumb');
             
-            // NOTE: We do NOT check for empty inventory here anymore.
-            // We want to show the Rep List even if no data loaded yet.
-
             // LEVEL 0: REPS LIST (Always show the hardcoded list)
             if(socViewLevel === 0) {
                 crumb.innerText = "All Reps";
@@ -456,11 +469,10 @@
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
                 
-                // Flexible matching logic: Split rep name and check if parts exist in data
+                // Flexible matching logic
                 const repParts = selectedSocRep.toUpperCase().split(" ");
                 const repItems = socInventory.filter(i => {
                     const dataName = (i.SALESREPNAME || "").toUpperCase();
-                    // Check if *any* part of the selected rep name is in the data name (e.g. "Burka" in "BURKA, ABBEY")
                     return repParts.some(part => dataName.includes(part));
                 });
 
