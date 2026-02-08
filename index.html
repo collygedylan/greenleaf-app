@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v172</title>
+    <title>Greenleaf Pro v173</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -63,9 +63,9 @@
         .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
 
         /* DATA GRID */
-        .detail-tabs, .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .detail-tab, .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active, .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        .detail-tabs, .task-tabs, .track-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; }
+        .detail-tab, .task-tab, .track-tab { flex: 1; min-width: 100px; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
+        .detail-tab.active, .task-tab.active, .track-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
@@ -113,7 +113,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v172</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v173</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -213,6 +213,9 @@
                 <div id="status-tracking-text" class="mb-2 text-xs font-bold text-gray-500"></div>
                 <button onclick="forceSync('tracking')" class="w-full bg-orange-500 text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Force Refresh Tracking</button>
                 <input type="text" id="tracking-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderTrackingView()">
+                
+                <div id="track-tabs-container" class="track-tabs hidden"></div>
+                
                 <div id="tracking-content"></div>
             </div>
 
@@ -294,8 +297,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWCZ7utBK38YIOMLQq09ur_ijHeA7Awjf3I1mdaQHncuuf6hkHSh2bv3DyKJguOmZb/exec"; 
-        
-        const STORAGE_KEY = "greenleaf_v172_storage"; 
+        const STORAGE_KEY = "greenleaf_v173_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         const SOC_REP_LIST = [
@@ -312,7 +314,10 @@
 
         let fullInventory = [];
         let socInventory = []; 
-        let trackingInventory = [];
+        
+        // TRACKING now stores objects by sheet name: { "Available": [...], "Future": [...] }
+        let trackingData = {};
+        let currentTrackingTab = "";
         
         let activeItem = null;
         let currentUser = null;
@@ -383,7 +388,7 @@
             if(local.data) {
                 if(type === 'inventory') fullInventory = local.data;
                 if(type === 'soc') socInventory = local.data;
-                if(type === 'tracking') trackingInventory = local.data;
+                if(type === 'tracking') trackingData = local.data; // Now an object
                 
                 // Set File Labels
                 if(local.filename) {
@@ -407,7 +412,6 @@
             const local = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
             try {
-                // 1. Check Version
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
                 const meta = await res.json();
                 
@@ -419,7 +423,6 @@
                     }
                 }
             } catch(e) {
-                console.log("Offline or Sync Error: " + type);
                 updateDot(type, 'error');
             }
         }
@@ -438,19 +441,19 @@
             const data = await res.json();
             if(data.status === 'success') {
                 const workbook = XLSX.read(data.data, {type: 'base64'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                let parsed = [];
+                let parsed = (type === 'tracking') ? {} : []; // Object for tracking, Array for others
 
                 if(type === 'inventory') {
-                    // DRIVE AROUND LOGIC - HEADERS ON ROW 2 (OR SCAN)
+                    // DRIVE AROUND LOGIC - HEADERS ON ROW 2
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     let headerRow = 0;
                     for(let i=0; i<Math.min(rows.length, 25); i++){
                         if(JSON.stringify(rows[i]).toUpperCase().includes("ITEMCODE")) { headerRow = i; break; }
                     }
-                    parsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                    let rawParsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
                     let idCounters = {};
-                    parsed = parsed.map(row => {
+                    parsed = rawParsed.map(row => {
                         let obj = {};
                         Object.keys(row).forEach(k => { 
                             let cleanK = k.toString().replace(/\s+/g, '').toUpperCase();
@@ -472,29 +475,37 @@
                     });
                     runLogicEngine(parsed);
                 } else if (type === 'soc') {
-                    // SOC LOGIC (Header Row 2, Index 1)
+                    // SOC LOGIC - HEADERS ON ROW 2 (Index 1)
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     parsed = XLSX.utils.sheet_to_json(sheet, { range: 1 }).map(row => {
                         let newRow = {};
                         Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
                         return newRow;
                     });
                 } else {
-                    // TRACKING LOGIC (Scan for header)
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    let headerRow = 0;
-                    for(let i=0; i<Math.min(rows.length, 10); i++){
-                        if(JSON.stringify(rows[i]).toUpperCase().includes("ITEMCODE")) { headerRow = i; break; }
-                    }
-                    parsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
-                        let newRow = {};
-                        Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
-                        return newRow;
+                    // TRACKING LOGIC - MULTI TABS
+                    workbook.SheetNames.forEach(sheetName => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        let headerRow = 0;
+                        // Scan for header row in each tab
+                        for(let i=0; i<Math.min(rows.length, 15); i++){
+                            if(JSON.stringify(rows[i]).toUpperCase().includes("ITEM") || JSON.stringify(rows[i]).toUpperCase().includes("CODE")) { headerRow = i; break; }
+                        }
+                        
+                        let tabData = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
+                            let newRow = {};
+                            Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
+                            return newRow;
+                        });
+                        
+                        if(tabData.length > 0) parsed[sheetName] = tabData;
                     });
                 }
 
                 if(type === 'inventory') fullInventory = parsed;
                 if(type === 'soc') socInventory = parsed;
-                if(type === 'tracking') trackingInventory = parsed;
+                if(type === 'tracking') trackingData = parsed;
 
                 localStorage.setItem("gl_cache_" + type, JSON.stringify({
                     ts: Date.now(),
@@ -505,10 +516,8 @@
                 
                 // UPDATE UI Labels
                 if(type === 'inventory') {
-                    const t = document.getElementById("file-inventory-t");
-                    const d = document.getElementById("file-inventory-d");
-                    if(t) t.innerText = data.filename;
-                    if(d) d.innerText = data.filename;
+                    document.getElementById("file-inventory-t").innerText = data.filename;
+                    document.getElementById("file-inventory-d").innerText = data.filename;
                     applyAssignments();
                     if(!document.getElementById('view-drive').classList.contains('hidden')) renderDriveNames();
                     if(!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
@@ -521,11 +530,6 @@
                 
                 if(type === 'soc' && !document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
                 if(type === 'tracking' && !document.getElementById('view-tracking').classList.contains('hidden')) renderTrackingView();
-                if(type === 'inventory') {
-                    applyAssignments();
-                    if(!document.getElementById('view-drive').classList.contains('hidden')) renderDriveNames();
-                    if(!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
-                }
             }
         }
 
@@ -649,10 +653,42 @@
 
         function renderTrackingView() {
             const container = document.getElementById('tracking-content');
+            const tabsContainer = document.getElementById('track-tabs-container');
             const searchTerm = document.getElementById('tracking-search').value.toLowerCase();
-            if(trackingInventory.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">Syncing Data...</div>`; return; }
-            const filtered = trackingInventory.filter(i => (i.ITEMCODE || "").toLowerCase().includes(searchTerm) || (i.COMMONNAME || "").toLowerCase().includes(searchTerm)).slice(0,50);
-            container.innerHTML = filtered.map(i => `<div class="inv-card"><div class="font-bold">${i.ITEMCODE || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTY || 0}</div></div>`).join('');
+            
+            // Generate Tabs if multiple sheets exist
+            const sheets = Object.keys(trackingData);
+            if (sheets.length === 0) { 
+                container.innerHTML = `<div class="text-center text-gray-400 p-4">Syncing Data...</div>`; 
+                return; 
+            }
+
+            // Set default tab if none selected
+            if (!currentTrackingTab || !trackingData[currentTrackingTab]) {
+                currentTrackingTab = sheets[0];
+            }
+
+            // Render Tabs
+            tabsContainer.classList.remove('hidden');
+            tabsContainer.innerHTML = sheets.map(sheet => 
+                `<div class="track-tab ${sheet === currentTrackingTab ? 'active' : ''}" onclick="switchTrackingTab('${sheet}')">${sheet}</div>`
+            ).join('');
+
+            // Get Data for Current Tab
+            const currentData = trackingData[currentTrackingTab] || [];
+            
+            const filtered = currentData.filter(i => (i.ITEMCODE || "").toLowerCase().includes(searchTerm) || (i.COMMONNAME || "").toLowerCase().includes(searchTerm)).slice(0,50);
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found in ${currentTrackingTab}.</div>`;
+            } else {
+                container.innerHTML = filtered.map(i => `<div class="inv-card"><div class="font-bold">${i.ITEMCODE || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTY || 0}</div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div></div>`).join('');
+            }
+        }
+
+        function switchTrackingTab(tabName) {
+            currentTrackingTab = tabName;
+            renderTrackingView();
         }
 
         // --- APP LOGIC ---
@@ -998,21 +1034,52 @@
             views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); } });
         }
 
-        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
-        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
+        function updateSelected() { 
+            const checks = document.querySelectorAll('.select-check:checked'); 
+            selectedIdx = Array.from(checks).map(c => parseInt(c.value)); 
+            document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); 
+        }
+        
+        function openAssignModal() { 
+            document.getElementById('assign-modal').style.display='flex'; 
+        }
+        
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked;
+            const d = document.getElementById('chk-dylan').checked; 
+            const k = document.getElementById('chk-kayla').checked; 
+            const m = document.getElementById('chk-morgan').checked;
             let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             selectedIdx.forEach(idx => fullInventory[idx].ASSIGNEDTO = target);
             document.getElementById('assign-modal').style.display='none'; toggleBatch(); alert("Items Assigned to: " + target);
         }
-        function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
-        function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
-        function switchDetailTab(tab) { document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); }
-        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); }
+        
+        function toggleMenu() { 
+            document.getElementById('side-drawer').classList.toggle('open'); 
+            document.getElementById('drawer-overlay').classList.toggle('open'); 
+        }
+        
+        function toggleExpand() { 
+            document.getElementById('expand-section').classList.toggle('expanded'); 
+        }
+        
+        function resetLogin() { 
+            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-buttons').classList.remove('hidden'); 
+        }
+        
+        function switchDetailTab(tab) {
+            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview');
+            document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions');
+            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview');
+            document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions');
+        }
+        
+        function goBackFromDetail() {
+            document.getElementById('view-detail').classList.add('hidden');
+            document.getElementById('view-' + lastView).classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
