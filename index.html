@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v173</title>
+    <title>Greenleaf Pro v174</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -113,7 +113,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v173</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v174</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -296,8 +296,10 @@
     </div>
 
     <script>
+        // *** GOOGLE APPS SCRIPT URL ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWCZ7utBK38YIOMLQq09ur_ijHeA7Awjf3I1mdaQHncuuf6hkHSh2bv3DyKJguOmZb/exec"; 
-        const STORAGE_KEY = "greenleaf_v173_storage"; 
+        
+        const STORAGE_KEY = "greenleaf_v174_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         const SOC_REP_LIST = [
@@ -314,9 +316,7 @@
 
         let fullInventory = [];
         let socInventory = []; 
-        
-        // TRACKING now stores objects by sheet name: { "Available": [...], "Future": [...] }
-        let trackingData = {};
+        let trackingData = {}; // Multi-tab storage
         let currentTrackingTab = "";
         
         let activeItem = null;
@@ -388,7 +388,7 @@
             if(local.data) {
                 if(type === 'inventory') fullInventory = local.data;
                 if(type === 'soc') socInventory = local.data;
-                if(type === 'tracking') trackingData = local.data; // Now an object
+                if(type === 'tracking') trackingData = local.data;
                 
                 // Set File Labels
                 if(local.filename) {
@@ -412,6 +412,7 @@
             const local = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
             try {
+                // 1. Check Version
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkVersion&type=${type}`);
                 const meta = await res.json();
                 
@@ -444,7 +445,7 @@
                 let parsed = (type === 'tracking') ? {} : []; // Object for tracking, Array for others
 
                 if(type === 'inventory') {
-                    // DRIVE AROUND LOGIC - HEADERS ON ROW 2
+                    // DRIVE AROUND LOGIC - HEADERS ON ROW 2 (OR SCAN)
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     let headerRow = 0;
@@ -475,7 +476,7 @@
                     });
                     runLogicEngine(parsed);
                 } else if (type === 'soc') {
-                    // SOC LOGIC - HEADERS ON ROW 2 (Index 1)
+                    // SOC LOGIC (Header Row 2, Index 1)
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     parsed = XLSX.utils.sheet_to_json(sheet, { range: 1 }).map(row => {
                         let newRow = {};
@@ -483,14 +484,15 @@
                         return newRow;
                     });
                 } else {
-                    // TRACKING LOGIC - MULTI TABS
+                    // TRACKING LOGIC (MULTI-TAB SCAN)
                     workbook.SheetNames.forEach(sheetName => {
                         const sheet = workbook.Sheets[sheetName];
                         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                         let headerRow = 0;
-                        // Scan for header row in each tab
+                        // Scan for "ITEMCODE" or "ITEM" to identify the header row
                         for(let i=0; i<Math.min(rows.length, 15); i++){
-                            if(JSON.stringify(rows[i]).toUpperCase().includes("ITEM") || JSON.stringify(rows[i]).toUpperCase().includes("CODE")) { headerRow = i; break; }
+                            const rowStr = JSON.stringify(rows[i]).toUpperCase();
+                            if(rowStr.includes("ITEM") || rowStr.includes("CODE")) { headerRow = i; break; }
                         }
                         
                         let tabData = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
@@ -499,7 +501,10 @@
                             return newRow;
                         });
                         
-                        if(tabData.length > 0) parsed[sheetName] = tabData;
+                        // Only add tab if it has data
+                        if(tabData.length > 0) {
+                            parsed[sheetName] = tabData;
+                        }
                     });
                 }
 
@@ -656,27 +661,29 @@
             const tabsContainer = document.getElementById('track-tabs-container');
             const searchTerm = document.getElementById('tracking-search').value.toLowerCase();
             
-            // Generate Tabs if multiple sheets exist
+            // Get sheets (tabs) from data
             const sheets = Object.keys(trackingData);
+            
             if (sheets.length === 0) { 
                 container.innerHTML = `<div class="text-center text-gray-400 p-4">Syncing Data...</div>`; 
                 return; 
             }
 
-            // Set default tab if none selected
+            // Set default tab if none active
             if (!currentTrackingTab || !trackingData[currentTrackingTab]) {
                 currentTrackingTab = sheets[0];
             }
 
-            // Render Tabs
+            // 1. Render Tabs
             tabsContainer.classList.remove('hidden');
             tabsContainer.innerHTML = sheets.map(sheet => 
                 `<div class="track-tab ${sheet === currentTrackingTab ? 'active' : ''}" onclick="switchTrackingTab('${sheet}')">${sheet}</div>`
             ).join('');
 
-            // Get Data for Current Tab
+            // 2. Render List for Current Tab
             const currentData = trackingData[currentTrackingTab] || [];
             
+            // Filter
             const filtered = currentData.filter(i => (i.ITEMCODE || "").toLowerCase().includes(searchTerm) || (i.COMMONNAME || "").toLowerCase().includes(searchTerm)).slice(0,50);
             
             if (filtered.length === 0) {
