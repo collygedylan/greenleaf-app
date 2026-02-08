@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v167</title>
+    <title>Greenleaf Pro v168</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -41,8 +41,10 @@
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
+        .task-tabs, .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
+        .task-tab, .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
+        .task-tab.active, .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
-        /* HOME BUTTONS */
         .home-btn { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; position: relative; height: 120px; justify-content: center; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 2px; }
@@ -64,10 +66,6 @@
         .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
 
         /* DATA GRID */
-        .detail-tabs, .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .detail-tab, .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active, .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
@@ -114,7 +112,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v167</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v168</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -295,7 +293,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiIAZdL1KjufqtBCD4fUBY02RDxo0ii3cKpTCywOIJO7COB6vV7tnbbHuzhy-bU6qZ/exec"; 
-        const STORAGE_KEY = "greenleaf_v167_storage"; 
+        const STORAGE_KEY = "greenleaf_v168_storage"; 
         const ADMINS = ["Dylan", "J.D."];
         
         const SOC_REP_LIST = [
@@ -443,6 +441,7 @@
                 let parsed = [];
 
                 if(type === 'inventory') {
+                    // DRIVE AROUND LOGIC
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     let headerRow = 0;
                     for(let i=0; i<Math.min(rows.length, 25); i++){
@@ -452,11 +451,18 @@
                     let idCounters = {};
                     parsed = parsed.map(row => {
                         let obj = {};
-                        Object.keys(row).forEach(k => { obj[k.toString().replace(/\s+/g, '').toUpperCase()] = row[k]; });
+                        // CLEAN KEY NAMES
+                        Object.keys(row).forEach(k => { 
+                            let cleanK = k.toString().replace(/\s+/g, '').toUpperCase();
+                            if(cleanK === 'SEASON_SUPPLY') cleanK = 'SEASONSUPPLY'; // Fix Mapping
+                            obj[cleanK] = row[k]; 
+                        });
+                        
                         if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown";
                         obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
                         obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0;
                         obj.PRIORITY = parseFloat(obj.PRIORITY) || 0;
+                        
                         const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
                         if(!idCounters[baseKey]) idCounters[baseKey] = 0;
                         const instanceNum = idCounters[baseKey]; idCounters[baseKey]++;
@@ -466,13 +472,20 @@
                     });
                     runLogicEngine(parsed);
                 } else if (type === 'soc') {
+                    // SOC LOGIC (Header Row 2, Index 1)
                     parsed = XLSX.utils.sheet_to_json(sheet, { range: 1 }).map(row => {
                         let newRow = {};
                         Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
                         return newRow;
                     });
                 } else {
-                    parsed = XLSX.utils.sheet_to_json(sheet).map(row => {
+                    // TRACKING LOGIC (Scan for header)
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    let headerRow = 0;
+                    for(let i=0; i<Math.min(rows.length, 10); i++){
+                        if(JSON.stringify(rows[i]).toUpperCase().includes("ITEMCODE")) { headerRow = i; break; }
+                    }
+                    parsed = XLSX.utils.sheet_to_json(sheet, { range: headerRow }).map(row => {
                         let newRow = {};
                         Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
                         return newRow;
@@ -570,7 +583,10 @@
             const statusText = document.getElementById('status-soc-text');
             const searchTerm = document.getElementById('soc-search').value.toLowerCase();
             
-            if(socInventory.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">Syncing Data...</div>`; return; }
+            if(socInventory.length === 0) { 
+                container.innerHTML = `<div class="text-center text-gray-400 p-4">Empty Data. Try Force Refresh.</div>`; 
+                return; 
+            }
             statusText.innerText = "Data Loaded: " + socInventory.length + " rows";
 
             // LEVEL 0: REPS
