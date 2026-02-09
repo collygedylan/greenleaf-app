@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v205</title>
+    <title>Greenleaf Pro v207</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -18,12 +18,14 @@
         body { font-family: Arial, sans-serif; background-color: #f9fafb; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN VIEW */
+        /* LOGIN */
         #view-login { position: fixed; inset: 0; background: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; }
         
-        /* MAIN UI */
+        /* UI CARDS */
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .soc-card { border-left: 4px solid #f97316; background: #fff7ed; padding: 14px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
         
@@ -32,7 +34,7 @@
         .note-input:focus { outline: none; border-color: var(--brand-green); background: white; }
         .complete-btn { float: right; background-color: var(--brand-green); color: white; font-weight: bold; font-size: 10px; padding: 6px 12px; border-radius: 20px; margin-top: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
-        /* BOTTOM NAV */
+        /* NAV BAR */
         #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); z-index: 3000; }
         .nav-item { flex: 1; padding: 12px 0; text-align: center; color: #9ca3af; }
         .nav-item.active { color: var(--brand-green); font-weight: bold; }
@@ -64,7 +66,7 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex flex-col">
                 <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v205</div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v207</div>
             </div>
             <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
@@ -82,7 +84,12 @@
                         <span class="font-bold text-gray-700">My Tasks</span>
                         <span id="task-count" class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">--</span>
                     </div>
-                    <div onclick="switchView('drive')" class="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-gray-50">
+                    <div onclick="switchView('soc')" class="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-gray-50">
+                        <i class="ph-bold ph-bell text-4xl text-orange-500"></i>
+                        <span class="font-bold text-gray-700">SOC</span>
+                        <span class="text-[10px] text-gray-400">Order Changes</span>
+                    </div>
+                    <div onclick="switchView('drive')" class="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center justify-center gap-2 cursor-pointer active:bg-gray-50 col-span-2">
                         <i class="ph-bold ph-car text-4xl text-blue-600"></i>
                         <span class="font-bold text-gray-700">Drive Mode</span>
                     </div>
@@ -98,6 +105,16 @@
                 <div id="task-content"></div>
             </div>
 
+            <div id="view-soc" class="hidden">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-200 mb-4">
+                    <h2 class="font-bold text-orange-600 text-lg">Sales Order Changes</h2>
+                    <p class="text-xs text-gray-500">Updates from the office.</p>
+                </div>
+                <div id="soc-content" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">Loading changes...</div>
+                </div>
+            </div>
+
             <div id="view-drive" class="hidden">
                 <input type="text" id="drive-search" class="w-full p-3 border rounded-lg mb-4 shadow-sm" placeholder="Search Plant Names..." onkeyup="renderDriveNames()">
                 <div id="drive-content"></div>
@@ -108,25 +125,25 @@
         <nav id="bottom-nav">
             <div class="nav-item active" id="nav-home" onclick="switchView('home')"><i class="ph-bold ph-house"></i><div class="nav-label">Home</div></div>
             <div class="nav-item" id="nav-tasks" onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text"></i><div class="nav-label">Tasks</div></div>
+            <div class="nav-item" id="nav-soc" onclick="switchView('soc')"><i class="ph-bold ph-bell"></i><div class="nav-label">SOC</div></div>
             <div class="nav-item" id="nav-drive" onclick="switchView('drive')"><i class="ph-bold ph-car"></i><div class="nav-label">Drive</div></div>
         </nav>
     </div>
 
     <script>
-        // *** YOUR LIVE API URL IS PRE-FILLED HERE ***
+        // *** LIVE API CONNECTION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
         
-        // APP STATE
         let fullInventory = [];
+        let socData = [];
         let currentUser = null;
         let currentTab = 'season';
         
-        // Drill-Down State
         let taskLevel = 0;
         let selectedBlock = null;
         let selectedLoc = null;
 
-        // --- LOGIN LOGIC ---
+        // --- LOGIN ---
         function selectUser(u) { currentUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
         function verifyPin() {
@@ -138,19 +155,22 @@
             } else { alert("Incorrect PIN"); }
         }
 
-        // --- SYNC & LOGIC ENGINE ---
+        // --- SYNC & LOGIC ENGINE (V207 FIXED) ---
         async function syncDatabase() {
             const status = document.getElementById('sync-status');
             status.style.display = 'block';
-            document.getElementById('view-login').style.display = 'flex'; // Loader overlay
+            document.getElementById('view-login').style.display = 'flex';
 
             try {
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=inventory");
-                const json = await res.json();
+                const resInv = await fetch(GOOGLE_SCRIPT_URL + "?type=inventory");
+                const jsonInv = await resInv.json();
                 
-                if(json.status === 'success') {
+                const resSoc = await fetch(GOOGLE_SCRIPT_URL + "?type=soc");
+                const jsonSoc = await resSoc.json();
+
+                if(jsonInv.status === 'success') {
                     // PROCESS DATA WITH LOGIC ENGINE
-                    fullInventory = json.data.map(item => {
+                    fullInventory = jsonInv.data.map(item => {
                         // 1. Clean Data
                         item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
                         item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0;
@@ -162,7 +182,8 @@
                         else if(grp.includes("330") || grp.includes("300")) item.ASSIGNED_TO = "Kayla";
                         else item.ASSIGNED_TO = "Morgan";
 
-                        // 3. LOGIC ENGINE
+                        // 3. LOGIC ENGINE (UPDATED FOR v207)
+                        
                         // RULE A: Sold Out (< 10%) -> HIDE
                         if (item.PTRAVAILABLE < (item.SEASONSUPPLY * 0.10)) {
                             item.IS_TASK = false;
@@ -178,19 +199,28 @@
                             }
                         }
 
-                        // RULE C: Priority -> SHOW
+                        // RULE C: Sort into Tabs
                         if (item.PRIORITY > 0) {
+                            // High Priority -> Season Sales
                             item.IS_TASK = true;
                             item.TASK_TAB = 'season'; 
+                        } else if (item.PTRAVAILABLE > 0) {
+                            // No Priority, but has Inventory -> Location Sales
+                            item.IS_TASK = true;
+                            item.TASK_TAB = 'location';
                         } else {
+                            // No Priority, No Inventory -> Hide
                             item.IS_TASK = false;
                         }
+                        
                         return item;
                     });
                     
+                    if(jsonSoc.status === 'success') { socData = jsonSoc.data; }
+                    
                     updateTaskCount();
                     switchView('home');
-                } else { alert("Database Error: " + json.message); }
+                } else { alert("Error: " + jsonInv.message); }
             } catch(e) { alert("Network Error: " + e); }
             finally { 
                 status.style.display = 'none'; 
@@ -198,23 +228,27 @@
             }
         }
 
+        // *** ADMIN CHECK ***
+        function isAdmin() { return currentUser === 'J.D.' || currentUser === 'Dylan'; }
+
         function updateTaskCount() {
-            const count = fullInventory.filter(i => i.IS_TASK && (currentUser === 'J.D.' || i.ASSIGNED_TO === currentUser)).length;
+            const count = fullInventory.filter(i => i.IS_TASK && (isAdmin() || i.ASSIGNED_TO === currentUser)).length;
             document.getElementById('task-count').innerText = count + " Items";
         }
 
         // --- NAVIGATION ---
         function switchView(v) {
-            ['view-home','view-tasks','view-drive'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['view-home','view-tasks','view-soc','view-drive'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(v!=='home') document.getElementById('nav-'+v).classList.add('active');
             
             if(v==='tasks') { taskLevel=0; renderTasks(); }
+            if(v==='soc') { renderSOC(); }
             if(v==='drive') { renderDriveNames(); }
         }
 
-        // --- TASKS VIEW (DRILL DOWN) ---
+        // --- TASKS ---
         function setTaskTab(t) {
             currentTab = t;
             document.getElementById('ttab-season').className = t==='season' ? "flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" : "flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400";
@@ -226,90 +260,56 @@
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
-            let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (currentUser === 'J.D.' || i.ASSIGNED_TO === currentUser));
+            
+            let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (isAdmin() || i.ASSIGNED_TO === currentUser));
             
             if (myTasks.length === 0) { container.innerHTML = "<div class='p-8 text-center text-gray-400'>No tasks found.</div>"; return; }
 
-            // LEVEL 0: BLOCKS
             if (taskLevel === 0) {
                 crumb.innerText = "Select Block";
                 const blocks = [...new Set(myTasks.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                container.innerHTML = blocks.map(b => `
-                    <div class="drill-item" onclick="selectBlock('${b}')">
-                        <span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
-                    </div>
-                `).join('');
-            }
-            // LEVEL 1: LOCATIONS
-            else if (taskLevel === 1) {
+                container.innerHTML = blocks.map(b => `<div class="drill-item" onclick="selectBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('');
+            } else if (taskLevel === 1) {
                 crumb.innerText = `${selectedBlock} / Select Location`;
                 const locs = [...new Set(myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock).map(i => i.LOCATIONCODE))].sort();
-                container.innerHTML = `
-                    <div class="back-btn" onclick="taskLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>
-                    ${locs.map(l => `
-                        <div class="drill-item" onclick="selectLoc('${l}')">
-                            <span class="font-bold">${l}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
-                        </div>
-                    `).join('')}
-                `;
-            }
-            // LEVEL 2: ITEMS (ACTIONABLE)
-            else if (taskLevel === 2) {
+                container.innerHTML = `<div class="back-btn" onclick="taskLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>${locs.map(l => `<div class="drill-item" onclick="selectLoc('${l}')"><span class="font-bold">${l}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('')}`;
+            } else if (taskLevel === 2) {
                 crumb.innerText = `${selectedBlock} / ${selectedLoc}`;
                 const items = myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock && i.LOCATIONCODE === selectedLoc);
-                container.innerHTML = `
-                    <div class="back-btn" onclick="taskLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>
-                    ${items.map(item => `
-                        <div class="inv-card">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
-                                    <div class="text-xs text-gray-500 mt-1">Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE}</div>
-                                    <div class="text-xs text-gray-500">Qty: ${item.PTRAVAILABLE}</div>
-                                </div>
-                                <button class="complete-btn" onclick="markComplete('${item.UNIQUE_ID}')">COMPLETE</button>
-                            </div>
-                            <input type="text" class="note-input" placeholder="Add Sales Note..." value="${item.SALES_NOTE || ''}" onchange="saveNote(this, '${item.UNIQUE_ID}')">
-                        </div>
-                    `).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="taskLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>${items.map(item => `<div class="inv-card"><div class="flex justify-between items-start"><div><div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div><div class="text-xs text-gray-500 mt-1">Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE}</div><div class="text-xs text-gray-500">Qty: ${item.PTRAVAILABLE}</div></div><button class="complete-btn" onclick="markComplete('${item.UNIQUE_ID}')">COMPLETE</button></div><input type="text" class="note-input" placeholder="Add Sales Note..." value="${item.SALES_NOTE || ''}" onchange="saveNote(this, '${item.UNIQUE_ID}')"></div>`).join('')}`;
             }
         }
         function selectBlock(b) { selectedBlock = b; taskLevel = 1; renderTasks(); }
         function selectLoc(l) { selectedLoc = l; taskLevel = 2; renderTasks(); }
 
-        // --- DRIVE MODE LOGIC ---
-        function renderDriveNames() {
-            const q = document.getElementById('drive-search').value.toLowerCase();
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(q)).sort();
-            document.getElementById('drive-content').innerHTML = names.map(n => `
-                <div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
-                    <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
+        // --- SOC ---
+        function renderSOC() {
+            const container = document.getElementById('soc-content');
+            if(socData.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 py-8'>No changes found.</div>"; return; }
+            
+            container.innerHTML = socData.map(row => `
+                <div class="soc-card">
+                    <div class="font-bold text-gray-800">${row.ORDERNO || "Order #"}</div>
+                    <div class="text-sm mt-1">${row.CUSTOMER || "Customer"}</div>
+                    <div class="text-xs text-gray-500 mt-2">${row.ITEMCODE || ""} - ${row.QTYORDERED || ""}</div>
+                    <div class="text-xs font-bold text-orange-600 mt-1">${row.NOTES || "Check Details"}</div>
                 </div>
             `).join('');
         }
+
+        // --- DRIVE ---
+        function renderDriveNames() {
+            const q = document.getElementById('drive-search').value.toLowerCase();
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n.toLowerCase().includes(q)).sort();
+            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('');
+        }
         function selectDriveName(n) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === n).map(i => i.CONTSIZE))].sort();
-            document.getElementById('drive-content').innerHTML = `
-                <div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>
-                ${sizes.map(s => `
-                    <div class="drill-item" onclick="selectDriveSize('${n.replace(/'/g, "\\'")}', '${s}')">
-                        <span class="font-bold">${s}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
-                    </div>
-                `).join('')}
-            `;
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${n.replace(/'/g, "\\'")}', '${s}')"><span class="font-bold">${s}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('')}`;
         }
         function selectDriveSize(n, s) {
             const items = fullInventory.filter(i => i.COMMONNAME === n && i.CONTSIZE === s);
-            document.getElementById('drive-content').innerHTML = `
-                <div class="back-btn" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
-                ${items.map(i => `
-                    <div class="inv-card">
-                        <div class="font-bold text-[#007a4d]">${i.LOCATIONCODE}</div>
-                        <div class="text-sm mt-1">Qty: ${i.PTRAVAILABLE} | Lot: ${i.LOTCODE}</div>
-                    </div>
-                `).join('')}
-            `;
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.LOCATIONCODE}</div><div class="text-sm mt-1">Qty: ${i.PTRAVAILABLE} | Lot: ${i.LOTCODE}</div></div>`).join('')}`;
         }
 
         // --- ACTIONS ---
