@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v204</title>
+    <title>Greenleaf Pro v205</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -18,17 +18,21 @@
         body { font-family: Arial, sans-serif; background-color: #f9fafb; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
+        /* LOGIN VIEW */
         #view-login { position: fixed; inset: 0; background: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; }
         
+        /* MAIN UI */
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
         
+        /* INPUTS */
         .note-input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-top: 8px; background: #fffbeb; transition: background 0.3s; }
         .note-input:focus { outline: none; border-color: var(--brand-green); background: white; }
         .complete-btn { float: right; background-color: var(--brand-green); color: white; font-weight: bold; font-size: 10px; padding: 6px 12px; border-radius: 20px; margin-top: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
+        /* BOTTOM NAV */
         #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); z-index: 3000; }
         .nav-item { flex: 1; padding: 12px 0; text-align: center; color: #9ca3af; }
         .nav-item.active { color: var(--brand-green); font-weight: bold; }
@@ -60,7 +64,7 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex flex-col">
                 <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v204</div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v205</div>
             </div>
             <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
@@ -109,14 +113,15 @@
     </div>
 
     <script>
-        // *** LIVE API CONNECTION ***
+        // *** YOUR LIVE API URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
         
+        // APP STATE
         let fullInventory = [];
         let currentUser = null;
         let currentTab = 'season';
         
-        // Task Drill-Down State
+        // Drill-Down State
         let taskLevel = 0;
         let selectedBlock = null;
         let selectedLoc = null;
