@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Turbo v309 (CSV)</title>
+    <title>Greenleaf Turbo v309</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -53,14 +53,14 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="text-4xl text-[#007a4d] mb-2"><i class="ph-fill ph-plant"></i></div>
             <h1 class="text-2xl font-bold text-gray-800 mb-1">Greenleaf Turbo</h1>
-            <p class="text-xs text-gray-400 mb-6">v309 • CSV Edition</p>
+            <p class="text-xs text-gray-400 mb-6">v309 • Connected</p>
             
             <div id="login-users">
                 <button class="user-btn" onclick="promptPin('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">D</div> Dylan</button>
                 <button class="user-btn" onclick="promptPin('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D.</button>
                 <button class="user-btn" onclick="promptPin('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-700 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="promptPin('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold">M</div> Morgan</button>
-                <div class="mt-6"><button class="text-xs text-red-400 underline" onclick="hardReset()">Fix App (Reset Data)</button></div>
+                <div class="mt-6"><button class="text-xs text-red-400 underline" onclick="hardReset()">Reset App Data</button></div>
             </div>
 
             <div id="login-pin" class="hidden">
@@ -154,6 +154,7 @@
 
     <script>
         // *** CONFIGURATION ***
+        // VERIFIED WORKING URL
         const API_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec";
         
         let inventory = [];
