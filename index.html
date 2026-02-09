@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v167</title>
+    <title>Greenleaf Pro v168</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -106,7 +106,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v167</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v168</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -207,10 +207,8 @@
                 </div>
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-4 hidden">
-                        <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
-                        <img id="img-prev" class="w-full h-48 object-cover rounded-lg border hidden">
-                        <div id="img-placeholder" class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border rounded-lg">Photo stored on Cloud</div>
-                        <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
+                        <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p>
+                        <div id="photo-list-container" class="space-y-2"></div>
                     </div>
                     <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
                     <div id="input-container" class="input-stack"></div>
@@ -251,7 +249,6 @@
 
     <script>
         // *** CONFIGURATION ***
-        // I have inserted your URL here:
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTc6bHuZ1znfYoF_oNxBxw3H5CasUvJ47uyVWqA45OR0M8MYvAvHUYpMV5rmtbHhud/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -263,7 +260,7 @@
         // STATE
         let fullInventory = [];
         let socInventory = []; 
-        let savedFieldData = {}; // Stores cloud data
+        let savedFieldData = {}; 
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
@@ -298,16 +295,15 @@
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        // FETCH DATA (INVENTORY + CLOUD NOTES)
+        // FETCH DATA
         async function fetchData() {
             try {
-                // 1. Fetch Cloud Data
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
-                    fullInventory = cloudJson.data; // The script now does all the heavy lifting
-                    applyAssignments(); // Still client-side if needed, but script assigns most
+                    fullInventory = cloudJson.data; 
+                    applyAssignments(); 
                     launchApp();
                 } else {
                     throw new Error("Failed to load Cloud Data");
@@ -322,7 +318,6 @@
         // CLOUD SAVE FUNCTION
         function saveData(silent = false) {
             if(!isAdmin) return;
-            // Update local object immediately for UI
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
             activeItem.SAVED_PICK = document.getElementById('in-pick').value;
@@ -333,7 +328,6 @@
                 document.getElementById('btn-save').disabled = true;
             }
 
-            // Send to Google Script
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
@@ -341,8 +335,8 @@
                 spec: activeItem.SAVED_SPEC,
                 pick: activeItem.SAVED_PICK,
                 note: activeItem.SAVED_NOTE,
-                photoLink: activeItem.SAVED_PHOTO_LINK || "",
-                photoName: activeItem.SAVED_PHOTO_NAME || "",
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", // Send full string
+                photoName: activeItem.SAVED_PHOTO_NAME || "", // Send full string
                 user: currentUser
             };
 
@@ -366,7 +360,7 @@
             .catch(err => alert("Network Error: " + err));
         }
 
-        // PHOTO UPLOAD (Handles Cloud Save Internally)
+        // PHOTO UPLOAD (APPEND LOGIC)
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
@@ -383,7 +377,8 @@
                         const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
                         const dateStr = new Date().toISOString().split('T')[0];
-                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
+                        // Sanitize filename: remove slashes, spaces, AND commas
+                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
                         
                         // Send Photo
                         fetch(GOOGLE_SCRIPT_URL, { 
@@ -392,13 +387,20 @@
                         })
                         .then(res => res.json()).then(data => {
                             if(data.status === 'success') { 
-                                activeItem.SAVED_PHOTO_LINK = data.url; 
-                                activeItem.TEMP_PHOTO_BASE64 = dataUrl;
-                                activeItem.SAVED_PHOTO_NAME = filename;
+                                // *** APPEND LOGIC ***
+                                let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
+                                let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                                
+                                links.push(data.url);
+                                names.push(filename);
+                                
+                                activeItem.SAVED_PHOTO_LINK = links.join(',');
+                                activeItem.SAVED_PHOTO_NAME = names.join(',');
+                                
                                 renderOverviewData(); 
-                                // Auto-Save record with new photo link
+                                // Auto-Save record with new photo list
                                 saveData(true); 
-                                alert("Photo Uploaded!"); 
+                                alert("Photo Added!"); 
                             } 
                             else { alert("Upload Error: " + data.message); }
                         }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
@@ -472,7 +474,6 @@
             switchView('home'); 
         }
         function applyAssignments() { 
-            // Most assignments now happen on server, this is just backup
             let i = 0; 
             fullInventory.forEach(item => { 
                 if(!item.ASSIGNEDTO) {
@@ -594,8 +595,10 @@
                 if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) {
-                    const dispName = item.SAVED_PHOTO_NAME || "View Photo";
-                    report += `Photo: [${dispName}] ${item.SAVED_PHOTO_LINK}\n`;
+                    report += `Photos:\n`;
+                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => {
+                        report += ` - ${url}\n`;
+                    });
                 }
                 report += `\n`;
             });
@@ -687,27 +690,38 @@
             renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
+        // *** UPDATED: RENDER MULTIPLE PHOTOS ***
         function renderOverviewData() {
             const box = document.getElementById('user-data-box');
             const grid = document.getElementById('dynamic-user-grid');
             const photoDiv = document.getElementById('photo-preview');
-            const imgPrev = document.getElementById('img-prev');
-            const imgPlace = document.getElementById('img-placeholder');
-            const linkBtn = document.getElementById('photo-link-btn');
+            const photoList = document.getElementById('photo-list-container');
+            
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            
+            // Multiple Photo Logic
             if(activeItem.SAVED_PHOTO_LINK) {
-                const dispName = activeItem.SAVED_PHOTO_NAME || "View Photo on Drive";
-                h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">${dispName}</div></div>`;
                 photoDiv.classList.remove('hidden');
-                linkBtn.innerText = dispName;
-                linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
-                else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
-            } else { photoDiv.classList.add('hidden'); }
+                const urls = activeItem.SAVED_PHOTO_LINK.split(',');
+                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                
+                let phHtml = "";
+                urls.forEach((url, i) => {
+                    const dispName = names[i] || `Photo ${i+1}`;
+                    phHtml += `<a href="${url}" target="_blank" class="block w-full text-center p-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 mb-2 truncate"><i class="ph-bold ph-image"></i> ${dispName}</a>`;
+                });
+                photoList.innerHTML = phHtml;
+                
+                // Also add to overview grid as count
+                h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached (See Below)</div></div>`;
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
+            
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
