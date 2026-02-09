@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v156</title>
+    <title>Greenleaf Pro v158</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -46,9 +46,18 @@
         /* BATCH & HOME */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 16px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; gap: 10px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom); }
+        
+        #action-bar { 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; 
+            padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); 
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; 
+            z-index: 4000; transition: transform 0.3s; transform: translateY(100%); 
+            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
+        }
         #action-bar.visible { transform: translateY(0); }
-        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        
+        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
@@ -106,7 +115,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v156</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v158</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -177,7 +186,7 @@
             </div>
 
             <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><p class="text-gray-500 text-sm">Inventory Tracking Module Active.</p></div>
-            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with No Priority OR No Season Winner.</div><span id="review-crumb" class="text-xs font-bold text-gray-400"></span><div id="review-content"></div></div>
+            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2><div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div><span id="review-crumb" class="text-xs font-bold text-gray-400"></span><div id="review-content"></div></div>
             <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-detail" class="hidden">
@@ -221,6 +230,7 @@
         <div id="action-bar">
             <div class="action-btn bg-blue-600" onclick="batchText()"><i class="ph-bold ph-chat-text"></i> Text</div>
             <div class="action-btn bg-purple-600" onclick="batchEmail()"><i class="ph-bold ph-envelope"></i> Email</div>
+            <div class="action-btn bg-gray-700" onclick="copyBatchData()"><i class="ph-bold ph-copy"></i> Copy</div>
             <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus"></i> Assign</div>
         </div>
 
@@ -326,34 +336,43 @@
                     const instanceNum = idCounters[baseKey];
                     idCounters[baseKey]++;
                     obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
-                    obj.TASK_TAB = 'location'; 
+                    obj.TASK_TAB = 'hidden'; 
                     return obj;
                 });
 
-                // LOGIC ENGINE
+                // LOGIC ENGINE - STRICT PRIORITY FILTERING
                 const groupedByItem = {};
                 rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
                 Object.keys(groupedByItem).forEach(code => {
                     let items = groupedByItem[code];
+                    
+                    // CHECK 1: DOES THE GROUP HAVE ANY PRIORITY?
                     const hasPriority = items.some(i => i.PRIORITY > 0);
-                    if(!hasPriority) {
-                        items.forEach(i => i.TASK_TAB = 'review');
-                        return;
-                    }
+                    
+                    if(!hasPriority) return; // HIDDEN if no priority
+                    
                     let winnerPriority = null;
                     const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
+                    
                     for(let p of priorities) {
                         const pItems = items.filter(i => i.PRIORITY === p);
                         const isWinner = pItems.some(i => i.PTRAVAILABLE > (i.SEASONSUPPLY * 0.10));
                         if(isWinner) { winnerPriority = p; break; }
                     }
+                    
                     if (winnerPriority !== null) {
                         items.forEach(i => {
-                            if (i.PRIORITY === winnerPriority) { i.TASK_TAB = 'season'; } 
+                            if (i.PRIORITY <= 0) { i.TASK_TAB = 'hidden'; } 
+                            else if (i.PRIORITY === winnerPriority) { i.TASK_TAB = 'season'; } 
                             else { i.TASK_TAB = 'location'; }
                         });
-                    } else { items.forEach(i => i.TASK_TAB = 'review'); }
+                    } else { 
+                        items.forEach(i => {
+                            if (i.PRIORITY > 0) { i.TASK_TAB = 'review'; } 
+                            else { i.TASK_TAB = 'hidden'; }
+                        }); 
+                    }
                 });
 
                 fullInventory = rawItems;
@@ -386,58 +405,24 @@
         function renderSocView() {
             const container = document.getElementById('soc-content');
             const crumb = document.getElementById('soc-crumb');
-            
-            if(socInventory.length === 0) { 
-                container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data. Tap check button.</div>`; 
-                return; 
-            }
-
-            // LEVEL 0: SALES REPS
+            if(socInventory.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data. Tap check button.</div>`; return; }
             if(socViewLevel === 0) {
                 crumb.innerText = "All Reps";
                 const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
-                container.innerHTML = reps.map(r => `
-                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
-                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                `).join('');
+                container.innerHTML = reps.map(r => `<div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')"><span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             }
-            // LEVEL 1: CUSTOMERS
             else if(socViewLevel === 1) {
                 crumb.innerText = selectedSocRep;
                 const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
                 const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
-                    ${customers.map(c => `
-                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
-                            <span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             }
-            // LEVEL 2: ITEMS
             else if(socViewLevel === 2) {
                 crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
-                const items = socInventory.filter(i => 
-                    (i.SALESREPNAME || "Unknown") === selectedSocRep && 
-                    (i.CUSTOMERNAME || "Unknown") === selectedSocCust
-                );
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
-                    ${items.map(i => `
-                        <div class="inv-card">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
-                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
-                        </div>
-                    `).join('')}
-                `;
+                const items = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep && (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`;
             }
         }
-
         function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
@@ -494,30 +479,14 @@
             document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`;
             document.getElementById('task-crumb').innerText = "Team View";
         }
-
-        function setTaskUser(user) {
-            taskViewTargetUser = user;
-            document.getElementById('team-selector').classList.add('hidden');
-            document.getElementById('task-tabs-container').classList.remove('hidden');
-            taskViewLevel = 0;
-            renderTasks();
-        }
-
-        function setTaskTab(t) {
-            currentTab = t;
-            document.getElementById('ttab-season').classList.toggle('active', t === 'season');
-            document.getElementById('ttab-location').classList.toggle('active', t === 'location');
-            taskViewLevel = 0;
-            renderTasks();
-        }
+        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
+        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); taskViewLevel = 0; renderTasks(); }
 
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
-
             if(currentTab === 'season') {
                 if(taskViewLevel === 0) {
                     crumb.innerText = `${taskViewTargetUser} / Season / Blocks`;
@@ -552,53 +521,27 @@
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
             const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-
-            if(reviewItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`;
-                crumb.innerText = "";
-                return;
-            }
-
+            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
             if(reviewViewLevel === 0) {
                 crumb.innerText = "All Names";
                 const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort();
-                container.innerHTML = names.map(n => 
-                    `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')">
-                        <span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i>
-                    </div>`
-                ).join('');
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if(reviewViewLevel === 1) {
                 crumb.innerText = selectedReviewName;
                 const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort();
-                container.innerHTML = `
-                    <div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>
-                    ${sizes.map(s => `
-                        <div class="drill-item" onclick="selectReviewSize('${s}')">
-                            <span>${s}</span><i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             } else if(reviewViewLevel === 2) {
                 crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`;
                 const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize);
-                container.innerHTML = `
-                    <div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>
-                    ${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`;
             }
         }
 
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
-        
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { 
-            selectedTaskLoc = l; 
-            if(currentTab === 'season') taskViewLevel = 2;
-            else taskViewLevel = 1; 
-            renderTasks(); 
-        }
+        function selectTaskLoc(l) { selectedTaskLoc = l; if(currentTab === 'season') taskViewLevel = 2; else taskViewLevel = 1; renderTasks(); }
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
@@ -606,22 +549,33 @@
             let report = "";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                report += `[QTY: ${item.PTRAVAILABLE || 0}] ${item.COMMONNAME} :: ${item.CONTSIZE}\n`;
-                let details = [`Loc: ${item.LOCATIONCODE || '-'}`, `Lot: ${item.LOTCODE || '-'}`];
-                if(item.CALIPER || item.CAL) details.push(`Cal: ${item.CALIPER || item.CAL}`);
-                report += details.join(' | ') + "\n";
+                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                report += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                if(item.CALIPER || item.CAL) report += `Cal: ${item.CALIPER || item.CAL}\n`;
                 if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
                 if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
                 if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
-                report += `\n----------------\n\n`;
+                report += `\n`;
             });
             return report;
         }
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
         function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
+        
+        function copyBatchData() {
+            const text = getBatchReport();
+            if(!text) { alert("No items selected!"); return; }
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Data Copied! Switch to Outlook and Paste into your reply.");
+                // Deselect after copy
+                isBatch = false; toggleBatch(); 
+            }).catch(err => {
+                alert("Failed to copy. Browser may not support this.");
+            });
+        }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -668,7 +622,6 @@
             lastView = originView; activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -678,24 +631,15 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
-
             const cont = document.getElementById('input-container');
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
-                cont.innerHTML = `
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
-                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
-                `;
+                cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             } else {
                 document.getElementById('btn-cam').classList.add('hidden');
                 document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
-                    <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
-                `;
+                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
             }
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); }
             else { document.getElementById('expand-section').classList.remove('hidden'); }
@@ -709,29 +653,18 @@
             const imgPrev = document.getElementById('img-prev');
             const imgPlace = document.getElementById('img-placeholder');
             const linkBtn = document.getElementById('photo-link-btn');
-            
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            
             if(activeItem.SAVED_PHOTO_LINK) {
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
                 photoDiv.classList.remove('hidden');
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
-                if(activeItem.TEMP_PHOTO_BASE64) {
-                    imgPrev.src = activeItem.TEMP_PHOTO_BASE64;
-                    imgPrev.classList.remove('hidden');
-                    imgPlace.classList.add('hidden');
-                } else {
-                    imgPrev.classList.add('hidden');
-                    imgPlace.classList.remove('hidden');
-                }
-            } else {
-                photoDiv.classList.add('hidden');
-            }
-            
+                if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
+                else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
+            } else { photoDiv.classList.add('hidden'); }
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
