@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v216</title>
+    <title>Greenleaf Turbo v220</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -92,10 +92,10 @@
             <div class="text-4xl text-[#007a4d] font-bold mb-6 flex items-center justify-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</div>
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             <div id="login-buttons">
-                <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan</button>
+                <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Manager)</button>
+                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Manager)</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
-                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Manager)</button>
             </div>
             <div id="pin-container" class="hidden mt-4">
                 <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
@@ -115,7 +115,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v216</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf Turbo v220</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -287,9 +287,8 @@
 
     <script>
         // *** CONFIGURATION ***
-        // UPDATED: This is the exact URL you provided
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v216_storage"; 
+        const STORAGE_KEY = "greenleaf_v220_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
@@ -763,6 +762,7 @@
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
             const cont = document.getElementById('input-container');
+            // UPDATED: Now Dylan AND J.D. can edit data
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
@@ -853,22 +853,36 @@
         }
 
         function saveData(silent = false) {
+            // Updated to ensure Managers can save
             if(!isAdmin) return;
+            
+            // Capture Values
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
             activeItem.SAVED_PICK = document.getElementById('in-pick').value;
             activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            
+            // Save Locally to Phone Storage
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
             storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() };
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
+            try { 
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); 
+                if(!silent) { alert("Data Saved Locally"); renderOverviewData(); } 
+            } catch(e) { alert("Storage Full!"); }
         }
 
         function loadSavedData() {
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             fullInventory.forEach(item => {
                 const id = item.UNIQUE_ROW_ID;
-                if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; }
+                if(storage[id]) { 
+                    item.SAVED_MATCH = storage[id].m; 
+                    item.SAVED_SPEC = storage[id].s; 
+                    item.SAVED_PICK = storage[id].p; 
+                    item.SAVED_NOTE = storage[id].n; 
+                    item.SAVED_PHOTO_LINK = storage[id].pl; 
+                }
             });
         }
 
