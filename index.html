@@ -287,6 +287,7 @@
 
     <script>
         // *** CONFIGURATION ***
+        // UPDATED: This is the exact URL you provided
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
         const STORAGE_KEY = "greenleaf_v220_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
@@ -762,7 +763,6 @@
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
 
             const cont = document.getElementById('input-container');
-            // UPDATED: Now Dylan AND J.D. can edit data
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
@@ -834,6 +834,8 @@
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
+                        
+                        // UPDATED: Included type: 'photo' so backend recognizes it
                         fetch(GOOGLE_SCRIPT_URL, { 
                             method: "POST", 
                             body: JSON.stringify({ 
@@ -853,36 +855,22 @@
         }
 
         function saveData(silent = false) {
-            // Updated to ensure Managers can save
             if(!isAdmin) return;
-            
-            // Capture Values
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
             activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
             activeItem.SAVED_PICK = document.getElementById('in-pick').value;
             activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            
-            // Save Locally to Phone Storage
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
             storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() };
-            try { 
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); 
-                if(!silent) { alert("Data Saved Locally"); renderOverviewData(); } 
-            } catch(e) { alert("Storage Full!"); }
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
         }
 
         function loadSavedData() {
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             fullInventory.forEach(item => {
                 const id = item.UNIQUE_ROW_ID;
-                if(storage[id]) { 
-                    item.SAVED_MATCH = storage[id].m; 
-                    item.SAVED_SPEC = storage[id].s; 
-                    item.SAVED_PICK = storage[id].p; 
-                    item.SAVED_NOTE = storage[id].n; 
-                    item.SAVED_PHOTO_LINK = storage[id].pl; 
-                }
+                if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; }
             });
         }
 
