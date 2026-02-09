@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v159</title>
+    <title>Greenleaf Pro v165</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -46,18 +46,9 @@
         /* BATCH & HOME */
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); }
-        
-        #action-bar { 
-            position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; 
-            padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); 
-            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; 
-            z-index: 4000; transition: transform 0.3s; transform: translateY(100%); 
-            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
-        }
+        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
-        
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
@@ -104,7 +95,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing Server...</div>
+                <div class="text-white font-bold text-sm mt-3">Syncing Cloud Data...</div>
             </div>
         </div>
     </div>
@@ -115,7 +106,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v159</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v165</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -210,6 +201,7 @@
                         <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
+                        <div class="overview-card full-width"><div class="overview-label">Source File</div><div id="ov-source" class="overview-val">--</div></div>
                     </div>
                     <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
                 </div>
@@ -259,8 +251,8 @@
 
     <script>
         // *** CONFIGURATION ***
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSSEUCEYFr5uiam1r-77BQ0MveZheZ9iIUSMVHj2Xed8T8l91MydmLOciNf7l1eNL2Yg/exec"; 
-        const STORAGE_KEY = "greenleaf_v156_storage"; 
+        // I have inserted your URL here:
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTc6bHuZ1znfYoF_oNxBxw3H5CasUvJ47uyVWqA45OR0M8MYvAvHUYpMV5rmtbHhud/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -271,6 +263,7 @@
         // STATE
         let fullInventory = [];
         let socInventory = []; 
+        let savedFieldData = {}; // Stores cloud data
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
@@ -295,7 +288,6 @@
         function selectUser(u) { 
             currentUser = u; 
             isAdmin = ADMINS.includes(u); 
-            // HARDCODED MANAGER OVERRIDE
             if(u === "Dylan" || u === "J.D.") isAdmin = true;
             taskViewTargetUser = u; 
             document.getElementById('login-buttons').classList.add('hidden'); 
@@ -306,75 +298,113 @@
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
-        // FETCH DATA
+        // FETCH DATA (INVENTORY + CLOUD NOTES)
         async function fetchData() {
             try {
-                pruneOldData(); 
-                const res = await fetch('inventory.xlsx?v=' + Date.now());
-                if (!res.ok) throw new Error();
-                const buffer = await res.arrayBuffer();
-                const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                let headerRow = 0;
-                for(let i=0; i<Math.min(rows.length, 25); i++){
-                    const str = JSON.stringify(rows[i]).toUpperCase();
-                    if(str.includes("ITEMCODE") || str.includes("COMMONNAME")) { headerRow = i; break; }
-                }
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
+                // 1. Fetch Cloud Data
+                const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
+                const cloudJson = await cloudRes.json();
                 
-                let idCounters = {};
-                let rawItems = jsonData.map((row, index) => {
-                    let obj = {};
-                    Object.keys(row).forEach(k => { let cleanK = k.toString().replace(/\s+/g, '').toUpperCase(); obj[cleanK] = row[k]; });
-                    if(!obj.COMMONNAME) obj.COMMONNAME = obj.ITEMCODE || "Unknown Plant";
-                    obj.PTRAVAILABLE = parseFloat(obj.PTRAVAILABLE) || 0;
-                    obj.SEASONSUPPLY = parseFloat(obj.SEASONSUPPLY) || 0; 
-                    obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
-                    const baseKey = (obj.ITEMCODE||"") + "_" + (obj.LOCATIONCODE||"") + "_" + (obj.LOTCODE||"");
-                    if(!idCounters[baseKey]) idCounters[baseKey] = 0;
-                    const instanceNum = idCounters[baseKey];
-                    idCounters[baseKey]++;
-                    obj.UNIQUE_ROW_ID = baseKey + "_" + instanceNum;
-                    obj.TASK_TAB = 'hidden'; 
-                    return obj;
-                });
+                if(cloudJson.status === 'success') { 
+                    fullInventory = cloudJson.data; // The script now does all the heavy lifting
+                    applyAssignments(); // Still client-side if needed, but script assigns most
+                    launchApp();
+                } else {
+                    throw new Error("Failed to load Cloud Data");
+                }
+            } catch (e) { 
+                console.error(e); 
+                document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
+                setTimeout(resetLogin, 3000); 
+            }
+        }
 
-                // LOGIC ENGINE
-                const groupedByItem = {};
-                rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
+        // CLOUD SAVE FUNCTION
+        function saveData(silent = false) {
+            if(!isAdmin) return;
+            // Update local object immediately for UI
+            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            
+            if(!silent) {
+                document.getElementById('btn-save').innerText = "SAVING...";
+                document.getElementById('btn-save').disabled = true;
+            }
 
-                Object.keys(groupedByItem).forEach(code => {
-                    let items = groupedByItem[code];
-                    const hasPriority = items.some(i => i.PRIORITY > 0);
-                    if(!hasPriority) return; 
-                    
-                    let winnerPriority = null;
-                    const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
-                    
-                    for(let p of priorities) {
-                        const pItems = items.filter(i => i.PRIORITY === p);
-                        const isWinner = pItems.some(i => i.PTRAVAILABLE > (i.SEASONSUPPLY * 0.10));
-                        if(isWinner) { winnerPriority = p; break; }
+            // Send to Google Script
+            const payload = {
+                type: "update",
+                id: activeItem.UNIQUE_ID,
+                match: activeItem.SAVED_MATCH,
+                spec: activeItem.SAVED_SPEC,
+                pick: activeItem.SAVED_PICK,
+                note: activeItem.SAVED_NOTE,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "",
+                photoName: activeItem.SAVED_PHOTO_NAME || "",
+                user: currentUser
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    if(!silent) {
+                        alert("Saved to Cloud!");
+                        document.getElementById('btn-save').innerText = "SAVE UPDATES";
+                        document.getElementById('btn-save').disabled = false;
+                        renderOverviewData();
                     }
-                    
-                    if (winnerPriority !== null) {
-                        items.forEach(i => {
-                            if (i.PRIORITY <= 0) { i.TASK_TAB = 'hidden'; } 
-                            else if (i.PRIORITY === winnerPriority) { i.TASK_TAB = 'season'; } 
-                            else { i.TASK_TAB = 'location'; }
-                        });
-                    } else { 
-                        items.forEach(i => {
-                            if (i.PRIORITY > 0) { i.TASK_TAB = 'review'; } 
-                            else { i.TASK_TAB = 'hidden'; }
-                        }); 
-                    }
-                });
+                } else {
+                    alert("Cloud Save Failed: " + data.message);
+                }
+            })
+            .catch(err => alert("Network Error: " + err));
+        }
 
-                fullInventory = rawItems;
-                applyAssignments(); loadSavedData(); launchApp();
-            } catch (e) { console.error(e); setTimeout(resetLogin, 3000); }
+        // PHOTO UPLOAD (Handles Cloud Save Internally)
+        function handlePhotoUpload(input) {
+            if(input.files && input.files[0]) {
+                const file = input.files[0];
+                const btn = document.getElementById('btn-cam');
+                const btnText = document.getElementById('cam-text');
+                btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
+                
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = function(e) {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
+                        const dateStr = new Date().toISOString().split('T')[0];
+                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
+                        
+                        // Send Photo
+                        fetch(GOOGLE_SCRIPT_URL, { 
+                            method: "POST", 
+                            body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
+                        })
+                        .then(res => res.json()).then(data => {
+                            if(data.status === 'success') { 
+                                activeItem.SAVED_PHOTO_LINK = data.url; 
+                                activeItem.TEMP_PHOTO_BASE64 = dataUrl;
+                                activeItem.SAVED_PHOTO_NAME = filename;
+                                renderOverviewData(); 
+                                // Auto-Save record with new photo link
+                                saveData(true); 
+                                alert("Photo Uploaded!"); 
+                            } 
+                            else { alert("Upload Error: " + data.message); }
+                        }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
+                    }
+                }
+            }
         }
 
         // SOC LOGIC
@@ -424,7 +454,6 @@
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
         // UTILS
-        function pruneOldData() { const now = Date.now(); const tenDaysMs = 10 * 24 * 60 * 60 * 1000; const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); let changed = false; Object.keys(storage).forEach(key => { if(storage[key].t && (now - storage[key].t > tenDaysMs)) { delete storage[key]; changed = true; } }); if(changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); }
         function launchApp() { 
             document.getElementById('view-login').style.display = 'none'; 
             document.getElementById('app-wrapper').classList.remove('hidden'); 
@@ -442,7 +471,18 @@
             } 
             switchView('home'); 
         }
-        function applyAssignments() { let i = 0; fullInventory.forEach(item => { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla"; else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } }); }
+        function applyAssignments() { 
+            // Most assignments now happen on server, this is just backup
+            let i = 0; 
+            fullInventory.forEach(item => { 
+                if(!item.ASSIGNEDTO) {
+                    const group = (item.PLANTGROUPCODE || "").toString(); 
+                    if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; 
+                    else if(group.includes("330") || group.includes("300")) item.ASSIGNEDTO = "Kayla"; 
+                    else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } 
+                }
+            }); 
+        }
         function switchView(v) { 
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
@@ -554,8 +594,8 @@
                 if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) {
-                    // Display filename in brackets with link for copy/paste
-                    report += `Photo: [${item.SAVED_PHOTO_NAME || 'View Photo'}] ${item.SAVED_PHOTO_LINK}\n`;
+                    const dispName = item.SAVED_PHOTO_NAME || "View Photo";
+                    report += `Photo: [${dispName}] ${item.SAVED_PHOTO_LINK}\n`;
                 }
                 report += `\n`;
             });
@@ -630,6 +670,8 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
+            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+
             const cont = document.getElementById('input-container');
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
@@ -658,7 +700,6 @@
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
             if(activeItem.SAVED_PHOTO_LINK) {
-                // CHANGED: Shows filename instead of "View on Google Drive"
                 const dispName = activeItem.SAVED_PHOTO_NAME || "View Photo on Drive";
                 h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">${dispName}</div></div>`;
                 photoDiv.classList.remove('hidden');
@@ -668,74 +709,6 @@
                 else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
             } else { photoDiv.classList.add('hidden'); }
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
-        }
-
-        function handlePhotoUpload(input) {
-            if(input.files && input.files[0]) {
-                const file = input.files[0];
-                const btn = document.getElementById('btn-cam');
-                const btnText = document.getElementById('cam-text');
-                btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = function(e) {
-                    const img = new Image(); img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
-                        const dateStr = new Date().toISOString().split('T')[0];
-                        // Save Filename locally
-                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
-                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) })
-                        .then(res => res.json()).then(data => {
-                            if(data.status === 'success') { 
-                                activeItem.SAVED_PHOTO_LINK = data.url; 
-                                activeItem.TEMP_PHOTO_BASE64 = dataUrl;
-                                activeItem.SAVED_PHOTO_NAME = filename; // Save the name
-                                renderOverviewData(); saveData(true); alert("Photo Uploaded!"); 
-                            } 
-                            else { alert("Upload Error: " + data.message); }
-                        }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
-                    }
-                }
-            }
-        }
-
-        function saveData(silent = false) {
-            if(!isAdmin) return;
-            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            const id = activeItem.UNIQUE_ROW_ID;
-            // Now saves 'pn' (photo name)
-            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, pn: activeItem.SAVED_PHOTO_NAME, t: Date.now() };
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
-        }
-
-        function loadSavedData() {
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            fullInventory.forEach(item => {
-                const id = item.UNIQUE_ROW_ID;
-                if(storage[id]) { 
-                    item.SAVED_MATCH = storage[id].m; 
-                    item.SAVED_SPEC = storage[id].s; 
-                    item.SAVED_PICK = storage[id].p; 
-                    item.SAVED_NOTE = storage[id].n; 
-                    item.SAVED_PHOTO_LINK = storage[id].pl;
-                    item.SAVED_PHOTO_NAME = storage[id].pn; // Load the name
-                }
-            });
-        }
-
-        function renderAllFields() {
-            const cont = document.getElementById('expand-content');
-            cont.innerHTML = Object.keys(activeItem).map(k => {
-                if(k.startsWith('SAVED_') || k.startsWith('TEMP_') || k === 'ASSIGNEDTO' || k === 'UNIQUE_ROW_ID' || k === 'TASK_TAB') return "";
-                return `<div class="dynamic-stack"><div class="dynamic-label">${k}</div><div class="dynamic-val">${activeItem[k] || '-'}</div></div>`;
-            }).join('');
         }
 
         function toggleBatch() {
