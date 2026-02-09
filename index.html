@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v207</title>
+    <title>Greenleaf Pro v209</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -66,7 +66,7 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex flex-col">
                 <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v207</div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v209</div>
             </div>
             <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
@@ -155,13 +155,14 @@
             } else { alert("Incorrect PIN"); }
         }
 
-        // --- SYNC & LOGIC ENGINE (V207 FIXED) ---
+        // --- SYNC & LOGIC ENGINE (V209) ---
         async function syncDatabase() {
             const status = document.getElementById('sync-status');
             status.style.display = 'block';
             document.getElementById('view-login').style.display = 'flex';
 
             try {
+                // 1. Fetch Inventory & SOC Data
                 const resInv = await fetch(GOOGLE_SCRIPT_URL + "?type=inventory");
                 const jsonInv = await resInv.json();
                 
@@ -169,28 +170,25 @@
                 const jsonSoc = await resSoc.json();
 
                 if(jsonInv.status === 'success') {
-                    // PROCESS DATA WITH LOGIC ENGINE
+                    
+                    // *** THE LOGIC ENGINE ***
                     fullInventory = jsonInv.data.map(item => {
-                        // 1. Clean Data
+                        // A. Clean Numbers
                         item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
                         item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0;
                         item.PRIORITY = parseFloat(item.PRIORITY) || 0;
                         
-                        // 2. Assign User
+                        // B. Assign User (Based on Plant Group)
                         const grp = String(item.PLANTGROUPCODE || "");
-                        if(grp.includes("230") || grp.includes("140")) item.ASSIGNED_TO = "Dylan";
-                        else if(grp.includes("330") || grp.includes("300")) item.ASSIGNED_TO = "Kayla";
-                        else item.ASSIGNED_TO = "Morgan";
-
-                        // 3. LOGIC ENGINE (UPDATED FOR v207)
-                        
-                        // RULE A: Sold Out (< 10%) -> HIDE
-                        if (item.PTRAVAILABLE < (item.SEASONSUPPLY * 0.10)) {
-                            item.IS_TASK = false;
-                            return item;
+                        if(grp.includes("230") || grp.includes("140")) {
+                            item.ASSIGNED_TO = "Dylan";
+                        } else if(grp.includes("330") || grp.includes("300")) {
+                            item.ASSIGNED_TO = "Kayla";
+                        } else {
+                            item.ASSIGNED_TO = "Morgan";
                         }
 
-                        // RULE B: Recently Completed (< 10 Days) -> HIDE
+                        // C. 10-Day Hide Rule (If completed, hide it regardless)
                         if (item.COMPLETED_AT) {
                             const daysSince = (new Date() - new Date(item.COMPLETED_AT)) / (1000 * 60 * 60 * 24);
                             if (daysSince < 10) {
@@ -199,30 +197,43 @@
                             }
                         }
 
-                        // RULE C: Sort into Tabs
-                        if (item.PRIORITY > 0) {
-                            // High Priority -> Season Sales
+                        // D. PRIORITY FILTER (The New Rule)
+                        // If NO Priority (0 or empty), it is HIDDEN from both tabs.
+                        if (item.PRIORITY < 1) {
+                            item.IS_TASK = false;
+                            return item;
+                        }
+
+                        // E. THE SPLIT (Winner vs Loser)
+                        // At this point, we KNOW Priority >= 1.
+                        // Now we check inventory health.
+                        
+                        const threshold = item.SEASONSUPPLY * 0.10; // 10% of Season Supply
+
+                        if (item.PTRAVAILABLE > threshold) {
+                            // Healthy Stock -> SEASON SALES
                             item.IS_TASK = true;
                             item.TASK_TAB = 'season'; 
-                        } else if (item.PTRAVAILABLE > 0) {
-                            // No Priority, but has Inventory -> Location Sales
+                        } else {
+                            // Low Stock (The "Losers") -> LOCATION SALES
                             item.IS_TASK = true;
                             item.TASK_TAB = 'location';
-                        } else {
-                            // No Priority, No Inventory -> Hide
-                            item.IS_TASK = false;
                         }
                         
                         return item;
                     });
                     
+                    // Load SOC Data if available
                     if(jsonSoc.status === 'success') { socData = jsonSoc.data; }
                     
                     updateTaskCount();
                     switchView('home');
-                } else { alert("Error: " + jsonInv.message); }
-            } catch(e) { alert("Network Error: " + e); }
-            finally { 
+                } else { 
+                    alert("Database Error: " + jsonInv.message); 
+                }
+            } catch(e) { 
+                alert("Network Error: " + e); 
+            } finally { 
                 status.style.display = 'none'; 
                 document.getElementById('view-login').style.display = 'none'; 
             }
