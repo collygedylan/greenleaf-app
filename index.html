@@ -128,8 +128,8 @@
 
             <div id="view-soc" class="hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-200 mb-4">
-                    <h2 class="font-bold text-orange-600 text-lg">Sales Order Changes</h2>
-                    <p class="text-xs text-gray-500">Updates from the office.</p>
+                    <h2 class="font-bold text-orange-600 text-lg">SOC</h2>
+                    <p id="soc-crumb" class="text-xs text-gray-500 font-bold uppercase mt-1">All Reps</p>
                 </div>
                 <div id="soc-content" class="space-y-3">
                     <div class="text-center text-gray-400 py-8">Loading changes...</div>
@@ -173,11 +173,7 @@
                         <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
                     </div>
                     
-                    <label id="btn-cam" class="camera-btn">
-                        <i class="ph-fill ph-camera text-3xl"></i>
-                        <span id="cam-text" class="font-bold">Take Field Photo</span>
-                        <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
-                    </label>
+                    <label id="btn-cam" class="camera-btn"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)"></label>
 
                     <div id="input-container" class="space-y-4">
                         <div><label class="text-[10px] font-bold text-gray-500 uppercase">Season Sales Note</label><textarea id="in-seas-note" class="input-field h-20" placeholder="For the season tab..."></textarea></div>
@@ -211,19 +207,33 @@
         // *** LIVE API URL ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
         const STORAGE_KEY = "greenleaf_pro_v214_data"; 
+        
+        // SALES REP LIST (Exact spelling matches Sheet)
+        const SOC_REP_LIST = [
+            "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
+            "Tracey Tapscott", "David Brandt", "Tony Bono", "Ellen Deely", "Chance Alldredge", "Nate Douglas", 
+            "Traci Earle", "Kevin Effinger", "Chris Farrow", "Annette Hancock", "Ben Harveson", 
+            "Brian Hatfield", "InHouse Sales", "Interdivison", "Wes Lugas", "Rudy Martenez", "Ben Machino", "Casey Rufener"
+        ];
 
         let fullInventory = [];
         let socData = [];
         let currentUser = null;
         let currentTab = 'season';
-        let targetUser = null; // Who are we looking at?
+        let targetUser = null; 
         
-        // ACCORDION STATE
+        // VIEW STATES
         let taskLevel = 0; 
         let selectedBlock = null;
         let selectedLoc = null;
-        let activeItem = null; // For Detail View
-        let lastView = 'home'; // For Detail View Back Button
+        
+        let socViewLevel = 0; 
+        let selectedSocRep = null;
+        let selectedSocCommon = null;
+        let selectedSocSize = null;
+
+        let activeItem = null; 
+        let lastView = 'home';
 
         // --- LOGIN ---
         function selectUser(u) { currentUser = u; targetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); }
@@ -237,7 +247,7 @@
             } else { alert("Incorrect PIN"); }
         }
 
-        // --- SYNC & LOGIC ENGINE ---
+        // --- SYNC & LOGIC ---
         async function syncDatabase() {
             const status = document.getElementById('sync-status');
             status.style.display = 'block';
@@ -255,22 +265,18 @@
                         item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0;
                         item.PRIORITY = parseFloat(item.PRIORITY) || 0;
                         
-                        // Assign User
                         const grp = String(item.PLANTGROUPCODE || "");
                         if(grp.includes("230") || grp.includes("140")) item.ASSIGNED_TO = "Dylan";
                         else if(grp.includes("330") || grp.includes("300")) item.ASSIGNED_TO = "Kayla";
                         else item.ASSIGNED_TO = "Morgan";
 
-                        // 10-Day Hide Rule
                         if (item.COMPLETED_AT) {
                             const daysSince = (new Date() - new Date(item.COMPLETED_AT)) / (1000 * 60 * 60 * 24);
                             if (daysSince < 10) { item.IS_TASK = false; return item; }
                         }
 
-                        // STRICT PRIORITY CHECK
                         if (item.PRIORITY < 1) { item.IS_TASK = false; return item; }
 
-                        // THE SPLIT
                         const threshold = item.SEASONSUPPLY * 0.10; 
                         if (item.PTRAVAILABLE > threshold) { item.IS_TASK = true; item.TASK_TAB = 'season'; } 
                         else { item.IS_TASK = true; item.TASK_TAB = 'location'; }
@@ -315,10 +321,7 @@
                 pl: activeItem.SAVED_PHOTO_LINK, pq: activeItem.SAVED_PRIM, c: activeItem.SAVED_CAL
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-            
-            // ALSO SAVE SALES NOTE TO GOOGLE SHEET
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: activeItem.UNIQUE_ID, note: activeItem.SAVED_SEAS_NOTE + " | " + activeItem.SAVED_LOC_NOTE }) });
-            
             alert("Saved!");
         }
 
@@ -340,7 +343,7 @@
                 if(isAdmin()) document.getElementById('team-selector').classList.remove('hidden');
                 taskLevel=0; renderTasks(); 
             }
-            if(v==='soc') { renderSOC(); }
+            if(v==='soc') { socViewLevel = 0; renderSOC(); }
             if(v==='drive') { renderDriveNames(); }
         }
 
@@ -364,13 +367,11 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY;
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY;
 
-            // Accordion Data
             document.getElementById('expand-content').innerHTML = Object.keys(activeItem).map(k => {
                 if(k.startsWith('SAVED_') || k === 'UNIQUE_ID' || k === 'TASK_TAB' || k === 'IS_TASK' || k === 'ASSIGNED_TO') return "";
                 return `<div class="dynamic-stack"><span class="text-xs font-bold text-gray-500">${k}:</span> <span class="text-sm">${activeItem[k]}</span></div>`;
             }).join('');
 
-            // Inputs
             document.getElementById('in-match').value = activeItem.SAVED_MATCH || '';
             document.getElementById('in-spec').value = activeItem.SAVED_SPEC || '';
             document.getElementById('in-seas-note').value = activeItem.SAVED_SEAS_NOTE || '';
@@ -384,7 +385,6 @@
             } else {
                 document.getElementById('photo-preview').classList.add('hidden');
             }
-
             switchDetailTab('overview');
         }
 
@@ -430,7 +430,6 @@
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
-            
             let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (i.ASSIGNED_TO === targetUser));
             
             if (myTasks.length === 0) { container.innerHTML = "<div class='p-8 text-center text-gray-400'>No tasks for this user.</div>"; return; }
@@ -458,18 +457,67 @@
         function selectBlock(b) { selectedBlock = b; taskLevel = 1; renderTasks(); }
         function selectLoc(l) { selectedLoc = l; taskLevel = 2; renderTasks(); }
 
-        // --- SOC ---
+        // --- SOC RENDERER (V214 NEW) ---
         function renderSOC() {
             const container = document.getElementById('soc-content');
-            if(socData.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 py-8'>No changes found.</div>"; return; }
-            container.innerHTML = socData.map(row => `
-                <div class="soc-card">
-                    <div class="font-bold text-gray-800">${row.ORDERNO || "Order #"}</div>
-                    <div class="text-sm mt-1">${row.CUSTOMER || "Customer"}</div>
-                    <div class="text-xs text-gray-500 mt-2">${row.ITEMCODE || ""} - ${row.QTYORDERED || ""}</div>
-                    <div class="text-xs font-bold text-orange-600 mt-1">${row.NOTES || "Check Details"}</div>
-                </div>`).join('');
+            const crumb = document.getElementById('soc-crumb');
+            
+            if (socViewLevel === 0) {
+                crumb.innerText = "ALL REPS";
+                container.innerHTML = SOC_REP_LIST.map(r => `
+                    <div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')">
+                        <span class="font-bold">${r}</span><i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>`).join('');
+            } else if (socViewLevel === 1) {
+                crumb.innerText = selectedSocRep;
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const items = socData.filter(i => {
+                    const dataName = (i.SALESREPNAME || i.SALES_REP_NAME || "").toUpperCase(); // Flexible naming
+                    return repParts.some(part => dataName.includes(part));
+                });
+                const commons = [...new Set(items.map(i => i.COMMONNAME || "Unknown"))].sort();
+                
+                if (commons.length === 0) {
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSOC()"><i class="ph-bold ph-arrow-left"></i> Back</div><div class="p-8 text-center text-gray-400">No changes for ${selectedSocRep}</div>`;
+                } else {
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSOC()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>` + 
+                        commons.map(c => `<div class="drill-item" onclick="selectSocCommon('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                }
+            } else if (socViewLevel === 2) {
+                crumb.innerText = `${selectedSocRep} > ${selectedSocCommon}`;
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const items = socData.filter(i => {
+                    const dataName = (i.SALESREPNAME || i.SALES_REP_NAME || "").toUpperCase();
+                    return repParts.some(part => dataName.includes(part)) && (i.COMMONNAME || "Unknown") === selectedSocCommon;
+                });
+                const sizes = [...new Set(items.map(i => i.PRINTEDCONTAINERCODE || i.SIZE || "Unknown"))].sort();
+                
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSOC()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div>` + 
+                    sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-sm">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (socViewLevel === 3) {
+                crumb.innerText = `${selectedSocCommon} > ${selectedSocSize}`;
+                const repParts = selectedSocRep.toUpperCase().split(" ");
+                const finalItems = socData.filter(i => {
+                    const dataName = (i.SALESREPNAME || i.SALES_REP_NAME || "").toUpperCase();
+                    return repParts.some(part => dataName.includes(part)) && 
+                           (i.COMMONNAME || "Unknown") === selectedSocCommon && 
+                           (i.PRINTEDCONTAINERCODE || i.SIZE || "Unknown") === selectedSocSize;
+                });
+                
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=2; renderSOC()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + 
+                    finalItems.map(row => `
+                        <div class="soc-card">
+                            <div class="font-bold text-gray-800">${row.ORDERNO || "Order #"}</div>
+                            <div class="text-sm mt-1">${row.CUSTOMER || row.CUSTOMERNAME || "Customer"}</div>
+                            <div class="text-xs text-gray-500 mt-2">Qty: ${row.QTYORDERED || row.QTY || 0}</div>
+                            <div class="text-xs font-bold text-orange-600 mt-1">${row.NOTES || row.SALESNOTELINE || ""}</div>
+                        </div>`).join('');
+            }
         }
+
+        function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSOC(); }
+        function selectSocCommon(c) { selectedSocCommon = c; socViewLevel = 2; renderSOC(); }
+        function selectSocSize(s) { selectedSocSize = s; socViewLevel = 3; renderSOC(); }
 
         // --- DRIVE ---
         function renderDriveNames() {
