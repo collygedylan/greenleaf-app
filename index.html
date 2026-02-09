@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v209</title>
+    <title>Greenleaf Pro v214</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -15,25 +15,40 @@
     
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: Arial, sans-serif; background-color: #f9fafb; color: var(--text-main); overscroll-behavior-y: none; }
+        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: #f9fafb; color: var(--text-main); overscroll-behavior-y: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN */
         #view-login { position: fixed; inset: 0; background: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; }
         
-        /* UI CARDS */
-        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
         .soc-card { border-left: 4px solid #f97316; background: #fff7ed; padding: 14px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.2s; }
+        .drill-item:active { background-color: #f3f4f6; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px; }
         
-        /* INPUTS */
-        .note-input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-top: 8px; background: #fffbeb; transition: background 0.3s; }
-        .note-input:focus { outline: none; border-color: var(--brand-green); background: white; }
-        .complete-btn { float: right; background-color: var(--brand-green); color: white; font-weight: bold; font-size: 10px; padding: 6px 12px; border-radius: 20px; margin-top: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* INPUTS & DETAIL */
+        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
+        .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
+        .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
+        .camera-btn.loading { opacity: 0.5; pointer-events: none; }
+        
+        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; background: white; }
+        
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
+        .full-width { grid-column: span 2; }
+        
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+        .dynamic-stack { margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+
         /* NAV BAR */
         #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); z-index: 3000; }
         .nav-item { flex: 1; padding: 12px 0; text-align: center; color: #9ca3af; }
@@ -66,7 +81,7 @@
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex flex-col">
                 <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v209</div>
+                <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v214</div>
             </div>
             <button onclick="syncDatabase()" class="bg-white text-[#007a4d] px-3 py-1 rounded text-xs font-bold shadow">SYNC</button>
         </header>
@@ -97,6 +112,12 @@
             </div>
 
             <div id="view-tasks" class="hidden">
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-3 gap-2">
+                    <div class="p-2 border rounded text-center font-bold bg-blue-50 text-blue-700 text-xs cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
+                    <div class="p-2 border rounded text-center font-bold bg-pink-50 text-pink-700 text-xs cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
+                    <div class="p-2 border rounded text-center font-bold bg-purple-50 text-purple-700 text-xs cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
+                </div>
+
                 <div class="flex gap-2 mb-4">
                     <button id="ttab-season" class="flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" onclick="setTaskTab('season')">Season Sales</button>
                     <button id="ttab-location" class="flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400" onclick="setTaskTab('location')">Location Sales</button>
@@ -120,6 +141,62 @@
                 <div id="drive-content"></div>
             </div>
 
+            <div id="view-detail" class="hidden">
+                <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
+                <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
+                <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
+                
+                <div class="detail-tabs">
+                    <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
+                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
+                </div>
+
+                <div id="det-overview-content" class="py-4">
+                    <div class="task-info-grid overview-grid">
+                        <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Item Code</div><div id="ov-item" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="expand-trigger" onclick="toggleExpand()"><span>View All Data</span><i class="ph-bold ph-caret-down"></i></div>
+                        <div id="expand-content" class="expand-content"></div>
+                    </div>
+                </div>
+
+                <div id="det-actions-content" class="hidden py-4">
+                    <div id="photo-preview" class="mb-4 hidden">
+                        <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
+                        <div id="img-placeholder" class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border rounded-lg">Photo stored on Cloud</div>
+                        <a id="photo-link-btn" href="#" target="_blank" class="block text-center text-xs font-bold text-[#007a4d] mt-2 underline">Open Google Drive Link</a>
+                    </div>
+                    
+                    <label id="btn-cam" class="camera-btn">
+                        <i class="ph-fill ph-camera text-3xl"></i>
+                        <span id="cam-text" class="font-bold">Take Field Photo</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
+                    </label>
+
+                    <div id="input-container" class="space-y-4">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Season Sales Note</label><textarea id="in-seas-note" class="input-field h-20" placeholder="For the season tab..."></textarea></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Location Comments</label><textarea id="in-loc-note" class="input-field h-20" placeholder="For the location tab..."></textarea></div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95"></div>
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Prim Qty</label><input type="number" id="in-prim" class="input-field" placeholder="Qty"></div>
+                        </div>
+
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Caliper</label><input type="text" id="in-cal" class="input-field" placeholder="e.g. 2 inch"></div>
+                    </div>
+
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-6" onclick="saveData()">SAVE UPDATES</button>
+                    <button class="w-full text-red-500 font-bold py-4 mt-2 text-xs" onclick="markComplete()">MARK COMPLETE (Hide for 10 Days)</button>
+                </div>
+            </div>
+
         </main>
 
         <nav id="bottom-nav">
@@ -131,20 +208,25 @@
     </div>
 
     <script>
-        // *** LIVE API CONNECTION ***
+        // *** LIVE API URL ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        
+        const STORAGE_KEY = "greenleaf_pro_v214_data"; 
+
         let fullInventory = [];
         let socData = [];
         let currentUser = null;
         let currentTab = 'season';
+        let targetUser = null; // Who are we looking at?
         
-        let taskLevel = 0;
+        // ACCORDION STATE
+        let taskLevel = 0; 
         let selectedBlock = null;
         let selectedLoc = null;
+        let activeItem = null; // For Detail View
+        let lastView = 'home'; // For Detail View Back Button
 
         // --- LOGIN ---
-        function selectUser(u) { currentUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); }
+        function selectUser(u) { currentUser = u; targetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
         function verifyPin() {
             if(document.getElementById('pin-code').value === '1234') {
@@ -155,93 +237,93 @@
             } else { alert("Incorrect PIN"); }
         }
 
-        // --- SYNC & LOGIC ENGINE (V209) ---
+        // --- SYNC & LOGIC ENGINE ---
         async function syncDatabase() {
             const status = document.getElementById('sync-status');
             status.style.display = 'block';
             document.getElementById('view-login').style.display = 'flex';
 
             try {
-                // 1. Fetch Inventory & SOC Data
                 const resInv = await fetch(GOOGLE_SCRIPT_URL + "?type=inventory");
                 const jsonInv = await resInv.json();
-                
                 const resSoc = await fetch(GOOGLE_SCRIPT_URL + "?type=soc");
                 const jsonSoc = await resSoc.json();
 
                 if(jsonInv.status === 'success') {
-                    
-                    // *** THE LOGIC ENGINE ***
                     fullInventory = jsonInv.data.map(item => {
-                        // A. Clean Numbers
                         item.PTRAVAILABLE = parseFloat(item.PTRAVAILABLE) || 0;
                         item.SEASONSUPPLY = parseFloat(item.SEASONSUPPLY) || 0;
                         item.PRIORITY = parseFloat(item.PRIORITY) || 0;
                         
-                        // B. Assign User (Based on Plant Group)
+                        // Assign User
                         const grp = String(item.PLANTGROUPCODE || "");
-                        if(grp.includes("230") || grp.includes("140")) {
-                            item.ASSIGNED_TO = "Dylan";
-                        } else if(grp.includes("330") || grp.includes("300")) {
-                            item.ASSIGNED_TO = "Kayla";
-                        } else {
-                            item.ASSIGNED_TO = "Morgan";
-                        }
+                        if(grp.includes("230") || grp.includes("140")) item.ASSIGNED_TO = "Dylan";
+                        else if(grp.includes("330") || grp.includes("300")) item.ASSIGNED_TO = "Kayla";
+                        else item.ASSIGNED_TO = "Morgan";
 
-                        // C. 10-Day Hide Rule (If completed, hide it regardless)
+                        // 10-Day Hide Rule
                         if (item.COMPLETED_AT) {
                             const daysSince = (new Date() - new Date(item.COMPLETED_AT)) / (1000 * 60 * 60 * 24);
-                            if (daysSince < 10) {
-                                item.IS_TASK = false;
-                                return item;
-                            }
+                            if (daysSince < 10) { item.IS_TASK = false; return item; }
                         }
 
-                        // D. PRIORITY FILTER (The New Rule)
-                        // If NO Priority (0 or empty), it is HIDDEN from both tabs.
-                        if (item.PRIORITY < 1) {
-                            item.IS_TASK = false;
-                            return item;
-                        }
+                        // STRICT PRIORITY CHECK
+                        if (item.PRIORITY < 1) { item.IS_TASK = false; return item; }
 
-                        // E. THE SPLIT (Winner vs Loser)
-                        // At this point, we KNOW Priority >= 1.
-                        // Now we check inventory health.
-                        
-                        const threshold = item.SEASONSUPPLY * 0.10; // 10% of Season Supply
-
-                        if (item.PTRAVAILABLE > threshold) {
-                            // Healthy Stock -> SEASON SALES
-                            item.IS_TASK = true;
-                            item.TASK_TAB = 'season'; 
-                        } else {
-                            // Low Stock (The "Losers") -> LOCATION SALES
-                            item.IS_TASK = true;
-                            item.TASK_TAB = 'location';
-                        }
-                        
+                        // THE SPLIT
+                        const threshold = item.SEASONSUPPLY * 0.10; 
+                        if (item.PTRAVAILABLE > threshold) { item.IS_TASK = true; item.TASK_TAB = 'season'; } 
+                        else { item.IS_TASK = true; item.TASK_TAB = 'location'; }
                         return item;
                     });
                     
-                    // Load SOC Data if available
                     if(jsonSoc.status === 'success') { socData = jsonSoc.data; }
-                    
+                    loadSavedData();
                     updateTaskCount();
                     switchView('home');
-                } else { 
-                    alert("Database Error: " + jsonInv.message); 
-                }
-            } catch(e) { 
-                alert("Network Error: " + e); 
-            } finally { 
-                status.style.display = 'none'; 
-                document.getElementById('view-login').style.display = 'none'; 
-            }
+                } else { alert("Database Error: " + jsonInv.message); }
+            } catch(e) { alert("Network Error: " + e); } 
+            finally { status.style.display = 'none'; document.getElementById('view-login').style.display = 'none'; }
         }
 
-        // *** ADMIN CHECK ***
-        function isAdmin() { return currentUser === 'J.D.' || currentUser === 'Dylan'; }
+        // --- LOCAL STORAGE ---
+        function loadSavedData() {
+            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            fullInventory.forEach(item => {
+                const id = item.UNIQUE_ID;
+                if(storage[id]) { 
+                    item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; 
+                    item.SAVED_LOC_NOTE = storage[id].ln; item.SAVED_SEAS_NOTE = storage[id].sn; 
+                    item.SAVED_PHOTO_LINK = storage[id].pl; item.SAVED_PRIM = storage[id].pq; item.SAVED_CAL = storage[id].c;
+                }
+            });
+        }
 
+        function saveData() {
+            if(!activeItem) return;
+            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+            activeItem.SAVED_SEAS_NOTE = document.getElementById('in-seas-note').value;
+            activeItem.SAVED_LOC_NOTE = document.getElementById('in-loc-note').value;
+            activeItem.SAVED_PRIM = document.getElementById('in-prim').value;
+            activeItem.SAVED_CAL = document.getElementById('in-cal').value;
+            
+            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+            storage[activeItem.UNIQUE_ID] = { 
+                m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, 
+                sn: activeItem.SAVED_SEAS_NOTE, ln: activeItem.SAVED_LOC_NOTE,
+                pl: activeItem.SAVED_PHOTO_LINK, pq: activeItem.SAVED_PRIM, c: activeItem.SAVED_CAL
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+            
+            // ALSO SAVE SALES NOTE TO GOOGLE SHEET
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: activeItem.UNIQUE_ID, note: activeItem.SAVED_SEAS_NOTE + " | " + activeItem.SAVED_LOC_NOTE }) });
+            
+            alert("Saved!");
+        }
+
+        // --- ADMIN CHECK ---
+        function isAdmin() { return currentUser === 'J.D.' || currentUser === 'Dylan'; }
         function updateTaskCount() {
             const count = fullInventory.filter(i => i.IS_TASK && (isAdmin() || i.ASSIGNED_TO === currentUser)).length;
             document.getElementById('task-count').innerText = count + " Items";
@@ -249,45 +331,128 @@
 
         // --- NAVIGATION ---
         function switchView(v) {
-            ['view-home','view-tasks','view-soc','view-drive'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['view-home','view-tasks','view-soc','view-drive','view-detail'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('view-'+v).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if(v!=='home') document.getElementById('nav-'+v).classList.add('active');
+            if(v!=='home' && v!=='detail') document.getElementById('nav-'+v).classList.add('active');
             
-            if(v==='tasks') { taskLevel=0; renderTasks(); }
+            if(v==='tasks') { 
+                if(isAdmin()) document.getElementById('team-selector').classList.remove('hidden');
+                taskLevel=0; renderTasks(); 
+            }
             if(v==='soc') { renderSOC(); }
             if(v==='drive') { renderDriveNames(); }
         }
 
-        // --- TASKS ---
-        function setTaskTab(t) {
-            currentTab = t;
+        function setTaskUser(u) { targetUser = u; taskLevel = 0; renderTasks(); }
+
+        // --- DETAIL VIEW ---
+        function openDetail(uniqueId, fromView) {
+            lastView = fromView;
+            activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
+            if(!activeItem) return;
+
+            ['view-home','view-tasks','view-soc','view-drive'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('view-detail').classList.remove('hidden');
+
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME;
+            document.getElementById('det-size').innerText = activeItem.CONTSIZE;
+            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE;
+            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE;
+            document.getElementById('ov-item').innerText = activeItem.ITEMCODE;
+            document.getElementById('ov-lot').innerText = activeItem.LOTCODE;
+            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY;
+            document.getElementById('ov-prior').innerText = activeItem.PRIORITY;
+
+            // Accordion Data
+            document.getElementById('expand-content').innerHTML = Object.keys(activeItem).map(k => {
+                if(k.startsWith('SAVED_') || k === 'UNIQUE_ID' || k === 'TASK_TAB' || k === 'IS_TASK' || k === 'ASSIGNED_TO') return "";
+                return `<div class="dynamic-stack"><span class="text-xs font-bold text-gray-500">${k}:</span> <span class="text-sm">${activeItem[k]}</span></div>`;
+            }).join('');
+
+            // Inputs
+            document.getElementById('in-match').value = activeItem.SAVED_MATCH || '';
+            document.getElementById('in-spec').value = activeItem.SAVED_SPEC || '';
+            document.getElementById('in-seas-note').value = activeItem.SAVED_SEAS_NOTE || '';
+            document.getElementById('in-loc-note').value = activeItem.SAVED_LOC_NOTE || '';
+            document.getElementById('in-prim').value = activeItem.SAVED_PRIM || '';
+            document.getElementById('in-cal').value = activeItem.SAVED_CAL || '';
+
+            if(activeItem.SAVED_PHOTO_LINK) {
+                document.getElementById('photo-preview').classList.remove('hidden');
+                document.getElementById('photo-link-btn').href = activeItem.SAVED_PHOTO_LINK;
+            } else {
+                document.getElementById('photo-preview').classList.add('hidden');
+            }
+
+            switchDetailTab('overview');
+        }
+
+        function goBackFromDetail() { document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-'+lastView).classList.remove('hidden'); }
+        function switchDetailTab(tab) {
+            document.getElementById('dtab-overview').className = tab === 'overview' ? 'detail-tab active' : 'detail-tab';
+            document.getElementById('dtab-actions').className = tab === 'actions' ? 'detail-tab active' : 'detail-tab';
+            document.getElementById('det-overview-content').className = tab === 'overview' ? 'py-4' : 'hidden';
+            document.getElementById('det-actions-content').className = tab === 'actions' ? 'py-4' : 'hidden';
+        }
+        function toggleExpand() { document.getElementById('expand-content').style.display = document.getElementById('expand-content').style.display === 'block' ? 'none' : 'block'; }
+
+        function handlePhotoUpload(input) {
+            if(input.files && input.files[0]) {
+                const file = input.files[0];
+                const btn = document.getElementById('btn-cam');
+                const btnText = document.getElementById('cam-text');
+                btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = function(e) {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024; const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const base64Data = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+                        const filename = `${activeItem.COMMONNAME}_${activeItem.UNIQUE_ID}.jpg`.replace(/[\/\s]/g, '_');
+                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "photo", image: base64Data, mimeType: "image/jpeg", filename: filename }) })
+                        .then(res => res.json()).then(data => {
+                            if(data.status === 'success') { activeItem.SAVED_PHOTO_LINK = data.url; saveData(); openDetail(activeItem.UNIQUE_ID, lastView); alert("Photo Uploaded!"); } else { alert("Upload Error"); }
+                        }).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
+                    }
+                }
+            }
+        }
+
+        // --- TASKS RENDERER ---
+        function setTaskTab(t) { currentTab = t; taskLevel = 0; renderTasks(); 
             document.getElementById('ttab-season').className = t==='season' ? "flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" : "flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400";
             document.getElementById('ttab-location').className = t==='location' ? "flex-1 py-2 font-bold text-sm border-b-2 border-[#007a4d] text-[#007a4d]" : "flex-1 py-2 font-bold text-sm border-b-2 border-transparent text-gray-400";
-            taskLevel = 0;
-            renderTasks();
         }
 
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             
-            let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (isAdmin() || i.ASSIGNED_TO === currentUser));
+            let myTasks = fullInventory.filter(i => i.IS_TASK && i.TASK_TAB === currentTab && (i.ASSIGNED_TO === targetUser));
             
-            if (myTasks.length === 0) { container.innerHTML = "<div class='p-8 text-center text-gray-400'>No tasks found.</div>"; return; }
+            if (myTasks.length === 0) { container.innerHTML = "<div class='p-8 text-center text-gray-400'>No tasks for this user.</div>"; return; }
 
             if (taskLevel === 0) {
-                crumb.innerText = "Select Block";
+                crumb.innerText = `${targetUser} > Select Block`;
                 const blocks = [...new Set(myTasks.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                 container.innerHTML = blocks.map(b => `<div class="drill-item" onclick="selectBlock('${b}')"><span class="font-bold text-lg">${b}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('');
             } else if (taskLevel === 1) {
-                crumb.innerText = `${selectedBlock} / Select Location`;
+                crumb.innerText = `${targetUser} > ${selectedBlock}`;
                 const locs = [...new Set(myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock).map(i => i.LOCATIONCODE))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="taskLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>${locs.map(l => `<div class="drill-item" onclick="selectLoc('${l}')"><span class="font-bold">${l}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('')}`;
+                container.innerHTML = `<div class="back-btn" onclick="taskLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + 
+                    locs.map(l => `<div class="drill-item" onclick="selectLoc('${l}')"><span class="font-bold">${l}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('');
             } else if (taskLevel === 2) {
-                crumb.innerText = `${selectedBlock} / ${selectedLoc}`;
+                crumb.innerText = `${targetUser} > ${selectedBlock} > ${selectedLoc}`;
                 const items = myTasks.filter(i => (i.BLOCKALPHA||"Unassigned") === selectedBlock && i.LOCATIONCODE === selectedLoc);
-                container.innerHTML = `<div class="back-btn" onclick="taskLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>${items.map(item => `<div class="inv-card"><div class="flex justify-between items-start"><div><div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div><div class="text-xs text-gray-500 mt-1">Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE}</div><div class="text-xs text-gray-500">Qty: ${item.PTRAVAILABLE}</div></div><button class="complete-btn" onclick="markComplete('${item.UNIQUE_ID}')">COMPLETE</button></div><input type="text" class="note-input" placeholder="Add Sales Note..." value="${item.SALES_NOTE || ''}" onchange="saveNote(this, '${item.UNIQUE_ID}')"></div>`).join('')}`;
+                container.innerHTML = `<div class="back-btn" onclick="taskLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>` + 
+                    items.map(item => `<div class="inv-card" onclick="openDetail('${item.UNIQUE_ID}', 'tasks')">
+                        <div class="font-bold text-[#007a4d]">${item.COMMONNAME}</div>
+                        <div class="text-xs text-gray-500 mt-1">Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE}</div>
+                        <div class="text-xs text-gray-500">Qty: ${item.PTRAVAILABLE}</div>
+                    </div>`).join('');
             }
         }
         function selectBlock(b) { selectedBlock = b; taskLevel = 1; renderTasks(); }
@@ -297,15 +462,13 @@
         function renderSOC() {
             const container = document.getElementById('soc-content');
             if(socData.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 py-8'>No changes found.</div>"; return; }
-            
             container.innerHTML = socData.map(row => `
                 <div class="soc-card">
                     <div class="font-bold text-gray-800">${row.ORDERNO || "Order #"}</div>
                     <div class="text-sm mt-1">${row.CUSTOMER || "Customer"}</div>
                     <div class="text-xs text-gray-500 mt-2">${row.ITEMCODE || ""} - ${row.QTYORDERED || ""}</div>
                     <div class="text-xs font-bold text-orange-600 mt-1">${row.NOTES || "Check Details"}</div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         // --- DRIVE ---
@@ -316,27 +479,26 @@
         }
         function selectDriveName(n) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === n).map(i => i.CONTSIZE))].sort();
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${n.replace(/'/g, "\\'")}', '${s}')"><span class="font-bold">${s}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('')}`;
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${n.replace(/'/g, "\\'")}', '${s}')"><span class="font-bold">${s}</span><i class="ph-bold ph-caret-right text-gray-400"></i></div>`).join('');
         }
         function selectDriveSize(n, s) {
             const items = fullInventory.filter(i => i.COMMONNAME === n && i.CONTSIZE === s);
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.LOCATIONCODE}</div><div class="text-sm mt-1">Qty: ${i.PTRAVAILABLE} | Lot: ${i.LOTCODE}</div></div>`).join('')}`;
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(i => `
+                <div class="inv-card" onclick="openDetail('${i.UNIQUE_ID}', 'drive')">
+                    <div class="font-bold text-[#007a4d]">${i.LOCATIONCODE}</div>
+                    <div class="text-sm mt-1">Qty: ${i.PTRAVAILABLE} | Lot: ${i.LOTCODE}</div>
+                </div>`).join('');
         }
 
-        // --- ACTIONS ---
-        function saveNote(el, uniqueId) {
-            const item = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
-            if(item) item.SALES_NOTE = el.value;
-            el.style.backgroundColor = "#dcfce7"; setTimeout(() => el.style.backgroundColor = "#fffbeb", 1500);
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: uniqueId, note: el.value }) }).catch(e => alert("Save Failed"));
-        }
-
-        function markComplete(uniqueId) {
+        function markComplete() {
+            if(!activeItem) return;
             if(!confirm("Mark complete? Disappears for 10 days.")) return;
-            const item = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
-            if(item) item.IS_TASK = false;
-            renderTasks(); updateTaskCount();
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: uniqueId, isComplete: true, user: currentUser }) }).catch(e => alert("Save Failed"));
+            activeItem.IS_TASK = false;
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "update_task", id: activeItem.UNIQUE_ID, isComplete: true, user: currentUser }) });
+            alert("Completed!");
+            goBackFromDetail();
+            renderTasks();
+            updateTaskCount();
         }
     </script>
 </body>
