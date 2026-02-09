@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v216</title>
+    <title>Greenleaf Pro v218</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -43,6 +43,7 @@
         .drill-item:active { background-color: #f3f4f6; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; padding: 5px; }
         
+        /* DETAIL VIEW */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 12px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -93,7 +94,7 @@
                 <i class="ph-bold ph-list text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v216</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf Pro v218</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH</button>
@@ -107,7 +108,7 @@
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-bell"></i> SOC</div>
-            <div class="drawer-item text-red-600" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
+            <div id="drawer-review-item" class="drawer-item text-red-600 hidden" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
         </div>
@@ -161,9 +162,7 @@
                     <h2 class="font-bold text-orange-600 text-lg">SOC</h2>
                     <p id="soc-crumb" class="text-xs text-gray-500 font-bold uppercase mt-1">All Reps</p>
                 </div>
-                <div id="soc-content" class="space-y-3">
-                    <div class="text-center text-gray-400 py-8">Loading changes...</div>
-                </div>
+                <div id="soc-content" class="space-y-3"></div>
             </div>
 
             <div id="view-review" class="hidden">
@@ -183,10 +182,12 @@
                 <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
+                
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
                     <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
                 </div>
+
                 <div id="det-overview-content" class="py-4">
                     <div class="task-info-grid overview-grid">
                         <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
@@ -201,6 +202,7 @@
                         <div id="expand-content" class="expand-content"></div>
                     </div>
                 </div>
+
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-4 hidden">
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTO ON FILE</p>
@@ -239,7 +241,7 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_pro_v216_data"; 
+        const STORAGE_KEY = "greenleaf_pro_v218_data"; 
         
         const SOC_REP_LIST = [
             "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
@@ -263,6 +265,7 @@
                 if(isAdmin()) {
                     document.getElementById('header-batch-btn').style.display = 'block';
                     document.getElementById('home-btn-review').classList.remove('hidden');
+                    document.getElementById('drawer-review-item').classList.remove('hidden');
                 }
                 syncDatabase();
             } else { alert("Incorrect PIN"); }
@@ -285,24 +288,20 @@
                             const daysSince = (new Date() - new Date(item.COMPLETED_AT)) / (1000 * 60 * 60 * 24);
                             if (daysSince < 10) { item.IS_TASK = false; return item; }
                         }
-                        
-                        // MANAGER REVIEW LOGIC: Priority < 1 BUT Qty > 0 = Review Needed
                         if (item.PRIORITY < 1) { 
                             item.IS_TASK = false; 
-                            if(item.PTRAVAILABLE > 0) item.NEEDS_REVIEW = true; // Flag for manager
+                            if(item.PTRAVAILABLE > 0) item.NEEDS_REVIEW = true;
                             return item; 
                         }
-
                         const threshold = item.SEASONSUPPLY * 0.10; 
                         if (item.PTRAVAILABLE > threshold) { item.IS_TASK = true; item.TASK_TAB = 'season'; } 
                         else { item.IS_TASK = true; item.TASK_TAB = 'location'; }
                         return item;
                     });
                     if(jsonSoc.status === 'success') { socData = jsonSoc.data; }
-                    loadSavedData();
                     updateTaskCount(); switchView('home');
                 } else { alert("Error: " + jsonInv.message); }
-            } catch(e) { alert("Network: " + e); } finally { status.style.display = 'none'; document.getElementById('view-login').style.display = 'none'; }
+            } catch(e) { alert("Network Error: Make sure script is Deployed as 'Anyone'."); } finally { status.style.display = 'none'; document.getElementById('view-login').style.display = 'none'; }
         }
 
         function isAdmin() { return currentUser === 'J.D.' || currentUser === 'Dylan'; }
@@ -340,7 +339,7 @@
             selectedIdx.forEach(id => {
                 let item = fullInventory.find(i => i.UNIQUE_ID === id);
                 if(item) {
-                    report += `[${item.COMMONNAME}] Qty:${item.PTRAVAILABLE} | Size:${item.CONTSIZE}\n`;
+                    report += `[${item.COMMONNAME}] Qty:${item.PTRAVAILABLE} | Size:${item.CONTSIZE} | Loc:${item.LOCATIONCODE}\n`;
                     if(item.SAVED_SEAS_NOTE) report += `Note: ${item.SAVED_SEAS_NOTE}\n`;
                     report += `----------------\n`;
                 }
@@ -348,7 +347,7 @@
             return report;
         }
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Report&body=${encodeURIComponent(getBatchReport())}`; }
+        function batchEmail() { window.location.href = `mailto:?subject=Inventory Report&body=${encodeURIComponent(getBatchReport())}`; }
 
         function openDetail(uniqueId, fromView) {
             if(isBatch) return; lastView = fromView;
@@ -399,12 +398,6 @@
                 prim: activeItem.SAVED_PRIM, cal: activeItem.SAVED_CAL, photo: activeItem.SAVED_PHOTO_LINK
             };
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
-            
-            // Local Save
-            const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            storage[activeItem.UNIQUE_ID] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, sn: activeItem.SAVED_SEAS_NOTE, ln: activeItem.SAVED_LOC_NOTE, pl: activeItem.SAVED_PHOTO_LINK, pq: activeItem.SAVED_PRIM, c: activeItem.SAVED_CAL };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-            
             alert("Saved!");
         }
 
