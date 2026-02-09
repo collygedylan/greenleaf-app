@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Turbo v303 (Auto-Fix)</title>
+    <title>Greenleaf Turbo v304</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -115,7 +115,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf Turbo v303</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf Turbo v304</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -288,11 +288,10 @@
     <script>
         // CONFIGURATION
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyj9l52858cvw_UHAt7et_xsXNS2RYgOzEzpyzGUyoDmxoiArCBstES5bqG4DYWMIPDYg/exec"; 
-        const STORAGE_KEY = "greenleaf_v303_storage"; 
+        const STORAGE_KEY = "greenleaf_v304_storage"; 
         const CACHE_KEYS = { inventory: "gl_cache_inventory", soc: "gl_cache_soc" };
         const ADMINS = ["Dylan", "J.D."];
         
-        // CUSTOM REP LIST
         const SOC_REP_LIST = [
             "Abbey Burka", "Ben Brown", "Troy Lee", "Jessica Robertson", "Chris Gaydos", "Toby Brown", 
             "Tracey Tapscott", "David Brandt", "Tony Bono", "Ellen Deely", "Chance Alldredge", "Nate Douglas", 
@@ -300,17 +299,13 @@
             "Brian Hatfield", "InHouse Sales", "Interdivison", "Wes Lugas", "Rudy Martenez", "Ben Machino", "Casey Rufener"
         ];
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
-        async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const{outcome}=await deferredPrompt.userChoice; if(outcome==='accepted')document.getElementById('install-btn').style.display='none'; deferredPrompt=null; } }
-
         let fullInventory = [];
         let socInventory = []; 
-        
         let activeItem = null;
         let currentUser = null;
         let isAdmin = false;
         
+        // Task Variables
         let taskViewTargetUser = null; 
         let currentTab = 'season';
         let taskViewLevel = 0; 
@@ -320,6 +315,7 @@
         let selectedReviewName = null;
         let selectedReviewSize = null;
         
+        // SOC Variables
         let socViewLevel = 0;
         let selectedSocRep = null;
         let selectedSocCommon = null; 
@@ -364,22 +360,13 @@
             location.reload();
         }
 
-        // *** SELF-HEALING SYNC MANAGER ***
+        // *** SYNC MANAGER ***
         async function syncManager(type) {
             updateStatusUI(type, "loading");
-            
-            // 1. Try to Load Cache
             let cached = loadLocalCache(type);
-            
-            // SELF-HEALING: If cache is corrupted (not an array), destroy it
-            if (cached && cached.data && !Array.isArray(cached.data)) {
-                console.warn("Corrupted Cache Detected for " + type + ". Purging.");
-                localStorage.removeItem(CACHE_KEYS[type]);
-                cached = null;
-            }
+            if (cached && cached.data && !Array.isArray(cached.data)) { localStorage.removeItem(CACHE_KEYS[type]); cached = null; }
 
             if (cached) {
-                console.log(`Loaded ${type} from cache.`);
                 if(type === 'inventory') {
                     fullInventory = cached.data || [];
                     runLogicEngine(fullInventory);
@@ -396,15 +383,12 @@
                 updateStatusUI(type, "success"); 
             }
 
-            // 2. Fetch Fresh Data
             try {
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?type=${type}`);
                 const jsonData = await response.json();
                 
                 if (jsonData.status === 'success') {
                     let processedData = jsonData.data;
-                    
-                    // Safety check: Ensure it is an array
                     if (!Array.isArray(processedData)) processedData = [];
 
                     if(type === 'inventory') {
@@ -414,7 +398,6 @@
                             obj.PRIORITY = parseFloat(obj.PRIORITY) || 0; 
                             return obj;
                         });
-
                         fullInventory = processedData;
                         runLogicEngine(fullInventory);
                         applyAssignments();
@@ -422,56 +405,28 @@
                         document.getElementById('file-label-drive').innerText = "Live Data";
                         document.getElementById('file-label-drive-t').innerText = "Live Data";
                     }
-                    
                     if(type === 'soc') {
                         socInventory = processedData;
                         document.getElementById('file-label-soc').innerText = "Live Data";
                         renderSocView();
                     }
-
-                    // Update Cache
-                    saveLocalCache(type, {
-                        lastUpdated: Date.now(),
-                        data: processedData
-                    });
-
+                    saveLocalCache(type, { lastUpdated: Date.now(), data: processedData });
                     updateStatusUI(type, "success");
-                } else {
-                    console.error("API Error:", jsonData.message);
-                    if (!cached) updateStatusUI(type, "error");
-                }
-            } catch (e) {
-                console.error(`Sync failed for ${type}:`, e);
-                if (type === 'soc') lastSocError = e.toString();
-                if (!cached) updateStatusUI(type, "error");
-            }
+                } else { if (!cached) updateStatusUI(type, "error"); }
+            } catch (e) { if (!cached) updateStatusUI(type, "error"); }
         }
 
-        // *** CACHE UTILS ***
-        function loadLocalCache(type) {
-            try {
-                const json = localStorage.getItem(CACHE_KEYS[type]);
-                return json ? JSON.parse(json) : null;
-            } catch(e) { return null; }
-        }
-        function saveLocalCache(type, data) {
-            try {
-                localStorage.setItem(CACHE_KEYS[type], JSON.stringify(data));
-            } catch(e) { console.log("Cache Full"); }
-        }
+        // *** UTILS & RENDER ***
+        function loadLocalCache(type) { try { return JSON.parse(localStorage.getItem(CACHE_KEYS[type])); } catch(e) { return null; } }
+        function saveLocalCache(type, data) { try { localStorage.setItem(CACHE_KEYS[type], JSON.stringify(data)); } catch(e) {} }
         function updateStatusUI(type, status) {
             const dot = document.getElementById(`dot-${type}`);
             if(dot) dot.className = `status-dot visible ${status}`;
-            
             if(status === 'loading') {
-                if(type === 'inventory') {
-                    document.getElementById('file-label-drive').innerText = "Syncing...";
-                    document.getElementById('file-label-drive-t').innerText = "Syncing...";
-                }
+                if(type === 'inventory') document.getElementById('file-label-drive').innerText = "Syncing...";
                 if(type === 'soc') document.getElementById('file-label-soc').innerText = "Syncing...";
             }
         }
-
         function runLogicEngine(items) {
             if (!Array.isArray(items)) return;
             const grouped = {};
@@ -482,22 +437,22 @@
                 if(!hasPriority) { grp.forEach(i => i.TASK_TAB = 'review'); return; }
                 let winner = null;
                 const priorities = [...new Set(grp.map(i => i.PRIORITY).filter(p=>p>0))].sort((a,b)=>a-b);
-                for(let p of priorities) {
-                    if(grp.filter(i=>i.PRIORITY===p).some(i=>i.PTRAVAILABLE > (i.SEASONSUPPLY*0.10))) { winner = p; break; }
-                }
-                if(winner !== null) {
-                    grp.forEach(i => { if(i.PRIORITY===winner) i.TASK_TAB='season'; else i.TASK_TAB='location'; });
-                } else { grp.forEach(i => i.TASK_TAB = 'review'); }
+                for(let p of priorities) { if(grp.filter(i=>i.PRIORITY===p).some(i=>i.PTRAVAILABLE > (i.SEASONSUPPLY*0.10))) { winner = p; break; } }
+                if(winner !== null) { grp.forEach(i => { if(i.PRIORITY===winner) i.TASK_TAB='season'; else i.TASK_TAB='location'; }); } 
+                else { grp.forEach(i => i.TASK_TAB = 'review'); }
             });
         }
 
-        // *** RENDER FUNCTIONS (With Safety Checks) ***
+        // *** OPTIMIZED RENDER: SLICING ARRAYS TO PREVENT FREEZE ***
         function renderDriveNames() {
             if (!Array.isArray(fullInventory)) return;
             const term = document.getElementById('drive-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && n.toLowerCase().includes(term)).sort();
-            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            // LIMIT TO 50 ITEMS TO PREVENT FREEZE
+            const displayNames = names.slice(0, 50);
+            document.getElementById('drive-content').innerHTML = displayNames.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('') + (names.length > 50 ? `<div class="p-4 text-center text-gray-400 text-xs">...and ${names.length - 50} more. Search to find them.</div>` : '');
         }
+        
         function selectDriveName(name) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
             document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
@@ -507,15 +462,13 @@
             document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'drive'); }).join('');
         }
 
+        // ... (Rest of logic remains consistent) ...
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-
             if (!Array.isArray(fullInventory)) { container.innerHTML = "No Data"; return; }
-
             let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
-
             if(taskViewLevel === 0) {
                 crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Loc'} / Blocks`;
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
@@ -532,16 +485,17 @@
                 container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
             }
         }
-
-        // ... (Rest of functions remain same as v301, they are safe now because fullInventory is guaranteed array) ...
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+        
+        // Viewer & Review & Other Helpers
         function renderViewerNames() {
             const term = document.getElementById('viewer-search').value.toLowerCase();
             const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].filter(n => n && n.toLowerCase().includes(term)).sort();
-            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            const displayNames = names.slice(0, 50); // LIMIT RENDER
+            document.getElementById('viewer-content').innerHTML = displayNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
         function selectViewerName(name) {
             const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
