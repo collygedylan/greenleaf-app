@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v155</title>
+    <title>Greenleaf Pro v156</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -106,7 +106,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v155</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v156</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -250,7 +250,7 @@
     <script>
         // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSSEUCEYFr5uiam1r-77BQ0MveZheZ9iIUSMVHj2Xed8T8l91MydmLOciNf7l1eNL2Yg/exec"; 
-        const STORAGE_KEY = "greenleaf_v155_storage"; 
+        const STORAGE_KEY = "greenleaf_v156_storage"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -282,7 +282,17 @@
         let lastView = 'drive'; 
 
         // LOGIN
-        function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
+        function selectUser(u) { 
+            currentUser = u; 
+            isAdmin = ADMINS.includes(u); 
+            // HARDCODED MANAGER OVERRIDE
+            if(u === "Dylan" || u === "J.D.") isAdmin = true;
+            taskViewTargetUser = u; 
+            document.getElementById('login-buttons').classList.add('hidden'); 
+            document.getElementById('pin-container').classList.remove('hidden'); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
+        }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
 
@@ -464,7 +474,7 @@
             if(v==='soc' && socInventory.length > 0) renderSocView(); 
         }
         
-        // --- FIXED FUNCTIONS START ---
+        // --- FIXED TABS & BACK BUTTON ---
         function switchDetailTab(tab) {
             document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview');
             document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions');
@@ -476,7 +486,6 @@
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
         }
-        // --- FIXED FUNCTIONS END ---
 
         // Expanded UI Logic Functions
         function renderTeamSelector() {
