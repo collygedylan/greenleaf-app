@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v158</title>
+    <title>Greenleaf Pro v159</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -69,7 +69,7 @@
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; }
+        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
         .full-width { grid-column: span 2; }
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
@@ -115,7 +115,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v158</div>
+                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v159</div>
                 </div>
             </div>
             <button id="header-batch-btn" onclick="toggleBatch()">BATCH MODE</button>
@@ -340,17 +340,14 @@
                     return obj;
                 });
 
-                // LOGIC ENGINE - STRICT PRIORITY FILTERING
+                // LOGIC ENGINE
                 const groupedByItem = {};
                 rawItems.forEach(i => { if(!groupedByItem[i.ITEMCODE]) groupedByItem[i.ITEMCODE] = []; groupedByItem[i.ITEMCODE].push(i); });
 
                 Object.keys(groupedByItem).forEach(code => {
                     let items = groupedByItem[code];
-                    
-                    // CHECK 1: DOES THE GROUP HAVE ANY PRIORITY?
                     const hasPriority = items.some(i => i.PRIORITY > 0);
-                    
-                    if(!hasPriority) return; // HIDDEN if no priority
+                    if(!hasPriority) return; 
                     
                     let winnerPriority = null;
                     const priorities = [...new Set(items.map(i => i.PRIORITY).filter(p => p > 0))].sort((a,b) => a-b);
@@ -556,7 +553,10 @@
                 if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
                 if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
-                if(item.SAVED_PHOTO_LINK) report += `Photo: ${item.SAVED_PHOTO_LINK}\n`;
+                if(item.SAVED_PHOTO_LINK) {
+                    // Display filename in brackets with link for copy/paste
+                    report += `Photo: [${item.SAVED_PHOTO_NAME || 'View Photo'}] ${item.SAVED_PHOTO_LINK}\n`;
+                }
                 report += `\n`;
             });
             return report;
@@ -570,7 +570,6 @@
             if(!text) { alert("No items selected!"); return; }
             navigator.clipboard.writeText(text).then(() => {
                 alert("Data Copied! Switch to Outlook and Paste into your reply.");
-                // Deselect after copy
                 isBatch = false; toggleBatch(); 
             }).catch(err => {
                 alert("Failed to copy. Browser may not support this.");
@@ -659,8 +658,11 @@
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
             if(activeItem.SAVED_PHOTO_LINK) {
-                h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">View on Google Drive</div></div>`;
+                // CHANGED: Shows filename instead of "View on Google Drive"
+                const dispName = activeItem.SAVED_PHOTO_NAME || "View Photo on Drive";
+                h += `<div class="overview-card full-width"><div class="overview-label">Photo</div><div class="overview-val text-blue-600 underline" onclick="window.open('${activeItem.SAVED_PHOTO_LINK}')">${dispName}</div></div>`;
                 photoDiv.classList.remove('hidden');
+                linkBtn.innerText = dispName;
                 linkBtn.href = activeItem.SAVED_PHOTO_LINK;
                 if(activeItem.TEMP_PHOTO_BASE64) { imgPrev.src = activeItem.TEMP_PHOTO_BASE64; imgPrev.classList.remove('hidden'); imgPlace.classList.add('hidden'); } 
                 else { imgPrev.classList.add('hidden'); imgPlace.classList.remove('hidden'); }
@@ -683,10 +685,16 @@
                         const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const base64Data = dataUrl.split(',')[1];
                         const dateStr = new Date().toISOString().split('T')[0];
+                        // Save Filename locally
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s]/g, '_');
                         fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", filename: filename }) })
                         .then(res => res.json()).then(data => {
-                            if(data.status === 'success') { activeItem.SAVED_PHOTO_LINK = data.url; activeItem.TEMP_PHOTO_BASE64 = dataUrl; renderOverviewData(); saveData(true); alert("Photo Uploaded!"); } 
+                            if(data.status === 'success') { 
+                                activeItem.SAVED_PHOTO_LINK = data.url; 
+                                activeItem.TEMP_PHOTO_BASE64 = dataUrl;
+                                activeItem.SAVED_PHOTO_NAME = filename; // Save the name
+                                renderOverviewData(); saveData(true); alert("Photo Uploaded!"); 
+                            } 
                             else { alert("Upload Error: " + data.message); }
                         }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
                     }
@@ -702,7 +710,8 @@
             activeItem.SAVED_NOTE = document.getElementById('in-note').value;
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             const id = activeItem.UNIQUE_ROW_ID;
-            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, t: Date.now() };
+            // Now saves 'pn' (photo name)
+            storage[id] = { m: activeItem.SAVED_MATCH, s: activeItem.SAVED_SPEC, p: activeItem.SAVED_PICK, n: activeItem.SAVED_NOTE, pl: activeItem.SAVED_PHOTO_LINK, pn: activeItem.SAVED_PHOTO_NAME, t: Date.now() };
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(storage)); if(!silent) { alert("Data Saved"); renderOverviewData(); } } catch(e) { alert("Storage Full!"); }
         }
 
@@ -710,7 +719,14 @@
             const storage = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             fullInventory.forEach(item => {
                 const id = item.UNIQUE_ROW_ID;
-                if(storage[id]) { item.SAVED_MATCH = storage[id].m; item.SAVED_SPEC = storage[id].s; item.SAVED_PICK = storage[id].p; item.SAVED_NOTE = storage[id].n; item.SAVED_PHOTO_LINK = storage[id].pl; }
+                if(storage[id]) { 
+                    item.SAVED_MATCH = storage[id].m; 
+                    item.SAVED_SPEC = storage[id].s; 
+                    item.SAVED_PICK = storage[id].p; 
+                    item.SAVED_NOTE = storage[id].n; 
+                    item.SAVED_PHOTO_LINK = storage[id].pl;
+                    item.SAVED_PHOTO_NAME = storage[id].pn; // Load the name
+                }
             });
         }
 
