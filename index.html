@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v195</title>
+    <title>Greenleaf Pro v196</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -72,6 +72,7 @@
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        /* FIXED: No 'capture' logic here, handled in HTML */
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -126,7 +127,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v195 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v196 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -291,6 +292,7 @@
 
     <script>
         // *** CONFIGURATION ***
+        // UPDATED: Pre-filled with your v195 link
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr-zmHywFs13VpwZJgICJXzDB4BeJ75utR69yB-ulnZBuMS96hUfjzwjEyIlzVWDcX/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -452,23 +454,41 @@
 
         function saveData(silent = false) {
             if(!isAdmin) return;
-            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
             
+            // 1. Capture Values
+            const match = document.getElementById('in-match').value;
+            const spec = document.getElementById('in-spec').value;
+            const pick = document.getElementById('in-pick').value;
+            const note = document.getElementById('in-note').value;
+
+            // 2. Optimistic Local Update
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            
+            renderOverviewData();
+
+            // 3. UI Feedback
+            const btn = document.getElementById('btn-save');
             if(!silent) {
-                document.getElementById('btn-save').innerText = "SAVING...";
-                document.getElementById('btn-save').disabled = true;
+                const originalText = btn.innerText;
+                btn.innerText = "SAVED!";
+                btn.style.backgroundColor = "#16a34a"; // Green-600
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#007a4d";
+                }, 2000);
             }
 
+            // 4. Send to Cloud
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
-                match: activeItem.SAVED_MATCH,
-                spec: activeItem.SAVED_SPEC,
-                pick: activeItem.SAVED_PICK,
-                note: activeItem.SAVED_NOTE,
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
@@ -480,44 +500,65 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
-                    if(!silent) {
-                        document.getElementById('btn-save').innerText = "SAVE UPDATES";
-                        document.getElementById('btn-save').disabled = false;
-                        renderOverviewData();
-                    }
-                } else {
-                    alert("Cloud Save Failed: " + data.message);
+                if(data.status !== 'success') {
+                    alert("⚠️ Save Failed in Cloud: " + data.message);
                 }
             })
-            .catch(err => alert("Network Error: " + err));
+            .catch(err => {
+                alert("❌ Network Error: Not Saved. " + err);
+            });
         }
 
-        // NEW: Mark Request Complete
+        // NEW: Mark Request Complete (Fix: Saves data too)
         function markRequestComplete() {
             if(!activeItem) return;
+
+            // 1. Capture latest data
+            const match = document.getElementById('in-match').value;
+            const spec = document.getElementById('in-spec').value;
+            const pick = document.getElementById('in-pick').value;
+            const note = document.getElementById('in-note').value;
+
+            // 2. Update Local Data
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            activeItem.REQUEST_ASSIGNED_TO = "";
+            activeItem.TASK_TAB = "review";
+
+            // 3. Prepare Payload
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
-                requestAssignedTo: "", // Clear the assignment
-                taskTab: "review",     // Send to Review
+                requestAssignedTo: "", 
+                taskTab: "review",
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
             };
 
-            document.getElementById('request-complete-container').innerHTML = '<div class="text-center font-bold text-blue-600">Completing...</div>';
+            // 4. Visual Feedback
+            document.getElementById('request-complete-container').innerHTML = 
+                '<div class="p-4 bg-green-100 text-green-800 font-bold rounded-lg text-center"><i class="ph-bold ph-check"></i> SAVED & COMPLETED</div>';
 
+            // 5. Send to Google
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    // Update Local
-                    activeItem.REQUEST_ASSIGNED_TO = "";
-                    activeItem.TASK_TAB = "review";
-                    alert("Request Completed!");
-                    goBackFromDetail();
+                    setTimeout(() => { goBackFromDetail(); }, 1000); 
                 } else {
                     alert("Error: " + data.message);
                 }
+            })
+            .catch(err => {
+                alert("Network Error: " + err);
+                goBackFromDetail(); 
             });
         }
 
