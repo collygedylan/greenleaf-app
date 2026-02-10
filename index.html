@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v186</title>
+    <title>Greenleaf Pro v182</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -84,11 +84,6 @@
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
-        #auto-sync-badge { transition: opacity 0.3s; }
-        
-        .thumb-img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; margin-right: 12px; background-color: #f3f4f6; border: 1px solid #e5e7eb; flex-shrink: 0; }
-        .dock-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
-        .dock-btn { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-weight: bold; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 14px; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
@@ -132,7 +127,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v186 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 opacity-50"></span>
+                        Greenleaf v182 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -145,7 +140,6 @@
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-            <div class="drawer-item" onclick="switchView('docks'); toggleMenu();"><i class="ph-bold ph-boat"></i> Docks</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
@@ -166,17 +160,10 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    <div onclick="switchView('docks')" class="home-btn"><i class="ph-bold ph-boat home-icon text-teal-600"></i><span class="font-bold">Docks</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
-            </div>
-
-            <div id="view-docks" class="hidden">
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Dock Management</h2>
-                <div id="dock-list" class="dock-grid"></div>
-                <div id="dock-content" class="hidden"></div>
             </div>
 
             <div id="view-drive" class="hidden">
@@ -207,6 +194,7 @@
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
+                <button onclick="fetchSocReps()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Load Sales Reps</button>
                 <div id="soc-content"></div>
             </div>
 
@@ -308,8 +296,8 @@
 
         // STATE
         let fullInventory = [];
-        let socReps = []; 
-        let socData = []; 
+        let socReps = []; // Just list of names
+        let socData = []; // Actual data for selected rep
         let savedFieldData = {}; 
         let activeItem = null;
         let currentUser = null;
@@ -326,14 +314,12 @@
         let socViewLevel = 0;
         let selectedSocRep = null;
         let selectedSocCust = null;
-        let selectedDock = null;
 
         let isBatch = false;
         let selectedIdx = [];
         let lastView = 'drive'; 
         let longPressTimer; 
         let autoSyncTimer;
-        let socSyncTimer; 
 
         // LOGIN
         function selectUser(u) { 
@@ -352,16 +338,18 @@
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
             autoSyncTimer = setInterval(() => {
-                fetchData(true); 
-            }, 15000); 
+                fetchData(true); // Silent sync
+            }, 15000); // 15 seconds
         }
 
         // FETCH DATA
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
+                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
+                
                 document.getElementById('sync-btn').classList.remove('animate-spin');
                 
                 if(cloudJson.status === 'success') { 
@@ -371,23 +359,31 @@
                         launchApp();
                         startAutoSync();
                     } else {
-                        if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                            if(freshItem) { 
-                                activeItem = freshItem; 
-                                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                                    renderOverviewData();
+                        if(!document.getElementById('view-detail').classList.contains('hidden')) {
+                            if(activeItem) {
+                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                                if(freshItem) { 
+                                    activeItem = freshItem; 
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                                        renderOverviewData();
+                                    }
                                 }
                             }
                         } else {
                             checkForRequests(); 
                         }
                     }
-                    const badge = document.getElementById('auto-sync-badge');
-                    badge.classList.remove('opacity-50'); badge.classList.add('bg-green-500');
-                    setTimeout(() => { badge.classList.add('opacity-50'); badge.classList.remove('bg-green-500'); }, 1000);
+                } else {
+                    throw new Error("Failed to load Cloud Data");
                 }
-            } catch (e) { console.error(e); document.getElementById('sync-btn').classList.remove('animate-spin'); }
+            } catch (e) { 
+                console.error(e); 
+                document.getElementById('sync-btn').classList.remove('animate-spin');
+                if(!isSilent) {
+                    document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
+                    setTimeout(resetLogin, 3000); 
+                }
+            }
         }
 
         // PUSH NOTIFICATION SIMULATION
@@ -438,12 +434,14 @@
                         document.getElementById('btn-save').disabled = false;
                         renderOverviewData();
                     }
+                } else {
+                    alert("Cloud Save Failed: " + data.message);
                 }
             })
             .catch(err => alert("Network Error: " + err));
         }
 
-        // PHOTO UPLOAD
+        // PHOTO UPLOAD (APPEND LOGIC)
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
@@ -485,66 +483,7 @@
             }
         }
 
-        // --- NEW DOCKS LOGIC ---
-        function renderDocks() {
-            const list = document.getElementById('dock-list');
-            document.getElementById('dock-content').classList.add('hidden');
-            list.classList.remove('hidden');
-            
-            let html = "";
-            for(let i=1; i<=56; i++) {
-                html += `<div class="dock-btn" onclick="openDock(${i})">Dock ${i}</div>`;
-            }
-            list.innerHTML = html;
-        }
-
-        function openDock(num) {
-            selectedDock = num;
-            const list = document.getElementById('dock-list');
-            const content = document.getElementById('dock-content');
-            list.classList.add('hidden');
-            content.classList.remove('hidden');
-            
-            content.innerHTML = `
-                <div class="back-btn" onclick="renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>
-                <h2 class="text-xl font-bold text-[#007a4d] mb-4">Dock ${num}</h2>
-                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-4 cursor-pointer flex items-center justify-between" onclick="showDockHoldItems(${num})">
-                    <div class="font-bold text-yellow-800">Hold Items</div>
-                    <i class="ph-bold ph-caret-right text-yellow-600"></i>
-                </div>
-            `;
-        }
-
-        function showDockHoldItems(num) {
-            const content = document.getElementById('dock-content');
-            
-            // Filter Logic: HOLDSTOPCODE contains "H" AND Location matches Dock
-            const dockStr = `Dock ${num}`;
-            const simpleStr = String(num);
-            
-            const items = fullInventory.filter(i => {
-                const hasHold = (i.HOLDSTOPCODE || "").toString().toUpperCase().includes("H");
-                if(!hasHold) return false;
-                
-                const loc = (i.LOCATIONCODE || "").toString().toUpperCase();
-                // Match "Dock 5", "D5", or just "5"
-                return loc === simpleStr || loc.includes(`DOCK ${simpleStr}`) || loc === `D${simpleStr}`;
-            });
-            
-            let html = `
-                <div class="back-btn" onclick="openDock(${num})"><i class="ph-bold ph-arrow-left"></i> Back to Dock ${num}</div>
-                <h3 class="font-bold mb-2">Hold Items (${items.length})</h3>
-            `;
-            
-            if(items.length === 0) {
-                html += `<div class="text-gray-400 italic">No hold items found for Dock ${num}.</div>`;
-            } else {
-                html += items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'docks')).join('');
-            }
-            content.innerHTML = html;
-        }
-
-        // --- SOC LOGIC ---
+        // --- NEW SOC LOGIC: FETCH REPS FIRST, THEN DATA ---
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
@@ -560,39 +499,19 @@
             .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
-        function fetchRepData(repName, isSilent = false) {
-            if(!isSilent) document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+        function fetchRepData(repName) {
+            document.getElementById('soc-status').innerText = "Loading " + repName + "...";
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    const newHash = JSON.stringify(data.data);
-                    const oldHash = JSON.stringify(socData);
-                    if(newHash !== oldHash) {
-                        socData = data.data;
-                        if(isSilent && socViewLevel > 0) {
-                            renderSocView();
-                        } else {
-                            socViewLevel = 1;
-                            selectedSocRep = repName;
-                            renderSocView();
-                        }
-                    }
-                    if(!isSilent) {
-                        document.getElementById('soc-status').innerText = "";
-                        startSocSync(repName); 
-                    }
-                } 
+                    socData = data.data;
+                    socViewLevel = 1;
+                    selectedSocRep = repName;
+                    renderSocView();
+                    document.getElementById('soc-status').innerText = "";
+                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
             });
-        }
-        
-        function startSocSync(repName) {
-            if(socSyncTimer) clearInterval(socSyncTimer);
-            socSyncTimer = setInterval(() => {
-                if(!document.getElementById('view-soc').classList.contains('hidden') && socViewLevel > 0) {
-                    fetchRepData(repName, true);
-                } else { clearInterval(socSyncTimer); }
-            }, 15000); 
         }
 
         // *** UPDATED: SALES REPS TAB ***
@@ -600,24 +519,56 @@
             const container = document.getElementById('soc-content');
             
             if(socViewLevel === 0) {
-                if(socReps.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">Loading...</div>`; return; }
-                let html = `<div class="task-tabs mb-4"><div class="task-tab active">SALES REPS</div></div>`;
-                html += socReps.map(r => `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                // Show Rep List
+                if(socReps.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; return; }
+                
+                let html = `
+                <div class="task-tabs mb-4">
+                    <div class="task-tab active">SALES REPS</div>
+                </div>`;
+                
+                html += socReps.map(r => `
+                    <div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')">
+                        <span class="font-bold text-lg">${r}</span>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `).join('');
                 container.innerHTML = html;
             }
             else if(socViewLevel === 1) {
+                // Rep Selected -> Show Customers
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
+                
                 container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div>
+                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()">
+                        <i class="ph-bold ph-arrow-left"></i> Back to Sales Reps
+                    </div>
                     <div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>
-                    ${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+                    ${customers.map(c => `
+                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-sm">${c}</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
             }
             else if(socViewLevel === 2) {
+                // Customer Selected -> Show Items
                 const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                
                 container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
+                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()">
+                        <i class="ph-bold ph-arrow-left"></i> Back to Customers
+                    </div>
                     <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
-                    ${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`;
+                    ${items.map(i => `
+                        <div class="inv-card">
+                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
+                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                        </div>
+                    `).join('')}
+                `;
             }
         }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
@@ -650,7 +601,7 @@
             }); 
         }
         function switchView(v) { 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking','view-docks'].forEach(id => document.getElementById(id).classList.add('hidden')); 
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v==='drive') renderDriveNames(); 
             if(v==='tasks') { 
@@ -660,7 +611,6 @@
             if(v==='viewer') renderViewerNames(); 
             if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
             if(v==='soc') { fetchSocReps(); } 
-            if(v==='docks') { renderDocks(); }
         }
         
         // --- FIXED TABS & BACK BUTTON ---
@@ -832,16 +782,6 @@
         function createRowHtml(item, idx, source) {
             const showCheck = isBatch && isAdmin;
             const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
-            
-            // PHOTO THUMBNAIL LOGIC
-            let thumbHtml = '';
-            if(item.SAVED_PHOTO_LINK) {
-                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0].trim();
-                if(firstLink) {
-                    thumbHtml = `<img src="${firstLink}" loading="lazy" class="thumb-img" alt="photo">`;
-                }
-            }
-
             return `
             <div class="batch-row" 
                 ontouchstart="startLongPress()" 
@@ -851,12 +791,9 @@
                 onmouseleave="cancelLongPress()">
                 
                 ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                
-                <div class="inv-card flex-grow flex items-center" ${clickAction}>
-                    ${thumbHtml}
-                    <div class="flex-grow min-w-0"> <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
-                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
-                    </div>
+                <div class="inv-card flex-grow" ${clickAction}>
+                    <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                    <div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
                 </div>
             </div>`;
         }
@@ -875,7 +812,7 @@
         function openDetail(idx, originView) {
             lastView = originView; activeItem = fullInventory[idx];
             document.getElementById('view-detail').classList.remove('hidden');
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking','view-docks'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
