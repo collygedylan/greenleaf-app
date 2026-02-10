@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v171</title>
+    <title>Greenleaf Pro v182</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -127,7 +127,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v171 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v182 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -193,11 +193,8 @@
 
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
-                <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d]"></div>
-                <button onclick="fetchSocData()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Check for New SOC File</button>
-                <div class="flex justify-between items-center mb-2">
-                    <span id="soc-crumb" class="text-xs font-bold text-gray-500"></span>
-                </div>
+                <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
+                <button onclick="fetchSocReps()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Load Sales Reps</button>
                 <div id="soc-content"></div>
             </div>
 
@@ -299,7 +296,8 @@
 
         // STATE
         let fullInventory = [];
-        let socInventory = []; 
+        let socReps = []; // Just list of names
+        let socData = []; // Actual data for selected rep
         let savedFieldData = {}; 
         let activeItem = null;
         let currentUser = null;
@@ -361,24 +359,18 @@
                         launchApp();
                         startAutoSync();
                     } else {
-                        // Silent update
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
-                            // If looking at detail, refresh only detail data if IDs match
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                     activeItem = freshItem; 
-                                    // Don't overwrite inputs if user is typing (basic check)
                                     if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                                         renderOverviewData();
                                     }
                                 }
                             }
                         } else {
-                            // If in list view, re-render list but try to keep scroll? 
-                            // Complex for pure HTML. For now, just update data variable.
-                            // Next interaction will use fresh data.
-                            checkForRequests(); // Trigger notification if new data came in
+                            checkForRequests(); 
                         }
                     }
                 } else {
@@ -491,50 +483,94 @@
             }
         }
 
-        // SOC LOGIC
-        function fetchSocData() {
-            document.getElementById('soc-status').innerText = "Querying Drive...";
-            fetch(GOOGLE_SCRIPT_URL + "?action=getSoc")
+        // --- NEW SOC LOGIC: FETCH REPS FIRST, THEN DATA ---
+        function fetchSocReps() {
+            document.getElementById('soc-status').innerText = "Loading Reps...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    document.getElementById('soc-status').innerText = "Loaded: " + data.filename;
-                    const workbook = XLSX.read(data.data, {type: 'base64'});
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    socInventory = XLSX.utils.sheet_to_json(sheet).map(row => {
-                        let newRow = {};
-                        Object.keys(row).forEach(k => { newRow[k.toUpperCase().replace(/\s+/g, '')] = row[k]; });
-                        return newRow;
-                    });
+                    socReps = data.data;
                     socViewLevel = 0;
                     renderSocView();
+                    document.getElementById('soc-status').innerText = "";
                 } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
             })
             .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
+        function fetchRepData(repName) {
+            document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    socData = data.data;
+                    socViewLevel = 1;
+                    selectedSocRep = repName;
+                    renderSocView();
+                    document.getElementById('soc-status').innerText = "";
+                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
+            });
+        }
+
+        // *** UPDATED: SALES REPS TAB ***
         function renderSocView() {
             const container = document.getElementById('soc-content');
-            const crumb = document.getElementById('soc-crumb');
-            if(socInventory.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">No Data. Tap check button.</div>`; return; }
+            
             if(socViewLevel === 0) {
-                crumb.innerText = "All Reps";
-                const reps = [...new Set(socInventory.map(i => i.SALESREPNAME || "Unknown"))].sort();
-                container.innerHTML = reps.map(r => `<div class="drill-item" onclick="selectSocRep('${r.replace(/'/g, "\\'")}')"><span class="font-bold">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                // Show Rep List
+                if(socReps.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; return; }
+                
+                let html = `
+                <div class="task-tabs mb-4">
+                    <div class="task-tab active">SALES REPS</div>
+                </div>`;
+                
+                html += socReps.map(r => `
+                    <div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')">
+                        <span class="font-bold text-lg">${r}</span>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `).join('');
+                container.innerHTML = html;
             }
             else if(socViewLevel === 1) {
-                crumb.innerText = selectedSocRep;
-                const repItems = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep);
-                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+                // Rep Selected -> Show Customers
+                const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()">
+                        <i class="ph-bold ph-arrow-left"></i> Back to Sales Reps
+                    </div>
+                    <div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>
+                    ${customers.map(c => `
+                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-sm">${c}</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>
+                    `).join('')}
+                `;
             }
             else if(socViewLevel === 2) {
-                crumb.innerText = `${selectedSocRep} / ${selectedSocCust}`;
-                const items = socInventory.filter(i => (i.SALESREPNAME || "Unknown") === selectedSocRep && (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`;
+                // Customer Selected -> Show Items
+                const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                
+                container.innerHTML = `
+                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()">
+                        <i class="ph-bold ph-arrow-left"></i> Back to Customers
+                    </div>
+                    <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
+                    ${items.map(i => `
+                        <div class="inv-card">
+                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
+                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                        </div>
+                    `).join('')}
+                `;
             }
         }
-        function selectSocRep(r) { selectedSocRep = r; socViewLevel = 1; renderSocView(); }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
         // UTILS
@@ -574,7 +610,7 @@
             } 
             if(v==='viewer') renderViewerNames(); 
             if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
-            if(v==='soc' && socInventory.length > 0) renderSocView(); 
+            if(v==='soc') { fetchSocReps(); } 
         }
         
         // --- FIXED TABS & BACK BUTTON ---
