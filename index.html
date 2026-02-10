@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v186</title>
+    <title>Greenleaf Pro v188</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
     
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; user-select: none; -webkit-user-select: none; }
+        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -72,6 +72,7 @@
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        /* UPDATED: No 'capture' attribute here */
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -79,6 +80,11 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
+        /* PULL TO REFRESH */
+        #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
+        #ptr-spinner.loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -121,12 +127,11 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v186 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v188 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
-            <div id="sync-btn" onclick="manualSync()" class="bg-white/20 p-2 rounded-full cursor-pointer active:scale-95 transition"><i class="ph-bold ph-arrows-clockwise text-white"></i></div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -144,7 +149,8 @@
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
         </div>
 
-        <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32">
+        <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32 relative">
+            <div id="ptr-spinner"><i class="ph-bold ph-arrows-clockwise"></i></div>
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg">
@@ -238,7 +244,7 @@
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p>
                         <div id="photo-list-container" class="space-y-2"></div>
                     </div>
-                    <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
+                    <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)"></label>
                     <div id="input-container" class="input-stack"></div>
                     <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
                 </div>
@@ -279,7 +285,7 @@
             </div>
             <div class="flex gap-3">
                 <button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
-                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">Send Requests</button>
+                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">DONE</button>
             </div>
         </div>
     </div>
@@ -321,6 +327,52 @@
         let longPressTimer; 
         let autoSyncTimer;
 
+        // PULL TO REFRESH VARIABLES
+        let ptrStartY = 0;
+        let ptrCurrentY = 0;
+        let ptrDragging = false;
+        const scrollArea = document.getElementById('main-scroll-area');
+        const spinner = document.getElementById('ptr-spinner');
+
+        scrollArea.addEventListener('touchstart', (e) => {
+            if (scrollArea.scrollTop === 0) {
+                ptrStartY = e.touches[0].clientY;
+                ptrDragging = true;
+            }
+        }, { passive: true });
+
+        scrollArea.addEventListener('touchmove', (e) => {
+            if (!ptrDragging) return;
+            const y = e.touches[0].clientY;
+            const diff = y - ptrStartY;
+            if (diff > 0 && scrollArea.scrollTop === 0) {
+                ptrCurrentY = diff;
+                // Add resistance
+                const move = Math.min(diff * 0.5, 80);
+                spinner.style.top = (move - 40) + 'px';
+                spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
+            } else {
+                ptrDragging = false;
+            }
+        }, { passive: true });
+
+        scrollArea.addEventListener('touchend', () => {
+            if (!ptrDragging) return;
+            ptrDragging = false;
+            if (ptrCurrentY > 60) {
+                // Trigger Refresh
+                spinner.style.top = '20px';
+                spinner.classList.add('loading');
+                manualSync().then(() => {
+                    spinner.classList.remove('loading');
+                    spinner.style.top = '-40px';
+                });
+            } else {
+                spinner.style.top = '-40px';
+            }
+            ptrCurrentY = 0;
+        });
+
         // LOGIN
         function selectUser(u) { 
             currentUser = u; 
@@ -333,7 +385,7 @@
         }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
-        function manualSync() { document.getElementById('sync-btn').classList.add('animate-spin'); fetchData(); }
+        async function manualSync() { await fetchData(); } // Updated to async
 
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
@@ -350,7 +402,7 @@
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
                 
-                document.getElementById('sync-btn').classList.remove('animate-spin');
+                // document.getElementById('sync-btn')?.classList.remove('animate-spin'); // Removed btn
                 
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
@@ -385,7 +437,6 @@
                 }
             } catch (e) { 
                 console.error(e); 
-                document.getElementById('sync-btn').classList.remove('animate-spin');
                 if(!isSilent) {
                     document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
                     setTimeout(resetLogin, 3000); 
