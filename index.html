@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v182</title>
+    <title>Greenleaf Pro v183</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -20,18 +20,15 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: none; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         
-        /* NOTIFICATION TOAST */
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #ef4444; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; }
         #toast-notification.show { top: 20px; }
         
-        /* DRAWER */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
@@ -39,7 +36,6 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* UI ELEMENTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.2s; user-select: none; }
         .drill-item:active { background: #f3f4f6; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s; user-select: none; }
@@ -51,7 +47,6 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
-        /* BATCH & HOME */
         .batch-row { display: flex; align-items: center; padding: 0 4px; transition: all 0.2s; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
@@ -63,7 +58,6 @@
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
 
-        /* DATA GRID */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -127,7 +121,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v182 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v183 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -234,6 +228,12 @@
                     <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
                 </div>
                 <div id="det-actions-content" class="hidden py-4">
+                    <div id="request-complete-container" class="mb-6 hidden">
+                        <button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE
+                        </button>
+                        <p class="text-xs text-center text-gray-400 mt-2">Sends to Manager Review & Removes from your list.</p>
+                    </div>
                     <div id="photo-preview" class="mb-4 hidden">
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p>
                         <div id="photo-list-container" class="space-y-2"></div>
@@ -296,8 +296,8 @@
 
         // STATE
         let fullInventory = [];
-        let socReps = []; // Just list of names
-        let socData = []; // Actual data for selected rep
+        let socReps = []; 
+        let socData = []; 
         let savedFieldData = {}; 
         let activeItem = null;
         let currentUser = null;
@@ -338,8 +338,8 @@
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
             autoSyncTimer = setInterval(() => {
-                fetchData(true); // Silent sync
-            }, 15000); // 15 seconds
+                fetchData(true); 
+            }, 15000); 
         }
 
         // FETCH DATA
@@ -386,9 +386,8 @@
             }
         }
 
-        // PUSH NOTIFICATION SIMULATION
         function checkForRequests() {
-            const myRequests = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(currentUser) && i.TASK_TAB === 'requests');
+            const myRequests = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(currentUser) && i.TASK_TAB === 'requests');
             if(myRequests.length > 0) {
                 const toast = document.getElementById('toast-notification');
                 toast.classList.add('show');
@@ -396,7 +395,6 @@
             }
         }
 
-        // CLOUD SAVE FUNCTION
         function saveData(silent = false) {
             if(!isAdmin) return;
             activeItem.SAVED_MATCH = document.getElementById('in-match').value;
@@ -441,7 +439,34 @@
             .catch(err => alert("Network Error: " + err));
         }
 
-        // PHOTO UPLOAD (APPEND LOGIC)
+        // NEW: Mark Request Complete
+        function markRequestComplete() {
+            if(!activeItem) return;
+            const payload = {
+                type: "update",
+                id: activeItem.UNIQUE_ID,
+                requestAssignedTo: "", // Clear the assignment
+                taskTab: "review",     // Send to Review
+                user: currentUser
+            };
+
+            document.getElementById('request-complete-container').innerHTML = '<div class="text-center font-bold text-blue-600">Completing...</div>';
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Update Local
+                    activeItem.REQUEST_ASSIGNED_TO = "";
+                    activeItem.TASK_TAB = "review";
+                    alert("Request Completed!");
+                    goBackFromDetail();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+        }
+
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
@@ -483,7 +508,6 @@
             }
         }
 
-        // --- NEW SOC LOGIC: FETCH REPS FIRST, THEN DATA ---
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
@@ -514,66 +538,25 @@
             });
         }
 
-        // *** UPDATED: SALES REPS TAB ***
         function renderSocView() {
             const container = document.getElementById('soc-content');
-            
             if(socViewLevel === 0) {
-                // Show Rep List
                 if(socReps.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; return; }
-                
-                let html = `
-                <div class="task-tabs mb-4">
-                    <div class="task-tab active">SALES REPS</div>
-                </div>`;
-                
-                html += socReps.map(r => `
-                    <div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${r}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                `).join('');
+                let html = `<div class="task-tabs mb-4"><div class="task-tab active">SALES REPS</div></div>`;
+                html += socReps.map(r => `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 container.innerHTML = html;
             }
             else if(socViewLevel === 1) {
-                // Rep Selected -> Show Customers
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Sales Reps
-                    </div>
-                    <div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>
-                    ${customers.map(c => `
-                        <div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')">
-                            <span class="font-bold text-sm">${c}</span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    `).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             }
             else if(socViewLevel === 2) {
-                // Customer Selected -> Show Items
                 const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
-                
-                container.innerHTML = `
-                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Customers
-                    </div>
-                    <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
-                    ${items.map(i => `
-                        <div class="inv-card">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div>
-                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
-                        </div>
-                    `).join('')}
-                `;
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`;
             }
         }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
-        // UTILS
         function launchApp() { 
             document.getElementById('view-login').style.display = 'none'; 
             document.getElementById('app-wrapper').classList.remove('hidden'); 
@@ -592,6 +575,7 @@
         function applyAssignments() { 
             let i = 0; 
             fullInventory.forEach(item => { 
+                // STANDARD SEASON ASSIGNMENT LOGIC (DOES NOT TOUCH REQUESTS)
                 if(!item.ASSIGNEDTO) {
                     const group = (item.PLANTGROUPCODE || "").toString(); 
                     if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; 
@@ -613,7 +597,6 @@
             if(v==='soc') { fetchSocReps(); } 
         }
         
-        // --- FIXED TABS & BACK BUTTON ---
         function switchDetailTab(tab) {
             document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview');
             document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions');
@@ -626,7 +609,6 @@
             document.getElementById('view-' + lastView).classList.remove('hidden');
         }
 
-        // Expanded UI Logic Functions
         function renderTeamSelector() {
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
@@ -647,15 +629,21 @@
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-            let myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
             
-            // SPECIAL RENDER FOR REQUESTS
+            // *** CRITICAL LOGIC SPLIT ***
+            let myItems = [];
+            
             if(currentTab === 'requests') {
+                 // REQUESTS LOOK AT "REQUEST_ASSIGNED_TO"
+                 myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests');
                  crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
                  container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{alert('Root')}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                  return;
             }
+
+            // SEASON AND LOCATION LOOK AT STANDARD "ASSIGNEDTO"
+            myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
             if(currentTab === 'season') {
                 if(taskViewLevel === 0) {
@@ -728,9 +716,7 @@
                 if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) {
                     report += `Photos:\n`;
-                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => {
-                        report += ` - ${url}\n`;
-                    });
+                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => { report += ` - ${url}\n`; });
                 }
                 report += `\n`;
             });
@@ -739,17 +725,7 @@
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
         function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
-        
-        function copyBatchData() {
-            const text = getBatchReport();
-            if(!text) { alert("No items selected!"); return; }
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Data Copied! Switch to Outlook and Paste into your reply.");
-                isBatch = false; toggleBatch(); 
-            }).catch(err => {
-                alert("Failed to copy. Browser may not support this.");
-            });
-        }
+        function copyBatchData() { const text = getBatchReport(); if(!text) { alert("No items selected!"); return; } navigator.clipboard.writeText(text).then(() => { alert("Data Copied!"); isBatch = false; toggleBatch(); }); }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -789,7 +765,6 @@
                 onmousedown="startLongPress()" 
                 onmouseup="cancelLongPress()" 
                 onmouseleave="cancelLongPress()">
-                
                 ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
                 <div class="inv-card flex-grow" ${clickAction}>
                     <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
@@ -798,14 +773,7 @@
             </div>`;
         }
         
-        // LONG PRESS LOGIC
-        function startLongPress() {
-            if(!isAdmin) return;
-            longPressTimer = setTimeout(() => {
-                if(!isBatch) toggleBatch();
-                navigator.vibrate(100); 
-            }, 800);
-        }
+        function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 800); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
         function exitBatchMode() { if(isBatch) toggleBatch(); }
 
@@ -825,6 +793,16 @@
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
 
             const cont = document.getElementById('input-container');
+            const btnComplete = document.getElementById('request-complete-container');
+
+            // Handle Complete Button visibility
+            // It only shows if this item is a REQUEST, and the current user is the one assigned to it
+            if(activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser)) {
+                btnComplete.classList.remove('hidden');
+            } else {
+                btnComplete.classList.add('hidden');
+            }
+
             if(isAdmin) {
                 document.getElementById('btn-cam').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
@@ -839,7 +817,17 @@
             renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
-        // *** UPDATED: RENDER MULTIPLE PHOTOS ***
+        function renderAllFields() {
+            if(!activeItem) return;
+            let html = '<div class="grid grid-cols-1 gap-2">';
+            for (const [key, value] of Object.entries(activeItem)) {
+                if(['SAVED_PHOTO_LINK', 'SAVED_PHOTO_NAME', 'UNIQUE_ID'].includes(key)) continue;
+                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`;
+            }
+            html += '</div>';
+            document.getElementById('expand-content').innerHTML = html;
+        }
+
         function renderOverviewData() {
             const box = document.getElementById('user-data-box');
             const grid = document.getElementById('dynamic-user-grid');
@@ -856,17 +844,11 @@
                 photoDiv.classList.remove('hidden');
                 const urls = activeItem.SAVED_PHOTO_LINK.split(',');
                 const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                
                 let phHtml = "";
-                urls.forEach((url, i) => {
-                    const dispName = names[i] || `Photo ${i+1}`;
-                    phHtml += `<a href="${url}" target="_blank" class="block w-full text-center p-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 mb-2 truncate"><i class="ph-bold ph-image"></i> ${dispName}</a>`;
-                });
+                urls.forEach((url, i) => { const dispName = names[i] || `Photo ${i+1}`; phHtml += `<a href="${url}" target="_blank" class="block w-full text-center p-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 mb-2 truncate"><i class="ph-bold ph-image"></i> ${dispName}</a>`; });
                 photoList.innerHTML = phHtml;
                 h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached (See Below)</div></div>`;
-            } else { 
-                photoDiv.classList.add('hidden'); 
-            }
+            } else { photoDiv.classList.add('hidden'); }
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
@@ -883,31 +865,51 @@
         function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
         
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked;
+            const d = document.getElementById('chk-dylan').checked;
+            const k = document.getElementById('chk-kayla').checked;
+            const m = document.getElementById('chk-morgan').checked;
             const isCalReq = document.getElementById('chk-cal-request').checked;
-            
-            let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
+
+            let selected = [];
+            if(d) selected.push("Dylan");
+            if(k) selected.push("Kayla");
+            if(m) selected.push("Morgan");
+
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             
             selectedIdx.forEach(idx => {
-                fullInventory[idx].ASSIGNEDTO = target;
-                // Move to "Requests" tab
+                // UPDATE REQUEST COLUMN, NOT SEASON COLUMN
+                fullInventory[idx].REQUEST_ASSIGNED_TO = target;
                 fullInventory[idx].TASK_TAB = "requests"; 
                 if(isCalReq) {
                     let oldNote = fullInventory[idx].SAVED_PICK || "";
-                    if(!oldNote.includes("[CAL REQUEST]")) {
-                        fullInventory[idx].SAVED_PICK = "[CAL REQUEST] " + oldNote;
-                    }
+                    if(!oldNote.includes("[CAL REQUEST]")) { fullInventory[idx].SAVED_PICK = "[CAL REQUEST] " + oldNote; }
                 }
             });
-            
+
             document.getElementById('assign-modal').style.display='none'; 
-            toggleBatch(); 
-            // Force save updates for assignments (in real app we'd need loop save or batch API)
-            // For now, client side updates will reflect instantly, sync on next load.
-            alert(`Sent Requests to: ${target}`);
+            alert(`Sending Requests to: ${target}...`);
+
+            let savePromises = selectedIdx.map(idx => {
+                const item = fullInventory[idx];
+                const payload = {
+                    type: "update",
+                    id: item.UNIQUE_ID,
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, // Use new parameter
+                    taskTab: item.TASK_TAB,
+                    match: item.SAVED_MATCH,
+                    spec: item.SAVED_SPEC,
+                    pick: item.SAVED_PICK,
+                    note: item.SAVED_NOTE,
+                    user: currentUser
+                };
+                return fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+            });
+
+            Promise.all(savePromises).then(() => { alert("All assignments saved to Cloud!"); toggleBatch(); fetchData(true); }).catch(err => { alert("Error saving assignments: " + err); });
         }
+        
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
         function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
