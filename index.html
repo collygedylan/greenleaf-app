@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v188</title>
+    <title>Greenleaf Pro v189 (Turbo)</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -72,7 +72,6 @@
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
-        /* UPDATED: No 'capture' attribute here */
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -127,7 +126,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v188 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v189 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -854,7 +853,6 @@
             const btnComplete = document.getElementById('request-complete-container');
 
             // Handle Complete Button visibility
-            // It only shows if this item is a REQUEST, and the current user is the one assigned to it
             if(activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser)) {
                 btnComplete.classList.remove('hidden');
             } else {
@@ -870,9 +868,13 @@
                 document.getElementById('btn-save').classList.add('hidden');
                 cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
             }
+            
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); }
             else { document.getElementById('expand-section').classList.remove('hidden'); }
-            renderOverviewData(); renderAllFields(); switchDetailTab('overview');
+            
+            renderOverviewData(); 
+            // REMOVED renderAllFields() from here to speed up load time
+            switchDetailTab('overview');
         }
 
         // *** FIX: Filter out system keys for clean Accordion ***
@@ -959,9 +961,7 @@
             views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); if(v === 'review') renderReviewItems(); } });
         }
 
-        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
-        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
-        
+        // *** FIX: New Optimized Batch Update logic ***
         function batchAssign() {
             const d = document.getElementById('chk-dylan').checked;
             const k = document.getElementById('chk-kayla').checked;
@@ -976,25 +976,22 @@
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             
-            selectedIdx.forEach(idx => {
-                // UPDATE REQUEST COLUMN, NOT SEASON COLUMN
-                fullInventory[idx].REQUEST_ASSIGNED_TO = target;
-                fullInventory[idx].TASK_TAB = "requests"; 
-                if(isCalReq) {
-                    let oldNote = fullInventory[idx].SAVED_PICK || "";
-                    if(!oldNote.includes("[CAL REQUEST]")) { fullInventory[idx].SAVED_PICK = "[CAL REQUEST] " + oldNote; }
-                }
-            });
-
-            document.getElementById('assign-modal').style.display='none'; 
-            alert(`Sending Requests to: ${target}...`);
-
-            let savePromises = selectedIdx.map(idx => {
+            // 1. UPDATE LOCAL UI (Optimistic)
+            const updates = selectedIdx.map(idx => {
                 const item = fullInventory[idx];
-                const payload = {
-                    type: "update",
+                
+                // Update Local State
+                item.REQUEST_ASSIGNED_TO = target;
+                item.TASK_TAB = "requests"; 
+                if(isCalReq) {
+                    let oldNote = item.SAVED_PICK || "";
+                    if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; }
+                }
+
+                // Prepare Update Object
+                return {
                     id: item.UNIQUE_ID,
-                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, // Use new parameter
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO,
                     taskTab: item.TASK_TAB,
                     match: item.SAVED_MATCH,
                     spec: item.SAVED_SPEC,
@@ -1002,14 +999,38 @@
                     note: item.SAVED_NOTE,
                     user: currentUser
                 };
-                return fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
             });
 
-            Promise.all(savePromises).then(() => { alert("All assignments saved to Cloud!"); toggleBatch(); fetchData(true); }).catch(err => { alert("Error saving assignments: " + err); });
+            document.getElementById('assign-modal').style.display='none'; 
+            toggleBatch(); // Exit batch mode immediately
+            alert(`Saving ${updates.length} items to Cloud...`);
+
+            // 2. SEND ONE BATCH REQUEST (Network Optimization)
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "batch_update", updates: updates }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Success! No need to alert, just refresh data quietly
+                    fetchData(true); 
+                } else {
+                    alert("Error saving: " + data.message);
+                }
+            })
+            .catch(err => { alert("Network Error: " + err); });
         }
-        
+
         function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
-        function toggleExpand() { document.getElementById('expand-section').classList.toggle('expanded'); }
+        function toggleExpand() { 
+            const content = document.getElementById('expand-content');
+            const section = document.getElementById('expand-section');
+            if (content.innerHTML === '') { renderAllFields(); }
+            section.classList.toggle('expanded'); 
+        }
+        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
+        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
     </script>
 </body>
