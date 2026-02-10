@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v198</title>
+    <title>Greenleaf Pro v199</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -126,7 +126,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v198 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v199 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -291,7 +291,6 @@
 
     <script>
         // *** CONFIGURATION ***
-        // UPDATED: Pre-filled with your link
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr-zmHywFs13VpwZJgICJXzDB4BeJ75utR69yB-ulnZBuMS96hUfjzwjEyIlzVWDcX/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -763,29 +762,104 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        function getBatchReport() {
-            let report = "";
+        // --- NEW HTML BATCH LOGIC ---
+        function getBatchHtml() {
+            let html = "<b>Greenleaf Report</b><br><br>";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
-                report += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
-                if(item.CALIPER || item.CAL) report += `Cal: ${item.CALIPER || item.CAL}\n`;
-                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
-                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
+                html += `<b>${item.COMMONNAME} (${item.CONTSIZE})</b><br>`;
+                html += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}<br>`;
+                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
+                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                
                 if(item.SAVED_PHOTO_LINK) {
-                    report += `Photos:\n`;
-                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => { report += ` - ${url}\n`; });
+                    html += `Photos:<br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(',');
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => {
+                        const name = names[i] || `Photo ${i+1}`;
+                        // THIS CREATES THE CLICKABLE LINK
+                        html += `<a href="${url}">${name}</a><br>`;
+                    });
                 }
-                report += `\n`;
+                html += `<br>`;
             });
-            return report;
+            return html;
+        }
+
+        function getBatchText() {
+            let text = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                text += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`;
+                    const urls = item.SAVED_PHOTO_LINK.split(',');
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => {
+                        const name = names[i] || `Photo ${i+1}`;
+                        text += `• ${name}: ${url}\n`;
+                    });
+                }
+                text += `\n`;
+            });
+            return text;
         }
         
-        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
-        function copyBatchData() { const text = getBatchReport(); if(!text) { alert("No items selected!"); return; } navigator.clipboard.writeText(text).then(() => { alert("Data Copied!"); isBatch = false; toggleBatch(); }); }
+        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
+        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchText())}`; }
+        
+        // UPDATED COPY FUNCTION
+        function copyBatchData() { 
+            if(selectedIdx.length === 0) { alert("No items selected!"); return; }
+            
+            const html = getBatchHtml();
+            const text = getBatchText(); // Fallback
+            
+            // Modern Clipboard API with HTML support attempt
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            // Use ClipboardItem if available (Mobile Safari 13.4+)
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ 
+                    ["text/html"]: blobHtml, 
+                    ["text/plain"]: blobText 
+                })];
+                navigator.clipboard.write(data).then(() => {
+                    alert("Report Copied with Links! Paste into Email.");
+                    isBatch = false; toggleBatch();
+                }).catch(err => {
+                    // Fallback to old execCommand method if new API fails
+                    fallbackCopy(html);
+                });
+            } else {
+                fallbackCopy(html);
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = "fixed";
+            tempDiv.style.left = "-9999px";
+            document.body.appendChild(tempDiv);
+            const range = document.createRange();
+            range.selectNodeContents(tempDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            document.body.removeChild(tempDiv);
+            alert("Report Copied! (Legacy Mode)");
+            isBatch = false; toggleBatch();
+        }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -824,7 +898,8 @@
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/id=([a-zA-Z0-9_-]+)/);
+                // Matches ?id=... or /d/.../
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
                 }
