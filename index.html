@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v183</title>
+    <title>Greenleaf Pro v184</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v183 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v184 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -817,12 +817,30 @@
             renderOverviewData(); renderAllFields(); switchDetailTab('overview');
         }
 
+        // *** FIX: Filter out system keys for clean Accordion ***
         function renderAllFields() {
             if(!activeItem) return;
+            
+            // Hide these technical/duplicate keys from the view
+            const hiddenKeys = [
+                'UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 
+                'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO',
+                'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 
+                'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 
+                'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME',
+                'UPDATEDBY', 'TIMESTAMP'
+            ];
+
             let html = '<div class="grid grid-cols-1 gap-2">';
             for (const [key, value] of Object.entries(activeItem)) {
-                if(['SAVED_PHOTO_LINK', 'SAVED_PHOTO_NAME', 'UNIQUE_ID'].includes(key)) continue;
-                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`;
+                // Skip hidden keys or empty values to keep it clean
+                if(hiddenKeys.includes(key)) continue;
+                
+                html += `
+                    <div class="flex justify-between border-b border-gray-200 py-2">
+                        <span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span>
+                        <span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span>
+                    </div>`;
             }
             html += '</div>';
             document.getElementById('expand-content').innerHTML = html;
