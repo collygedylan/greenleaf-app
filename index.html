@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v185</title>
+    <title>Greenleaf Pro v186</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v185 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v186 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -869,11 +869,33 @@
                 photoDiv.classList.remove('hidden');
                 const urls = activeItem.SAVED_PHOTO_LINK.split(',');
                 const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                
                 let phHtml = "";
-                urls.forEach((url, i) => { const dispName = names[i] || `Photo ${i+1}`; phHtml += `<a href="${url}" target="_blank" class="block w-full text-center p-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 mb-2 truncate"><i class="ph-bold ph-image"></i> ${dispName}</a>`; });
+                urls.forEach((url, i) => {
+                    const dispName = names[i] || `Photo ${i+1}`;
+                    
+                    // EXTRACT ID FOR THUMBNAIL GENERATION
+                    let thumbUrl = url; 
+                    const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) {
+                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
+                    }
+
+                    phHtml += `
+                    <a href="${url}" target="_blank" class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
+                        <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb">
+                        <div class="flex-grow min-w-0">
+                            <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                            <div class="text-[10px] text-gray-400">Tap to view full size</div>
+                        </div>
+                        <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                    </a>`;
+                });
                 photoList.innerHTML = phHtml;
-                h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached (See Below)</div></div>`;
-            } else { photoDiv.classList.add('hidden'); }
+                h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
