@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v192</title>
+    <title>Greenleaf Pro v194</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -126,7 +126,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v192 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v194 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -401,8 +401,6 @@
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
                 
-                // document.getElementById('sync-btn')?.classList.remove('animate-spin'); // Removed btn
-                
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     
@@ -484,7 +482,7 @@
             .then(data => {
                 if(data.status === 'success') {
                     if(!silent) {
-                        alert("Saved to Cloud!");
+                        //alert("Saved to Cloud!"); // Removed Alert for speed
                         document.getElementById('btn-save').innerText = "SAVE UPDATES";
                         document.getElementById('btn-save').disabled = false;
                         renderOverviewData();
@@ -815,6 +813,19 @@
         function createRowHtml(item, idx, source) {
             const showCheck = isBatch && isAdmin;
             const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
+            
+            // THUMBNAIL LOGIC
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
+                let thumbUrl = firstLink;
+                const idMatch = firstLink.match(/id=([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) {
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
+                }
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
+            }
+
             return `
             <div class="batch-row" 
                 ontouchstart="startLongPress()" 
@@ -822,10 +833,16 @@
                 onmousedown="startLongPress()" 
                 onmouseup="cancelLongPress()" 
                 onmouseleave="cancelLongPress()">
+                
                 ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow" ${clickAction}>
-                    <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
-                    <div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                
+                <div class="inv-card flex-grow flex items-center" ${clickAction}>
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'}</div>
+                    </div>
                 </div>
             </div>`;
         }
@@ -961,7 +978,9 @@
             views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); if(v === 'review') renderReviewItems(); } });
         }
 
-        // *** FIX: New Optimized Batch Update logic ***
+        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
+        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
+        
         function batchAssign() {
             const d = document.getElementById('chk-dylan').checked;
             const k = document.getElementById('chk-kayla').checked;
@@ -1029,8 +1048,6 @@
             if (content.innerHTML === '') { renderAllFields(); }
             section.classList.toggle('expanded'); 
         }
-        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
-        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
     </script>
 </body>
