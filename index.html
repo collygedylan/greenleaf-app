@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v184</title>
+    <title>Greenleaf Pro v185</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -121,7 +121,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v184 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v185 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -354,11 +354,13 @@
                 
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
+                    
                     if(!isSilent) {
                         applyAssignments(); 
                         launchApp();
                         startAutoSync();
                     } else {
+                        // AUTO REFRESH LOGIC
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
@@ -369,6 +371,11 @@
                                     }
                                 }
                             }
+                        } else if(!document.getElementById('view-tasks').classList.contains('hidden')) {
+                            renderTasks();
+                            checkForRequests(); 
+                        } else if(!document.getElementById('view-review').classList.contains('hidden')) {
+                            renderReviewItems();
                         } else {
                             checkForRequests(); 
                         }
