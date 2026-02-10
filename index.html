@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v200</title>
+    <title>Greenleaf Pro v201</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -72,8 +72,12 @@
         .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 24px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; margin-bottom: 16px; }
         
+        /* TWO CAMERA BUTTONS */
+        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+        .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
+
         #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
@@ -126,7 +130,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v200 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v201 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -243,7 +247,22 @@
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p>
                         <div id="photo-list-container" class="space-y-2"></div>
                     </div>
-                    <label id="btn-cam" class="camera-btn hidden"><i class="ph-fill ph-camera text-3xl"></i><span id="cam-text" class="font-bold">Take Field Photo</span><input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)"></label>
+                    
+                    <div id="btn-cam-container" class="hidden">
+                        <div class="cam-grid">
+                            <label class="camera-btn">
+                                <i class="ph-fill ph-camera text-3xl"></i>
+                                <span class="text-xs font-bold mt-1">CAMERA</span>
+                                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
+                            </label>
+                            <label class="lib-btn">
+                                <i class="ph-fill ph-image text-3xl"></i>
+                                <span class="text-xs font-bold mt-1">LIBRARY</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div id="input-container" class="input-stack"></div>
                     <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
                 </div>
@@ -452,23 +471,43 @@
 
         function saveData(silent = false) {
             if(!isAdmin) return;
-            activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-            activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-            activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-            activeItem.SAVED_NOTE = document.getElementById('in-note').value;
             
+            // 1. Capture Values
+            const match = document.getElementById('in-match').value;
+            const spec = document.getElementById('in-spec').value;
+            const pick = document.getElementById('in-pick').value;
+            const note = document.getElementById('in-note').value;
+
+            // 2. Optimistic Local Update
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            
+            renderOverviewData();
+
+            // 3. UI Feedback - INSTANT
+            const btn = document.getElementById('btn-save');
             if(!silent) {
-                document.getElementById('btn-save').innerText = "SAVING...";
-                document.getElementById('btn-save').disabled = true;
+                const originalText = btn.innerText;
+                btn.innerText = "SAVED!";
+                btn.style.backgroundColor = "#16a34a"; // Green-600
+                // Revert after 2s
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#007a4d";
+                    btn.disabled = false;
+                }, 2000);
             }
 
+            // 4. Send to Cloud
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
-                match: activeItem.SAVED_MATCH,
-                spec: activeItem.SAVED_SPEC,
-                pick: activeItem.SAVED_PICK,
-                note: activeItem.SAVED_NOTE,
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
@@ -480,58 +519,82 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
-                    if(!silent) {
-                        document.getElementById('btn-save').innerText = "SAVED!";
-                        document.getElementById('btn-save').style.backgroundColor = "#16a34a"; // Green-600
-                        setTimeout(() => {
-                            document.getElementById('btn-save').innerText = "SAVE UPDATES";
-                            document.getElementById('btn-save').style.backgroundColor = "#007a4d";
-                            document.getElementById('btn-save').disabled = false;
-                        }, 2000);
-                        renderOverviewData();
-                    }
-                } else {
-                    alert("Cloud Save Failed: " + data.message);
+                if(data.status !== 'success') {
+                    alert("⚠️ Save Failed in Cloud: " + data.message);
                 }
             })
-            .catch(err => alert("Network Error: " + err));
+            .catch(err => {
+                alert("❌ Network Error: " + err);
+            });
         }
 
         // NEW: Mark Request Complete
         function markRequestComplete() {
             if(!activeItem) return;
+
+            // 1. Capture latest data
+            const match = document.getElementById('in-match').value;
+            const spec = document.getElementById('in-spec').value;
+            const pick = document.getElementById('in-pick').value;
+            const note = document.getElementById('in-note').value;
+
+            // 2. Update Local Data
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            activeItem.REQUEST_ASSIGNED_TO = "";
+            activeItem.TASK_TAB = "review";
+
+            // 3. Prepare Payload
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
-                requestAssignedTo: "", // Clear the assignment
-                taskTab: "review",     // Send to Review
+                requestAssignedTo: "", 
+                taskTab: "review",
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
             };
 
-            document.getElementById('request-complete-container').innerHTML = '<div class="text-center font-bold text-blue-600">Completing...</div>';
+            // 4. Visual Feedback
+            document.getElementById('request-complete-container').innerHTML = 
+                '<div class="p-4 bg-green-100 text-green-800 font-bold rounded-lg text-center"><i class="ph-bold ph-check"></i> SAVED & COMPLETED</div>';
 
+            // 5. Send to Google
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    // Update Local
-                    activeItem.REQUEST_ASSIGNED_TO = "";
-                    activeItem.TASK_TAB = "review";
-                    alert("Request Completed!");
-                    goBackFromDetail();
+                    setTimeout(() => { goBackFromDetail(); }, 1000); 
                 } else {
                     alert("Error: " + data.message);
                 }
+            })
+            .catch(err => {
+                alert("Network Error: " + err);
+                goBackFromDetail(); 
             });
         }
 
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
-                const btn = document.getElementById('btn-cam');
-                const btnText = document.getElementById('cam-text');
-                btn.classList.add('loading'); btnText.innerText = "UPLOADING...";
+                
+                // Show loading on appropriate button
+                const isLib = input.parentElement.classList.contains('lib-btn');
+                const btn = isLib ? input.parentElement : input.parentElement; // Just target parent label
+                
+                // Simple generic loading indicator
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = "temp-loader";
+                loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
+                loadingDiv.innerHTML = '<div class="spinner mb-4"></div>UPLOADING PHOTO...';
+                document.body.appendChild(loadingDiv);
                 
                 const reader = new FileReader(); reader.readAsDataURL(file);
                 reader.onload = function(e) {
@@ -561,7 +624,9 @@
                                 alert("Photo Added!"); 
                             } 
                             else { alert("Upload Error: " + data.message); }
-                        }).catch(err => alert("Network Error: " + err)).finally(() => { btn.classList.remove('loading'); btnText.innerText = "Take Field Photo"; });
+                        }).catch(err => alert("Network Error: " + err)).finally(() => { 
+                            document.body.removeChild(loadingDiv);
+                        });
                     }
                 }
             }
@@ -762,104 +827,29 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        // --- NEW HTML BATCH LOGIC ---
-        function getBatchHtml() {
-            let html = "<b>Greenleaf Report</b><br><br>";
+        function getBatchReport() {
+            let report = "";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                html += `<b>${item.COMMONNAME} (${item.CONTSIZE})</b><br>`;
-                html += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}<br>`;
-                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
-                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
-                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
-                
+                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                report += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                if(item.CALIPER || item.CAL) report += `Cal: ${item.CALIPER || item.CAL}\n`;
+                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
+                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
+                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
                 if(item.SAVED_PHOTO_LINK) {
-                    html += `Photos:<br>`;
-                    const urls = item.SAVED_PHOTO_LINK.split(',');
-                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
-                    urls.forEach((url, i) => {
-                        const name = names[i] || `Photo ${i+1}`;
-                        // THIS CREATES THE CLICKABLE LINK
-                        html += `<a href="${url}">${name}</a><br>`;
-                    });
+                    report += `Photos:\n`;
+                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => { report += ` - ${url}\n`; });
                 }
-                html += `<br>`;
+                report += `\n`;
             });
-            return html;
-        }
-
-        function getBatchText() {
-            let text = "";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                text += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
-                text += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
-                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
-                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    text += `Photos:\n`;
-                    const urls = item.SAVED_PHOTO_LINK.split(',');
-                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
-                    urls.forEach((url, i) => {
-                        const name = names[i] || `Photo ${i+1}`;
-                        text += `• ${name}: ${url}\n`;
-                    });
-                }
-                text += `\n`;
-            });
-            return text;
+            return report;
         }
         
-        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchText())}`; }
-        
-        // UPDATED COPY FUNCTION
-        function copyBatchData() { 
-            if(selectedIdx.length === 0) { alert("No items selected!"); return; }
-            
-            const html = getBatchHtml();
-            const text = getBatchText(); // Fallback
-            
-            // Modern Clipboard API with HTML support attempt
-            const blobHtml = new Blob([html], { type: "text/html" });
-            const blobText = new Blob([text], { type: "text/plain" });
-            
-            // Use ClipboardItem if available (Mobile Safari 13.4+)
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const data = [new ClipboardItem({ 
-                    ["text/html"]: blobHtml, 
-                    ["text/plain"]: blobText 
-                })];
-                navigator.clipboard.write(data).then(() => {
-                    alert("Report Copied with Links! Paste into Email.");
-                    isBatch = false; toggleBatch();
-                }).catch(err => {
-                    // Fallback to old execCommand method if new API fails
-                    fallbackCopy(html);
-                });
-            } else {
-                fallbackCopy(html);
-            }
-        }
-
-        function fallbackCopy(html) {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html;
-            tempDiv.style.position = "fixed";
-            tempDiv.style.left = "-9999px";
-            document.body.appendChild(tempDiv);
-            const range = document.createRange();
-            range.selectNodeContents(tempDiv);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            document.execCommand('copy');
-            document.body.removeChild(tempDiv);
-            alert("Report Copied! (Legacy Mode)");
-            isBatch = false; toggleBatch();
-        }
+        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
+        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
+        function copyBatchData() { const text = getBatchReport(); if(!text) { alert("No items selected!"); return; } navigator.clipboard.writeText(text).then(() => { alert("Data Copied!"); isBatch = false; toggleBatch(); }); }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -898,8 +888,7 @@
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                // Matches ?id=... or /d/.../
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                const idMatch = firstLink.match(/id=([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
                 }
@@ -959,11 +948,11 @@
             }
 
             if(isAdmin) {
-                document.getElementById('btn-cam').classList.remove('hidden');
+                document.getElementById('btn-cam-container').classList.remove('hidden'); // NEW: Unhide dual buttons
                 document.getElementById('btn-save').classList.remove('hidden');
                 cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             } else {
-                document.getElementById('btn-cam').classList.add('hidden');
+                document.getElementById('btn-cam-container').classList.add('hidden');
                 document.getElementById('btn-save').classList.add('hidden');
                 cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
             }
