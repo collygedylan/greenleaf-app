@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v170</title>
+    <title>Greenleaf Pro v171</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -126,7 +126,9 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">Greenleaf v170</div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
+                        Greenleaf v171 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                    </div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -319,6 +321,7 @@
         let selectedIdx = [];
         let lastView = 'drive'; 
         let longPressTimer; 
+        let autoSyncTimer;
 
         // LOGIN
         function selectUser(u) { 
@@ -334,26 +337,60 @@
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
         function manualSync() { document.getElementById('sync-btn').classList.add('animate-spin'); fetchData(); }
 
+        function startAutoSync() {
+            if(autoSyncTimer) clearInterval(autoSyncTimer);
+            autoSyncTimer = setInterval(() => {
+                fetchData(true); // Silent sync
+            }, 15000); // 15 seconds
+        }
+
         // FETCH DATA
-        async function fetchData() {
+        async function fetchData(isSilent = false) {
             try {
+                if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
+                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
+                
                 document.getElementById('sync-btn').classList.remove('animate-spin');
                 
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
-                    applyAssignments(); 
-                    launchApp();
-                    checkForRequests();
+                    if(!isSilent) {
+                        applyAssignments(); 
+                        launchApp();
+                        startAutoSync();
+                    } else {
+                        // Silent update
+                        if(!document.getElementById('view-detail').classList.contains('hidden')) {
+                            // If looking at detail, refresh only detail data if IDs match
+                            if(activeItem) {
+                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                                if(freshItem) { 
+                                    activeItem = freshItem; 
+                                    // Don't overwrite inputs if user is typing (basic check)
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                                        renderOverviewData();
+                                    }
+                                }
+                            }
+                        } else {
+                            // If in list view, re-render list but try to keep scroll? 
+                            // Complex for pure HTML. For now, just update data variable.
+                            // Next interaction will use fresh data.
+                            checkForRequests(); // Trigger notification if new data came in
+                        }
+                    }
                 } else {
                     throw new Error("Failed to load Cloud Data");
                 }
             } catch (e) { 
                 console.error(e); 
                 document.getElementById('sync-btn').classList.remove('animate-spin');
-                document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
-                setTimeout(resetLogin, 3000); 
+                if(!isSilent) {
+                    document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
+                    setTimeout(resetLogin, 3000); 
+                }
             }
         }
 
