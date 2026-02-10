@@ -126,7 +126,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v197 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v198 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -824,8 +824,7 @@
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                // Matches ?id=... or /d/.../
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                const idMatch = firstLink.match(/id=([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
                 }
