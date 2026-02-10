@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v184</title>
+    <title>Greenleaf Pro v185</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -131,7 +131,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v184 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 opacity-50"></span>
+                        Greenleaf v185 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 opacity-50"></span>
                     </div>
                 </div>
             </div>
@@ -198,7 +198,6 @@
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
-                <button onclick="fetchSocReps()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Load Sales Reps</button>
                 <div id="soc-content"></div>
             </div>
 
@@ -817,7 +816,6 @@
             // PHOTO THUMBNAIL LOGIC
             let thumbHtml = '';
             if(item.SAVED_PHOTO_LINK) {
-                // Get the first link from comma-separated list
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0].trim();
                 if(firstLink) {
                     thumbHtml = `<img src="${firstLink}" loading="lazy" class="thumb-img" alt="photo">`;
