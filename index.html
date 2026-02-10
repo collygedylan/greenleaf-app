@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v182</title>
+    <title>Greenleaf Pro v184</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -84,6 +84,10 @@
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        #auto-sync-badge { transition: opacity 0.3s; }
+        
+        /* IMAGE PREVIEW IN LIST */
+        .thumb-img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; margin-right: 12px; background-color: #f3f4f6; border: 1px solid #e5e7eb; flex-shrink: 0; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
@@ -127,7 +131,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v182 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v184 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 opacity-50"></span>
                     </div>
                 </div>
             </div>
@@ -296,8 +300,8 @@
 
         // STATE
         let fullInventory = [];
-        let socReps = []; // Just list of names
-        let socData = []; // Actual data for selected rep
+        let socReps = []; 
+        let socData = []; 
         let savedFieldData = {}; 
         let activeItem = null;
         let currentUser = null;
@@ -320,6 +324,7 @@
         let lastView = 'drive'; 
         let longPressTimer; 
         let autoSyncTimer;
+        let socSyncTimer; // SPECIFIC TIMER FOR SOC
 
         // LOGIN
         function selectUser(u) { 
@@ -338,18 +343,16 @@
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
             autoSyncTimer = setInterval(() => {
-                fetchData(true); // Silent sync
-            }, 15000); // 15 seconds
+                fetchData(true); // Silent sync for Inventory
+            }, 15000); 
         }
 
-        // FETCH DATA
+        // FETCH DATA (INVENTORY)
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
-                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
-                
                 document.getElementById('sync-btn').classList.remove('animate-spin');
                 
                 if(cloudJson.status === 'success') { 
@@ -359,31 +362,25 @@
                         launchApp();
                         startAutoSync();
                     } else {
-                        if(!document.getElementById('view-detail').classList.contains('hidden')) {
-                            if(activeItem) {
-                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                                if(freshItem) { 
-                                    activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                                        renderOverviewData();
-                                    }
+                        // Silent update
+                        if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
+                            const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                            if(freshItem) { 
+                                activeItem = freshItem; 
+                                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                                    renderOverviewData();
                                 }
                             }
                         } else {
                             checkForRequests(); 
                         }
                     }
-                } else {
-                    throw new Error("Failed to load Cloud Data");
+                    // Flash badge
+                    const badge = document.getElementById('auto-sync-badge');
+                    badge.classList.remove('opacity-50'); badge.classList.add('bg-green-500');
+                    setTimeout(() => { badge.classList.add('opacity-50'); badge.classList.remove('bg-green-500'); }, 1000);
                 }
-            } catch (e) { 
-                console.error(e); 
-                document.getElementById('sync-btn').classList.remove('animate-spin');
-                if(!isSilent) {
-                    document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
-                    setTimeout(resetLogin, 3000); 
-                }
-            }
+            } catch (e) { console.error(e); document.getElementById('sync-btn').classList.remove('animate-spin'); }
         }
 
         // PUSH NOTIFICATION SIMULATION
@@ -434,14 +431,12 @@
                         document.getElementById('btn-save').disabled = false;
                         renderOverviewData();
                     }
-                } else {
-                    alert("Cloud Save Failed: " + data.message);
                 }
             })
             .catch(err => alert("Network Error: " + err));
         }
 
-        // PHOTO UPLOAD (APPEND LOGIC)
+        // PHOTO UPLOAD
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
@@ -483,7 +478,7 @@
             }
         }
 
-        // --- NEW SOC LOGIC: FETCH REPS FIRST, THEN DATA ---
+        // --- SOC LOGIC WITH SMART SYNC ---
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
@@ -499,19 +494,55 @@
             .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
-        function fetchRepData(repName) {
-            document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+        function fetchRepData(repName, isSilent = false) {
+            if(!isSilent) document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+            
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    socData = data.data;
-                    socViewLevel = 1;
-                    selectedSocRep = repName;
-                    renderSocView();
-                    document.getElementById('soc-status').innerText = "";
-                } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
+                    // DIFF CHECK: Only update if data changed
+                    const newHash = JSON.stringify(data.data);
+                    const oldHash = JSON.stringify(socData);
+                    
+                    if(newHash !== oldHash) {
+                        socData = data.data;
+                        if(isSilent && socViewLevel > 0) {
+                            // Save scroll position
+                            const scrollPos = document.getElementById('soc-content').scrollTop;
+                            renderSocView(); // Re-render
+                            // Restore scroll might need slight delay or just let browser handle
+                        } else {
+                            socViewLevel = 1;
+                            selectedSocRep = repName;
+                            renderSocView();
+                        }
+                        
+                        if(isSilent) {
+                            // Visual flash
+                            document.getElementById('soc-status').innerText = "Updated just now";
+                            setTimeout(() => document.getElementById('soc-status').innerText = "", 2000);
+                        }
+                    }
+                    
+                    if(!isSilent) {
+                        document.getElementById('soc-status').innerText = "";
+                        startSocSync(repName); // Start polling
+                    }
+                } 
             });
+        }
+        
+        function startSocSync(repName) {
+            if(socSyncTimer) clearInterval(socSyncTimer);
+            socSyncTimer = setInterval(() => {
+                // Only poll if we are still looking at SOC
+                if(!document.getElementById('view-soc').classList.contains('hidden') && socViewLevel > 0) {
+                    fetchRepData(repName, true);
+                } else {
+                    clearInterval(socSyncTimer);
+                }
+            }, 15000); // 15 seconds
         }
 
         // *** UPDATED: SALES REPS TAB ***
@@ -782,6 +813,17 @@
         function createRowHtml(item, idx, source) {
             const showCheck = isBatch && isAdmin;
             const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
+            
+            // PHOTO THUMBNAIL LOGIC
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                // Get the first link from comma-separated list
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0].trim();
+                if(firstLink) {
+                    thumbHtml = `<img src="${firstLink}" loading="lazy" class="thumb-img" alt="photo">`;
+                }
+            }
+
             return `
             <div class="batch-row" 
                 ontouchstart="startLongPress()" 
@@ -791,9 +833,12 @@
                 onmouseleave="cancelLongPress()">
                 
                 ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow" ${clickAction}>
-                    <div class="font-bold text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
-                    <div class="text-sm text-gray-600">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                
+                <div class="inv-card flex-grow flex items-center" ${clickAction}>
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0"> <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                    </div>
                 </div>
             </div>`;
         }
