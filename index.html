@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v205</title>
+    <title>Greenleaf Pro v206</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -129,7 +129,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v205 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v206 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -322,7 +322,7 @@
     </div>
 
     <script>
-        // *** YOUR GOOGLE SCRIPT URL HERE ***
+        // *** CONFIGURATION ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -497,7 +497,7 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // Update Local Data + NEW TIMESTAMP (Triggers hide logic)
+            // Update Local Data + TIMESTAMP
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
@@ -566,7 +566,7 @@
             activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = "";
             activeItem.TASK_TAB = "review";
-            activeItem.TIMESTAMP = new Date().toISOString(); // Instant hide trigger
+            activeItem.TIMESTAMP = new Date().toISOString(); 
 
             const payload = {
                 type: "update",
@@ -745,7 +745,6 @@
         function goBackFromDetail() {
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
-            // Refresh tasks just in case we completed something
             if(lastView === 'tasks') renderTasks();
         }
 
@@ -765,7 +764,6 @@
             taskViewLevel = 0; renderTasks(); 
         }
 
-        // --- NEW 10-DAY TASK FILTER LOGIC ---
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
@@ -774,12 +772,10 @@
             let myItems = [];
             const now = new Date().getTime();
 
-            // Core filtering logic for task list hiding
             const taskFilter = (i) => {
                 if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
                 if (i.TASK_TAB !== currentTab) return false;
                 
-                // 10-Day / 10% Hiding Logic
                 if (i.TIMESTAMP) {
                     const saveTime = new Date(i.TIMESTAMP).getTime();
                     const daysOld = (now - saveTime) / (1000 * 3600 * 24);
@@ -788,14 +784,13 @@
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
                     
                     if (daysOld < 10 && !isLowStock) {
-                        return false; // INSTANTLY HIDE IT FROM LIST
+                        return false; 
                     }
                 }
                 return true;
             };
             
             if(currentTab === 'requests') {
-                 // Requests don't need the 10-day logic because completing them removes the ASSIGNEDTO immediately
                  myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests');
                  crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
@@ -803,7 +798,7 @@
                  return;
             }
 
-            myItems = fullInventory.filter(taskFilter); // Apply the new filter
+            myItems = fullInventory.filter(taskFilter); 
 
             if(currentTab === 'season') {
                 if(taskViewLevel === 0) {
@@ -863,28 +858,35 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
+        // --- ENHANCED BATCH COPY LOGIC ---
         function getBatchHtml() {
-            let html = "<b>Greenleaf Report</b><br><br>";
+            let html = "<div style='font-family: Arial, sans-serif;'>";
+            html += "<h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                html += `<b>${item.COMMONNAME} (${item.CONTSIZE})</b><br>`;
-                html += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}<br>`;
+                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">`;
+                html += `<strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>`;
+                html += `<span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                
                 if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
                 if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
-                if(item.SAVED_SALES_DESC) html += `Sales Desc: ${item.SAVED_SALES_DESC}<br>`;
+                if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
                 if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
                 
                 if(item.SAVED_PHOTO_LINK) {
-                    html += `Photos:<br>`;
+                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
                     const urls = item.SAVED_PHOTO_LINK.split(',');
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => {
                         const name = names[i] || `Photo ${i+1}`;
-                        html += `<a href="${url}">${name}</a><br>`;
+                        html += `&bull; <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`;
                     });
+                    html += `</div>`;
                 }
-                html += `<br>`;
+                html += `</div>`;
             });
+            html += "</div>";
             return html;
         }
 
