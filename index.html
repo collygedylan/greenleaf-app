@@ -1332,8 +1332,9 @@
                     const urls = item.SAVED_PHOTO_LINK.split(','); 
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
-                        const name = names[i] || `Photo ${i+1}`; 
-                        html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
+                        const name = names[i] || `View Photo ${i+1}`; 
+                        // Added explicit target='_blank' and styling for the HTML version
+                        html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; 
                     });
                     html += `</div>`;
                 }
@@ -1346,34 +1347,32 @@
             let text = "";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
                 
                 if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
-                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_SALES_DESC) text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
-                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
+                if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`;
                 
                 if(item.SAVED_PHOTO_LINK) {
                     text += `Photos:\n`; 
                     const urls = item.SAVED_PHOTO_LINK.split(','); 
-                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
-                        const name = names[i] || `Photo ${i+1}`; 
-                        // CLEAN LINK - NO URL
-                        text += `• ${name}\n`; 
+                        // We place the URL on its own line to ensure SMS apps recognize it as a clickable link
+                        text += `• ${url.trim()}\n`; 
                     });
                 }
                 text += `\n`;
             });
             return text;
         }
-        
+
         function batchText() { 
             if(selectedIdx.length === 0) { 
                 showToast("Warning", "No items selected.", true); 
                 return; 
             }
-            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
+            // SMS doesn't support HTML, so we use the text version with the raw URLs
+            const bodyText = getBatchText();
+            window.location.href = "sms:?body=" + encodeURIComponent(bodyText); 
         }
         
         function batchEmail() { 
