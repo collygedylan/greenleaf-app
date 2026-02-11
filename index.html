@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v202</title>
+    <title>Greenleaf Pro v203</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -129,7 +129,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v202 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v203 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -236,12 +236,18 @@
                     <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
                 </div>
                 <div id="det-actions-content" class="hidden py-4">
+                    
                     <div id="request-complete-container" class="mb-6 hidden">
                         <button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2">
                             <i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE
                         </button>
-                        <p class="text-xs text-center text-gray-400 mt-2">Sends to Manager Review & Removes from your list.</p>
+                        <p class="text-xs text-center text-gray-400 mt-2">Saves data & Removes from your list.</p>
                     </div>
+
+                    <div id="readonly-lock-banner" class="hidden bg-gray-100 p-3 rounded text-xs text-gray-500 mb-4 font-bold border border-gray-200 flex items-center gap-2">
+                        <i class="ph-bold ph-lock-key text-lg"></i> Data is locked. (10-Day / 10% Rule Active)
+                    </div>
+
                     <div id="photo-preview" class="mb-4 hidden">
                         <p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p>
                         <div id="photo-list-container" class="space-y-2"></div>
@@ -263,7 +269,15 @@
                     </div>
                     
                     <div id="input-container" class="input-stack"></div>
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE UPDATES</button>
+                    
+                    <div id="btn-edit-container" class="hidden mt-4 mb-4">
+                        <button onclick="showEditMode()" class="w-full bg-yellow-500 text-white font-bold py-3 rounded-xl shadow border-2 border-yellow-600 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-lock-key-open text-xl"></i> UNLOCK TO EDIT
+                        </button>
+                        <p class="text-xs text-center text-gray-400 mt-2">Admin override.</p>
+                    </div>
+
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE & LOCK DATA</button>
                 </div>
             </div>
         </div>
@@ -341,6 +355,7 @@
         let isBatch = false;
         let selectedIdx = [];
         let lastView = 'drive'; 
+        let currentOriginView = '';
         let longPressTimer; 
         let autoSyncTimer;
 
@@ -364,7 +379,6 @@
             const diff = y - ptrStartY;
             if (diff > 0 && scrollArea.scrollTop === 0) {
                 ptrCurrentY = diff;
-                // Add resistance
                 const move = Math.min(diff * 0.5, 80);
                 spinner.style.top = (move - 40) + 'px';
                 spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
@@ -377,7 +391,6 @@
             if (!ptrDragging) return;
             ptrDragging = false;
             if (ptrCurrentY > 60) {
-                // Trigger Refresh
                 spinner.style.top = '20px';
                 spinner.classList.add('loading');
                 manualSync().then(() => {
@@ -402,7 +415,7 @@
         }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
-        async function manualSync() { await fetchData(); } // Updated to async
+        async function manualSync() { await fetchData(); } 
 
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
@@ -427,7 +440,6 @@
                         launchApp();
                         startAutoSync();
                     } else {
-                        // AUTO REFRESH LOGIC
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
@@ -469,13 +481,18 @@
         }
 
         function saveData(silent = false) {
-            if(!isAdmin) return;
+            if(!isAdmin && currentOriginView !== 'tasks') return; // Double check permissions
             
-            // 1. Capture Values
-            const match = document.getElementById('in-match').value;
-            const spec = document.getElementById('in-spec').value;
-            const pick = document.getElementById('in-pick').value;
-            const note = document.getElementById('in-note').value;
+            // 1. Capture Values (safely check if element exists)
+            const matchEl = document.getElementById('in-match');
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick');
+            const noteEl = document.getElementById('in-note');
+
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || "");
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || "");
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
 
             // 2. Optimistic Local Update
             activeItem.SAVED_MATCH = match;
@@ -487,15 +504,17 @@
 
             // 3. UI Feedback - INSTANT
             const btn = document.getElementById('btn-save');
-            if(!silent) {
+            if(!silent && btn) {
                 const originalText = btn.innerText;
                 btn.innerText = "SAVED!";
-                btn.style.backgroundColor = "#16a34a"; // Green-600
+                btn.style.backgroundColor = "#16a34a"; 
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.style.backgroundColor = "#007a4d";
                     btn.disabled = false;
-                }, 2000);
+                    // Immediately lock the UI after manual save
+                    renderActionsTab(); 
+                }, 1000);
             }
 
             // 4. Send to Cloud
@@ -526,16 +545,20 @@
             });
         }
 
+        // ONE-CLICK COMPLETE
         function markRequestComplete() {
             if(!activeItem) return;
 
-            // 1. Capture latest data
-            const match = document.getElementById('in-match').value;
-            const spec = document.getElementById('in-spec').value;
-            const pick = document.getElementById('in-pick').value;
-            const note = document.getElementById('in-note').value;
+            const matchEl = document.getElementById('in-match');
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick');
+            const noteEl = document.getElementById('in-note');
 
-            // 2. Update Local Data
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || "");
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || "");
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
@@ -543,7 +566,6 @@
             activeItem.REQUEST_ASSIGNED_TO = "";
             activeItem.TASK_TAB = "review";
 
-            // 3. Prepare Payload
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
@@ -558,11 +580,9 @@
                 user: currentUser
             };
 
-            // 4. Visual Feedback
             document.getElementById('request-complete-container').innerHTML = 
                 '<div class="p-4 bg-green-100 text-green-800 font-bold rounded-lg text-center"><i class="ph-bold ph-check"></i> SAVED & COMPLETED</div>';
 
-            // 5. Send to Google
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
@@ -582,7 +602,6 @@
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
-                // Show loading
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = "temp-loader";
                 loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
@@ -930,7 +949,6 @@
             document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
         }
 
-        // NEW: Handles clicking a card during batch mode
         function handleCardClick(idx, source) {
             if(isBatch) {
                 const cb = document.getElementById('cb-' + idx);
@@ -944,14 +962,10 @@
         }
 
         function createRowHtml(item, idx, source) {
-            // FIX: Always render checkbox if Admin, hide with CSS
-            
-            // THUMBNAIL LOGIC
             let thumbHtml = '';
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                // Changed to uc?export=view to bypass grey box thumbnail blocks
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
                     thumbUrl = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
@@ -985,7 +999,6 @@
         function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 800); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
         
-        // FIX: Toggle batch without re-rendering the whole screen
         function toggleBatch() { 
             if(!isAdmin) return; 
             isBatch = !isBatch;
@@ -998,10 +1011,15 @@
             }
         }
 
+        // SMART LOCK UI LOGIC
         function openDetail(idx, originView) {
-            lastView = originView; activeItem = fullInventory[idx];
+            lastView = originView; 
+            currentOriginView = originView;
+            activeItem = fullInventory[idx];
+            
             document.getElementById('view-detail').classList.remove('hidden');
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -1013,30 +1031,72 @@
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
 
-            const cont = document.getElementById('input-container');
-            const btnComplete = document.getElementById('request-complete-container');
-
-            if(activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser)) {
-                btnComplete.classList.remove('hidden');
-            } else {
-                btnComplete.classList.add('hidden');
-            }
-
-            if(isAdmin) {
-                document.getElementById('btn-cam-container').classList.remove('hidden'); 
-                document.getElementById('btn-save').classList.remove('hidden');
-                cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
-            } else {
-                document.getElementById('btn-cam-container').classList.add('hidden');
-                document.getElementById('btn-save').classList.add('hidden');
-                cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>`;
-            }
-            
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); }
             else { document.getElementById('expand-section').classList.remove('hidden'); }
             
             renderOverviewData(); 
+            renderActionsTab(); // Call new role-based render
             switchDetailTab('overview');
+        }
+
+        function renderActionsTab() {
+            const btnComplete = document.getElementById('request-complete-container');
+            
+            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_PHOTO_LINK);
+            const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
+
+            let canEditThisView = false;
+            if (isAdmin) {
+                canEditThisView = ['tasks', 'drive', 'review'].includes(currentOriginView);
+            } else {
+                canEditThisView = ['tasks'].includes(currentOriginView);
+            }
+
+            if (isMyRequest) { btnComplete.classList.remove('hidden'); } 
+            else { btnComplete.classList.add('hidden'); }
+
+            if (canEditThisView && !hasData) {
+                showEditMode();
+            } else {
+                showReadonlyMode(canEditThisView, hasData);
+            }
+        }
+
+        function showEditMode() {
+            document.getElementById('btn-cam-container').classList.remove('hidden');
+            document.getElementById('btn-save').classList.remove('hidden');
+            document.getElementById('btn-edit-container').classList.add('hidden');
+            document.getElementById('readonly-lock-banner').classList.add('hidden');
+            
+            const cont = document.getElementById('input-container');
+            cont.innerHTML = `
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
+            `;
+        }
+
+        function showReadonlyMode(canEditThisView, hasData) {
+            document.getElementById('btn-cam-container').classList.add('hidden');
+            document.getElementById('btn-save').classList.add('hidden');
+            
+            if(hasData) { document.getElementById('readonly-lock-banner').classList.remove('hidden'); }
+            else { document.getElementById('readonly-lock-banner').classList.add('hidden'); }
+            
+            const cont = document.getElementById('input-container');
+            cont.innerHTML = `
+                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
+                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
+                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
+                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
+            `;
+
+            if (isAdmin && canEditThisView && hasData) {
+                document.getElementById('btn-edit-container').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-edit-container').classList.add('hidden');
+            }
         }
 
         function renderAllFields() {
