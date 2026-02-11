@@ -22,17 +22,12 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        /* LOGIN & MODALS */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
-
-        /* UI ELEMENTS */
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
         
@@ -43,7 +38,6 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* CARDS & LISTS */
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.2s; user-select: none; }
         .drill-item:active { background: #f3f4f6; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s; user-select: none; }
@@ -55,23 +49,17 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
-        /* BATCH MODE */
         .batch-row { display: flex; align-items: center; padding: 0 4px; transition: all 0.2s; }
-        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; pointer-events: none; }
+        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
         
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        
-        #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
 
-        /* DETAIL VIEW */
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -90,7 +78,10 @@
         .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
         .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
-        
+
+        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
+        #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
         /* PULL TO REFRESH */
@@ -98,6 +89,7 @@
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
         #ptr-spinner.loading i { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         
         .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
@@ -140,7 +132,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v229 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v224 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -379,7 +371,6 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        // *** YOUR URL HAS BEEN UPDATED BELOW ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -397,55 +388,49 @@
                 if(outcome === 'accepted') {
                     document.getElementById('install-btn').style.display='none'; 
                 }
-                deferredPrompt = null; 
+                deferredPrompt=null; 
             } 
         }
 
-        // *** GLOBAL STATE VARIABLES ***
         let fullInventory = []; 
         let noteTemplates = []; 
         let socReps = []; 
         let socData = []; 
+        let savedFieldData = {}; 
         let activeItem = null; 
         let currentUser = null; 
         let isAdmin = false; 
         let taskViewTargetUser = null; 
-
-        // Navigation State
         let currentTab = 'season'; 
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
-        
         let reviewViewLevel = 0; 
         let selectedReviewName = null; 
         let selectedReviewSize = null; 
-        
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null; 
-        
         let currentDriveTab = 'all'; 
-        let lastView = 'drive'; 
-        let currentOriginView = ''; 
-
-        // Batch & Timer State
         let isBatch = false; 
         let selectedIdx = []; 
+        let lastView = 'drive'; 
+        let currentOriginView = ''; 
         let longPressTimer; 
         let autoSyncTimer;
 
-        // *** HELPER: SMART LOCATION SORTING (D.07.023 -> D.07) ***
+        // --- NEW: SMART LOCATION PREFIX LOGIC ---
         function getLocPrefix(loc) {
             if (!loc) return "No Loc";
             let parts = loc.split('.');
             if (parts.length >= 3) {
-                return parts[0] + '.' + parts[1]; 
+                return parts[0] + '.' + parts[1]; // Turns D.07.023 into D.07
             }
             return loc;
         }
 
-        // *** UI UTILITIES ***
+        // --- UI UTILITIES ---
+
         function showToast(title, message, isAlert = false) {
             const toast = document.getElementById('toast-notification');
             toast.style.background = isAlert ? '#ef4444' : '#16a34a';
@@ -467,7 +452,7 @@
             document.getElementById('drawer-overlay').classList.toggle('open');
         }
 
-        // *** PULL TO REFRESH LOGIC ***
+        // --- PULL TO REFRESH ---
         let ptrStartY = 0, ptrCurrentY = 0, ptrDragging = false;
         const scrollArea = document.getElementById('main-scroll-area'); 
         const spinner = document.getElementById('ptr-spinner');
@@ -492,7 +477,7 @@
                 ptrDragging = false; 
             }
         }, { passive: true });
-
+        
         scrollArea.addEventListener('touchend', () => {
             if (!ptrDragging) return; 
             ptrDragging = false;
@@ -509,7 +494,7 @@
             ptrCurrentY = 0;
         });
 
-        // *** AUTHENTICATION ***
+        // --- AUTHENTICATION ---
         function selectUser(u) { 
             currentUser = u; 
             isAdmin = ADMINS.includes(u); 
@@ -545,7 +530,7 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // *** CORE DATA FETCHING ***
+        // --- DATA FETCHING ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -564,22 +549,22 @@
                 
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
-                    noteTemplates = cloudJson.templates || [];
+                    noteTemplates = cloudJson.templates || []; 
                     
                     if(!isSilent) { 
+                        applyAssignments(); 
                         launchApp(); 
                         startAutoSync(); 
                     } else {
-                        // Silent Refresh Logic
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
-                            if(activeItem) { 
-                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID); 
+                            if(activeItem) {
+                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                     activeItem = freshItem; 
                                     if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
                                         renderOverviewData(); 
                                     } 
-                                } 
+                                }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
@@ -600,28 +585,10 @@
             } catch (e) { 
                 console.error("Fetch Data Error:", e); 
                 if(!isSilent) { 
-                    document.getElementById('loading-text').innerHTML = `
-                        <div class="text-red-200">CONNECTION FAILED</div>
-                        <div class="text-[10px] opacity-80 py-2">${e.message}</div>
-                        <button onclick="fetchData()" class="bg-white text-[#007a4d] font-bold py-2 px-6 rounded-full mt-2 text-xs">RETRY</button>
-                        <div onclick="resetLogin()" class="text-[10px] underline mt-3 cursor-pointer opacity-60">Cancel / Go Back</div>
-                    `;
+                    document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
+                    setTimeout(resetLogin, 4000); 
                 } 
             }
-        }
-        
-        function launchApp() {
-            document.getElementById('view-login').style.display = 'none';
-            document.getElementById('app-wrapper').classList.remove('hidden');
-            document.getElementById('header-user').innerText = currentUser;
-            
-            if(isAdmin) {
-                document.getElementById('home-btn-soc').classList.remove('hidden');
-                document.getElementById('home-btn-track').classList.remove('hidden');
-                document.getElementById('home-btn-review').classList.remove('hidden');
-                document.getElementById('team-selector').classList.remove('hidden');
-            }
-            switchView('home');
         }
 
         function checkForRequests() {
@@ -631,180 +598,6 @@
             }
         }
 
-        // --- NAVIGATION LOGIC (MISSING IN SNIPPET, ADDED HERE) ---
-        function switchView(viewName) {
-            // Hide all views
-            const views = ['home', 'drive', 'tasks', 'salesoffice', 'soc', 'tracking', 'review', 'viewer', 'detail'];
-            views.forEach(v => {
-                const el = document.getElementById('view-' + v);
-                if(el) el.classList.add('hidden');
-            });
-            
-            // Show selected view
-            const target = document.getElementById('view-' + viewName);
-            if(target) target.classList.remove('hidden');
-            
-            // Reset state triggers
-            if(viewName === 'drive') { renderDriveNames(); }
-            if(viewName === 'tasks') { renderTasks(); }
-            if(viewName === 'salesoffice') { renderSalesOffice(); }
-            if(viewName === 'viewer') { renderViewerNames(); }
-            if(viewName === 'review') { renderReviewItems(); }
-        }
-        
-        function switchDriveTab(tab) {
-            currentDriveTab = tab;
-            document.getElementById('drivetab-all').classList.toggle('active', tab === 'all');
-            document.getElementById('drivetab-photos').classList.toggle('active', tab === 'photos');
-            renderDriveNames();
-        }
-        
-        function switchDetailTab(tab) {
-             document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview');
-             document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions');
-             
-             if(tab === 'overview') {
-                 document.getElementById('det-overview-content').classList.remove('hidden');
-                 document.getElementById('det-actions-content').classList.add('hidden');
-             } else {
-                 document.getElementById('det-overview-content').classList.add('hidden');
-                 document.getElementById('det-actions-content').classList.remove('hidden');
-             }
-        }
-        
-        function setTaskTab(t) {
-            currentTab = t;
-            document.querySelectorAll('#task-tabs-container .task-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('ttab-' + t).classList.add('active');
-            renderTasks();
-        }
-        
-        function setTaskUser(u) {
-            taskViewTargetUser = u;
-            showToast("Switched User", "Viewing tasks for " + u);
-            renderTasks();
-        }
-        
-        function goBackFromDetail() {
-            switchView(lastView);
-        }
-
-        // --- RENDER FUNCTIONS (RECONSTRUCTED) ---
-        function renderDriveNames() {
-            const container = document.getElementById('drive-content');
-            const search = document.getElementById('drive-search').value.toLowerCase();
-            
-            let filtered = fullInventory.filter(i => {
-                if(!i.LOCATIONCODE && !i.COMMONNAME) return false;
-                // Basic filter: must have a location OR be in stock
-                if(!i.LOCATIONCODE && i.PTRAVAILABLE <= 0) return false;
-                
-                const txt = (i.COMMONNAME + " " + i.LOCATIONCODE + " " + i.CONTSIZE).toLowerCase();
-                return txt.includes(search);
-            });
-            
-            if(currentDriveTab === 'photos') {
-                filtered = filtered.filter(i => i.SAVED_PHOTO_LINK && i.SAVED_PHOTO_LINK.length > 5);
-            }
-            
-            // Sort by Location
-            filtered.sort((a,b) => (a.LOCATIONCODE || "ZZ").localeCompare(b.LOCATIONCODE || "ZZ"));
-            
-            // Limit to 100 for performance
-            const displayList = filtered.slice(0, 100);
-            
-            let html = "";
-            displayList.forEach(item => {
-                // Find index in main array
-                const idx = fullInventory.findIndex(x => x.UNIQUE_ID === item.UNIQUE_ID);
-                html += createRowHtml(item, idx, 'drive');
-            });
-            
-            container.innerHTML = html || '<div class="text-center text-gray-400 mt-10">No items found.</div>';
-        }
-        
-        function renderTasks() {
-            const container = document.getElementById('task-content');
-            const search = document.getElementById('task-search').value.toLowerCase();
-            const tabs = document.getElementById('task-tabs-container');
-            const target = taskViewTargetUser || currentUser;
-            
-            tabs.classList.remove('hidden');
-            
-            let filtered = fullInventory.filter(i => {
-               // Must be assigned to target user
-               const assigned = i.ASSIGNEDTO || "";
-               const reqAssigned = i.REQUEST_ASSIGNED_TO || "";
-               const isAssigned = (assigned.includes(target) && i.TASK_TAB === currentTab) || 
-                                  (reqAssigned.includes(target) && i.TASK_TAB === 'requests' && currentTab === 'requests');
-               
-               if(!isAssigned) return false;
-               
-               const txt = (i.COMMONNAME + " " + i.LOCATIONCODE).toLowerCase();
-               return txt.includes(search);
-            });
-            
-            let html = "";
-            filtered.forEach(item => {
-                 const idx = fullInventory.findIndex(x => x.UNIQUE_ID === item.UNIQUE_ID);
-                 html += createRowHtml(item, idx, 'tasks');
-            });
-            
-            container.innerHTML = html || '<div class="text-center text-gray-400 mt-10">No tasks found.</div>';
-        }
-        
-        function renderSalesOffice() {
-            const container = document.getElementById('salesoffice-content');
-            const search = document.getElementById('salesoffice-search').value.toLowerCase();
-            
-            // Filter only items with Sales Descriptions
-            const filtered = fullInventory.filter(i => {
-                if(!i.SAVED_SALES_DESC) return false;
-                const txt = (i.COMMONNAME + " " + i.SAVED_SALES_DESC).toLowerCase();
-                return txt.includes(search);
-            }).slice(0, 50);
-            
-            let html = "";
-            filtered.forEach(item => {
-                const idx = fullInventory.findIndex(x => x.UNIQUE_ID === item.UNIQUE_ID);
-                html += createRowHtml(item, idx, 'salesoffice');
-            });
-            container.innerHTML = html || '<div class="text-center text-gray-400 mt-10">No descriptions found.</div>';
-        }
-        
-        function renderViewerNames() {
-            const container = document.getElementById('viewer-content');
-            const search = document.getElementById('viewer-search').value.toLowerCase();
-            if(search.length < 3) {
-                 container.innerHTML = '<div class="text-center text-gray-400 mt-10">Type 3+ characters to search...</div>';
-                 return;
-            }
-            
-            const filtered = fullInventory.filter(i => {
-                const txt = (i.COMMONNAME + " " + i.ITEMCODE).toLowerCase();
-                return txt.includes(search);
-            }).slice(0, 50);
-            
-            let html = "";
-            filtered.forEach(item => {
-                const idx = fullInventory.findIndex(x => x.UNIQUE_ID === item.UNIQUE_ID);
-                html += createRowHtml(item, idx, 'viewer');
-            });
-            container.innerHTML = html;
-        }
-
-        function renderReviewItems() {
-             const container = document.getElementById('review-content');
-             const filtered = fullInventory.filter(i => i.TASK_TAB === 'review' || i.STATUS === 'review');
-             let html = "";
-             filtered.forEach(item => {
-                 const idx = fullInventory.findIndex(x => x.UNIQUE_ID === item.UNIQUE_ID);
-                 html += createRowHtml(item, idx, 'review');
-             });
-             container.innerHTML = html || '<div class="text-center text-gray-400 mt-10">No items in review.</div>';
-        }
-
-        // --- DATA SAVING UTILS ---
         function logFailedSave(payload) {
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
             failed = failed.filter(f => f.id !== payload.id); 
@@ -835,10 +628,9 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
-        // --- MAIN SAVE FUNCTION ---
+        // --- DATA SAVING ---
         function saveData(silent = false) {
-            // PERMISSION CHECK: Admins always allowed. Regular users allowed in 'tasks' AND 'drive' views.
-            if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'drive') return; 
+            if(!isAdmin && currentOriginView !== 'tasks') return; 
             
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
@@ -892,11 +684,17 @@
         function markRequestComplete() {
             if(!activeItem) return;
             
-            const match = document.getElementById('in-match') ? document.getElementById('in-match').value : (activeItem.SAVED_MATCH || "");
-            const spec = document.getElementById('in-spec') ? document.getElementById('in-spec').value : (activeItem.SAVED_SPEC || "");
-            const pick = document.getElementById('in-pick') ? document.getElementById('in-pick').value : (activeItem.SAVED_PICK || "");
-            const note = document.getElementById('in-note') ? document.getElementById('in-note').value : (activeItem.SAVED_NOTE || "");
-            const salesDesc = document.getElementById('in-sales-desc') ? document.getElementById('in-sales-desc').value : (activeItem.SAVED_SALES_DESC || "");
+            const matchEl = document.getElementById('in-match'); 
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick'); 
+            const noteEl = document.getElementById('in-note'); 
+            const salesDescEl = document.getElementById('in-sales-desc');
+
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
 
             activeItem.SAVED_MATCH = match; 
             activeItem.SAVED_SPEC = spec; 
@@ -935,11 +733,11 @@
             .catch(err => logFailedSave(payload));
         }
 
-        // --- SILENT BACKGROUND PHOTO UPLOAD ---
+        // --- NEW: SILENT BACKGROUND PHOTO UPLOAD ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
-                const itemBeingEdited = activeItem; // Lock reference
+                const itemBeingEdited = activeItem; // Lock to current item
                 
                 showToast("Uploading...", "Photo uploading in background. You can keep working.", false);
                 
@@ -986,20 +784,20 @@
                                 itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
                                 itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
-                                // Refresh UI only if still viewing the same item
+                                // Update UI ONLY if user is still on this specific detail view
                                 if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
                                     renderOverviewData(); 
                                 }
                                 
-                                // Silent cloud save
+                                // Silently save this specific item's update to the cloud
                                 const payload = { 
                                     type: "update", 
                                     id: itemBeingEdited.UNIQUE_ID, 
-                                    match: itemBeingEdited.SAVED_MATCH||"", 
-                                    spec: itemBeingEdited.SAVED_SPEC||"", 
-                                    pick: itemBeingEdited.SAVED_PICK||"", 
-                                    note: itemBeingEdited.SAVED_NOTE||"", 
-                                    salesDesc: itemBeingEdited.SAVED_SALES_DESC||"", 
+                                    match: itemBeingEdited.SAVED_MATCH || "", 
+                                    spec: itemBeingEdited.SAVED_SPEC || "", 
+                                    pick: itemBeingEdited.SAVED_PICK || "", 
+                                    note: itemBeingEdited.SAVED_NOTE || "", 
+                                    salesDesc: itemBeingEdited.SAVED_SALES_DESC || "", 
                                     photoLink: itemBeingEdited.SAVED_PHOTO_LINK, 
                                     photoName: itemBeingEdited.SAVED_PHOTO_NAME, 
                                     user: currentUser 
@@ -1010,7 +808,7 @@
                                     body: JSON.stringify(payload) 
                                 }).catch(err => logFailedSave(payload));
 
-                                showToast("Success", "Photo securely uploaded."); 
+                                showToast("Success", "Photo securely uploaded and saved."); 
                             } else { 
                                 showToast("Upload Error", data.message, true); 
                             }
@@ -1021,19 +819,478 @@
             }
         }
 
-        // --- BATCH SELECTION LOGIC ---
-        function handleCardClick(idx, source) {
-            if(isBatch) {
-                const cb = document.getElementById('cb-' + idx);
-                if(cb) {
-                    cb.checked = !cb.checked; 
-                    updateSelected(); 
+        // --- SOC LOGIC ---
+        function fetchSocReps() {
+            document.getElementById('soc-status').innerText = "Loading Reps...";
+            
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    socReps = data.data; 
+                    socViewLevel = 0; 
+                    renderSocView(); 
+                    document.getElementById('soc-status').innerText = "";
+                } else { 
+                    document.getElementById('soc-status').innerText = "Error: " + data.message; 
                 }
-                return; 
-            }
-            openDetail(idx, source);
+            })
+            .catch(e => { 
+                document.getElementById('soc-status').innerText = "Fetch Error: " + e; 
+            });
         }
 
+        function fetchRepData(repName) {
+            document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+            
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    socData = data.data; 
+                    socViewLevel = 1; 
+                    selectedSocRep = repName; 
+                    renderSocView(); 
+                    document.getElementById('soc-status').innerText = "";
+                } else { 
+                    document.getElementById('soc-status').innerText = "Error: " + data.message; 
+                }
+            });
+        }
+
+        function renderSocView() {
+            const container = document.getElementById('soc-content'); 
+            const term = document.getElementById('soc-search').value.toLowerCase();
+            
+            if (term && socData.length > 0) { 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
+                return; 
+            }
+            
+            if(socViewLevel === 0) { 
+                if(socReps.length === 0) { 
+                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; 
+                    return; 
+                } 
+                let html = `<div class="task-tabs mb-4"><div class="task-tab active">SALES REPS</div></div>`; 
+                html += socReps.map(r => `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                container.innerHTML = html;
+            } else if(socViewLevel === 1) { 
+                const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+            } else if(socViewLevel === 2) { 
+                const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`; 
+            }
+        }
+        
+        function selectSocCust(c) { 
+            selectedSocCust = c; 
+            socViewLevel = 2; 
+            renderSocView(); 
+        }
+
+        // --- DRIVE MODE LOGIC ---
+        function switchDriveTab(tab) {
+            currentDriveTab = tab;
+            document.getElementById('drivetab-all').classList.toggle('active', tab === 'all');
+            document.getElementById('drivetab-photos').classList.toggle('active', tab === 'photos');
+            renderDriveNames();
+        }
+
+        function renderDriveNames() {
+            const term = document.getElementById('drive-search').value.toLowerCase();
+            
+            // Photo Gallery / Recent Updates Tab
+            if (currentDriveTab === 'photos') {
+                let photoItems = fullInventory.filter(i => i.SAVED_PHOTO_LINK || i.SAVED_NOTE || i.SAVED_SALES_DESC || i.SAVED_PICK || i.SAVED_MATCH);
+                
+                if(term) {
+                    photoItems = photoItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term));
+                }
+                
+                if(photoItems.length === 0) { 
+                    document.getElementById('drive-content').innerHTML = `<div class="p-8 text-center text-gray-400">No recent updates found.</div>`; 
+                    return; 
+                }
+                
+                let html = '<div class="grid grid-cols-2 gap-3">';
+                photoItems.forEach(item => {
+                    const idx = fullInventory.indexOf(item); 
+                    let mediaHtml = `<div class="w-full h-32 bg-green-50 flex items-center justify-center p-2 text-center text-xs text-green-800 font-semibold italic overflow-hidden shadow-inner">"${item.SAVED_SALES_DESC || item.SAVED_NOTE || item.SAVED_PICK || 'Updated'}"</div>`;
+                    
+                    if(item.SAVED_PHOTO_LINK) {
+                        const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                        let thumbUrl = firstLink;
+                        const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                        
+                        if(idMatch && idMatch[1]) { 
+                            thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                        }
+                        mediaHtml = `<img src="${thumbUrl}" class="w-full h-32 object-cover bg-gray-100" loading="lazy" onerror="this.style.display='none'">`;
+                    }
+                    
+                    html += `
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer" onclick="handleCardClick(${idx}, 'drive')">
+                            ${mediaHtml}
+                            <div class="p-2">
+                                <div class="text-[10px] font-bold text-[#007a4d] truncate">${item.COMMONNAME}</div>
+                                <div class="text-[9px] text-gray-500 truncate">${item.CONTSIZE} | ${item.LOCATIONCODE || 'No Loc'}</div>
+                            </div>
+                        </div>`;
+                });
+                
+                html += '</div>'; 
+                document.getElementById('drive-content').innerHTML = html; 
+                return;
+            }
+
+            // Normal Browse Search
+            if (term) {
+                const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term));
+                document.getElementById('drive-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); 
+                return;
+            }
+
+            // Normal Browse Folders
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        
+        function selectDriveName(name) {
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        
+        function selectDriveSize(name, size) {
+            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
+            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
+                const idx = fullInventory.indexOf(item); 
+                return createRowHtml(item, idx, 'drive'); 
+            }).join('');
+        }
+
+        // --- TASKS LOGIC ---
+        function renderTasks() {
+            const container = document.getElementById('task-content'); 
+            const crumb = document.getElementById('task-crumb');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
+            
+            let myItems = []; 
+            const now = new Date().getTime();
+            
+            const taskFilter = (i) => {
+                if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                if (i.TASK_TAB !== currentTab) return false;
+                if (i.TIMESTAMP) {
+                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
+                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
+                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    if (daysOld < 10 && !isLowStock) return false; 
+                }
+                return true;
+            };
+            
+            if(currentTab === 'requests') {
+                 myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                 crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+            } else { 
+                myItems = fullInventory.filter(taskFilter); 
+            }
+
+            const term = document.getElementById('task-search').value.toLowerCase();
+            if (term) { 
+                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+
+            if(myItems.length === 0 && currentTab === 'requests') { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; 
+                return; 
+            }
+            
+            if(currentTab === 'requests') { 
+                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+
+            if(currentTab === 'season' || currentTab === 'location') {
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                    
+                    if(blocks.length === 0) { 
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
+                        return; 
+                    }
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => {
+                        const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
+                        return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                    
+                } else if (taskViewLevel === 1) {
+                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`; 
+                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                    
+                    // LOCATION PREFIX AND NUMERIC SORT
+                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
+                        const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                    
+                } else {
+                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                    
+                    // NUMERIC FULL SORT
+                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
+                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
+            }
+        }
+        
+        function renderTeamSelector() { 
+            document.getElementById('team-selector').classList.remove('hidden'); 
+            document.getElementById('task-tabs-container').classList.add('hidden'); 
+            document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; 
+            document.getElementById('task-crumb').innerText = "Team View"; 
+        }
+        
+        function setTaskUser(user) { 
+            taskViewTargetUser = user; 
+            document.getElementById('team-selector').classList.add('hidden'); 
+            document.getElementById('task-tabs-container').classList.remove('hidden'); 
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+        
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
+            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
+            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
+            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+        
+        function selectTaskBlock(b) { 
+            selectedTaskBlock = b; 
+            taskViewLevel = 1; 
+            renderTasks(); 
+        }
+        
+        function selectTaskLoc(l) { 
+            selectedTaskLoc = l; 
+            taskViewLevel = 2; 
+            renderTasks(); 
+        }
+        
+        function backToTaskLocs() { 
+            taskViewLevel = 1; 
+            selectedTaskLoc = null; 
+            renderTasks(); 
+        }
+        
+        function resetTaskView() { 
+            taskViewLevel = 0; 
+            selectedTaskBlock = null; 
+            selectedTaskLoc = null; 
+            renderTasks(); 
+        }
+
+        // --- VIEWER LOGIC ---
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            
+            if(term) { 
+                const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); 
+                return; 
+            }
+            
+            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort(); 
+            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        
+        function selectViewerName(name) { 
+            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); 
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+        }
+        
+        function selectViewerSize(name, size) { 
+            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); 
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
+                const idx = fullInventory.indexOf(item); 
+                return createRowHtml(item, idx, 'viewer'); 
+            }).join(''); 
+        }
+
+        // --- REVIEW LOGIC ---
+        function renderReviewItems() {
+            const container = document.getElementById('review-content'); 
+            const crumb = document.getElementById('review-crumb'); 
+            const failContainer = document.getElementById('failed-saves-container');
+            
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if (failed.length > 0) { 
+                failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; 
+            } else { 
+                failContainer.innerHTML = ''; 
+            }
+            
+            const term = document.getElementById('review-search').value.toLowerCase(); 
+            const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            
+            if(term) { 
+                const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                return; 
+            }
+            
+            if(reviewItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; 
+                crumb.innerText = ""; 
+                return; 
+            }
+            
+            if(reviewViewLevel === 0) { 
+                crumb.innerText = "All Names"; 
+                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); 
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if(reviewViewLevel === 1) { 
+                crumb.innerText = selectedReviewName; 
+                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); 
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+            } else if(reviewViewLevel === 2) { 
+                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
+                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
+            }
+        }
+        
+        function selectReviewName(n) { 
+            selectedReviewName = n; 
+            reviewViewLevel = 1; 
+            renderReviewItems(); 
+        }
+        
+        function selectReviewSize(s) { 
+            selectedReviewSize = s; 
+            reviewViewLevel = 2; 
+            renderReviewItems(); 
+        }
+
+        // --- SALES OFFICE LOGIC ---
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); 
+            const searchInput = document.getElementById('salesoffice-search'); 
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const salesItems = fullInventory.filter(i => { 
+                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
+                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
+                return true; 
+            });
+            
+            if(salesItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; 
+                return; 
+            }
+            
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            
+            container.innerHTML = salesItems.map(item => `
+                <div class="inv-card mb-3 !p-4 border-green-200">
+                    <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                    <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                    <div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
+                </div>
+            `).join('');
+        }
+
+        // --- APP NAVIGATION ---
+        function launchApp() { 
+            document.getElementById('view-login').style.display = 'none'; 
+            document.getElementById('app-wrapper').classList.remove('hidden'); 
+            document.getElementById('header-user').innerText = currentUser; 
+            
+            if(isAdmin) { 
+                document.getElementById('home-btn-soc').classList.remove('hidden'); 
+                document.getElementById('home-btn-track').classList.remove('hidden'); 
+                document.getElementById('home-btn-review').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('home-btn-soc').classList.add('hidden'); 
+                document.getElementById('home-btn-track').classList.add('hidden'); 
+                document.getElementById('home-btn-review').classList.add('hidden'); 
+            } 
+            
+            switchView('home'); 
+        }
+        
+        function applyAssignments() { 
+            let i = 0; 
+            fullInventory.forEach(item => { 
+                if(!item.ASSIGNEDTO) { 
+                    const group = (item.PLANTGROUPCODE || "").toString(); 
+                    if(group.includes("230") || group.includes("140")) {
+                        item.ASSIGNEDTO = "Dylan"; 
+                    } else if(group.includes("330") || group.includes("300")) {
+                        item.ASSIGNEDTO = "Kayla"; 
+                    } else { 
+                        const weight = i % 5; 
+                        item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); 
+                        i++; 
+                    } 
+                } 
+            }); 
+        }
+        
+        function switchView(v) { 
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            }); 
+            
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+            
+            if(v === 'drive') renderDriveNames(); 
+            if(v === 'tasks') { 
+                if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
+                    renderTeamSelector(); 
+                } else { 
+                    renderTasks(); 
+                } 
+            } 
+            if(v === 'viewer') renderViewerNames(); 
+            if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } 
+            if(v === 'soc') { fetchSocReps(); } 
+            if(v === 'salesoffice') { renderSalesOffice(); } 
+        }
+        
+        function switchDetailTab(tab) { 
+            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); 
+            document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); 
+            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); 
+            document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); 
+        }
+        
+        function goBackFromDetail() { 
+            document.getElementById('view-detail').classList.add('hidden'); 
+            document.getElementById('view-' + lastView).classList.remove('hidden'); 
+            if(lastView === 'tasks') renderTasks(); 
+            if(lastView === 'drive') renderDriveNames(); 
+        }
+
+        // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
         function updateSelected() {
             selectedIdx = [];
             document.querySelectorAll('.select-check').forEach(cb => {
@@ -1049,31 +1306,6 @@
             }
         }
 
-        function startLongPress() { 
-            if(!isAdmin) return; 
-            longPressTimer = setTimeout(() => { 
-                if(!isBatch) toggleBatch(); 
-                navigator.vibrate(100); 
-            }, 1500); 
-        }
-        
-        function cancelLongPress() { 
-            clearTimeout(longPressTimer); 
-        }
-        
-        function toggleBatch() { 
-            if(!isAdmin) return; 
-            isBatch = !isBatch; 
-            document.body.classList.toggle('batch-mode', isBatch); 
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
-            
-            if(!isBatch) { 
-                document.getElementById('action-bar').classList.remove('visible'); 
-                selectedIdx = []; 
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
-            } 
-        }
-
         function openAssignModal() {
             if (selectedIdx.length === 0) { 
                 showToast("Warning", "No items selected.", true); 
@@ -1082,7 +1314,6 @@
             document.getElementById('assign-modal').style.display = 'flex';
         }
 
-        // --- BATCH TEXT & EMAIL GENERATORS ---
         function getBatchHtml() {
             let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
             selectedIdx.forEach(idx => {
@@ -1128,21 +1359,28 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
-                        text += `• ${name} (${url})\n`; 
+                        // CLEAN LINK - NO URL
+                        text += `• ${name}\n`; 
                     });
                 }
                 text += `\n`;
             });
             return text;
         }
-
+        
         function batchText() { 
-            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
             window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
         }
         
         function batchEmail() { 
-            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
             const html = getBatchHtml(); 
             const text = getBatchText();
             const blobHtml = new Blob([html], { type: "text/html" }); 
@@ -1153,7 +1391,8 @@
                 navigator.clipboard.write(data).then(() => { 
                     showToast("Copied!", "Ready to paste into your email app."); 
                     setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); 
-                    isBatch = false; toggleBatch();
+                    isBatch = false; 
+                    toggleBatch();
                 }).catch(err => { 
                     fallbackCopy(html); 
                     window.location.href = `mailto:?subject=Greenleaf%20Report`; 
@@ -1165,7 +1404,10 @@
         }
         
         function copyBatchData() { 
-            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
             const html = getBatchHtml(); 
             const text = getBatchText();
             const blobHtml = new Blob([html], { type: "text/html" }); 
@@ -1174,7 +1416,9 @@
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => { 
-                    showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); 
+                    showToast("Copied!", "Data copied to clipboard."); 
+                    isBatch = false; 
+                    toggleBatch(); 
                 }).catch(err => { fallbackCopy(html); });
             } else { 
                 fallbackCopy(html); 
@@ -1182,65 +1426,53 @@
         }
 
         function fallbackCopy(html) {
-            const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv);
-            const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv);
-            showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch();
+            const tempDiv = document.createElement("div"); 
+            tempDiv.innerHTML = html; 
+            tempDiv.style.position = "fixed"; 
+            tempDiv.style.left = "-9999px"; 
+            document.body.appendChild(tempDiv);
+            
+            const range = document.createRange(); 
+            range.selectNodeContents(tempDiv); 
+            const sel = window.getSelection(); 
+            sel.removeAllRanges(); 
+            sel.addRange(range); 
+            document.execCommand('copy'); 
+            document.body.removeChild(tempDiv);
+            
+            showToast("Copied!", "Data copied (Legacy Mode)."); 
+            isBatch = false; 
+            toggleBatch();
         }
 
-        function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; 
-            const k = document.getElementById('chk-kayla').checked; 
-            const m = document.getElementById('chk-morgan').checked; 
-            const isCalReq = document.getElementById('chk-cal-request').checked;
-            
-            let selected = []; 
-            if(d) selected.push("Dylan"); 
-            if(k) selected.push("Kayla"); 
-            if(m) selected.push("Morgan");
-            
-            if(selected.length === 0) { showToast("Warning", "Select at least one person.", true); return; }
-            let target = selected.join(" & ");
-            
-            const updates = selectedIdx.map(idx => {
-                const item = fullInventory[idx]; 
-                item.REQUEST_ASSIGNED_TO = target; 
-                item.TASK_TAB = "requests"; 
-                if(isCalReq) { 
-                    let oldNote = item.SAVED_PICK || ""; 
-                    if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } 
-                }
-                return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser };
-            });
-
-            document.getElementById('assign-modal').style.display = 'none'; 
-            toggleBatch(); 
-            showToast("Saving", "Batch assigning items...");
-            
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
-            .then(res => res.json())
-            .then(data => { 
-                if(data.status === 'success') { fetchData(true); } 
-                else { showToast("Error", data.message, true); } 
-            })
-            .catch(err => { showToast("Network Error", "Saved offline.", true); });
+        function handleCardClick(idx, source) { 
+            if(isBatch) { 
+                const cb = document.getElementById('cb-' + idx); 
+                if(cb) { 
+                    cb.checked = !cb.checked; 
+                    updateSelected(); 
+                } 
+                return; 
+            } 
+            openDetail(idx, source); 
         }
 
-        // --- ROW CREATION ---
         function createRowHtml(item, idx, source) {
             let thumbHtml = '';
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
-                let thumbUrl = firstLink; 
+                let thumbUrl = firstLink;
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; } 
+                
+                if(idMatch && idMatch[1]) { 
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                }
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
-            let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
-
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
-                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>` : ''}
+                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
                 <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
                     ${thumbHtml}
                     <div class="flex-grow min-w-0">
@@ -1252,13 +1484,41 @@
             </div>`;
         }
         
+        function startLongPress() { 
+            if(!isAdmin) return; 
+            longPressTimer = setTimeout(() => { 
+                if(!isBatch) toggleBatch(); 
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+        
+        function toggleBatch() { 
+            if(!isAdmin) return; 
+            isBatch = !isBatch; 
+            document.body.classList.toggle('batch-mode', isBatch); 
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
+            
+            if(!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
+                selectedIdx = []; 
+            } 
+        }
+
         // --- DETAIL VIEW LOGIC ---
         function openDetail(idx, originView) {
             lastView = originView; 
             currentOriginView = originView; 
             activeItem = fullInventory[idx];
             
-            switchView('detail');
+            document.getElementById('view-detail').classList.remove('hidden'); 
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(v => {
+                document.getElementById(v).classList.add('hidden');
+            });
             
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
@@ -1285,7 +1545,13 @@
             switchDetailTab('overview');
         }
 
-        function toggleExpand() { const section = document.getElementById('expand-section'); if (!section.classList.contains('expanded')) { renderAllFields(); } section.classList.toggle('expanded'); }
+        function toggleExpand() { 
+            const section = document.getElementById('expand-section'); 
+            if (!section.classList.contains('expanded')) { 
+                renderAllFields(); 
+            } 
+            section.classList.toggle('expanded'); 
+        }
 
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container');
@@ -1293,16 +1559,23 @@
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
             let canEditThisView = false;
-            // PERMISSION UPDATE: Drive Mode is now editable for everyone
             if (isAdmin) { 
                 canEditThisView = ['tasks', 'drive', 'review'].includes(currentOriginView); 
             } else { 
-                canEditThisView = ['tasks', 'drive'].includes(currentOriginView); 
+                canEditThisView = ['tasks'].includes(currentOriginView); 
             }
 
-            if (isMyRequest) { btnComplete.classList.remove('hidden'); } else { btnComplete.classList.add('hidden'); }
+            if (isMyRequest) { 
+                btnComplete.classList.remove('hidden'); 
+            } else { 
+                btnComplete.classList.add('hidden'); 
+            }
             
-            if (canEditThisView && !hasData) { showEditMode(); } else { showReadonlyMode(canEditThisView, hasData); }
+            if (canEditThisView && !hasData) { 
+                showEditMode(); 
+            } else { 
+                showReadonlyMode(canEditThisView, hasData); 
+            }
         }
 
         function showEditMode() {
@@ -1322,11 +1595,27 @@
             const cont = document.getElementById('input-container');
             
             cont.innerHTML = `
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
-                <div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">${dlHtml}</div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
-                <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
+                    <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label>
+                    <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
+                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">
+                    ${dlHtml}
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
+                    <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
+                    <textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea>
+                </div>
             `;
         }
 
@@ -1334,7 +1623,11 @@
             document.getElementById('btn-cam-container').classList.add('hidden'); 
             document.getElementById('btn-save').classList.add('hidden');
             
-            if(hasData) { document.getElementById('readonly-lock-banner').classList.remove('hidden'); } else { document.getElementById('readonly-lock-banner').classList.add('hidden'); }
+            if(hasData) { 
+                document.getElementById('readonly-lock-banner').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('readonly-lock-banner').classList.add('hidden'); 
+            }
             
             const cont = document.getElementById('input-container');
             cont.innerHTML = `
@@ -1345,8 +1638,7 @@
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
             `;
             
-            // FIX: Allow editing for ANYONE if the view allows it (Drive/Tasks)
-            if (canEditThisView && hasData) { 
+            if (isAdmin && canEditThisView && hasData) { 
                 document.getElementById('btn-edit-container').classList.remove('hidden'); 
             } else { 
                 document.getElementById('btn-edit-container').classList.add('hidden'); 
@@ -1357,11 +1649,14 @@
             if(!activeItem) return;
             const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
             let html = '<div class="grid grid-cols-1 gap-2">';
+            
             for (const [key, value] of Object.entries(activeItem)) { 
                 if(hiddenKeys.includes(key)) continue; 
                 html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; 
             }
-            html += '</div>'; document.getElementById('expand-content').innerHTML = html;
+            
+            html += '</div>'; 
+            document.getElementById('expand-content').innerHTML = html;
         }
 
         function renderOverviewData() {
@@ -1387,14 +1682,99 @@
                     const dispName = names[i] || `Photo ${i+1}`; 
                     let thumbUrl = url; 
                     const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
-                    phHtml += `<a href="${url}" target="_blank" class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50"><img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'"><div class="flex-grow min-w-0"><div class="text-xs font-bold text-blue-600 truncate">${dispName}</div><div class="text-[10px] text-gray-400">Tap to view full size</div></div><i class="ph-bold ph-arrow-square-out text-gray-300"></i></a>`;
+                    
+                    if(idMatch && idMatch[1]) { 
+                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                    }
+                    
+                    phHtml += `
+                        <a href="${url}" target="_blank" class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
+                            <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'">
+                            <div class="flex-grow min-w-0">
+                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                <div class="text-[10px] text-gray-400">Tap to view full size</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                        </a>
+                    `;
                 });
+                
                 photoList.innerHTML = phHtml; 
                 h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
-            } else { photoDiv.classList.add('hidden'); }
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
             
-            if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else { box.classList.add('hidden'); }
+            if(h) { 
+                grid.innerHTML = h; 
+                box.classList.remove('hidden'); 
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function batchAssign() {
+            const d = document.getElementById('chk-dylan').checked; 
+            const k = document.getElementById('chk-kayla').checked; 
+            const m = document.getElementById('chk-morgan').checked; 
+            const isCalReq = document.getElementById('chk-cal-request').checked;
+            
+            let selected = []; 
+            if(d) selected.push("Dylan"); 
+            if(k) selected.push("Kayla"); 
+            if(m) selected.push("Morgan");
+            
+            if(selected.length === 0) { 
+                showToast("Warning", "Select at least one person.", true); 
+                return; 
+            }
+            
+            let target = selected.join(" & ");
+            
+            const updates = selectedIdx.map(idx => {
+                const item = fullInventory[idx]; 
+                item.REQUEST_ASSIGNED_TO = target; 
+                item.TASK_TAB = "requests"; 
+                
+                if(isCalReq) { 
+                    let oldNote = item.SAVED_PICK || ""; 
+                    if(!oldNote.includes("[CAL REQUEST]")) { 
+                        item.SAVED_PICK = "[CAL REQUEST] " + oldNote; 
+                    } 
+                }
+                
+                return { 
+                    id: item.UNIQUE_ID, 
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
+                    taskTab: item.TASK_TAB, 
+                    match: item.SAVED_MATCH, 
+                    spec: item.SAVED_SPEC, 
+                    pick: item.SAVED_PICK, 
+                    note: item.SAVED_NOTE, 
+                    salesDesc: item.SAVED_SALES_DESC, 
+                    user: currentUser 
+                };
+            });
+
+            document.getElementById('assign-modal').style.display = 'none'; 
+            toggleBatch(); 
+            showToast("Saving", "Batch assigning items...");
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "batch_update", updates: updates }) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') { 
+                    fetchData(true); 
+                } else { 
+                    showToast("Error", data.message, true); 
+                } 
+            })
+            .catch(err => { 
+                showToast("Network Error", "Saved offline.", true); 
+            });
         }
     </script>
 </body>
