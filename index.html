@@ -132,7 +132,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v221 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v224 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -418,6 +418,16 @@
         let currentOriginView = ''; 
         let longPressTimer; 
         let autoSyncTimer;
+
+        // --- NEW: SMART LOCATION PREFIX LOGIC ---
+        function getLocPrefix(loc) {
+            if (!loc) return "No Loc";
+            let parts = loc.split('.');
+            if (parts.length >= 3) {
+                return parts[0] + '.' + parts[1]; // Turns D.07.023 into D.07
+            }
+            return loc;
+        }
 
         // --- UI UTILITIES ---
 
@@ -723,15 +733,13 @@
             .catch(err => logFailedSave(payload));
         }
 
+        // --- NEW: SILENT BACKGROUND PHOTO UPLOAD ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
+                const itemBeingEdited = activeItem; // Lock to current item
                 
-                const loadingDiv = document.createElement('div'); 
-                loadingDiv.id = "temp-loader"; 
-                loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
-                loadingDiv.innerHTML = '<div class="spinner mb-4"></div>UPLOADING TO DRIVE...'; 
-                document.body.appendChild(loadingDiv);
+                showToast("Uploading...", "Photo uploading in background. You can keep working.", false);
                 
                 const reader = new FileReader(); 
                 reader.readAsDataURL(file);
@@ -753,7 +761,7 @@
                         const base64Data = dataUrl.split(',')[1];
                         
                         const dateStr = new Date().toISOString().split('T')[0];
-                        const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
+                        const filename = `${itemBeingEdited.COMMONNAME}_${itemBeingEdited.CONTSIZE}_${itemBeingEdited.LOCATIONCODE}_${itemBeingEdited.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
                         
                         fetch(GOOGLE_SCRIPT_URL, { 
                             method: "POST", 
@@ -767,26 +775,45 @@
                         .then(res => res.json())
                         .then(data => {
                             if(data.status === 'success') { 
-                                let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; 
-                                let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                                let links = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',') : []; 
+                                let names = itemBeingEdited.SAVED_PHOTO_NAME ? itemBeingEdited.SAVED_PHOTO_NAME.split(',') : [];
                                 
                                 links.push(data.url); 
                                 names.push(filename); 
                                 
-                                activeItem.SAVED_PHOTO_LINK = links.join(','); 
-                                activeItem.SAVED_PHOTO_NAME = names.join(',');
+                                itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
+                                itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
-                                renderOverviewData(); 
-                                saveData(true); 
-                                showToast("Success", "Photo securely uploaded."); 
+                                // Update UI ONLY if user is still on this specific detail view
+                                if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
+                                    renderOverviewData(); 
+                                }
+                                
+                                // Silently save this specific item's update to the cloud
+                                const payload = { 
+                                    type: "update", 
+                                    id: itemBeingEdited.UNIQUE_ID, 
+                                    match: itemBeingEdited.SAVED_MATCH || "", 
+                                    spec: itemBeingEdited.SAVED_SPEC || "", 
+                                    pick: itemBeingEdited.SAVED_PICK || "", 
+                                    note: itemBeingEdited.SAVED_NOTE || "", 
+                                    salesDesc: itemBeingEdited.SAVED_SALES_DESC || "", 
+                                    photoLink: itemBeingEdited.SAVED_PHOTO_LINK, 
+                                    photoName: itemBeingEdited.SAVED_PHOTO_NAME, 
+                                    user: currentUser 
+                                };
+                                
+                                fetch(GOOGLE_SCRIPT_URL, { 
+                                    method: "POST", 
+                                    body: JSON.stringify(payload) 
+                                }).catch(err => logFailedSave(payload));
+
+                                showToast("Success", "Photo securely uploaded and saved."); 
                             } else { 
                                 showToast("Upload Error", data.message, true); 
                             }
                         })
-                        .catch(err => showToast("Network Error", "Could not upload photo.", true))
-                        .finally(() => { 
-                            document.body.removeChild(loadingDiv); 
-                        });
+                        .catch(err => showToast("Network Error", "Could not upload photo.", true));
                     }
                 }
             }
@@ -1009,16 +1036,22 @@
                 } else if (taskViewLevel === 1) {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`; 
                     const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                    const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || "No Loc"))].sort();
+                    
+                    // LOCATION PREFIX AND NUMERIC SORT
+                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
                     
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
-                        const count = blockItems.filter(i => (i.LOCATIONCODE || "No Loc") === l).length;
-                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                        const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
                     }).join('');
                     
                 } else {
                     crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
-                    const items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && (i.LOCATIONCODE || "No Loc") === selectedTaskLoc);
+                    
+                    // NUMERIC FULL SORT
+                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
+                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                    
                     container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
             }
@@ -1257,7 +1290,7 @@
             if(lastView === 'drive') renderDriveNames(); 
         }
 
-        // --- BATCH SELECTION & ACTION BAR ---
+        // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
         function updateSelected() {
             selectedIdx = [];
             document.querySelectorAll('.select-check').forEach(cb => {
@@ -1326,7 +1359,8 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
-                        text += `• ${name}: ${url}\n`; 
+                        // CLEAN LINK - NO URL
+                        text += `• ${name}\n`; 
                     });
                 }
                 text += `\n`;
