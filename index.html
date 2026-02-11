@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v207</title>
+    <title>Greenleaf Pro v208</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -131,7 +131,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v207 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v208 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -367,7 +367,7 @@
         let longPressTimer; 
         let autoSyncTimer;
 
-        // PULL TO REFRESH VARIABLES
+        // PULL TO REFRESH
         let ptrStartY = 0;
         let ptrCurrentY = 0;
         let ptrDragging = false;
@@ -375,51 +375,34 @@
         const spinner = document.getElementById('ptr-spinner');
 
         scrollArea.addEventListener('touchstart', (e) => {
-            if (scrollArea.scrollTop === 0) {
-                ptrStartY = e.touches[0].clientY;
-                ptrDragging = true;
-            }
+            if (scrollArea.scrollTop === 0) { ptrStartY = e.touches[0].clientY; ptrDragging = true; }
         }, { passive: true });
 
         scrollArea.addEventListener('touchmove', (e) => {
             if (!ptrDragging) return;
-            const y = e.touches[0].clientY;
-            const diff = y - ptrStartY;
+            const y = e.touches[0].clientY; const diff = y - ptrStartY;
             if (diff > 0 && scrollArea.scrollTop === 0) {
-                ptrCurrentY = diff;
-                const move = Math.min(diff * 0.5, 80);
-                spinner.style.top = (move - 40) + 'px';
-                spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
-            } else {
-                ptrDragging = false;
-            }
+                ptrCurrentY = diff; const move = Math.min(diff * 0.5, 80);
+                spinner.style.top = (move - 40) + 'px'; spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
+            } else { ptrDragging = false; }
         }, { passive: true });
 
         scrollArea.addEventListener('touchend', () => {
             if (!ptrDragging) return;
             ptrDragging = false;
             if (ptrCurrentY > 60) {
-                spinner.style.top = '20px';
-                spinner.classList.add('loading');
-                manualSync().then(() => {
-                    spinner.classList.remove('loading');
-                    spinner.style.top = '-40px';
-                });
-            } else {
-                spinner.style.top = '-40px';
-            }
+                spinner.style.top = '20px'; spinner.classList.add('loading');
+                manualSync().then(() => { spinner.classList.remove('loading'); spinner.style.top = '-40px'; });
+            } else { spinner.style.top = '-40px'; }
             ptrCurrentY = 0;
         });
 
         // LOGIN
         function selectUser(u) { 
-            currentUser = u; 
-            isAdmin = ADMINS.includes(u); 
-            taskViewTargetUser = u; 
+            currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; 
             document.getElementById('login-buttons').classList.add('hidden'); 
             document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; 
-            document.getElementById('pin-code').focus(); 
+            document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); 
         }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
@@ -427,16 +410,13 @@
 
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
-            autoSyncTimer = setInterval(() => {
-                fetchData(true); 
-            }, 15000); 
+            autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
         // FETCH DATA
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
-                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
                 
@@ -445,38 +425,26 @@
                     noteTemplates = cloudJson.templates || []; 
                     
                     if(!isSilent) {
-                        applyAssignments(); 
-                        launchApp();
-                        startAutoSync();
+                        applyAssignments(); launchApp(); startAutoSync();
                     } else {
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                     activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                                        renderOverviewData();
-                                    }
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { renderOverviewData(); }
                                 }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) {
-                            renderTasks();
-                            checkForRequests(); 
+                            renderTasks(); checkForRequests(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) {
                             renderReviewItems();
-                        } else {
-                            checkForRequests(); 
-                        }
+                        } else { checkForRequests(); }
                     }
-                } else {
-                    throw new Error("Failed to load Cloud Data");
-                }
+                } else { throw new Error("Failed to load Cloud Data"); }
             } catch (e) { 
                 console.error(e); 
-                if(!isSilent) {
-                    document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
-                    setTimeout(resetLogin, 3000); 
-                }
+                if(!isSilent) { document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message; setTimeout(resetLogin, 3000); }
             }
         }
 
@@ -489,10 +457,9 @@
             }
         }
 
-        // --- NEW: FAILED SAVE LOGGING ---
+        // FAILED SAVE LOGGING
         function logFailedSave(payload) {
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-            // Replace if exact same ID, otherwise push new
             failed = failed.filter(f => f.id !== payload.id);
             failed.push(payload);
             localStorage.setItem('greenleaf_failed_saves', JSON.stringify(failed));
@@ -501,7 +468,6 @@
         function retryFailedSaves() {
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
             if(failed.length === 0) return;
-            
             alert(`Attempting to sync ${failed.length} offline updates...`);
             
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: failed }) })
@@ -509,16 +475,12 @@
             .then(data => {
                 if(data.status === 'success') {
                     localStorage.removeItem('greenleaf_failed_saves');
-                    alert("Sync Successful!");
-                    fetchData(true);
-                } else {
-                    alert("Sync failed again: " + data.message);
-                }
-            })
-            .catch(err => alert("Network still down."));
+                    alert("Sync Successful!"); fetchData(true);
+                } else { alert("Sync failed again: " + data.message); }
+            }).catch(err => alert("Network still down."));
         }
 
-        // INSTANT FIRE AND FORGET SAVE
+        // INSTANT SAVE
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return; 
             
@@ -534,45 +496,29 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // Update Local Data + INSTANT TIMESTAMP
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
+            
+            renderOverviewData();
 
             const payload = {
-                type: "update",
-                id: activeItem.UNIQUE_ID,
-                match: match,
-                spec: spec,
-                pick: pick,
-                note: note,
-                salesDesc: salesDesc, 
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
-                photoName: activeItem.SAVED_PHOTO_NAME || "", 
-                user: currentUser
+                type: "update", id: activeItem.UNIQUE_ID, match: match, spec: spec, pick: pick, note: note, salesDesc: salesDesc, 
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", photoName: activeItem.SAVED_PHOTO_NAME || "", user: currentUser
             };
 
-            // LEAVE IMMEDIATELY (Optimistic UI)
-            if(!silent) {
-                goBackFromDetail(); 
-            }
+            if(!silent) goBackFromDetail(); 
 
-            // Fire to cloud in background
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
-            .then(data => {
-                if(data.status !== 'success') logFailedSave(payload);
-            })
+            .then(data => { if(data.status !== 'success') logFailedSave(payload); })
             .catch(err => logFailedSave(payload));
         }
 
-        // INSTANT FIRE AND FORGET COMPLETE
+        // INSTANT COMPLETE
         function markRequestComplete() {
             if(!activeItem) return;
 
@@ -588,38 +534,22 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
 
-            activeItem.SAVED_MATCH = match;
-            activeItem.SAVED_SPEC = spec;
-            activeItem.SAVED_PICK = pick;
-            activeItem.SAVED_NOTE = note;
-            activeItem.SAVED_SALES_DESC = salesDesc;
-            activeItem.REQUEST_ASSIGNED_TO = "";
-            activeItem.TASK_TAB = "review";
+            activeItem.SAVED_MATCH = match; activeItem.SAVED_SPEC = spec; activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note; activeItem.SAVED_SALES_DESC = salesDesc;
+            activeItem.REQUEST_ASSIGNED_TO = ""; activeItem.TASK_TAB = "review";
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
             const payload = {
-                type: "update",
-                id: activeItem.UNIQUE_ID,
-                requestAssignedTo: "", 
-                taskTab: "review",
-                match: match,
-                spec: spec,
-                pick: pick,
-                note: note,
-                salesDesc: salesDesc,
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
-                photoName: activeItem.SAVED_PHOTO_NAME || "", 
-                user: currentUser
+                type: "update", id: activeItem.UNIQUE_ID, requestAssignedTo: "", taskTab: "review",
+                match: match, spec: spec, pick: pick, note: note, salesDesc: salesDesc,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", photoName: activeItem.SAVED_PHOTO_NAME || "", user: currentUser
             };
 
-            // LEAVE IMMEDIATELY
             goBackFromDetail();
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
-            .then(data => {
-                if(data.status !== 'success') logFailedSave(payload);
-            })
+            .then(data => { if(data.status !== 'success') logFailedSave(payload); })
             .catch(err => logFailedSave(payload));
         }
 
@@ -627,7 +557,6 @@
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
-                // Keep loading div for photo because we MUST wait for the Google Drive URL before saving
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = "temp-loader";
                 loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
@@ -645,26 +574,16 @@
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
                         
-                        fetch(GOOGLE_SCRIPT_URL, { 
-                            method: "POST", 
-                            body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
-                        })
+                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) })
                         .then(res => res.json()).then(data => {
                             if(data.status === 'success') { 
                                 let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
                                 let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                                links.push(data.url);
-                                names.push(filename);
-                                activeItem.SAVED_PHOTO_LINK = links.join(',');
-                                activeItem.SAVED_PHOTO_NAME = names.join(',');
-                                renderOverviewData(); 
-                                saveData(true); // Silent save instantly applies the new photo
-                                alert("Photo Added!"); 
-                            } 
-                            else { alert("Upload Error: " + data.message); }
-                        }).catch(err => alert("Network Error: " + err)).finally(() => { 
-                            document.body.removeChild(loadingDiv);
-                        });
+                                links.push(data.url); names.push(filename);
+                                activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
+                                renderOverviewData(); saveData(true); alert("Photo Added!"); 
+                            } else { alert("Upload Error: " + data.message); }
+                        }).catch(err => alert("Network Error: " + err)).finally(() => { document.body.removeChild(loadingDiv); });
                     }
                 }
             }
@@ -676,13 +595,9 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    socReps = data.data;
-                    socViewLevel = 0;
-                    renderSocView();
-                    document.getElementById('soc-status').innerText = "";
+                    socReps = data.data; socViewLevel = 0; renderSocView(); document.getElementById('soc-status').innerText = "";
                 } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
-            })
-            .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
+            }).catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
         function fetchRepData(repName) {
@@ -691,11 +606,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    socData = data.data;
-                    socViewLevel = 1;
-                    selectedSocRep = repName;
-                    renderSocView();
-                    document.getElementById('soc-status').innerText = "";
+                    socData = data.data; socViewLevel = 1; selectedSocRep = repName; renderSocView(); document.getElementById('soc-status').innerText = "";
                 } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
             });
         }
@@ -720,23 +631,15 @@
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
         function launchApp() { 
-            document.getElementById('view-login').style.display = 'none'; 
-            document.getElementById('app-wrapper').classList.remove('hidden'); 
-            document.getElementById('header-user').innerText = currentUser; 
+            document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; 
             if(isAdmin) { 
-                document.getElementById('home-btn-soc').classList.remove('hidden'); 
-                document.getElementById('home-btn-track').classList.remove('hidden'); 
-                document.getElementById('home-btn-review').classList.remove('hidden'); 
+                document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); 
             } else { 
-                document.getElementById('home-btn-soc').classList.add('hidden'); 
-                document.getElementById('home-btn-track').classList.add('hidden'); 
-                document.getElementById('home-btn-review').classList.add('hidden'); 
-            } 
-            switchView('home'); 
+                document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); 
+            } switchView('home'); 
         }
         function applyAssignments() { 
-            let i = 0; 
-            fullInventory.forEach(item => { 
+            let i = 0; fullInventory.forEach(item => { 
                 if(!item.ASSIGNEDTO) {
                     const group = (item.PLANTGROUPCODE || "").toString(); 
                     if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; 
@@ -749,10 +652,7 @@
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v==='drive') renderDriveNames(); 
-            if(v==='tasks') { 
-                if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } 
-                else { renderTasks(); } 
-            } 
+            if(v==='tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
             if(v==='viewer') renderViewerNames(); 
             if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
             if(v==='soc') { fetchSocReps(); } 
@@ -769,6 +669,7 @@
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
             if(lastView === 'tasks') renderTasks(); // Re-render instantly shows it removed
+            if(lastView === 'drive') renderDriveNames(); 
         }
 
         function renderTeamSelector() {
@@ -806,9 +707,7 @@
                     const ss = parseFloat(i.SEASONSUPPLY) || 0;
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
                     
-                    if (daysOld < 10 && !isLowStock) {
-                        return false; 
-                    }
+                    if (daysOld < 10 && !isLowStock) { return false; }
                 }
                 return true;
             };
@@ -866,9 +765,7 @@
                         <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
                         <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
                     </div>`;
-            } else {
-                failContainer.innerHTML = '';
-            }
+            } else { failContainer.innerHTML = ''; }
 
             const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
             if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
@@ -955,61 +852,39 @@
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
         
-        // NEW EMAIL LOGIC: Copies beautiful rich text, then opens email client.
         function batchEmail() { 
             if(selectedIdx.length === 0) { alert("No items selected!"); return; }
-            
-            const html = getBatchHtml();
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" });
-            const blobText = new Blob([text], { type: "text/plain" });
-            
+            const html = getBatchHtml(); const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
                     alert("Report successfully copied with hidden links!\n\nI will now open your email app. Please TAP and PASTE into the body.");
-                    window.location.href = `mailto:?subject=Greenleaf%20Report`;
-                    isBatch = false; toggleBatch();
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`; isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; });
-            } else {
-                fallbackCopy(html);
-                window.location.href = `mailto:?subject=Greenleaf%20Report`;
-            }
+            } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }
         }
         
         function copyBatchData() { 
             if(selectedIdx.length === 0) { alert("No items selected!"); return; }
-            const html = getBatchHtml();
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" });
-            const blobText = new Blob([text], { type: "text/plain" });
-            
+            const html = getBatchHtml(); const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
-                    alert("Report Copied with Links! Paste into Email.");
-                    isBatch = false; toggleBatch();
+                    alert("Report Copied with Links! Paste into Email."); isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); });
-            } else {
-                fallbackCopy(html);
-            }
+            } else { fallbackCopy(html); }
         }
 
         function fallbackCopy(html) {
             const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html;
-            tempDiv.style.position = "fixed";
-            tempDiv.style.left = "-9999px";
+            tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px";
             document.body.appendChild(tempDiv);
-            const range = document.createRange();
-            range.selectNodeContents(tempDiv);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            document.execCommand('copy');
-            document.body.removeChild(tempDiv);
-            alert("Report Copied! (Legacy Mode)");
-            isBatch = false; toggleBatch();
+            const range = document.createRange(); range.selectNodeContents(tempDiv);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+            document.execCommand('copy'); document.body.removeChild(tempDiv);
+            alert("Report Copied! (Legacy Mode)"); isBatch = false; toggleBatch();
         }
 
         function renderDriveNames() {
@@ -1043,10 +918,7 @@
         function handleCardClick(idx, source) {
             if(isBatch) {
                 const cb = document.getElementById('cb-' + idx);
-                if(cb) {
-                    cb.checked = !cb.checked;
-                    updateSelected();
-                }
+                if(cb) { cb.checked = !cb.checked; updateSelected(); }
                 return;
             }
             openDetail(idx, source);
@@ -1059,9 +931,10 @@
                 let thumbUrl = firstLink;
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
-                    thumbUrl = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+                    // FIX: Changed to uc?export=download to force browser rendering of Google Drive images
+                    thumbUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
                 }
-                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
             return `
@@ -1122,6 +995,10 @@
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A";
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
 
+            // FIX: Ensure Accordion is closed and empty before opening a new item
+            document.getElementById('expand-section').classList.remove('expanded');
+            document.getElementById('expand-content').innerHTML = ''; 
+
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); }
             else { document.getElementById('expand-section').classList.remove('hidden'); }
             
@@ -1130,10 +1007,16 @@
             switchDetailTab('overview');
         }
 
+        // FIX: Accordion Toggle forces fresh render
+        function toggleExpand() { 
+            const section = document.getElementById('expand-section');
+            if (!section.classList.contains('expanded')) { renderAllFields(); }
+            section.classList.toggle('expanded'); 
+        }
+
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container');
             
-            // Check if there is data OR a timestamp indicating it was worked on recently
             const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
@@ -1154,14 +1037,12 @@
             }
         }
 
-        // --- DROPDOWN LOGIC ---
         function showEditMode() {
             document.getElementById('btn-cam-container').classList.remove('hidden');
             document.getElementById('btn-save').classList.remove('hidden');
             document.getElementById('btn-edit-container').classList.add('hidden');
             document.getElementById('readonly-lock-banner').classList.add('hidden');
             
-            // Build the dynamic datalist for this item code
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,'');
             const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
             
@@ -1246,12 +1127,13 @@
                     let thumbUrl = url; 
                     const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                     if(idMatch && idMatch[1]) {
-                        thumbUrl = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+                        // FIX: Use export=download for detail photos too
+                        thumbUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
                     }
 
                     phHtml += `
                     <a href="${url}" target="_blank" class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
-                        <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb">
+                        <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'">
                         <div class="flex-grow min-w-0">
                             <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
                             <div class="text-[10px] text-gray-400">Tap to view full size</div>
@@ -1295,7 +1177,6 @@
             document.getElementById('assign-modal').style.display='none'; 
             toggleBatch(); 
             
-            // Background update
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
             .then(data => {
