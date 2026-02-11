@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v211</title>
+    <title>Greenleaf Pro v212</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/628/628283.png">
+    
+    <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
+    <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -88,8 +89,6 @@
         #ptr-spinner.loading i { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        
-        .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -98,7 +97,11 @@
 
     <div id="view-login">
         <div class="login-card">
-            <div class="text-4xl text-[#007a4d] font-bold mb-6 flex items-center justify-center gap-2"><i class="ph-fill ph-plant"></i> Greenleaf</div>
+            <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
+                <img src="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5" alt="Company Logo" class="h-16 w-auto object-contain">
+                Greenleaf Pro
+            </div>
+            
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             <div id="login-buttons">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Admin)</button>
@@ -125,7 +128,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v211 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v212 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -213,7 +216,9 @@
             
             <div id="view-review" class="hidden">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
+                
                 <div id="failed-saves-container"></div>
+                
                 <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
                 <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
                 <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
@@ -849,6 +854,7 @@
             }
         }
 
+        // SHOW FAILED SAVES IN REVIEW TAB
         function renderReviewItems() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
@@ -912,6 +918,7 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => {
                         const name = names[i] || `Photo ${i+1}`;
+                        // CLEAN CLICKABLE LINKS
                         html += `&bull; <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`;
                     });
                     html += `</div>`;
@@ -949,10 +956,15 @@
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
         
+        // NEW EMAIL LOGIC: Copies beautiful rich text, then opens email client.
         function batchEmail() { 
             if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
-            const html = getBatchHtml(); const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
+            
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
@@ -960,29 +972,45 @@
                     setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500);
                     isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; });
-            } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }
+            } else {
+                fallbackCopy(html);
+                window.location.href = `mailto:?subject=Greenleaf%20Report`;
+            }
         }
         
         function copyBatchData() { 
             if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
-            const html = getBatchHtml(); const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
-                    showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch();
+                    showToast("Copied!", "Data copied to clipboard.");
+                    isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); });
-            } else { fallbackCopy(html); }
+            } else {
+                fallbackCopy(html);
+            }
         }
 
         function fallbackCopy(html) {
             const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px";
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = "fixed";
+            tempDiv.style.left = "-9999px";
             document.body.appendChild(tempDiv);
-            const range = document.createRange(); range.selectNodeContents(tempDiv);
-            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-            document.execCommand('copy'); document.body.removeChild(tempDiv);
-            showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch();
+            const range = document.createRange();
+            range.selectNodeContents(tempDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            document.body.removeChild(tempDiv);
+            showToast("Copied!", "Data copied (Legacy Mode).");
+            isBatch = false; toggleBatch();
         }
 
         function renderDriveNames() {
@@ -1016,7 +1044,10 @@
         function handleCardClick(idx, source) {
             if(isBatch) {
                 const cb = document.getElementById('cb-' + idx);
-                if(cb) { cb.checked = !cb.checked; updateSelected(); }
+                if(cb) {
+                    cb.checked = !cb.checked;
+                    updateSelected();
+                }
                 return;
             }
             openDetail(idx, source);
@@ -1111,18 +1142,25 @@
 
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container');
+            
             const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
             let canEditThisView = false;
-            if (isAdmin) { canEditThisView = ['tasks', 'drive', 'review'].includes(currentOriginView); } 
-            else { canEditThisView = ['tasks'].includes(currentOriginView); }
+            if (isAdmin) {
+                canEditThisView = ['tasks', 'drive', 'review'].includes(currentOriginView);
+            } else {
+                canEditThisView = ['tasks'].includes(currentOriginView);
+            }
 
             if (isMyRequest) { btnComplete.classList.remove('hidden'); } 
             else { btnComplete.classList.add('hidden'); }
 
-            if (canEditThisView && !hasData) { showEditMode(); } 
-            else { showReadonlyMode(canEditThisView, hasData); }
+            if (canEditThisView && !hasData) {
+                showEditMode();
+            } else {
+                showReadonlyMode(canEditThisView, hasData);
+            }
         }
 
         function showEditMode() {
