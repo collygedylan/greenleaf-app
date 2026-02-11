@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v212</title>
+    <title>Greenleaf Pro v213</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
-    <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -89,6 +89,8 @@
         #ptr-spinner.loading i { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -98,7 +100,7 @@
     <div id="view-login">
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
-                <img src="https://drive.google.com/uc?export=view&id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5" alt="Company Logo" class="h-16 w-auto object-contain">
+                <img src="https://lh3.googleusercontent.com/d/1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5" alt="Greenleaf Logo" class="h-16 w-auto object-contain">
                 Greenleaf Pro
             </div>
             
@@ -128,7 +130,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v212 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v213 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -216,9 +218,7 @@
             
             <div id="view-review" class="hidden">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
-                
                 <div id="failed-saves-container"></div>
-                
                 <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
                 <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
                 <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
@@ -809,7 +809,9 @@
                     const ss = parseFloat(i.SEASONSUPPLY) || 0;
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
                     
-                    if (daysOld < 10 && !isLowStock) { return false; }
+                    if (daysOld < 10 && !isLowStock) {
+                        return false; 
+                    }
                 }
                 return true;
             };
@@ -1163,6 +1165,7 @@
             }
         }
 
+        // --- DROPDOWN LOGIC ---
         function showEditMode() {
             document.getElementById('btn-cam-container').classList.remove('hidden');
             document.getElementById('btn-save').classList.remove('hidden');
@@ -1253,6 +1256,7 @@
                     let thumbUrl = url; 
                     const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                     if(idMatch && idMatch[1]) {
+                        // FIX: Direct export=download link to bypass Drive security blocks on mobile thumbnails
                         thumbUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
                     }
 
