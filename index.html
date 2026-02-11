@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v203</title>
+    <title>Greenleaf Pro v204</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -129,7 +129,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v203 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v204 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -323,7 +323,7 @@
 
     <script>
         // *** CONFIGURATION ***
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr-zmHywFs13VpwZJgICJXzDB4BeJ75utR69yB-ulnZBuMS96hUfjzwjEyIlzVWDcX/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
         // PWA
@@ -333,6 +333,7 @@
 
         // STATE
         let fullInventory = [];
+        let noteTemplates = []; 
         let socReps = []; 
         let socData = []; 
         let savedFieldData = {}; 
@@ -434,6 +435,7 @@
                 
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
+                    noteTemplates = cloudJson.templates || []; 
                     
                     if(!isSilent) {
                         applyAssignments(); 
@@ -481,28 +483,28 @@
         }
 
         function saveData(silent = false) {
-            if(!isAdmin && currentOriginView !== 'tasks') return; // Double check permissions
+            if(!isAdmin && currentOriginView !== 'tasks') return; 
             
-            // 1. Capture Values (safely check if element exists)
             const matchEl = document.getElementById('in-match');
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick');
             const noteEl = document.getElementById('in-note');
+            const salesDescEl = document.getElementById('in-sales-desc');
 
             const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || "");
             const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
             const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || "");
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // 2. Optimistic Local Update
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc; 
             
             renderOverviewData();
 
-            // 3. UI Feedback - INSTANT
             const btn = document.getElementById('btn-save');
             if(!silent && btn) {
                 const originalText = btn.innerText;
@@ -512,12 +514,10 @@
                     btn.innerText = originalText;
                     btn.style.backgroundColor = "#007a4d";
                     btn.disabled = false;
-                    // Immediately lock the UI after manual save
                     renderActionsTab(); 
                 }, 1000);
             }
 
-            // 4. Send to Cloud
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
@@ -525,6 +525,7 @@
                 spec: spec,
                 pick: pick,
                 note: note,
+                salesDesc: salesDesc, 
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
@@ -536,16 +537,11 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status !== 'success') {
-                    alert("⚠️ Save Failed in Cloud: " + data.message);
-                }
+                if(data.status !== 'success') alert("⚠️ Save Failed in Cloud: " + data.message);
             })
-            .catch(err => {
-                alert("❌ Network Error: " + err);
-            });
+            .catch(err => alert("❌ Network Error: " + err));
         }
 
-        // ONE-CLICK COMPLETE
         function markRequestComplete() {
             if(!activeItem) return;
 
@@ -553,16 +549,19 @@
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick');
             const noteEl = document.getElementById('in-note');
+            const salesDescEl = document.getElementById('in-sales-desc');
 
             const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || "");
             const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
             const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || "");
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
 
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = "";
             activeItem.TASK_TAB = "review";
 
@@ -575,6 +574,7 @@
                 spec: spec,
                 pick: pick,
                 note: note,
+                salesDesc: salesDesc,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser
@@ -843,6 +843,7 @@
                 html += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}<br>`;
                 if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
                 if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
+                if(item.SAVED_SALES_DESC) html += `Sales Desc: ${item.SAVED_SALES_DESC}<br>`;
                 if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
                 
                 if(item.SAVED_PHOTO_LINK) {
@@ -867,6 +868,7 @@
                 text += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
                 if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
                 if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_SALES_DESC) text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
                 if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
                 
                 if(item.SAVED_PHOTO_LINK) {
@@ -1035,14 +1037,14 @@
             else { document.getElementById('expand-section').classList.remove('hidden'); }
             
             renderOverviewData(); 
-            renderActionsTab(); // Call new role-based render
+            renderActionsTab(); 
             switchDetailTab('overview');
         }
 
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container');
             
-            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_PHOTO_LINK);
+            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK);
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
             let canEditThisView = false;
@@ -1062,16 +1064,31 @@
             }
         }
 
+        // --- DROPDOWN LOGIC ---
         function showEditMode() {
             document.getElementById('btn-cam-container').classList.remove('hidden');
             document.getElementById('btn-save').classList.remove('hidden');
             document.getElementById('btn-edit-container').classList.add('hidden');
             document.getElementById('readonly-lock-banner').classList.add('hidden');
             
+            // Build the dynamic datalist for this item code
+            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,'');
+            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
+            let dlHtml = `<datalist id="dl-notes">`;
+            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
+            dlHtml += `</datalist>`;
+            
             const cont = document.getElementById('input-container');
             cont.innerHTML = `
                 <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
                 <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
+                
+                <div>
+                    <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
+                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="Tap to select or type note..." value="${activeItem.SAVED_SALES_DESC||''}">
+                    ${dlHtml}
+                </div>
+
                 <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
                 <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>
             `;
@@ -1088,6 +1105,7 @@
             cont.innerHTML = `
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
+                <div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div>
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
             `;
@@ -1101,7 +1119,7 @@
 
         function renderAllFields() {
             if(!activeItem) return;
-            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
+            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
             let html = '<div class="grid grid-cols-1 gap-2">';
             for (const [key, value] of Object.entries(activeItem)) {
                 if(hiddenKeys.includes(key)) continue;
@@ -1120,6 +1138,7 @@
             let h = "";
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
+            if(activeItem.SAVED_SALES_DESC) h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
             
@@ -1177,7 +1196,7 @@
                     let oldNote = item.SAVED_PICK || "";
                     if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; }
                 }
-                return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, user: currentUser };
+                return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser };
             });
 
             document.getElementById('assign-modal').style.display='none'; 
