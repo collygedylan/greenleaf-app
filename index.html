@@ -1333,7 +1333,6 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `View Photo ${i+1}`; 
-                        // Added explicit target='_blank' and styling for the HTML version
                         html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; 
                     });
                     html += `</div>`;
@@ -1356,7 +1355,6 @@
                     text += `Photos:\n`; 
                     const urls = item.SAVED_PHOTO_LINK.split(','); 
                     urls.forEach((url, i) => { 
-                        // We place the URL on its own line to ensure SMS apps recognize it as a clickable link
                         text += `• ${url.trim()}\n`; 
                     });
                 }
@@ -1370,9 +1368,7 @@
                 showToast("Warning", "No items selected.", true); 
                 return; 
             }
-            // SMS doesn't support HTML, so we use the text version with the raw URLs
-            const bodyText = getBatchText();
-            window.location.href = "sms:?body=" + encodeURIComponent(bodyText); 
+            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
         }
         
         function batchEmail() { 
@@ -1557,11 +1553,10 @@
             const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
-            let canEditThisView = false;
-            if (isAdmin) { 
-                canEditThisView = ['tasks', 'drive', 'review'].includes(currentOriginView); 
-            } else { 
-                canEditThisView = ['tasks'].includes(currentOriginView); 
+            let canEditText = false;
+            // Admins can edit text fields from specific views
+            if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { 
+                canEditText = true; 
             }
 
             if (isMyRequest) { 
@@ -1570,10 +1565,12 @@
                 btnComplete.classList.add('hidden'); 
             }
             
-            if (canEditThisView && !hasData) { 
+            if (canEditText && !hasData) { 
                 showEditMode(); 
             } else { 
-                showReadonlyMode(canEditThisView, hasData); 
+                // Pass canEditText to determine if inputs are editable or readonly
+                // All users can see the camera (handled in showReadonlyMode)
+                showReadonlyMode(canEditText, hasData); 
             }
         }
 
@@ -1618,9 +1615,17 @@
             `;
         }
 
-        function showReadonlyMode(canEditThisView, hasData) {
-            document.getElementById('btn-cam-container').classList.add('hidden'); 
-            document.getElementById('btn-save').classList.add('hidden');
+        function showReadonlyMode(canEditText, hasData) {
+            // UPDATED: Show camera button for ALL users so they can add photos
+            document.getElementById('btn-cam-container').classList.remove('hidden'); 
+            
+            // Only show main "SAVE & LOCK" button if user can edit text fields
+            if (canEditText) {
+                 document.getElementById('btn-save').classList.remove('hidden'); // Optional: hide if not needed in read-only visual mode, but admins might want to unlock
+                 document.getElementById('btn-save').classList.add('hidden'); // Actually hide it, use UNLOCK button
+            } else {
+                 document.getElementById('btn-save').classList.add('hidden');
+            }
             
             if(hasData) { 
                 document.getElementById('readonly-lock-banner').classList.remove('hidden'); 
@@ -1637,7 +1642,8 @@
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
             `;
             
-            if (isAdmin && canEditThisView && hasData) { 
+            // Only admins get the button to unlock text fields
+            if (canEditText) { 
                 document.getElementById('btn-edit-container').classList.remove('hidden'); 
             } else { 
                 document.getElementById('btn-edit-container').classList.add('hidden'); 
@@ -1686,15 +1692,24 @@
                         thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                     }
                     
+                    // UPDATED: Added Delete Button for Admins
+                    let deleteBtn = "";
+                    if(isAdmin) {
+                        deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`;
+                    }
+
                     phHtml += `
-                        <a href="${url}" target="_blank" class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
-                            <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'">
-                            <div class="flex-grow min-w-0">
-                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
-                                <div class="text-[10px] text-gray-400">Tap to view full size</div>
-                            </div>
-                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
-                        </a>
+                        <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
+                            <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                                <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'">
+                                <div class="flex-grow min-w-0">
+                                    <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                    <div class="text-[10px] text-gray-400">Tap to view full size</div>
+                                </div>
+                                <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                            </a>
+                            ${deleteBtn}
+                        </div>
                     `;
                 });
                 
@@ -1710,6 +1725,59 @@
             } else {
                 box.classList.add('hidden');
             }
+        }
+
+        // --- NEW FUNCTION: DELETE PHOTO ---
+        function deletePhoto(index) {
+            if(!confirm("Are you sure you want to delete this photo? This cannot be undone.")) return;
+            
+            let links = activeItem.SAVED_PHOTO_LINK.split(',');
+            let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+            
+            // Remove item at index
+            links.splice(index, 1);
+            if(names.length > index) names.splice(index, 1);
+            
+            // Update item
+            activeItem.SAVED_PHOTO_LINK = links.join(',');
+            activeItem.SAVED_PHOTO_NAME = names.join(',');
+            
+            // If empty, clear strings
+            if(links.length === 0) {
+                activeItem.SAVED_PHOTO_LINK = "";
+                activeItem.SAVED_PHOTO_NAME = "";
+            }
+            
+            // Re-render to update UI immediately
+            renderOverviewData();
+            
+            // Save changes to cloud
+            const payload = { 
+                type: "update", 
+                id: activeItem.UNIQUE_ID, 
+                match: activeItem.SAVED_MATCH || "", 
+                spec: activeItem.SAVED_SPEC || "", 
+                pick: activeItem.SAVED_PICK || "", 
+                note: activeItem.SAVED_NOTE || "", 
+                salesDesc: activeItem.SAVED_SALES_DESC || "", 
+                photoLink: activeItem.SAVED_PHOTO_LINK, 
+                photoName: activeItem.SAVED_PHOTO_NAME, 
+                user: currentUser 
+            };
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') {
+                    showToast("Deleted", "Photo removed.");
+                } else {
+                    logFailedSave(payload); 
+                }
+            })
+            .catch(err => logFailedSave(payload));
         }
 
         function batchAssign() {
