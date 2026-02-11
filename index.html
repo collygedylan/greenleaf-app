@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v210</title>
+    <title>Greenleaf Pro v211</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -113,7 +113,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div class="text-white font-bold text-sm mt-3">Syncing Cloud Data...</div>
+                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
             </div>
         </div>
     </div>
@@ -125,7 +125,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v207 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v211 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -164,7 +164,7 @@
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Mgr Review</span></div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Mgr Review</span></div>
                 </div>
             </div>
 
@@ -213,9 +213,7 @@
             
             <div id="view-review" class="hidden">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
-                
                 <div id="failed-saves-container"></div>
-                
                 <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
                 <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
                 <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
@@ -373,7 +371,7 @@
         let longPressTimer; 
         let autoSyncTimer;
 
-        // --- NEW TOAST SYSTEM (Replaces ugly alerts) ---
+        // --- NEW TOAST SYSTEM ---
         function showToast(title, message, isAlert = false) {
             const toast = document.getElementById('toast-notification');
             toast.style.background = isAlert ? '#ef4444' : '#16a34a'; // Red or Green
@@ -420,56 +418,104 @@
             ptrCurrentY = 0;
         });
 
-        // LOGIN
+        // --- FULLY UNCOMPRESSED LOGIN LOGIC ---
         function selectUser(u) { 
-            currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; 
+            currentUser = u; 
+            isAdmin = ADMINS.includes(u); 
+            taskViewTargetUser = u; 
+            
             document.getElementById('login-buttons').classList.add('hidden'); 
             document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
         }
-        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
-        async function manualSync() { await fetchData(); } 
+
+        function verifyPin() { 
+            if (document.getElementById('pin-code').value === '1234') { 
+                document.getElementById('pin-container').classList.add('hidden'); 
+                document.getElementById('loading-spinner').classList.remove('hidden'); 
+                fetchData(); 
+            } else { 
+                showToast("Error", "Incorrect PIN", true); 
+            } 
+        }
+
+        function resetLogin() { 
+            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-buttons').classList.remove('hidden'); 
+            document.getElementById('loading-spinner').classList.add('hidden'); // Fixes infinite visual spinner on error
+        }
+
+        async function manualSync() { 
+            await fetchData(); 
+        } 
 
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // FETCH DATA
+        // --- FULLY UNCOMPRESSED DATA FETCH ---
         async function fetchData(isSilent = false) {
             try {
-                if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
+                if(!isSilent) {
+                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                    document.getElementById('loading-spinner').classList.remove('hidden');
+                }
+
+                // 1. Make the request to Google Apps Script
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
+                
+                // 2. Check if Google blocked it with an HTML error page (Permissions error)
+                const textCheck = await cloudRes.clone().text();
+                if (textCheck.includes("<html") || textCheck.includes("<!DOCTYPE")) {
+                    throw new Error("Permissions Error: Ensure script is deployed to 'Anyone'.");
+                }
+
+                // 3. Parse the valid JSON
                 const cloudJson = await cloudRes.json();
                 
+                // 4. Validate success status
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
                     if(!isSilent) {
-                        applyAssignments(); launchApp(); startAutoSync();
+                        applyAssignments(); 
+                        launchApp(); 
+                        startAutoSync();
                     } else {
+                        // Silent update mode (Background refresh)
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                     activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { renderOverviewData(); }
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                        renderOverviewData(); 
+                                    }
                                 }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) {
-                            renderTasks(); checkForRequests(); 
+                            renderTasks(); 
+                            checkForRequests(); 
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) {
                             renderSalesOffice();
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) {
                             renderReviewItems();
-                        } else { checkForRequests(); }
+                        } else { 
+                            checkForRequests(); 
+                        }
                     }
-                } else { throw new Error("Failed to load Cloud Data"); }
+                } else { 
+                    throw new Error(cloudJson.message || "Failed to load data."); 
+                }
             } catch (e) { 
-                console.error(e); 
-                if(!isSilent) { document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message; setTimeout(resetLogin, 3000); }
+                console.error("Fetch Data Error:", e); 
+                if(!isSilent) { 
+                    document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
+                    setTimeout(resetLogin, 4000); 
+                }
             }
         }
 
@@ -529,7 +575,7 @@
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", photoName: activeItem.SAVED_PHOTO_NAME || "", user: currentUser
             };
 
-            // LEAVE IMMEDIATELY (No annoying popups)
+            // LEAVE IMMEDIATELY
             if(!silent) { goBackFromDetail(); } else { renderOverviewData(); }
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
@@ -686,6 +732,7 @@
                 document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); 
             } switchView('home'); 
         }
+        
         function applyAssignments() { 
             let i = 0; fullInventory.forEach(item => { 
                 if(!item.ASSIGNEDTO) {
@@ -696,6 +743,7 @@
                 }
             }); 
         }
+
         function switchView(v) { 
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
@@ -813,7 +861,9 @@
                         <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
                         <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
                     </div>`;
-            } else { failContainer.innerHTML = ''; }
+            } else {
+                failContainer.innerHTML = '';
+            }
 
             const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
             if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
@@ -1022,6 +1072,7 @@
             }
         }
 
+        // SMART LOCK UI LOGIC
         function openDetail(idx, originView) {
             lastView = originView; 
             currentOriginView = originView;
@@ -1121,8 +1172,11 @@
                 <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
             `;
 
-            if (isAdmin && canEditThisView && hasData) { document.getElementById('btn-edit-container').classList.remove('hidden'); } 
-            else { document.getElementById('btn-edit-container').classList.add('hidden'); }
+            if (isAdmin && canEditThisView && hasData) {
+                document.getElementById('btn-edit-container').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-edit-container').classList.add('hidden');
+            }
         }
 
         function renderAllFields() {
