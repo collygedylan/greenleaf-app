@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v204</title>
+    <title>Greenleaf Pro v205</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -58,7 +58,7 @@
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
 
-        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
@@ -129,7 +129,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v204 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v205 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -322,7 +322,7 @@
     </div>
 
     <script>
-        // *** CONFIGURATION ***
+        // *** YOUR GOOGLE SCRIPT URL HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -497,11 +497,13 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
+            // Update Local Data + NEW TIMESTAMP (Triggers hide logic)
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc; 
+            activeItem.TIMESTAMP = new Date().toISOString(); 
             
             renderOverviewData();
 
@@ -564,6 +566,7 @@
             activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = "";
             activeItem.TASK_TAB = "review";
+            activeItem.TIMESTAMP = new Date().toISOString(); // Instant hide trigger
 
             const payload = {
                 type: "update",
@@ -742,6 +745,8 @@
         function goBackFromDetail() {
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
+            // Refresh tasks just in case we completed something
+            if(lastView === 'tasks') renderTasks();
         }
 
         function renderTeamSelector() {
@@ -760,14 +765,37 @@
             taskViewLevel = 0; renderTasks(); 
         }
 
+        // --- NEW 10-DAY TASK FILTER LOGIC ---
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
             
             let myItems = [];
+            const now = new Date().getTime();
+
+            // Core filtering logic for task list hiding
+            const taskFilter = (i) => {
+                if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                if (i.TASK_TAB !== currentTab) return false;
+                
+                // 10-Day / 10% Hiding Logic
+                if (i.TIMESTAMP) {
+                    const saveTime = new Date(i.TIMESTAMP).getTime();
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
+                    const ptr = parseFloat(i.PTRAVAILABLE) || 0;
+                    const ss = parseFloat(i.SEASONSUPPLY) || 0;
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    
+                    if (daysOld < 10 && !isLowStock) {
+                        return false; // INSTANTLY HIDE IT FROM LIST
+                    }
+                }
+                return true;
+            };
             
             if(currentTab === 'requests') {
+                 // Requests don't need the 10-day logic because completing them removes the ASSIGNEDTO immediately
                  myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests');
                  crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
@@ -775,7 +803,7 @@
                  return;
             }
 
-            myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
+            myItems = fullInventory.filter(taskFilter); // Apply the new filter
 
             if(currentTab === 'season') {
                 if(taskViewLevel === 0) {
@@ -1044,7 +1072,8 @@
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container');
             
-            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK);
+            // Check if there is data OR a timestamp indicating it was worked on recently
+            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
             const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
 
             let canEditThisView = false;
@@ -1074,10 +1103,13 @@
             // Build the dynamic datalist for this item code
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,'');
             const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
+            
             let dlHtml = `<datalist id="dl-notes">`;
             validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
             dlHtml += `</datalist>`;
             
+            const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here...";
+
             const cont = document.getElementById('input-container');
             cont.innerHTML = `
                 <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
@@ -1085,7 +1117,7 @@
                 
                 <div>
                     <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
-                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="Tap to select or type note..." value="${activeItem.SAVED_SALES_DESC||''}">
+                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">
                     ${dlHtml}
                 </div>
 
