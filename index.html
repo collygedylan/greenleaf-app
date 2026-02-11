@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v206</title>
+    <title>Greenleaf Pro v207</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -88,6 +88,8 @@
         #ptr-spinner.loading i { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -129,7 +131,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v206 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v207 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -201,13 +203,18 @@
             </div>
 
             <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><p class="text-gray-500 text-sm">Inventory Tracking Module Active.</p></div>
+            
             <div id="view-review" class="hidden">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
+                
+                <div id="failed-saves-container"></div>
+                
                 <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
                 <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
                 <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
                 <div id="review-content"></div>
             </div>
+
             <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-detail" class="hidden">
@@ -241,7 +248,7 @@
                         <button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2">
                             <i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE
                         </button>
-                        <p class="text-xs text-center text-gray-400 mt-2">Saves data & Removes from your list.</p>
+                        <p class="text-xs text-center text-gray-400 mt-2">Saves data instantly & Removes from your list.</p>
                     </div>
 
                     <div id="readonly-lock-banner" class="hidden bg-gray-100 p-3 rounded text-xs text-gray-500 mb-4 font-bold border border-gray-200 flex items-center gap-2">
@@ -322,7 +329,7 @@
     </div>
 
     <script>
-        // *** CONFIGURATION ***
+        // *** YOUR GOOGLE SCRIPT URL HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
@@ -482,6 +489,36 @@
             }
         }
 
+        // --- NEW: FAILED SAVE LOGGING ---
+        function logFailedSave(payload) {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            // Replace if exact same ID, otherwise push new
+            failed = failed.filter(f => f.id !== payload.id);
+            failed.push(payload);
+            localStorage.setItem('greenleaf_failed_saves', JSON.stringify(failed));
+        }
+
+        function retryFailedSaves() {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if(failed.length === 0) return;
+            
+            alert(`Attempting to sync ${failed.length} offline updates...`);
+            
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: failed }) })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    localStorage.removeItem('greenleaf_failed_saves');
+                    alert("Sync Successful!");
+                    fetchData(true);
+                } else {
+                    alert("Sync failed again: " + data.message);
+                }
+            })
+            .catch(err => alert("Network still down."));
+        }
+
+        // INSTANT FIRE AND FORGET SAVE
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return; 
             
@@ -497,28 +534,13 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // Update Local Data + TIMESTAMP
+            // Update Local Data + INSTANT TIMESTAMP
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
-            
-            renderOverviewData();
-
-            const btn = document.getElementById('btn-save');
-            if(!silent && btn) {
-                const originalText = btn.innerText;
-                btn.innerText = "SAVED!";
-                btn.style.backgroundColor = "#16a34a"; 
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.backgroundColor = "#007a4d";
-                    btn.disabled = false;
-                    renderActionsTab(); 
-                }, 1000);
-            }
 
             const payload = {
                 type: "update",
@@ -533,17 +555,24 @@
                 user: currentUser
             };
 
+            // LEAVE IMMEDIATELY (Optimistic UI)
+            if(!silent) {
+                goBackFromDetail(); 
+            }
+
+            // Fire to cloud in background
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status !== 'success') alert("⚠️ Save Failed in Cloud: " + data.message);
+                if(data.status !== 'success') logFailedSave(payload);
             })
-            .catch(err => alert("❌ Network Error: " + err));
+            .catch(err => logFailedSave(payload));
         }
 
+        // INSTANT FIRE AND FORGET COMPLETE
         function markRequestComplete() {
             if(!activeItem) return;
 
@@ -583,32 +612,26 @@
                 user: currentUser
             };
 
-            document.getElementById('request-complete-container').innerHTML = 
-                '<div class="p-4 bg-green-100 text-green-800 font-bold rounded-lg text-center"><i class="ph-bold ph-check"></i> SAVED & COMPLETED</div>';
+            // LEAVE IMMEDIATELY
+            goBackFromDetail();
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
-                    setTimeout(() => { goBackFromDetail(); }, 1000); 
-                } else {
-                    alert("Error: " + data.message);
-                }
+                if(data.status !== 'success') logFailedSave(payload);
             })
-            .catch(err => {
-                alert("Network Error: " + err);
-                goBackFromDetail(); 
-            });
+            .catch(err => logFailedSave(payload));
         }
 
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
+                // Keep loading div for photo because we MUST wait for the Google Drive URL before saving
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = "temp-loader";
                 loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
-                loadingDiv.innerHTML = '<div class="spinner mb-4"></div>UPLOADING PHOTO...';
+                loadingDiv.innerHTML = '<div class="spinner mb-4"></div>UPLOADING TO DRIVE...';
                 document.body.appendChild(loadingDiv);
                 
                 const reader = new FileReader(); reader.readAsDataURL(file);
@@ -635,7 +658,7 @@
                                 activeItem.SAVED_PHOTO_LINK = links.join(',');
                                 activeItem.SAVED_PHOTO_NAME = names.join(',');
                                 renderOverviewData(); 
-                                saveData(true); 
+                                saveData(true); // Silent save instantly applies the new photo
                                 alert("Photo Added!"); 
                             } 
                             else { alert("Upload Error: " + data.message); }
@@ -745,7 +768,7 @@
         function goBackFromDetail() {
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
-            if(lastView === 'tasks') renderTasks();
+            if(lastView === 'tasks') renderTasks(); // Re-render instantly shows it removed
         }
 
         function renderTeamSelector() {
@@ -830,9 +853,23 @@
             }
         }
 
+        // SHOW FAILED SAVES IN REVIEW TAB
         function renderReviewItems() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
+            const failContainer = document.getElementById('failed-saves-container');
+            
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if (failed.length > 0) {
+                failContainer.innerHTML = `
+                    <div class="failed-sync-banner">
+                        <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
+                        <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
+                    </div>`;
+            } else {
+                failContainer.innerHTML = '';
+            }
+
             const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
             if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
             if(reviewViewLevel === 0) {
@@ -858,7 +895,7 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        // --- ENHANCED BATCH COPY LOGIC ---
+        // --- ENHANCED BATCH COPY LOGIC (RICH TEXT) ---
         function getBatchHtml() {
             let html = "<div style='font-family: Arial, sans-serif;'>";
             html += "<h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
@@ -880,6 +917,7 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => {
                         const name = names[i] || `Photo ${i+1}`;
+                        // CLEAN CLICKABLE LINKS
                         html += `&bull; <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`;
                     });
                     html += `</div>`;
@@ -916,7 +954,28 @@
         }
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchText())}`; }
+        
+        // NEW EMAIL LOGIC: Copies beautiful rich text, then opens email client.
+        function batchEmail() { 
+            if(selectedIdx.length === 0) { alert("No items selected!"); return; }
+            
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => {
+                    alert("Report successfully copied with hidden links!\n\nI will now open your email app. Please TAP and PASTE into the body.");
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`;
+                    isBatch = false; toggleBatch();
+                }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; });
+            } else {
+                fallbackCopy(html);
+                window.location.href = `mailto:?subject=Greenleaf%20Report`;
+            }
+        }
         
         function copyBatchData() { 
             if(selectedIdx.length === 0) { alert("No items selected!"); return; }
@@ -1235,8 +1294,8 @@
 
             document.getElementById('assign-modal').style.display='none'; 
             toggleBatch(); 
-            alert(`Saving ${updates.length} items to Cloud...`);
-
+            
+            // Background update
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
             .then(data => {
