@@ -555,16 +555,18 @@
                         applyAssignments(); 
                         launchApp(); 
                         startAutoSync(); 
+                        
+                        // RESTORE SESSION (If camera reload happened)
+                        restoreSession();
                     } else {
-                        if(!document.getElementById('view-detail').classList.contains('hidden')) {
-                            if(activeItem) {
-                                const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                                if(freshItem) { 
-                                    activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                        renderOverviewData(); 
-                                    } 
-                                }
+                        // REFRESH CURRENT VIEW DATA
+                        if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
+                            const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                            if(freshItem) { 
+                                activeItem = freshItem; 
+                                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                    renderOverviewData(); 
+                                } 
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
@@ -575,8 +577,6 @@
                             renderDriveNames();
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
-                        } else { 
-                            checkForRequests(); 
                         }
                     }
                 } else { 
@@ -588,6 +588,19 @@
                     document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
                     setTimeout(resetLogin, 4000); 
                 } 
+            }
+        }
+
+        // --- NEW: SESSION RESTORE LOGIC ---
+        function restoreSession() {
+            const savedView = localStorage.getItem('gl_last_view');
+            const savedId = localStorage.getItem('gl_active_item');
+            
+            if (savedId) {
+                const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId);
+                if (itemIndex > -1) {
+                    openDetail(itemIndex, savedView || 'drive');
+                }
             }
         }
 
@@ -928,7 +941,8 @@
                         if(idMatch && idMatch[1]) { 
                             thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                         }
-                        mediaHtml = `<img src="${thumbUrl}" class="w-full h-32 object-cover bg-gray-100" loading="lazy" onerror="this.style.display='none'">`;
+                        // UPDATED: Show image, no hidden on error
+                        mediaHtml = `<img src="${thumbUrl}" class="w-full h-32 object-cover bg-gray-100" loading="lazy">`;
                     }
                     
                     html += `
@@ -1256,6 +1270,9 @@
         }
         
         function switchView(v) { 
+            // SAVE STATE FOR RELOAD
+            localStorage.setItem('gl_last_view', v);
+
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             }); 
@@ -1284,6 +1301,9 @@
         }
         
         function goBackFromDetail() { 
+            // Clear active item state
+            localStorage.removeItem('gl_active_item');
+            
             document.getElementById('view-detail').classList.add('hidden'); 
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             if(lastView === 'tasks') renderTasks(); 
@@ -1462,7 +1482,8 @@
                 if(idMatch && idMatch[1]) { 
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                 }
-                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
+                // UPDATED: Show image, no hidden on error
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
 
             return `
@@ -1509,6 +1530,9 @@
             lastView = originView; 
             currentOriginView = originView; 
             activeItem = fullInventory[idx];
+            
+            // SAVE STATE FOR RELOAD
+            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
             
             document.getElementById('view-detail').classList.remove('hidden'); 
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(v => {
@@ -1701,7 +1725,7 @@
                     phHtml += `
                         <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
                             <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
-                                <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy" alt="Thumb" onerror="this.style.display='none'">
+                                <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy">
                                 <div class="flex-grow min-w-0">
                                     <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
                                     <div class="text-[10px] text-gray-400">Tap to view full size</div>
