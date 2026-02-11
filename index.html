@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v201</title>
+    <title>Greenleaf Pro v202</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -73,7 +73,6 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         
-        /* TWO CAMERA BUTTONS */
         .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
         .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
@@ -130,7 +129,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v201 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v202 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -492,7 +491,6 @@
                 const originalText = btn.innerText;
                 btn.innerText = "SAVED!";
                 btn.style.backgroundColor = "#16a34a"; // Green-600
-                // Revert after 2s
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.style.backgroundColor = "#007a4d";
@@ -528,7 +526,6 @@
             });
         }
 
-        // NEW: Mark Request Complete
         function markRequestComplete() {
             if(!activeItem) return;
 
@@ -585,11 +582,7 @@
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
-                // Show loading on appropriate button
-                const isLib = input.parentElement.classList.contains('lib-btn');
-                const btn = isLib ? input.parentElement : input.parentElement; // Just target parent label
-                
-                // Simple generic loading indicator
+                // Show loading
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = "temp-loader";
                 loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
@@ -699,7 +692,6 @@
         function applyAssignments() { 
             let i = 0; 
             fullInventory.forEach(item => { 
-                // STANDARD SEASON ASSIGNMENT LOGIC (DOES NOT TOUCH REQUESTS)
                 if(!item.ASSIGNEDTO) {
                     const group = (item.PLANTGROUPCODE || "").toString(); 
                     if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; 
@@ -754,11 +746,9 @@
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
             
-            // *** CRITICAL LOGIC SPLIT ***
             let myItems = [];
             
             if(currentTab === 'requests') {
-                 // REQUESTS LOOK AT "REQUEST_ASSIGNED_TO"
                  myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests');
                  crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
@@ -766,7 +756,6 @@
                  return;
             }
 
-            // SEASON AND LOCATION LOOK AT STANDARD "ASSIGNEDTO"
             myItems = fullInventory.filter(i => (i.ASSIGNEDTO || "").includes(taskViewTargetUser) && i.TASK_TAB === currentTab);
 
             if(currentTab === 'season') {
@@ -827,29 +816,91 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        function getBatchReport() {
-            let report = "";
+        function getBatchHtml() {
+            let html = "<b>Greenleaf Report</b><br><br>";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                report += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
-                report += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
-                if(item.CALIPER || item.CAL) report += `Cal: ${item.CALIPER || item.CAL}\n`;
-                if(item.SAVED_MATCH) report += `Match: ${item.SAVED_MATCH}%\n`;
-                if(item.SAVED_SPEC)  report += `Spec: ${item.SAVED_SPEC}\n`;
-                if(item.SAVED_PICK)  report += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_NOTE)  report += `Note: ${item.SAVED_NOTE}\n`;
+                html += `<b>${item.COMMONNAME} (${item.CONTSIZE})</b><br>`;
+                html += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}<br>`;
+                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
+                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                
                 if(item.SAVED_PHOTO_LINK) {
-                    report += `Photos:\n`;
-                    item.SAVED_PHOTO_LINK.split(',').forEach((url, i) => { report += ` - ${url}\n`; });
+                    html += `Photos:<br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(',');
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => {
+                        const name = names[i] || `Photo ${i+1}`;
+                        html += `<a href="${url}">${name}</a><br>`;
+                    });
                 }
-                report += `\n`;
+                html += `<br>`;
             });
-            return report;
+            return html;
+        }
+
+        function getBatchText() {
+            let text = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\n`;
+                text += `Loc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`;
+                    const urls = item.SAVED_PHOTO_LINK.split(',');
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => {
+                        const name = names[i] || `Photo ${i+1}`;
+                        text += `• ${name}: ${url}\n`;
+                    });
+                }
+                text += `\n`;
+            });
+            return text;
         }
         
-        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchReport()); }
-        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchReport())}`; }
-        function copyBatchData() { const text = getBatchReport(); if(!text) { alert("No items selected!"); return; } navigator.clipboard.writeText(text).then(() => { alert("Data Copied!"); isBatch = false; toggleBatch(); }); }
+        function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
+        function batchEmail() { window.location.href = `mailto:?subject=Greenleaf%20Report&body=${encodeURIComponent(getBatchText())}`; }
+        
+        function copyBatchData() { 
+            if(selectedIdx.length === 0) { alert("No items selected!"); return; }
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => {
+                    alert("Report Copied with Links! Paste into Email.");
+                    isBatch = false; toggleBatch();
+                }).catch(err => { fallbackCopy(html); });
+            } else {
+                fallbackCopy(html);
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = "fixed";
+            tempDiv.style.left = "-9999px";
+            document.body.appendChild(tempDiv);
+            const range = document.createRange();
+            range.selectNodeContents(tempDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            document.body.removeChild(tempDiv);
+            alert("Report Copied! (Legacy Mode)");
+            isBatch = false; toggleBatch();
+        }
 
         function renderDriveNames() {
             const term = document.getElementById('drive-search').value.toLowerCase();
@@ -879,18 +930,31 @@
             document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join('');
         }
 
+        // NEW: Handles clicking a card during batch mode
+        function handleCardClick(idx, source) {
+            if(isBatch) {
+                const cb = document.getElementById('cb-' + idx);
+                if(cb) {
+                    cb.checked = !cb.checked;
+                    updateSelected();
+                }
+                return;
+            }
+            openDetail(idx, source);
+        }
+
         function createRowHtml(item, idx, source) {
-            const showCheck = isBatch && isAdmin;
-            const clickAction = (!isBatch) ? `onclick="openDetail(${idx}, '${source}')"` : '';
+            // FIX: Always render checkbox if Admin, hide with CSS
             
             // THUMBNAIL LOGIC
             let thumbHtml = '';
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/id=([a-zA-Z0-9_-]+)/);
+                // Changed to uc?export=view to bypass grey box thumbnail blocks
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
-                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
+                    thumbUrl = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
                 }
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
@@ -903,9 +967,9 @@
                 onmouseup="cancelLongPress()" 
                 onmouseleave="cancelLongPress()">
                 
-                ${showCheck ? `<input type="checkbox" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
                 
-                <div class="inv-card flex-grow flex items-center" ${clickAction}>
+                <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
                     ${thumbHtml}
                     <div class="flex-grow min-w-0">
                         <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
@@ -920,7 +984,19 @@
         
         function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 800); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
-        function exitBatchMode() { if(isBatch) toggleBatch(); }
+        
+        // FIX: Toggle batch without re-rendering the whole screen
+        function toggleBatch() { 
+            if(!isAdmin) return; 
+            isBatch = !isBatch;
+            document.body.classList.toggle('batch-mode', isBatch);
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
+            if(!isBatch) {
+                document.getElementById('action-bar').classList.remove('visible');
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false);
+                selectedIdx = [];
+            }
+        }
 
         function openDetail(idx, originView) {
             lastView = originView; activeItem = fullInventory[idx];
@@ -940,7 +1016,6 @@
             const cont = document.getElementById('input-container');
             const btnComplete = document.getElementById('request-complete-container');
 
-            // Handle Complete Button visibility
             if(activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser)) {
                 btnComplete.classList.remove('hidden');
             } else {
@@ -948,7 +1023,7 @@
             }
 
             if(isAdmin) {
-                document.getElementById('btn-cam-container').classList.remove('hidden'); // NEW: Unhide dual buttons
+                document.getElementById('btn-cam-container').classList.remove('hidden'); 
                 document.getElementById('btn-save').classList.remove('hidden');
                 cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             } else {
@@ -961,34 +1036,16 @@
             else { document.getElementById('expand-section').classList.remove('hidden'); }
             
             renderOverviewData(); 
-            // REMOVED renderAllFields() from here to speed up load time
             switchDetailTab('overview');
         }
 
-        // *** FIX: Filter out system keys for clean Accordion ***
         function renderAllFields() {
             if(!activeItem) return;
-            
-            // Hide these technical/duplicate keys from the view
-            const hiddenKeys = [
-                'UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 
-                'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO',
-                'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 
-                'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 
-                'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME',
-                'UPDATEDBY', 'TIMESTAMP'
-            ];
-
+            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
             let html = '<div class="grid grid-cols-1 gap-2">';
             for (const [key, value] of Object.entries(activeItem)) {
-                // Skip hidden keys or empty values to keep it clean
                 if(hiddenKeys.includes(key)) continue;
-                
-                html += `
-                    <div class="flex justify-between border-b border-gray-200 py-2">
-                        <span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span>
-                        <span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span>
-                    </div>`;
+                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`;
             }
             html += '</div>';
             document.getElementById('expand-content').innerHTML = html;
@@ -1014,12 +1071,10 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     const dispName = names[i] || `Photo ${i+1}`;
-                    
-                    // EXTRACT ID FOR THUMBNAIL GENERATION
                     let thumbUrl = url; 
-                    const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
+                    const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                     if(idMatch && idMatch[1]) {
-                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s150`;
+                        thumbUrl = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
                     }
 
                     phHtml += `
@@ -1040,18 +1095,6 @@
             if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else box.classList.add('hidden');
         }
 
-        function toggleBatch() {
-            if(!isAdmin) return; isBatch = !isBatch;
-            document.body.classList.toggle('batch-mode', isBatch);
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
-            if(!isBatch) document.getElementById('action-bar').classList.remove('visible');
-            const views = ['drive','tasks','viewer','review'];
-            views.forEach(v => { if(!document.getElementById('view-'+v).classList.contains('hidden')) { if(v === 'drive') renderDriveNames(); if(v === 'tasks') renderTasks(); if(v === 'viewer') renderViewerNames(); if(v === 'review') renderReviewItems(); } });
-        }
-
-        function updateSelected() { const checks = document.querySelectorAll('.select-check:checked'); selectedIdx = Array.from(checks).map(c => parseInt(c.value)); document.getElementById('action-bar').classList.toggle('visible', selectedIdx.length > 0); }
-        function openAssignModal() { document.getElementById('assign-modal').style.display='flex'; }
-        
         function batchAssign() {
             const d = document.getElementById('chk-dylan').checked;
             const k = document.getElementById('chk-kayla').checked;
@@ -1066,60 +1109,28 @@
             if(selected.length === 0) { alert("Select at least one person."); return; }
             let target = selected.join(" & ");
             
-            // 1. UPDATE LOCAL UI (Optimistic)
             const updates = selectedIdx.map(idx => {
                 const item = fullInventory[idx];
-                
-                // Update Local State
                 item.REQUEST_ASSIGNED_TO = target;
                 item.TASK_TAB = "requests"; 
                 if(isCalReq) {
                     let oldNote = item.SAVED_PICK || "";
                     if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; }
                 }
-
-                // Prepare Update Object
-                return {
-                    id: item.UNIQUE_ID,
-                    requestAssignedTo: item.REQUEST_ASSIGNED_TO,
-                    taskTab: item.TASK_TAB,
-                    match: item.SAVED_MATCH,
-                    spec: item.SAVED_SPEC,
-                    pick: item.SAVED_PICK,
-                    note: item.SAVED_NOTE,
-                    user: currentUser
-                };
+                return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, user: currentUser };
             });
 
             document.getElementById('assign-modal').style.display='none'; 
-            toggleBatch(); // Exit batch mode immediately
+            toggleBatch(); 
             alert(`Saving ${updates.length} items to Cloud...`);
 
-            // 2. SEND ONE BATCH REQUEST (Network Optimization)
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ type: "batch_update", updates: updates }) 
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
-                    // Success! No need to alert, just refresh data quietly
-                    fetchData(true); 
-                } else {
-                    alert("Error saving: " + data.message);
-                }
+                if(data.status === 'success') { fetchData(true); } else { alert("Error saving: " + data.message); }
             })
             .catch(err => { alert("Network Error: " + err); });
         }
-
-        function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
-        function toggleExpand() { 
-            const content = document.getElementById('expand-content');
-            const section = document.getElementById('expand-section');
-            if (content.innerHTML === '') { renderAllFields(); }
-            section.classList.toggle('expanded'); 
-        }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
     </script>
 </body>
 </html>
