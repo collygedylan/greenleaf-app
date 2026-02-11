@@ -1342,7 +1342,14 @@
                             <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
                             <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
                 
-                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                // Build the secondary info block dynamically
+                let details = [];
+                if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`);
+                if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`);
+
+                // If we have match or spec, join them.
+                if(details.length > 0) html += details.join(' | ') + '<br>';
+
                 if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
                 if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
                 if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
@@ -1368,8 +1375,15 @@
                 let item = fullInventory[idx];
                 text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
                 
-                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                // Handle Match/Spec Line
+                let specLine = [];
+                if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`);
+                if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`);
+                if(specLine.length > 0) text += specLine.join(' | ') + '\n';
+
+                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`;
+                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
                 
                 if(item.SAVED_PHOTO_LINK) {
                     text += `Photos:\n`; 
@@ -1482,7 +1496,6 @@
                 if(idMatch && idMatch[1]) { 
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                 }
-                // UPDATED: Show image, no hidden on error
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
 
