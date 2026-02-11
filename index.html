@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro v208</title>
+    <title>Greenleaf Pro v209</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -131,7 +131,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v208 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v209 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -145,6 +145,7 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
             <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
             <div class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Sales Inventory Tracking</div>
             <div class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
@@ -164,10 +165,22 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    
+                    <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
+                    
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Mgr Review</span></div>
                 </div>
+            </div>
+
+            <div id="view-salesoffice" class="hidden">
+                <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes</h2>
+                <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100">
+                    <strong>Published Descriptions:</strong> Ready-to-sell items recently updated by the field team.
+                </div>
+                <input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search Plants or Codes..." onkeyup="renderSalesOffice()">
+                <div id="salesoffice-content"></div>
             </div>
 
             <div id="view-drive" class="hidden">
@@ -367,7 +380,7 @@
         let longPressTimer; 
         let autoSyncTimer;
 
-        // PULL TO REFRESH
+        // PULL TO REFRESH VARIABLES
         let ptrStartY = 0;
         let ptrCurrentY = 0;
         let ptrDragging = false;
@@ -375,34 +388,51 @@
         const spinner = document.getElementById('ptr-spinner');
 
         scrollArea.addEventListener('touchstart', (e) => {
-            if (scrollArea.scrollTop === 0) { ptrStartY = e.touches[0].clientY; ptrDragging = true; }
+            if (scrollArea.scrollTop === 0) {
+                ptrStartY = e.touches[0].clientY;
+                ptrDragging = true;
+            }
         }, { passive: true });
 
         scrollArea.addEventListener('touchmove', (e) => {
             if (!ptrDragging) return;
-            const y = e.touches[0].clientY; const diff = y - ptrStartY;
+            const y = e.touches[0].clientY;
+            const diff = y - ptrStartY;
             if (diff > 0 && scrollArea.scrollTop === 0) {
-                ptrCurrentY = diff; const move = Math.min(diff * 0.5, 80);
-                spinner.style.top = (move - 40) + 'px'; spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
-            } else { ptrDragging = false; }
+                ptrCurrentY = diff;
+                const move = Math.min(diff * 0.5, 80);
+                spinner.style.top = (move - 40) + 'px';
+                spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`;
+            } else {
+                ptrDragging = false;
+            }
         }, { passive: true });
 
         scrollArea.addEventListener('touchend', () => {
             if (!ptrDragging) return;
             ptrDragging = false;
             if (ptrCurrentY > 60) {
-                spinner.style.top = '20px'; spinner.classList.add('loading');
-                manualSync().then(() => { spinner.classList.remove('loading'); spinner.style.top = '-40px'; });
-            } else { spinner.style.top = '-40px'; }
+                spinner.style.top = '20px';
+                spinner.classList.add('loading');
+                manualSync().then(() => {
+                    spinner.classList.remove('loading');
+                    spinner.style.top = '-40px';
+                });
+            } else {
+                spinner.style.top = '-40px';
+            }
             ptrCurrentY = 0;
         });
 
         // LOGIN
         function selectUser(u) { 
-            currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; 
+            currentUser = u; 
+            isAdmin = ADMINS.includes(u); 
+            taskViewTargetUser = u; 
             document.getElementById('login-buttons').classList.add('hidden'); 
             document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
         }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { alert("Incorrect PIN"); } }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
@@ -410,13 +440,16 @@
 
         function startAutoSync() {
             if(autoSyncTimer) clearInterval(autoSyncTimer);
-            autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
+            autoSyncTimer = setInterval(() => {
+                fetchData(true); 
+            }, 15000); 
         }
 
         // FETCH DATA
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) document.getElementById('loading-spinner').innerText = "Syncing Cloud Data...";
+                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const cloudJson = await cloudRes.json();
                 
@@ -425,26 +458,40 @@
                     noteTemplates = cloudJson.templates || []; 
                     
                     if(!isSilent) {
-                        applyAssignments(); launchApp(); startAutoSync();
+                        applyAssignments(); 
+                        launchApp();
+                        startAutoSync();
                     } else {
                         if(!document.getElementById('view-detail').classList.contains('hidden')) {
                             if(activeItem) {
                                 const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                     activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { renderOverviewData(); }
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                                        renderOverviewData();
+                                    }
                                 }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) {
-                            renderTasks(); checkForRequests(); 
+                            renderTasks();
+                            checkForRequests(); 
+                        } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) {
+                            renderSalesOffice();
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) {
                             renderReviewItems();
-                        } else { checkForRequests(); }
+                        } else {
+                            checkForRequests(); 
+                        }
                     }
-                } else { throw new Error("Failed to load Cloud Data"); }
+                } else {
+                    throw new Error("Failed to load Cloud Data");
+                }
             } catch (e) { 
                 console.error(e); 
-                if(!isSilent) { document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message; setTimeout(resetLogin, 3000); }
+                if(!isSilent) {
+                    document.getElementById('loading-spinner').innerText = "Load Failed: " + e.message;
+                    setTimeout(resetLogin, 3000); 
+                }
             }
         }
 
@@ -468,6 +515,7 @@
         function retryFailedSaves() {
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
             if(failed.length === 0) return;
+            
             alert(`Attempting to sync ${failed.length} offline updates...`);
             
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: failed }) })
@@ -475,12 +523,16 @@
             .then(data => {
                 if(data.status === 'success') {
                     localStorage.removeItem('greenleaf_failed_saves');
-                    alert("Sync Successful!"); fetchData(true);
-                } else { alert("Sync failed again: " + data.message); }
-            }).catch(err => alert("Network still down."));
+                    alert("Sync Successful!");
+                    fetchData(true);
+                } else {
+                    alert("Sync failed again: " + data.message);
+                }
+            })
+            .catch(err => alert("Network still down."));
         }
 
-        // INSTANT SAVE
+        // INSTANT FIRE AND FORGET SAVE
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return; 
             
@@ -496,29 +548,47 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
+            // Update Local Data + INSTANT TIMESTAMP
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
-            
-            renderOverviewData();
 
             const payload = {
-                type: "update", id: activeItem.UNIQUE_ID, match: match, spec: spec, pick: pick, note: note, salesDesc: salesDesc, 
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", photoName: activeItem.SAVED_PHOTO_NAME || "", user: currentUser
+                type: "update",
+                id: activeItem.UNIQUE_ID,
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
+                salesDesc: salesDesc, 
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
+                user: currentUser
             };
 
-            if(!silent) goBackFromDetail(); 
+            // LEAVE IMMEDIATELY (Optimistic UI)
+            if(!silent) {
+                goBackFromDetail(); 
+            } else {
+                renderOverviewData();
+            }
 
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+            // Fire to cloud in background
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
             .then(res => res.json())
-            .then(data => { if(data.status !== 'success') logFailedSave(payload); })
+            .then(data => {
+                if(data.status !== 'success') logFailedSave(payload);
+            })
             .catch(err => logFailedSave(payload));
         }
 
-        // INSTANT COMPLETE
+        // INSTANT FIRE AND FORGET COMPLETE
         function markRequestComplete() {
             if(!activeItem) return;
 
@@ -534,22 +604,38 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
 
-            activeItem.SAVED_MATCH = match; activeItem.SAVED_SPEC = spec; activeItem.SAVED_PICK = pick;
-            activeItem.SAVED_NOTE = note; activeItem.SAVED_SALES_DESC = salesDesc;
-            activeItem.REQUEST_ASSIGNED_TO = ""; activeItem.TASK_TAB = "review";
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            activeItem.REQUEST_ASSIGNED_TO = "";
+            activeItem.TASK_TAB = "review";
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
             const payload = {
-                type: "update", id: activeItem.UNIQUE_ID, requestAssignedTo: "", taskTab: "review",
-                match: match, spec: spec, pick: pick, note: note, salesDesc: salesDesc,
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", photoName: activeItem.SAVED_PHOTO_NAME || "", user: currentUser
+                type: "update",
+                id: activeItem.UNIQUE_ID,
+                requestAssignedTo: "", 
+                taskTab: "review",
+                match: match,
+                spec: spec,
+                pick: pick,
+                note: note,
+                salesDesc: salesDesc,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
+                user: currentUser
             };
 
+            // LEAVE IMMEDIATELY
             goBackFromDetail();
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
-            .then(data => { if(data.status !== 'success') logFailedSave(payload); })
+            .then(data => {
+                if(data.status !== 'success') logFailedSave(payload);
+            })
             .catch(err => logFailedSave(payload));
         }
 
@@ -557,6 +643,7 @@
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
+                // Keep loading div for photo because we MUST wait for the Google Drive URL before saving
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = "temp-loader";
                 loadingDiv.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col items-center justify-center z-50 text-white font-bold";
@@ -574,16 +661,26 @@
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
                         
-                        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) })
+                        fetch(GOOGLE_SCRIPT_URL, { 
+                            method: "POST", 
+                            body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
+                        })
                         .then(res => res.json()).then(data => {
                             if(data.status === 'success') { 
                                 let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
                                 let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                                links.push(data.url); names.push(filename);
-                                activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
-                                renderOverviewData(); saveData(true); alert("Photo Added!"); 
-                            } else { alert("Upload Error: " + data.message); }
-                        }).catch(err => alert("Network Error: " + err)).finally(() => { document.body.removeChild(loadingDiv); });
+                                links.push(data.url);
+                                names.push(filename);
+                                activeItem.SAVED_PHOTO_LINK = links.join(',');
+                                activeItem.SAVED_PHOTO_NAME = names.join(',');
+                                renderOverviewData(); 
+                                saveData(true); // Silent save instantly applies the new photo
+                                alert("Photo Added!"); 
+                            } 
+                            else { alert("Upload Error: " + data.message); }
+                        }).catch(err => alert("Network Error: " + err)).finally(() => { 
+                            document.body.removeChild(loadingDiv);
+                        });
                     }
                 }
             }
@@ -595,9 +692,13 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    socReps = data.data; socViewLevel = 0; renderSocView(); document.getElementById('soc-status').innerText = "";
+                    socReps = data.data;
+                    socViewLevel = 0;
+                    renderSocView();
+                    document.getElementById('soc-status').innerText = "";
                 } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
-            }).catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
+            })
+            .catch(e => { document.getElementById('soc-status').innerText = "Fetch Error: " + e; });
         }
 
         function fetchRepData(repName) {
@@ -606,7 +707,11 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    socData = data.data; socViewLevel = 1; selectedSocRep = repName; renderSocView(); document.getElementById('soc-status').innerText = "";
+                    socData = data.data;
+                    socViewLevel = 1;
+                    selectedSocRep = repName;
+                    renderSocView();
+                    document.getElementById('soc-status').innerText = "";
                 } else { document.getElementById('soc-status').innerText = "Error: " + data.message; }
             });
         }
@@ -630,16 +735,56 @@
         }
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
+        // --- NEW: SALES OFFICE VIEW LOGIC ---
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content');
+            const searchInput = document.getElementById('salesoffice-search');
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            // Filter only items that HAVE a Sales Description
+            const salesItems = fullInventory.filter(i => {
+                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false;
+                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false;
+                return true;
+            });
+            
+            if(salesItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`;
+                return;
+            }
+            
+            // Sort A-Z by Common Name
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            
+            container.innerHTML = salesItems.map(item => `
+                <div class="inv-card mb-3 !p-4 border-green-200">
+                    <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                    <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                    <div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">
+                        "${item.SAVED_SALES_DESC}"
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function launchApp() { 
-            document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; 
+            document.getElementById('view-login').style.display = 'none'; 
+            document.getElementById('app-wrapper').classList.remove('hidden'); 
+            document.getElementById('header-user').innerText = currentUser; 
             if(isAdmin) { 
-                document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); 
+                document.getElementById('home-btn-soc').classList.remove('hidden'); 
+                document.getElementById('home-btn-track').classList.remove('hidden'); 
+                document.getElementById('home-btn-review').classList.remove('hidden'); 
             } else { 
-                document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); 
-            } switchView('home'); 
+                document.getElementById('home-btn-soc').classList.add('hidden'); 
+                document.getElementById('home-btn-track').classList.add('hidden'); 
+                document.getElementById('home-btn-review').classList.add('hidden'); 
+            } 
+            switchView('home'); 
         }
         function applyAssignments() { 
-            let i = 0; fullInventory.forEach(item => { 
+            let i = 0; 
+            fullInventory.forEach(item => { 
                 if(!item.ASSIGNEDTO) {
                     const group = (item.PLANTGROUPCODE || "").toString(); 
                     if(group.includes("230") || group.includes("140")) item.ASSIGNEDTO = "Dylan"; 
@@ -648,14 +793,19 @@
                 }
             }); 
         }
+        
         function switchView(v) { 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking'].forEach(id => document.getElementById(id).classList.add('hidden')); 
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(id => document.getElementById(id).classList.add('hidden')); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v==='drive') renderDriveNames(); 
-            if(v==='tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
+            if(v==='tasks') { 
+                if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } 
+                else { renderTasks(); } 
+            } 
             if(v==='viewer') renderViewerNames(); 
             if(v==='review') { reviewViewLevel = 0; renderReviewItems(); } 
             if(v==='soc') { fetchSocReps(); } 
+            if(v==='salesoffice') { renderSalesOffice(); } // Render new tab
         }
         
         function switchDetailTab(tab) {
@@ -668,7 +818,7 @@
         function goBackFromDetail() {
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
-            if(lastView === 'tasks') renderTasks(); // Re-render instantly shows it removed
+            if(lastView === 'tasks') renderTasks();
             if(lastView === 'drive') renderDriveNames(); 
         }
 
@@ -707,7 +857,9 @@
                     const ss = parseFloat(i.SEASONSUPPLY) || 0;
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
                     
-                    if (daysOld < 10 && !isLowStock) { return false; }
+                    if (daysOld < 10 && !isLowStock) {
+                        return false; 
+                    }
                 }
                 return true;
             };
@@ -765,7 +917,9 @@
                         <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
                         <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
                     </div>`;
-            } else { failContainer.innerHTML = ''; }
+            } else {
+                failContainer.innerHTML = '';
+            }
 
             const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
             if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
@@ -852,39 +1006,61 @@
         
         function batchText() { window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
         
+        // NEW EMAIL LOGIC: Copies beautiful rich text, then opens email client.
         function batchEmail() { 
             if(selectedIdx.length === 0) { alert("No items selected!"); return; }
-            const html = getBatchHtml(); const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
+            
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
                     alert("Report successfully copied with hidden links!\n\nI will now open your email app. Please TAP and PASTE into the body.");
-                    window.location.href = `mailto:?subject=Greenleaf%20Report`; isBatch = false; toggleBatch();
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`;
+                    isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; });
-            } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }
+            } else {
+                fallbackCopy(html);
+                window.location.href = `mailto:?subject=Greenleaf%20Report`;
+            }
         }
         
         function copyBatchData() { 
             if(selectedIdx.length === 0) { alert("No items selected!"); return; }
-            const html = getBatchHtml(); const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" });
+            const html = getBatchHtml();
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" });
+            const blobText = new Blob([text], { type: "text/plain" });
+            
             if (navigator.clipboard && navigator.clipboard.write) {
                 const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
                 navigator.clipboard.write(data).then(() => {
-                    alert("Report Copied with Links! Paste into Email."); isBatch = false; toggleBatch();
+                    alert("Report Copied with Links! Paste into Email.");
+                    isBatch = false; toggleBatch();
                 }).catch(err => { fallbackCopy(html); });
-            } else { fallbackCopy(html); }
+            } else {
+                fallbackCopy(html);
+            }
         }
 
         function fallbackCopy(html) {
             const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px";
+            tempDiv.innerHTML = html;
+            tempDiv.style.position = "fixed";
+            tempDiv.style.left = "-9999px";
             document.body.appendChild(tempDiv);
-            const range = document.createRange(); range.selectNodeContents(tempDiv);
-            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-            document.execCommand('copy'); document.body.removeChild(tempDiv);
-            alert("Report Copied! (Legacy Mode)"); isBatch = false; toggleBatch();
+            const range = document.createRange();
+            range.selectNodeContents(tempDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            document.body.removeChild(tempDiv);
+            alert("Report Copied! (Legacy Mode)");
+            isBatch = false; toggleBatch();
         }
 
         function renderDriveNames() {
@@ -918,7 +1094,10 @@
         function handleCardClick(idx, source) {
             if(isBatch) {
                 const cb = document.getElementById('cb-' + idx);
-                if(cb) { cb.checked = !cb.checked; updateSelected(); }
+                if(cb) {
+                    cb.checked = !cb.checked;
+                    updateSelected();
+                }
                 return;
             }
             openDetail(idx, source);
@@ -931,7 +1110,7 @@
                 let thumbUrl = firstLink;
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 if(idMatch && idMatch[1]) {
-                    // FIX: Changed to uc?export=download to force browser rendering of Google Drive images
+                    // FIX: Direct export=download link to bypass Drive security blocks on mobile thumbnails
                     thumbUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
                 }
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
@@ -982,7 +1161,7 @@
             activeItem = fullInventory[idx];
             
             document.getElementById('view-detail').classList.remove('hidden');
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(v => document.getElementById(v).classList.add('hidden'));
             
             document.getElementById('det-common').innerText = activeItem.COMMONNAME;
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
@@ -1177,6 +1356,7 @@
             document.getElementById('assign-modal').style.display='none'; 
             toggleBatch(); 
             
+            // Background update
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
             .then(data => {
