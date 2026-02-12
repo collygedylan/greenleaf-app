@@ -84,6 +84,12 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
+        /* SEASON SCROLL BAR */
+        .season-scroll { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; -ms-overflow-style: none; }
+        .season-scroll::-webkit-scrollbar { display: none; }
+        .season-chip { padding: 8px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 12px; font-weight: bold; color: #4b5563; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
+        .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
+        
         /* PULL TO REFRESH */
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
@@ -194,11 +200,22 @@
             </div>
 
             <div id="view-drive" class="hidden">
-                <div class="task-tabs mb-4">
-                    <div id="drivetab-all" class="task-tab active" onclick="switchDriveTab('all')">Browse All</div>
-                    <div id="drivetab-photos" class="task-tab" onclick="switchDriveTab('photos')">Recent Updates</div>
+                <h2 class="text-sm font-bold text-blue-600 uppercase mb-4">Drive Mode</h2>
+                
+                <div class="season-scroll" id="drive-season-bar">
+                    <div class="season-chip active" onclick="toggleDriveSeason('ALL', this)">ALL</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('F1', this)">F1</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('S1', this)">S1</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('U1', this)">U1</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('U2', this)">U2</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('U3', this)">U3</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('X', this)">X</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('Y', this)">Y</div>
+                    <div class="season-chip" onclick="toggleDriveSeason('Z', this)">Z</div>
                 </div>
-                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="renderDriveNames()">
+
+                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleDriveSearch(this.value)">
+                <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
 
@@ -411,13 +428,19 @@
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null; 
-        let currentDriveTab = 'all'; 
         let isBatch = false; 
         let selectedIdx = []; 
         let lastView = 'drive'; 
         let currentOriginView = ''; 
         let longPressTimer; 
         let autoSyncTimer;
+
+        // DRIVE MODE STATE
+        let driveViewLevel = 0;
+        let selectedDriveBlock = null;
+        let selectedDriveLoc = null;
+        let driveSearchTerm = '';
+        let driveSelectedSeasons = ['ALL'];
 
         // --- NEW: SMART LOCATION PREFIX LOGIC ---
         function getLocPrefix(loc) {
@@ -555,11 +578,8 @@
                         applyAssignments(); 
                         launchApp(); 
                         startAutoSync(); 
-                        
-                        // RESTORE SESSION (If camera reload happened)
                         restoreSession();
                     } else {
-                        // REFRESH CURRENT VIEW DATA
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                             if(freshItem) { 
@@ -574,7 +594,7 @@
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveNames();
+                            renderDriveView(); // Updated call
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         }
@@ -591,7 +611,6 @@
             }
         }
 
-        // --- NEW: SESSION RESTORE LOGIC ---
         function restoreSession() {
             const savedView = localStorage.getItem('gl_last_view');
             const savedId = localStorage.getItem('gl_active_item');
@@ -641,7 +660,6 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
-        // --- DATA SAVING ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return; 
             
@@ -746,11 +764,10 @@
             .catch(err => logFailedSave(payload));
         }
 
-        // --- NEW: SILENT BACKGROUND PHOTO UPLOAD ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
-                const itemBeingEdited = activeItem; // Lock to current item
+                const itemBeingEdited = activeItem; 
                 
                 showToast("Uploading...", "Photo uploading in background. You can keep working.", false);
                 
@@ -797,12 +814,10 @@
                                 itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
                                 itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
-                                // Update UI ONLY if user is still on this specific detail view
                                 if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
                                     renderOverviewData(); 
                                 }
                                 
-                                // Silently save this specific item's update to the cloud
                                 const payload = { 
                                     type: "update", 
                                     id: itemBeingEdited.UNIQUE_ID, 
@@ -832,7 +847,6 @@
             }
         }
 
-        // --- SOC LOGIC ---
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             
@@ -904,85 +918,128 @@
             renderSocView(); 
         }
 
-        // --- DRIVE MODE LOGIC ---
-        function switchDriveTab(tab) {
-            currentDriveTab = tab;
-            document.getElementById('drivetab-all').classList.toggle('active', tab === 'all');
-            document.getElementById('drivetab-photos').classList.toggle('active', tab === 'photos');
-            renderDriveNames();
-        }
-
-        function renderDriveNames() {
-            const term = document.getElementById('drive-search').value.toLowerCase();
+        // --- NEW DRIVE MODE LOGIC: FILTERS & HIERARCHY ---
+        function toggleDriveSeason(season, el) {
+            if(season === 'ALL') {
+                driveSelectedSeasons = ['ALL'];
+            } else {
+                // If ALL was selected, remove it
+                if(driveSelectedSeasons.includes('ALL')) driveSelectedSeasons = [];
+                
+                // Toggle selection
+                if(driveSelectedSeasons.includes(season)) {
+                    driveSelectedSeasons = driveSelectedSeasons.filter(s => s !== season);
+                } else {
+                    driveSelectedSeasons.push(season);
+                }
+                
+                // If nothing selected, revert to ALL
+                if(driveSelectedSeasons.length === 0) driveSelectedSeasons = ['ALL'];
+            }
             
-            // Photo Gallery / Recent Updates Tab
-            if (currentDriveTab === 'photos') {
-                let photoItems = fullInventory.filter(i => i.SAVED_PHOTO_LINK || i.SAVED_NOTE || i.SAVED_SALES_DESC || i.SAVED_PICK || i.SAVED_MATCH);
-                
-                if(term) {
-                    photoItems = photoItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term));
+            // Update UI Chips
+            document.querySelectorAll('.season-chip').forEach(chip => {
+                const s = chip.innerText;
+                if(driveSelectedSeasons.includes(s)) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+            
+            // Reset Drill Down on Filter Change? Maybe not, keep current level if possible.
+            // For safety, let's keep level but re-render
+            renderDriveView();
+        }
+
+        function handleDriveSearch(term) {
+            driveSearchTerm = term.toLowerCase();
+            renderDriveView();
+        }
+
+        function getFilteredDriveItems() {
+            return fullInventory.filter(i => {
+                // Season Filter
+                if(!driveSelectedSeasons.includes('ALL')) {
+                    if(!driveSelectedSeasons.includes(i.SEASONSUPPLY)) return false;
                 }
-                
-                if(photoItems.length === 0) { 
-                    document.getElementById('drive-content').innerHTML = `<div class="p-8 text-center text-gray-400">No recent updates found.</div>`; 
-                    return; 
+                // Search Filter
+                if(driveSearchTerm) {
+                    const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || 
+                                  (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || 
+                                  (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm);
+                    if(!match) return false;
                 }
-                
-                let html = '<div class="grid grid-cols-2 gap-3">';
-                photoItems.forEach(item => {
-                    const idx = fullInventory.indexOf(item); 
-                    let mediaHtml = `<div class="w-full h-32 bg-green-50 flex items-center justify-center p-2 text-center text-xs text-green-800 font-semibold italic overflow-hidden shadow-inner">"${item.SAVED_SALES_DESC || item.SAVED_NOTE || item.SAVED_PICK || 'Updated'}"</div>`;
-                    
-                    if(item.SAVED_PHOTO_LINK) {
-                        const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
-                        let thumbUrl = firstLink;
-                        const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                        
-                        if(idMatch && idMatch[1]) { 
-                            thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
-                        }
-                        // UPDATED: Show image, no hidden on error
-                        mediaHtml = `<img src="${thumbUrl}" class="w-full h-32 object-cover bg-gray-100" loading="lazy">`;
-                    }
-                    
-                    html += `
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer" onclick="handleCardClick(${idx}, 'drive')">
-                            ${mediaHtml}
-                            <div class="p-2">
-                                <div class="text-[10px] font-bold text-[#007a4d] truncate">${item.COMMONNAME}</div>
-                                <div class="text-[9px] text-gray-500 truncate">${item.CONTSIZE} | ${item.LOCATIONCODE || 'No Loc'}</div>
-                            </div>
-                        </div>`;
-                });
-                
-                html += '</div>'; 
-                document.getElementById('drive-content').innerHTML = html; 
+                return true;
+            });
+        }
+
+        function renderDriveNames() { renderDriveView(); } // Alias for compat
+
+        function renderDriveView() {
+            const container = document.getElementById('drive-content');
+            const crumb = document.getElementById('drive-crumb');
+            const filteredItems = getFilteredDriveItems();
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
+                crumb.innerText = "No Results";
                 return;
             }
 
-            // Normal Browse Search
-            if (term) {
-                const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term));
-                document.getElementById('drive-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); 
-                return;
-            }
+            if(driveViewLevel === 0) {
+                // BLOCK LEVEL
+                crumb.innerText = `All Blocks (${filteredItems.length} Items)`;
+                const blocks = [...new Set(filteredItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                
+                container.innerHTML = blocks.map(b => {
+                    const count = filteredItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
+                    return `<div class="drill-item" onclick="selectDriveBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
 
-            // Normal Browse Folders
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-            document.getElementById('drive-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (driveViewLevel === 1) {
+                // LOCATION LEVEL
+                crumb.innerText = `Block ${selectedDriveBlock}`;
+                const blockItems = filteredItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedDriveBlock);
+                
+                // Group by Location Prefix
+                const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                
+                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
+                    const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                    return `<div class="drill-item" onclick="selectDriveLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+
+            } else {
+                // ITEM LEVEL
+                crumb.innerText = `Block ${selectedDriveBlock} / ${selectedDriveLoc}`;
+                let locItems = filteredItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedDriveBlock && getLocPrefix(i.LOCATIONCODE) === selectedDriveLoc);
+                locItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
+                container.innerHTML = `<div class="back-btn" onclick="backToDriveLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locations</div>` + locItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
+            }
         }
-        
-        function selectDriveName(name) {
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort();
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="renderDriveNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+
+        function selectDriveBlock(b) {
+            selectedDriveBlock = b;
+            driveViewLevel = 1;
+            renderDriveView();
         }
-        
-        function selectDriveSize(name, size) {
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size);
-            document.getElementById('drive-content').innerHTML = `<div class="back-btn" onclick="selectDriveName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
-                const idx = fullInventory.indexOf(item); 
-                return createRowHtml(item, idx, 'drive'); 
-            }).join('');
+
+        function selectDriveLoc(l) {
+            selectedDriveLoc = l;
+            driveViewLevel = 2;
+            renderDriveView();
+        }
+
+        function backToDriveLocs() {
+            driveViewLevel = 1;
+            selectedDriveLoc = null;
+            renderDriveView();
+        }
+
+        function resetDriveView() {
+            driveViewLevel = 0;
+            selectedDriveBlock = null;
+            selectedDriveLoc = null;
+            renderDriveView();
         }
 
         // --- TASKS LOGIC ---
@@ -1496,6 +1553,7 @@
                 if(idMatch && idMatch[1]) { 
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                 }
+                // UPDATED: Show image, no hidden on error
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
 
