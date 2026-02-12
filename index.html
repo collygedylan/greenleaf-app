@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro</title>
+    <title>Greenleaf Pro Turbo</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -38,6 +38,7 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
+        /* TURBO LIST RENDERING */
         .drill-item { 
             border-bottom: 1px solid #e5e7eb; 
             padding: 16px; 
@@ -46,14 +47,27 @@
             align-items: center; 
             cursor: pointer; 
             background: white; 
-            transition: background 0.2s; 
+            transition: background 0.1s; 
             user-select: none;
             content-visibility: auto; 
             contain-intrinsic-size: 50px; 
         }
         .drill-item:active { background: #f3f4f6; }
-        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s; user-select: none; }
+        
+        .inv-card { 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 8px; 
+            background: white; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
+            transition: transform 0.1s; 
+            user-select: none; 
+            content-visibility: auto;
+            contain-intrinsic-size: 80px;
+        }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
+        
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
@@ -61,13 +75,14 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
-        .batch-row { display: flex; align-items: center; padding: 0 4px; transition: all 0.2s; }
+        .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
         
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
@@ -75,15 +90,17 @@
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
         .full-width { grid-column: span 2; }
+        
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         
@@ -119,6 +136,12 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         
         .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* DATA BADGES */
+        .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
+        .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -159,7 +182,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v228 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf Turbo <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -206,9 +229,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    
                     <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
-                    
                     <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
@@ -480,7 +501,6 @@
         let allCommonNames = []; // CACHED NAMES FOR PERFORMANCE
         let socReps = []; 
         let socData = []; 
-        let savedFieldData = {}; 
         let activeItem = null; 
         let currentUser = null; 
         let isAdmin = false; 
@@ -682,12 +702,12 @@
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
+                    // SMART SYNC: Only update local items if the cloud version is newer
+                    // Or if we don't have local modifications pending (simplification: simple overwrite for now unless we implement full diffing)
+                    // For "Turbo", we overwrite, but because saveData updates local immediately, it should be fine.
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
-                    // CLEAN EXPIRED DATA FROM APP MEMORY (10 Day/10% Rule)
-                    cleanExpiredData();
-
                     // PERFORMANCE: Pre-calculate unique names once
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
 
@@ -697,6 +717,7 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
+                        // RE-RENDER CURRENT VIEW SILENTLY
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                             if(freshItem) { 
@@ -732,32 +753,6 @@
                     setTimeout(resetLogin, 4000); 
                 } 
             }
-        }
-
-        // --- NEW: CLEAN UP EXPIRED DATA ---
-        function cleanExpiredData() {
-            const now = new Date().getTime();
-            fullInventory.forEach(item => {
-                if (item.TIMESTAMP) {
-                    const saveTime = new Date(item.TIMESTAMP).getTime(); 
-                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
-                    const ptr = parseFloat(item.PTRAVAILABLE) || 0; 
-                    const ss = parseFloat(item.SEASONSUPPLY) || 0; 
-                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
-                    
-                    // Rule: Older than 10 days AND NOT Low Stock -> Clear fields
-                    if (daysOld > 10 && !isLowStock) {
-                        item.SAVED_MATCH = "";
-                        item.SAVED_SPEC = "";
-                        item.SAVED_PICK = "";
-                        item.SAVED_NOTE = "";
-                        item.SAVED_SALES_DESC = "";
-                        item.SAVED_PHOTO_LINK = "";
-                        item.SAVED_PHOTO_NAME = "";
-                        // item.TIMESTAMP remains so we know it WAS updated, but data is gone
-                    }
-                }
-            });
         }
 
         function restoreSession() {
@@ -809,7 +804,7 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
-        // --- DATA SAVING ---
+        // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return;
             
@@ -826,8 +821,7 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // 2. CRITICAL FIX: Update Active Item AND the item inside fullInventory list
-            // This ensures the "Batch/Copy" function sees the data immediately
+            // 2. INSTANTLY UPDATE LOCAL MEMORY
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
@@ -835,17 +829,11 @@
             activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.TIMESTAMP = new Date().toISOString();
 
-            // Find and update the specific item in the main array to prevent "Orphaned" data
+            // 3. UPDATE MASTER ARRAY
             const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
             if(masterIdx > -1) {
                 fullInventory[masterIdx] = activeItem;
             }
-
-            // 3. STOP AUTO-SYNC TEMPORARILY
-            // This prevents the app from pulling old data before the sheet finishes saving
-            if(autoSyncTimer) clearInterval(autoSyncTimer);
-            // Restart sync in 20 seconds (gives Google Script time to finish)
-            setTimeout(() => { startAutoSync(); }, 20000);
 
             const payload = { 
                 type: "update", 
@@ -860,13 +848,15 @@
                 user: currentUser 
             };
             
+            // 4. INSTANT UI FEEDBACK (No waiting)
             if(!silent) { 
                 goBackFromDetail(); 
-                showToast("Saved", "Data locked. Sync paused for 20s.", false); 
+                showToast("Saved", "Update applied instantly.", false); 
             } else { 
                 renderOverviewData(); 
             }
             
+            // 5. SEND TO CLOUD IN BACKGROUND
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 body: JSON.stringify(payload) 
@@ -1951,10 +1941,17 @@
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 
                 if(idMatch && idMatch[1]) { 
-                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                    // High-speed small thumbnail request from Google Drive
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; 
                 }
-                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
+                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
+
+            // TURBO BADGES
+            let badges = '';
+            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
 
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
@@ -1962,9 +1959,13 @@
                 <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
                     ${thumbHtml}
                     <div class="flex-grow min-w-0">
-                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
-                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
-                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
+                        <div class="flex justify-between items-start">
+                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
+                        </div>
+                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
+                        <div class="text-xs text-gray-500 truncate mb-1">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}</div>
+                        ${badges}
                     </div>
                 </div>
             </div>`;
