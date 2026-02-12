@@ -655,9 +655,7 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            // If in SOC, make sure we call fetchSocReps if rep list is empty, or re-render
-                            if(socReps.length > 0) renderSocView();
-                            else fetchSocReps();
+                            renderSocView(); // Always re-render static list if visible
                         }
                     }
                 } else { 
@@ -953,23 +951,9 @@
         }
 
         function fetchSocReps() {
-            document.getElementById('soc-status').innerText = "Loading Reps...";
-            
-            fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') { 
-                    socReps = data.data; 
-                    socViewLevel = 0; 
-                    renderSocView(); 
-                    document.getElementById('soc-status').innerText = "";
-                } else { 
-                    document.getElementById('soc-status').innerText = "Error: " + data.message; 
-                }
-            })
-            .catch(e => { 
-                document.getElementById('soc-status').innerText = "Fetch Error: " + e; 
-            });
+            // Deprecated for List View, but kept for logic if needed
+            // We use STATIC_DIRECTORY now for the list.
+            renderSocView();
         }
 
         function fetchRepData(repName) {
@@ -1020,17 +1004,17 @@
 
             // REPS TAB
             if(socViewLevel === 0) { 
-                if(socReps.length === 0) { 
-                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; 
+                // Use STATIC_DIRECTORY instead of socReps to ensure formatting and availability
+                if(STATIC_DIRECTORY.length === 0) { 
+                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Loaded.</div>`; 
                     return; 
                 } 
                 
-                // Map Reps to IDs using STATIC_DIRECTORY
                 let html = '';
-                socReps.forEach(r => {
-                    const match = STATIC_DIRECTORY.find(d => d.name === r);
-                    const disp = match ? `${r} - ${match.id}` : r;
-                    html += `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                // Sort by name
+                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => {
+                    const disp = `${rep.name} - ${rep.id}`;
+                    html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
                 });
                 container.innerHTML = html;
 
@@ -1477,7 +1461,10 @@
             } 
             if(v === 'viewer') renderViewerNames(); 
             if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } 
-            if(v === 'soc') { fetchSocReps(); } 
+            if(v === 'soc') { 
+                // Always make sure soc list is rendered even if not fetched yet
+                renderSocView(); 
+            } 
             if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
