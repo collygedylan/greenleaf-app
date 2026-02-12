@@ -90,6 +90,15 @@
         .season-chip { padding: 8px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 12px; font-weight: bold; color: #4b5563; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
         .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
         
+        /* DIRECTORY CARDS */
+        .rep-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .rep-name { font-size: 16px; font-weight: 800; color: #111827; }
+        .rep-id { font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 12px; }
+        .contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .contact-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
+        .btn-call { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .btn-mail { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        
         /* PULL TO REFRESH */
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
@@ -150,6 +159,7 @@
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
+            <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
@@ -183,6 +193,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
@@ -197,6 +208,15 @@
                 </div>
                 <input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search Plants or Codes..." onkeyup="renderSalesOffice()">
                 <div id="salesoffice-content"></div>
+            </div>
+
+            <div id="view-directory" class="hidden">
+                <h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-address-book text-xl"></i> Company Directory</h2>
+                <div class="task-tabs mb-4">
+                    <div class="task-tab active">Sales Reps</div>
+                </div>
+                <input type="text" id="directory-search" class="input-field mb-4" placeholder="Search Rep Name..." onkeyup="renderDirectoryView()">
+                <div id="directory-content"></div>
             </div>
 
             <div id="view-drive" class="hidden">
@@ -442,6 +462,32 @@
         let driveSearchTerm = '';
         let driveSelectedSeasons = ['ALL'];
 
+        // STATIC DIRECTORY DATA (Auto-Loaded)
+        const STATIC_DIRECTORY = [
+            { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
+            { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
+            { name: "Anthony (Tony) Bono", id: "S20", phone: "(517)230-6999", email: "tony_bono@greenleafnursery.com" },
+            { name: "Ben Brown", id: "S21", phone: "(405)570-3984", email: "ben_brown@greenleafnursery.com" },
+            { name: "Ben Harveson", id: "S10", phone: "(817)320-6700", email: "ben_harveson@greenleafnursery.com" },
+            { name: "Ben Maschino", id: "S11", phone: "(812)592-7488", email: "Ben_Maschino@greenleafnursery.com" },
+            { name: "Brian Hatfield", id: "S19", phone: "(417)592-2555", email: "brian_hatfield@greenleafnursery.com" },
+            { name: "Casey Rufener", id: "S03", phone: "(608)513-6338", email: "casey_rufener@greenleafnursery.com" },
+            { name: "Chance Alldredge", id: "S07", phone: "(832)257-0463", email: "chance_alldredge@greenleafnursery.com" },
+            { name: "Chris Farrow", id: "S30", phone: "(443)790-2868", email: "Chris_Farrow@greenleafnursery.com" },
+            { name: "Chris Gaydos", id: "S23", phone: "(617)939-7746", email: "chris_gaydos@greenleafnursery.com" },
+            { name: "Ellen Deely", id: "S18", phone: "(609)668-3291", email: "ellen_deely@greenleafnursery.com" },
+            { name: "Jessica Robertson", id: "S09", phone: "(512)755-7400", email: "jessica_robertson@greenleafnursery.com" },
+            { name: "Josh Ringleb", id: "S27", phone: "(817)228-1243", email: "josh_ringleb@greenleafnursery.com" },
+            { name: "Kevin Effinger", id: "S25", phone: "(618)604-2616", email: "kevin_effinger@greenleafnursery.com" },
+            { name: "Nate Douglas", id: "S13", phone: "(720)800-6710", email: "nate_douglas@greenleafnursery.com" },
+            { name: "Rudy Martinez", id: "S17", phone: "(832)350-1395", email: "rudy_martinez@greenleafnursery.com" },
+            { name: "Toby Brown", id: "S26", phone: "(706)247-6737", email: "toby_brown@greenleafnursery.com" },
+            { name: "Tracey Tapscott", id: "S16", phone: "(561)420-9802", email: "tracey_tapscott@greenleafnursery.com" },
+            { name: "Traci Earle", id: "S15", phone: "(575)760-0010", email: "Traci_Earle@greenleafnursery.com" },
+            { name: "Troy Lee", id: "S12", phone: "(515)250-6566", email: "troy_lee@greenleafnursery.com" },
+            { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" }
+        ];
+
         // --- NEW: SMART LOCATION PREFIX LOGIC ---
         function getLocPrefix(loc) {
             if (!loc) return "No Loc";
@@ -580,6 +626,7 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
+                        // REFRESH CURRENT VIEW DATA
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                             if(freshItem) { 
@@ -594,7 +641,9 @@
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveView(); // Updated call
+                            renderDriveView(); 
+                        } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
+                            renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         }
@@ -611,6 +660,7 @@
             }
         }
 
+        // --- NEW: SESSION RESTORE LOGIC ---
         function restoreSession() {
             const savedView = localStorage.getItem('gl_last_view');
             const savedId = localStorage.getItem('gl_active_item');
@@ -660,6 +710,7 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
+        // --- DATA SAVING ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks') return; 
             
@@ -847,6 +898,40 @@
             }
         }
 
+        // --- DIRECTORY LOGIC ---
+        function renderDirectoryView() {
+            const container = document.getElementById('directory-content');
+            const term = document.getElementById('directory-search').value.toLowerCase();
+            
+            let displayList = STATIC_DIRECTORY;
+            
+            if(term) {
+                displayList = displayList.filter(r => r.name.toLowerCase().includes(term));
+            }
+            
+            container.innerHTML = displayList.map(rep => {
+                let btns = '';
+                if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
+                if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
+                
+                return `
+                <div class="rep-card">
+                    <div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
+                        <div>
+                            <div class="rep-name">${rep.name}</div>
+                            <div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-300 mt-1"></i>
+                    </div>
+                    
+                    ${btns ? `<div class="contact-row">${btns}</div>` : ''}
+                    
+                    <div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div>
+                </div>`;
+            }).join('');
+        }
+
+        // --- SOC LOGIC ---
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             
@@ -868,6 +953,11 @@
         }
 
         function fetchRepData(repName) {
+            // Check if we are coming from Directory or SOC
+            if(!document.getElementById('view-directory').classList.contains('hidden')) {
+                switchView('soc');
+            }
+            
             document.getElementById('soc-status').innerText = "Loading " + repName + "...";
             
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
@@ -918,34 +1008,35 @@
             renderSocView(); 
         }
 
-        // --- NEW DRIVE MODE LOGIC: FILTERS & HIERARCHY ---
+        // --- DRIVE MODE LOGIC ---
+        function switchDriveTab(tab) {
+            currentDriveTab = tab;
+            document.getElementById('drivetab-all').classList.toggle('active', tab === 'all');
+            document.getElementById('drivetab-photos').classList.toggle('active', tab === 'photos');
+            renderDriveNames();
+        }
+
         function toggleDriveSeason(season, el) {
             if(season === 'ALL') {
                 driveSelectedSeasons = ['ALL'];
             } else {
-                // If ALL was selected, remove it
                 if(driveSelectedSeasons.includes('ALL')) driveSelectedSeasons = [];
                 
-                // Toggle selection
                 if(driveSelectedSeasons.includes(season)) {
                     driveSelectedSeasons = driveSelectedSeasons.filter(s => s !== season);
                 } else {
                     driveSelectedSeasons.push(season);
                 }
                 
-                // If nothing selected, revert to ALL
                 if(driveSelectedSeasons.length === 0) driveSelectedSeasons = ['ALL'];
             }
             
-            // Update UI Chips
             document.querySelectorAll('.season-chip').forEach(chip => {
                 const s = chip.innerText;
                 if(driveSelectedSeasons.includes(s)) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
             
-            // Reset Drill Down on Filter Change? Maybe not, keep current level if possible.
-            // For safety, let's keep level but re-render
             renderDriveView();
         }
 
@@ -956,11 +1047,9 @@
 
         function getFilteredDriveItems() {
             return fullInventory.filter(i => {
-                // Season Filter
                 if(!driveSelectedSeasons.includes('ALL')) {
                     if(!driveSelectedSeasons.includes(i.SEASONSUPPLY)) return false;
                 }
-                // Search Filter
                 if(driveSearchTerm) {
                     const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || 
                                   (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || 
@@ -971,7 +1060,7 @@
             });
         }
 
-        function renderDriveNames() { renderDriveView(); } // Alias for compat
+        function renderDriveNames() { renderDriveView(); } 
 
         function renderDriveView() {
             const container = document.getElementById('drive-content');
@@ -1330,13 +1419,14 @@
             // SAVE STATE FOR RELOAD
             localStorage.setItem('gl_last_view', v);
 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(id => {
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             }); 
             
             document.getElementById('view-'+v).classList.remove('hidden'); 
             
             if(v === 'drive') renderDriveNames(); 
+            if(v === 'directory') renderDirectoryView(); // Load Directory
             if(v === 'tasks') { 
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
                     renderTeamSelector(); 
@@ -1553,7 +1643,6 @@
                 if(idMatch && idMatch[1]) { 
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                 }
-                // UPDATED: Show image, no hidden on error
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
             }
 
@@ -1606,7 +1695,7 @@
             localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
             
             document.getElementById('view-detail').classList.remove('hidden'); 
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice'].forEach(v => {
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory'].forEach(v => {
                 document.getElementById(v).classList.add('hidden');
             });
             
