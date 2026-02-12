@@ -260,9 +260,14 @@
 
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
-                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search SOC..." onkeyup="renderSocView()">
+                
+                <div class="task-tabs mb-4">
+                    <div id="st-reps" class="task-tab active" onclick="switchSocTab('reps')">Sales Reps</div>
+                    <div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div>
+                </div>
+
+                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderSocView()">
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
-                <button onclick="fetchSocReps()" class="w-full bg-[#007a4d] text-white p-3 rounded mb-4 font-bold flex items-center justify-center gap-2"><i class="ph-bold ph-arrows-clockwise"></i> Load Sales Reps</button>
                 <div id="soc-content"></div>
             </div>
 
@@ -462,6 +467,7 @@
         let driveSearchTerm = '';
         let driveSelectedSeasons = ['ALL'];
 
+        // DIRECTORY STATE
         // STATIC DIRECTORY DATA (Auto-Loaded)
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
@@ -487,6 +493,8 @@
             { name: "Troy Lee", id: "S12", phone: "(515)250-6566", email: "troy_lee@greenleafnursery.com" },
             { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" }
         ];
+
+        let currentSocTab = 'reps';
 
         // --- NEW: SMART LOCATION PREFIX LOGIC ---
         function getLocPrefix(loc) {
@@ -646,6 +654,10 @@
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
+                        } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
+                            // If in SOC, make sure we call fetchSocReps if rep list is empty, or re-render
+                            if(socReps.length > 0) renderSocView();
+                            else fetchSocReps();
                         }
                     }
                 } else { 
@@ -932,6 +944,14 @@
         }
 
         // --- SOC LOGIC ---
+        function switchSocTab(tab) {
+            currentSocTab = tab;
+            document.getElementById('st-reps').classList.toggle('active', tab === 'reps');
+            document.getElementById('st-docks').classList.toggle('active', tab === 'docks');
+            socViewLevel = 0;
+            renderSocView();
+        }
+
         function fetchSocReps() {
             document.getElementById('soc-status').innerText = "Loading Reps...";
             
@@ -979,20 +999,41 @@
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
             
+            // Search override
             if (term && socData.length > 0) { 
                 const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
                 return; 
             }
             
+            // TABS LOGIC
+            if (currentSocTab === 'docks') {
+                // Dock List 1-56
+                let html = '<div class="grid grid-cols-2 gap-2">';
+                for(let i=1; i<=56; i++) {
+                    html += `<div class="drill-item" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+                return;
+            }
+
+            // REPS TAB
             if(socViewLevel === 0) { 
                 if(socReps.length === 0) { 
                     container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Found.</div>`; 
                     return; 
                 } 
-                let html = `<div class="task-tabs mb-4"><div class="task-tab active">SALES REPS</div></div>`; 
-                html += socReps.map(r => `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${r}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                
+                // Map Reps to IDs using STATIC_DIRECTORY
+                let html = '';
+                socReps.forEach(r => {
+                    const match = STATIC_DIRECTORY.find(d => d.name === r);
+                    const disp = match ? `${r} - ${match.id}` : r;
+                    html += `<div class="drill-item" onclick="fetchRepData('${r.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                });
                 container.innerHTML = html;
+
             } else if(socViewLevel === 1) { 
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
