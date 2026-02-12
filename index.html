@@ -147,7 +147,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v224 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v226 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -159,8 +159,8 @@
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-            <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-plant"></i> Inventory</div>
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
+            <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
@@ -193,8 +193,10 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-plant home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    
+                    <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
+                    
                     <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
@@ -242,9 +244,9 @@
             </div>
 
             <div id="view-inventory" class="hidden">
-                <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory</h2>
+                <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory Lookup</h2>
                 
-                <div class="season-scroll" id="inventory-season-bar">
+                <div class="season-scroll" id="inv-season-bar">
                     <div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div>
                     <div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div>
                     <div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div>
@@ -256,7 +258,7 @@
                     <div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div>
                 </div>
 
-                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Full Inventory..." onkeyup="handleInventorySearch(this.value)">
+                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleInventorySearch(this.value)">
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
             </div>
@@ -337,12 +339,6 @@
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
-                        
-                        <div id="card-loc-note" class="overview-card full-width hidden">
-                            <div class="overview-label text-blue-600">Location Note</div>
-                            <div id="ov-loc-note" class="overview-val">--</div>
-                        </div>
-
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Source File</div><div id="ov-source" class="overview-val">--</div></div>
                     </div>
@@ -409,7 +405,6 @@
         <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
             <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
-            <div onclick="switchView('inventory')"><i class="ph-bold ph-plant text-2xl text-gray-400"></i></div>
             <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
             <div onclick="switchView('viewer')"><i class="ph-bold ph-eye text-2xl text-gray-400"></i></div>
         </nav>
@@ -686,7 +681,7 @@
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveView();
+                            renderDriveView(); 
                         } else if(!document.getElementById('view-inventory').classList.contains('hidden')) { 
                             renderInventoryView(); 
                         } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
@@ -760,8 +755,9 @@
 
         // --- DATA SAVING ---
         function saveData(silent = false) {
-            if(!isAdmin && currentOriginView !== 'tasks') return; 
+            if(!isAdmin && currentOriginView !== 'tasks') return;
             
+            // 1. GET VALUES FROM INPUTS
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
@@ -774,12 +770,26 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            activeItem.SAVED_MATCH = match; 
-            activeItem.SAVED_SPEC = spec; 
+            // 2. CRITICAL FIX: Update Active Item AND the item inside fullInventory list
+            // This ensures the "Batch/Copy" function sees the data immediately
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
-            activeItem.SAVED_NOTE = note; 
-            activeItem.SAVED_SALES_DESC = salesDesc; 
-            activeItem.TIMESTAMP = new Date().toISOString(); 
+            activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            activeItem.TIMESTAMP = new Date().toISOString();
+
+            // Find and update the specific item in the main array to prevent "Orphaned" data
+            const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+            if(masterIdx > -1) {
+                fullInventory[masterIdx] = activeItem;
+            }
+
+            // 3. STOP AUTO-SYNC TEMPORARILY
+            // This prevents the app from pulling old data before the sheet finishes saving
+            if(autoSyncTimer) clearInterval(autoSyncTimer);
+            // Restart sync in 20 seconds (gives Google Script time to finish)
+            setTimeout(() => { startAutoSync(); }, 20000);
 
             const payload = { 
                 type: "update", 
@@ -796,6 +806,7 @@
             
             if(!silent) { 
                 goBackFromDetail(); 
+                showToast("Saved", "Data locked. Sync paused for 20s.", false); 
             } else { 
                 renderOverviewData(); 
             }
@@ -1214,7 +1225,7 @@
             renderDriveView();
         }
 
-        // --- NEW: INVENTORY MODE LOGIC (CLONE OF DRIVE) ---
+        // --- INVENTORY MODE LOGIC (NEW) ---
         function toggleInventorySeason(season, el) {
             if(season === 'ALL') {
                 inventorySelectedSeasons = ['ALL'];
@@ -1230,7 +1241,7 @@
                 if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
             }
             
-            document.querySelectorAll('#inventory-season-bar .season-chip').forEach(chip => {
+            document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => {
                 const s = chip.innerText;
                 if(inventorySelectedSeasons.includes(s)) chip.classList.add('active');
                 else chip.classList.remove('active');
@@ -1272,7 +1283,7 @@
 
             if(inventoryViewLevel === 0) {
                 // LEVEL 0: COMMON NAMES
-                crumb.innerText = `All Inventory (${filteredItems.length})`;
+                crumb.innerText = `All Items (${filteredItems.length})`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
                 
                 container.innerHTML = names.map(n => {
@@ -1290,7 +1301,7 @@
                 }).join('');
 
             } else {
-                // LEVEL 2: ITEMS (Filtered by Name & Size, Sorted by Location)
+                // LEVEL 2: ITEMS
                 crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize);
                 
@@ -1621,8 +1632,8 @@
             document.getElementById('view-'+v).classList.remove('hidden'); 
             
             if(v === 'drive') renderDriveNames(); 
-            if(v === 'inventory') renderInventoryView(); // NEW
-            if(v === 'directory') renderDirectoryView(); 
+            if(v === 'inventory') renderInventoryView();
+            if(v === 'directory') renderDirectoryView(); // Load Directory
             if(v === 'tasks') { 
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
                     renderTeamSelector(); 
@@ -1633,6 +1644,7 @@
             if(v === 'viewer') renderViewerNames(); 
             if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } 
             if(v === 'soc') { 
+                // Always make sure soc list is rendered even if not fetched yet
                 renderSocView(); 
             } 
             if(v === 'salesoffice') { renderSalesOffice(); } 
@@ -1653,7 +1665,7 @@
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             if(lastView === 'tasks') renderTasks(); 
             if(lastView === 'drive') renderDriveNames(); 
-            if(lastView === 'inventory') renderInventoryView(); 
+            if(lastView === 'inventory') renderInventoryView();
         }
 
         // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
@@ -1901,17 +1913,6 @@
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
-            
-            // NEW: Set Location Note text
-            document.getElementById('ov-loc-note').innerText = activeItem.LOCATIONNOTE || "N/A";
-            
-            // NEW: Show/Hide Logic for Location Note
-            if(originView === 'inventory') {
-                document.getElementById('card-loc-note').classList.remove('hidden');
-            } else {
-                document.getElementById('card-loc-note').classList.add('hidden');
-            }
-
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
@@ -1919,7 +1920,7 @@
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; 
             document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; 
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
-            
+
             document.getElementById('expand-section').classList.remove('expanded'); 
             document.getElementById('expand-content').innerHTML = ''; 
             
@@ -1949,7 +1950,7 @@
 
             let canEditText = false;
             // Admins can edit text fields from specific views
-            if (isAdmin && ['tasks', 'drive', 'review', 'inventory'].includes(currentOriginView)) { 
+            if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { 
                 canEditText = true; 
             }
 
@@ -2065,6 +2066,15 @@
             const photoList = document.getElementById('photo-list-container');
             
             let h = "";
+            
+            // --- NEW: LOCATION NOTE HEADER (Only for Inventory View) ---
+            if(currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) {
+                h += `<div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;">
+                        <div class="overview-label text-red-600">Location Note</div>
+                        <div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div>
+                      </div>`;
+            }
+
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_SALES_DESC) h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
@@ -2086,7 +2096,6 @@
                         thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
                     }
                     
-                    // UPDATED: Added Delete Button for Admins
                     let deleteBtn = "";
                     if(isAdmin) {
                         deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`;
@@ -2125,22 +2134,17 @@
         function deletePhoto(index) {
             if(!confirm("Are you sure you want to delete this photo?")) return;
             
-            // 1. STOP AUTO SYNC IMMEDIATELY so old data doesn't overwrite our change
             if(autoSyncTimer) clearInterval(autoSyncTimer);
             
             let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
             let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
             
-            // Remove the item
             links.splice(index, 1);
-            // Only splice names if they exist at that index
             if(index < names.length) names.splice(index, 1);
             
-            // Re-join and clean up (remove empty entries if any)
             activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(',');
             activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
             
-            // Render immediately so user sees it gone
             renderOverviewData();
             showToast("Deleting...", "Removing photo from cloud...");
             
@@ -2165,20 +2169,19 @@
             .then(data => { 
                 if(data.status === 'success') {
                     showToast("Success", "Photo permanently deleted.");
-                    // 2. Wait 2.5 seconds for Sheet to catch up, then sync fresh data
                     setTimeout(() => {
                         fetchData(true);
-                        startAutoSync(); // Restart the timer
+                        startAutoSync(); 
                     }, 2500);
                 } else {
                     showToast("Error", "Could not delete: " + data.message, true);
-                    startAutoSync(); // Restart timer if failed
+                    startAutoSync(); 
                 }
             })
             .catch(err => {
                 showToast("Network Error", "Saved deletion offline.", true);
                 logFailedSave(payload);
-                startAutoSync(); // Restart timer
+                startAutoSync(); 
             });
         }
 
