@@ -38,7 +38,6 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* PERFORMANCE: 'content-visibility' makes scrolling thousands of items smooth */
         .drill-item { 
             border-bottom: 1px solid #e5e7eb; 
             padding: 16px; 
@@ -160,7 +159,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf v226 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Greenleaf v228 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -282,10 +281,11 @@
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
                 <input type="text" id="task-search" class="input-field mb-4" placeholder="Search tasks..." onkeyup="renderTasks()">
-                <div id="team-selector" class="hidden mb-4 grid grid-cols-3 gap-2">
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
                     <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
                     <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
                     <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
+                    <div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer" onclick="setTaskUser('ASSIST')">Assist Team (K & M)</div>
                 </div>
                 <div id="task-tabs-container" class="task-tabs hidden">
                     <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
@@ -685,6 +685,9 @@
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
+                    // CLEAN EXPIRED DATA FROM APP MEMORY (10 Day/10% Rule)
+                    cleanExpiredData();
+
                     // PERFORMANCE: Pre-calculate unique names once
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
 
@@ -729,6 +732,32 @@
                     setTimeout(resetLogin, 4000); 
                 } 
             }
+        }
+
+        // --- NEW: CLEAN UP EXPIRED DATA ---
+        function cleanExpiredData() {
+            const now = new Date().getTime();
+            fullInventory.forEach(item => {
+                if (item.TIMESTAMP) {
+                    const saveTime = new Date(item.TIMESTAMP).getTime(); 
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
+                    const ptr = parseFloat(item.PTRAVAILABLE) || 0; 
+                    const ss = parseFloat(item.SEASONSUPPLY) || 0; 
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    
+                    // Rule: Older than 10 days AND NOT Low Stock -> Clear fields
+                    if (daysOld > 10 && !isLowStock) {
+                        item.SAVED_MATCH = "";
+                        item.SAVED_SPEC = "";
+                        item.SAVED_PICK = "";
+                        item.SAVED_NOTE = "";
+                        item.SAVED_SALES_DESC = "";
+                        item.SAVED_PHOTO_LINK = "";
+                        item.SAVED_PHOTO_NAME = "";
+                        // item.TIMESTAMP remains so we know it WAS updated, but data is gone
+                    }
+                }
+            });
         }
 
         function restoreSession() {
@@ -927,8 +956,12 @@
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
                         const base64Data = dataUrl.split(',')[1];
                         
+                        // SEQUENTIAL NAMING LOGIC
+                        const currentCount = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',').length : 0;
+                        const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
+                        
                         const dateStr = new Date().toISOString().split('T')[0];
-                        const filename = `${itemBeingEdited.COMMONNAME}_${itemBeingEdited.CONTSIZE}_${itemBeingEdited.LOCATIONCODE}_${itemBeingEdited.LOTCODE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
+                        const filename = `${itemBeingEdited.COMMONNAME}_${itemBeingEdited.CONTSIZE}_${itemBeingEdited.LOCATIONCODE}_${itemBeingEdited.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
                         
                         fetch(GOOGLE_SCRIPT_URL, { 
                             method: "POST", 
@@ -1394,7 +1427,14 @@
             const now = new Date().getTime();
             
             const taskFilter = (i) => {
-                if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                // --- NEW FILTER LOGIC FOR ASSIST TEAM ---
+                if (taskViewTargetUser === 'ASSIST') {
+                    const assignee = (i.ASSIGNEDTO || "");
+                    if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false;
+                } else {
+                    if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                }
+                
                 if (i.TASK_TAB !== currentTab) return false;
                 if (i.TIMESTAMP) {
                     const saveTime = new Date(i.TIMESTAMP).getTime(); 
@@ -1408,8 +1448,17 @@
             };
             
             if(currentTab === 'requests') {
-                 myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                 crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                 if (taskViewTargetUser === 'ASSIST') {
+                     // For assist mode requests, combine Kayla and Morgan requests
+                     myItems = fullInventory.filter(i => 
+                        ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) 
+                        && i.TASK_TAB === 'requests'
+                     );
+                     crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                 } else {
+                     myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                     crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                 }
             } else { 
                 myItems = fullInventory.filter(taskFilter); 
             }
@@ -1431,9 +1480,12 @@
                 return; 
             }
 
+            // Determine display name for breadcrumbs
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
+
             if(currentTab === 'season' || currentTab === 'location') {
                 if(taskViewLevel === 0) {
-                    crumb.innerText = `${taskViewTargetUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                    crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                     
                     if(blocks.length === 0) { 
@@ -1447,7 +1499,7 @@
                     }).join('');
                     
                 } else if (taskViewLevel === 1) {
-                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock}`; 
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
                     const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                     
                     // LOCATION PREFIX AND NUMERIC SORT
@@ -1459,7 +1511,7 @@
                     }).join('');
                     
                 } else {
-                    crumb.innerText = `${taskViewTargetUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
                     
                     // NUMERIC FULL SORT
                     let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
