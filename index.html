@@ -413,7 +413,7 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlR0EEya8KaUnPbpr2QjZZE03-Dku4cxrbPTbwd0h5aorKnmjDX0XJP-cus1stODQ_/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         const ADMINS = ["Dylan", "J.D."];
 
         let deferredPrompt;
@@ -655,7 +655,8 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            renderSocView(); // Always re-render static list if visible
+                            // If in SOC, make sure we use STATIC list or re-render
+                            renderSocView();
                         }
                     }
                 } else { 
@@ -951,8 +952,7 @@
         }
 
         function fetchSocReps() {
-            // Deprecated for List View, but kept for logic if needed
-            // We use STATIC_DIRECTORY now for the list.
+            // Not needed for list, but kept for compatibility
             renderSocView();
         }
 
@@ -962,19 +962,40 @@
                 switchView('soc');
             }
             
-            document.getElementById('soc-status').innerText = "Loading " + repName + "...";
+            // Try to resolve Name/ID from Static Directory
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
+            const queryParam = dirEntry ? dirEntry.name : repName; // Prefer Name as that matches typical file naming "SOC - Name"
+
+            document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
             
-            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') { 
                     socData = data.data; 
                     socViewLevel = 1; 
-                    selectedSocRep = repName; 
+                    selectedSocRep = queryParam; 
                     renderSocView(); 
                     document.getElementById('soc-status').innerText = "";
                 } else { 
-                    document.getElementById('soc-status').innerText = "Error: " + data.message; 
+                     // Fallback: If Name failed, try ID (e.g. S31)
+                     if(dirEntry && queryParam !== dirEntry.id) {
+                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
+                         .then(res2 => res2.json())
+                         .then(data2 => {
+                             if(data2.status === 'success') {
+                                 socData = data2.data;
+                                 socViewLevel = 1;
+                                 selectedSocRep = dirEntry.id;
+                                 renderSocView();
+                                 document.getElementById('soc-status').innerText = "";
+                             } else {
+                                 document.getElementById('soc-status').innerText = "Not found. Try running Processor.";
+                             }
+                         });
+                    } else {
+                        document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; 
+                    }
                 }
             });
         }
@@ -983,7 +1004,7 @@
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
             
-            // Search override
+            // Search override (only active if data loaded)
             if (term && socData.length > 0) { 
                 const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
@@ -995,7 +1016,7 @@
                 // Dock List 1-56
                 let html = '<div class="grid grid-cols-2 gap-2">';
                 for(let i=1; i<=56; i++) {
-                    html += `<div class="drill-item" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
+                    html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
                 }
                 html += '</div>';
                 container.innerHTML = html;
@@ -1004,7 +1025,7 @@
 
             // REPS TAB
             if(socViewLevel === 0) { 
-                // Use STATIC_DIRECTORY instead of socReps to ensure formatting and availability
+                // ALWAYS USE STATIC DIRECTORY FOR LIST
                 if(STATIC_DIRECTORY.length === 0) { 
                     container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Loaded.</div>`; 
                     return; 
