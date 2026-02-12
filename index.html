@@ -413,9 +413,12 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
+        // *** CRITICAL UPDATE: YOUR SCRIPT URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
+        
         const ADMINS = ["Dylan", "J.D."];
 
+        // --- PWA INSTALLATION LOGIC ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { 
             e.preventDefault(); 
@@ -434,6 +437,7 @@
             } 
         }
 
+        // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
         let socReps = []; 
@@ -467,8 +471,7 @@
         let driveSearchTerm = '';
         let driveSelectedSeasons = ['ALL'];
 
-        // DIRECTORY STATE
-        // STATIC DIRECTORY DATA (Auto-Loaded)
+        // --- STATIC DIRECTORY (HARDCODED FOR SPEED) ---
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
             { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
@@ -496,18 +499,17 @@
 
         let currentSocTab = 'reps';
 
-        // --- NEW: SMART LOCATION PREFIX LOGIC ---
+        // --- HELPER: LOC PREFIX ---
         function getLocPrefix(loc) {
             if (!loc) return "No Loc";
             let parts = loc.split('.');
             if (parts.length >= 3) {
-                return parts[0] + '.' + parts[1]; // Turns D.07.023 into D.07
+                return parts[0] + '.' + parts[1]; 
             }
             return loc;
         }
 
-        // --- UI UTILITIES ---
-
+        // --- UI TOAST ---
         function showToast(title, message, isAlert = false) {
             const toast = document.getElementById('toast-notification');
             toast.style.background = isAlert ? '#ef4444' : '#16a34a';
@@ -634,7 +636,6 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
-                        // REFRESH CURRENT VIEW DATA
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                             if(freshItem) { 
@@ -655,8 +656,7 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            // If in SOC, make sure we use STATIC list or re-render
-                            renderSocView();
+                            renderSocView(); 
                         }
                     }
                 } else { 
@@ -671,7 +671,6 @@
             }
         }
 
-        // --- NEW: SESSION RESTORE LOGIC ---
         function restoreSession() {
             const savedView = localStorage.getItem('gl_last_view');
             const savedId = localStorage.getItem('gl_active_item');
@@ -951,20 +950,13 @@
             renderSocView();
         }
 
-        function fetchSocReps() {
-            // Not needed for list, but kept for compatibility
-            renderSocView();
-        }
-
-        function fetchRepData(repName) {
-            // Check if we are coming from Directory or SOC
+        function fetchRepData(repIdentifier) {
             if(!document.getElementById('view-directory').classList.contains('hidden')) {
                 switchView('soc');
             }
             
-            // Try to resolve Name/ID from Static Directory
-            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
-            const queryParam = dirEntry ? dirEntry.name : repName; // Prefer Name as that matches typical file naming "SOC - Name"
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
+            const queryParam = dirEntry ? dirEntry.name : repIdentifier;
 
             document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
             
@@ -978,8 +970,8 @@
                     renderSocView(); 
                     document.getElementById('soc-status').innerText = "";
                 } else { 
-                     // Fallback: If Name failed, try ID (e.g. S31)
-                     if(dirEntry && queryParam !== dirEntry.id) {
+                    // Fallback to ID search
+                    if(dirEntry && queryParam !== dirEntry.id) {
                          fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
                          .then(res2 => res2.json())
                          .then(data2 => {
@@ -990,13 +982,16 @@
                                  renderSocView();
                                  document.getElementById('soc-status').innerText = "";
                              } else {
-                                 document.getElementById('soc-status').innerText = "Not found. Try running Processor.";
+                                 document.getElementById('soc-status').innerText = "Not found (Try running Process Script)";
                              }
                          });
                     } else {
                         document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; 
                     }
                 }
+            })
+            .catch(e => {
+                 document.getElementById('soc-status').innerText = "Connection Error";
             });
         }
 
@@ -1004,16 +999,17 @@
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
             
-            // Search override (only active if data loaded)
             if (term && socData.length > 0) { 
-                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
-                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
+                const matched = socData.filter(i => 
+                    (i.CUSTOMERNAME||"").toLowerCase().includes(term) || 
+                    (i.ITEMCODE||"").toLowerCase().includes(term) || 
+                    (i.SALESREP||"").toLowerCase().includes(term)
+                ); 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
                 return; 
             }
             
-            // TABS LOGIC
             if (currentSocTab === 'docks') {
-                // Dock List 1-56
                 let html = '<div class="grid grid-cols-2 gap-2">';
                 for(let i=1; i<=56; i++) {
                     html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
@@ -1023,16 +1019,13 @@
                 return;
             }
 
-            // REPS TAB
             if(socViewLevel === 0) { 
-                // ALWAYS USE STATIC DIRECTORY FOR LIST
                 if(STATIC_DIRECTORY.length === 0) { 
-                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Reps Loaded.</div>`; 
+                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Directory Data.</div>`; 
                     return; 
                 } 
                 
                 let html = '';
-                // Sort by name
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => {
                     const disp = `${rep.name} - ${rep.id}`;
                     html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
@@ -1041,10 +1034,25 @@
 
             } else if(socViewLevel === 1) { 
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-xl">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+                
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div>
+                <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>
+                ${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+            
             } else if(socViewLevel === 2) { 
                 const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join('')}`; 
+                
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
+                <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
+                ${items.map(i => `
+                    <div class="inv-card">
+                        <div class="flex justify-between">
+                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
+                            <div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div>
+                        </div>
+                        <div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
+                    </div>`).join('')}`; 
             }
         }
         
