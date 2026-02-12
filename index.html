@@ -159,6 +159,7 @@
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
+            <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-plant"></i> Inventory</div>
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
@@ -192,6 +193,7 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
+                    <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-plant home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
                     <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
@@ -237,6 +239,26 @@
                 <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleDriveSearch(this.value)">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
+            </div>
+
+            <div id="view-inventory" class="hidden">
+                <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory</h2>
+                
+                <div class="season-scroll" id="inventory-season-bar">
+                    <div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('U1', this)">U1</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('U2', this)">U2</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('U3', this)">U3</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('X', this)">X</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('Y', this)">Y</div>
+                    <div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div>
+                </div>
+
+                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Full Inventory..." onkeyup="handleInventorySearch(this.value)">
+                <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
+                <div id="inventory-content"></div>
             </div>
 
             <div id="view-tasks" class="hidden">
@@ -315,6 +337,12 @@
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
+                        
+                        <div id="card-loc-note" class="overview-card full-width hidden">
+                            <div class="overview-label text-blue-600">Location Note</div>
+                            <div id="ov-loc-note" class="overview-val">--</div>
+                        </div>
+
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Source File</div><div id="ov-source" class="overview-val">--</div></div>
                     </div>
@@ -381,6 +409,7 @@
         <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
             <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
+            <div onclick="switchView('inventory')"><i class="ph-bold ph-plant text-2xl text-gray-400"></i></div>
             <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
             <div onclick="switchView('viewer')"><i class="ph-bold ph-eye text-2xl text-gray-400"></i></div>
         </nav>
@@ -470,6 +499,13 @@
         let selectedDriveSize = null;
         let driveSearchTerm = '';
         let driveSelectedSeasons = ['ALL'];
+
+        // INVENTORY MODE STATE
+        let inventoryViewLevel = 0;
+        let selectedInventoryName = null;
+        let selectedInventorySize = null;
+        let inventorySearchTerm = '';
+        let inventorySelectedSeasons = ['ALL'];
 
         // --- STATIC DIRECTORY (HARDCODED FOR SPEED) ---
         const STATIC_DIRECTORY = [
@@ -650,7 +686,9 @@
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveView(); 
+                            renderDriveView();
+                        } else if(!document.getElementById('view-inventory').classList.contains('hidden')) { 
+                            renderInventoryView(); 
                         } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
@@ -1062,7 +1100,7 @@
             renderSocView(); 
         }
 
-        // --- DRIVE MODE LOGIC (REWRITTEN) ---
+        // --- DRIVE MODE LOGIC ---
         function toggleDriveSeason(season, el) {
             if(season === 'ALL') {
                 driveSelectedSeasons = ['ALL'];
@@ -1078,7 +1116,7 @@
                 if(driveSelectedSeasons.length === 0) driveSelectedSeasons = ['ALL'];
             }
             
-            document.querySelectorAll('.season-chip').forEach(chip => {
+            document.querySelectorAll('#drive-season-bar .season-chip').forEach(chip => {
                 const s = chip.innerText;
                 if(driveSelectedSeasons.includes(s)) chip.classList.add('active');
                 else chip.classList.remove('active');
@@ -1174,6 +1212,118 @@
             selectedDriveName = null;
             selectedDriveSize = null;
             renderDriveView();
+        }
+
+        // --- NEW: INVENTORY MODE LOGIC (CLONE OF DRIVE) ---
+        function toggleInventorySeason(season, el) {
+            if(season === 'ALL') {
+                inventorySelectedSeasons = ['ALL'];
+            } else {
+                if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = [];
+                
+                if(inventorySelectedSeasons.includes(season)) {
+                    inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season);
+                } else {
+                    inventorySelectedSeasons.push(season);
+                }
+                
+                if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
+            }
+            
+            document.querySelectorAll('#inventory-season-bar .season-chip').forEach(chip => {
+                const s = chip.innerText;
+                if(inventorySelectedSeasons.includes(s)) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+            
+            renderInventoryView();
+        }
+
+        function handleInventorySearch(term) {
+            inventorySearchTerm = term.toLowerCase();
+            renderInventoryView();
+        }
+
+        function getFilteredInventoryItems() {
+            return fullInventory.filter(i => {
+                if(!inventorySelectedSeasons.includes('ALL')) {
+                    if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false;
+                }
+                if(inventorySearchTerm) {
+                    const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || 
+                                  (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || 
+                                  (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm);
+                    if(!match) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderInventoryView() {
+            const container = document.getElementById('inventory-content');
+            const crumb = document.getElementById('inventory-crumb');
+            const filteredItems = getFilteredInventoryItems();
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
+                crumb.innerText = "No Results";
+                return;
+            }
+
+            if(inventoryViewLevel === 0) {
+                // LEVEL 0: COMMON NAMES
+                crumb.innerText = `All Inventory (${filteredItems.length})`;
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                
+                container.innerHTML = names.map(n => {
+                    return `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+
+            } else if (inventoryViewLevel === 1) {
+                // LEVEL 1: SIZES (Filtered by Name)
+                crumb.innerText = selectedInventoryName;
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => {
+                    return `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+
+            } else {
+                // LEVEL 2: ITEMS (Filtered by Name & Size, Sorted by Location)
+                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`;
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize);
+                
+                // Sort by Location
+                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
+                container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
+            }
+        }
+
+        function selectInventoryName(n) {
+            selectedInventoryName = n;
+            inventoryViewLevel = 1;
+            renderInventoryView();
+        }
+
+        function selectInventorySize(s) {
+            selectedInventorySize = s;
+            inventoryViewLevel = 2;
+            renderInventoryView();
+        }
+
+        function backToInventorySizes() {
+            inventoryViewLevel = 1;
+            selectedInventorySize = null;
+            renderInventoryView();
+        }
+
+        function resetInventoryView() {
+            inventoryViewLevel = 0;
+            selectedInventoryName = null;
+            selectedInventorySize = null;
+            renderInventoryView();
         }
 
         // --- TASKS LOGIC ---
@@ -1464,14 +1614,15 @@
             // SAVE STATE FOR RELOAD
             localStorage.setItem('gl_last_view', v);
 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory'].forEach(id => {
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             }); 
             
             document.getElementById('view-'+v).classList.remove('hidden'); 
             
             if(v === 'drive') renderDriveNames(); 
-            if(v === 'directory') renderDirectoryView(); // Load Directory
+            if(v === 'inventory') renderInventoryView(); // NEW
+            if(v === 'directory') renderDirectoryView(); 
             if(v === 'tasks') { 
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
                     renderTeamSelector(); 
@@ -1482,7 +1633,6 @@
             if(v === 'viewer') renderViewerNames(); 
             if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } 
             if(v === 'soc') { 
-                // Always make sure soc list is rendered even if not fetched yet
                 renderSocView(); 
             } 
             if(v === 'salesoffice') { renderSalesOffice(); } 
@@ -1503,6 +1653,7 @@
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             if(lastView === 'tasks') renderTasks(); 
             if(lastView === 'drive') renderDriveNames(); 
+            if(lastView === 'inventory') renderInventoryView(); 
         }
 
         // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
@@ -1743,13 +1894,24 @@
             localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
             
             document.getElementById('view-detail').classList.remove('hidden'); 
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory'].forEach(v => {
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory'].forEach(v => {
                 document.getElementById(v).classList.add('hidden');
             });
             
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
+            
+            // NEW: Set Location Note text
+            document.getElementById('ov-loc-note').innerText = activeItem.LOCATIONNOTE || "N/A";
+            
+            // NEW: Show/Hide Logic for Location Note
+            if(originView === 'inventory') {
+                document.getElementById('card-loc-note').classList.remove('hidden');
+            } else {
+                document.getElementById('card-loc-note').classList.add('hidden');
+            }
+
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
@@ -1787,7 +1949,7 @@
 
             let canEditText = false;
             // Admins can edit text fields from specific views
-            if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { 
+            if (isAdmin && ['tasks', 'drive', 'review', 'inventory'].includes(currentOriginView)) { 
                 canEditText = true; 
             }
 
