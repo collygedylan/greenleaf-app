@@ -38,7 +38,20 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.2s; user-select: none; }
+        /* PERFORMANCE OPTIMIZATION: content-visibility */
+        .drill-item { 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            background: white; 
+            transition: background 0.2s; 
+            user-select: none;
+            content-visibility: auto; /* Browser skips rendering off-screen items */
+            contain-intrinsic-size: 50px; /* Estimated height to prevent scroll jump */
+        }
         .drill-item:active { background: #f3f4f6; }
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s; user-select: none; }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
@@ -238,7 +251,7 @@
                     <div class="season-chip" onclick="toggleDriveSeason('Z', this)">Z</div>
                 </div>
 
-                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleDriveSearch(this.value)">
+                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'drive')">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
@@ -258,7 +271,7 @@
                     <div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div>
                 </div>
 
-                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleInventorySearch(this.value)">
+                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'inventory')">
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
             </div>
@@ -464,6 +477,7 @@
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
+        let allCommonNames = []; // CACHED NAMES FOR PERFORMANCE
         let socReps = []; 
         let socData = []; 
         let savedFieldData = {}; 
@@ -487,6 +501,7 @@
         let currentOriginView = ''; 
         let longPressTimer; 
         let autoSyncTimer;
+        let debounceTimer; // SEARCH DEBOUNCE
 
         // DRIVE MODE STATE
         let driveViewLevel = 0;
@@ -538,6 +553,15 @@
                 return parts[0] + '.' + parts[1]; 
             }
             return loc;
+        }
+
+        // --- SEARCH DEBOUNCE FUNCTION ---
+        function handleSearchDebounced(val, type) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if(type === 'drive') handleDriveSearch(val);
+                if(type === 'inventory') handleInventorySearch(val);
+            }, 300); // Waits 300ms after last keystroke to search
         }
 
         // --- UI TOAST ---
@@ -661,6 +685,9 @@
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
+                    // PERFORMANCE: Pre-calculate unique names once
+                    allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+
                     if(!isSilent) { 
                         applyAssignments(); 
                         launchApp(); 
@@ -1161,6 +1188,16 @@
         function renderDriveView() {
             const container = document.getElementById('drive-content');
             const crumb = document.getElementById('drive-crumb');
+            
+            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
+            if(!driveSearchTerm && driveSelectedSeasons.includes('ALL') && driveViewLevel === 0) {
+                crumb.innerText = `All Items (${allCommonNames.length})`;
+                container.innerHTML = allCommonNames.map(n => {
+                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+                return;
+            }
+
             const filteredItems = getFilteredDriveItems();
 
             if (filteredItems.length === 0) {
@@ -1273,6 +1310,16 @@
         function renderInventoryView() {
             const container = document.getElementById('inventory-content');
             const crumb = document.getElementById('inventory-crumb');
+
+            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
+            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) {
+                crumb.innerText = `All Items (${allCommonNames.length})`;
+                container.innerHTML = allCommonNames.map(n => {
+                    return `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+                return;
+            }
+
             const filteredItems = getFilteredInventoryItems();
 
             if (filteredItems.length === 0) {
@@ -1483,8 +1530,8 @@
                 return; 
             }
             
-            const names = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort(); 
-            document.getElementById('viewer-content').innerHTML = names.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            // PERFORMANCE OPTIMIZATION: Use cached names
+            document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
         
         function selectViewerName(name) { 
