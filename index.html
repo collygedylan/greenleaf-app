@@ -766,7 +766,7 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- DATA FETCHING ---
+        // --- DATA FETCHING (SMART SYNC FIXED) ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -784,14 +784,51 @@
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
-                    // SMART SYNC: Only update local items if the cloud version is newer
-                    // Or if we don't have local modifications pending (simplification: simple overwrite for now unless we implement full diffing)
-                    // For "Turbo", we overwrite, but because saveData updates local immediately, it should be fine.
-                    fullInventory = cloudJson.data; 
+                    const cloudData = cloudJson.data;
                     noteTemplates = cloudJson.templates || []; 
+                    allCommonNames = [...new Set(cloudData.map(i => i.COMMONNAME))].sort();
+
+                    // --- SMART MERGE LOGIC ---
+                    // If we are currently looking at an item, we must protect its data 
+                    // from being overwritten by "stale" cloud data while the queue processes.
+                    if (activeItem) {
+                        const freshIndex = cloudData.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                        if (freshIndex > -1) {
+                            const freshItem = cloudData[freshIndex];
+                            
+                            // Compare Timestamps
+                            const localTs = activeItem.TIMESTAMP ? new Date(activeItem.TIMESTAMP).getTime() : 0;
+                            const cloudTs = freshItem.TIMESTAMP ? new Date(freshItem.TIMESTAMP).getTime() : 0;
+
+                            // If Local is newer than Cloud (or Cloud has no timestamp), KEEP LOCAL EDITS
+                            if (localTs > cloudTs) {
+                                console.log("Protecting local edits for: " + activeItem.COMMONNAME);
+                                // Keep all editable fields from the local ActiveItem
+                                freshItem.SAVED_MATCH = activeItem.SAVED_MATCH;
+                                freshItem.SAVED_SPEC = activeItem.SAVED_SPEC;
+                                freshItem.SAVED_PICK = activeItem.SAVED_PICK;
+                                freshItem.SAVED_NOTE = activeItem.SAVED_NOTE;
+                                freshItem.SAVED_SALES_DESC = activeItem.SAVED_SALES_DESC;
+                                freshItem.SAVED_PHOTO_LINK = activeItem.SAVED_PHOTO_LINK;
+                                freshItem.SAVED_PHOTO_NAME = activeItem.SAVED_PHOTO_NAME;
+                                freshItem.GROWER_EVAL = activeItem.GROWER_EVAL;
+                                freshItem.GROWER_SHEAR = activeItem.GROWER_SHEAR;
+                                freshItem.GROWER_WATER = activeItem.GROWER_WATER;
+                                freshItem.GROWER_ROOT = activeItem.GROWER_ROOT;
+                                freshItem.GROWER_NOTE = activeItem.GROWER_NOTE;
+                                freshItem.TIMESTAMP = activeItem.TIMESTAMP; // Keep the newer timestamp
+                            }
+                            
+                            // Update the Active Item reference
+                            activeItem = freshItem;
+                            
+                            // Update the Master List at that specific index
+                            cloudData[freshIndex] = freshItem;
+                        }
+                    }
                     
-                    // PERFORMANCE: Pre-calculate unique names once
-                    allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+                    // Update the full inventory with the merged result
+                    fullInventory = cloudData;
 
                     if(!isSilent) { 
                         applyAssignments(); 
@@ -801,13 +838,10 @@
                     } else {
                         // RE-RENDER CURRENT VIEW SILENTLY
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                            if(freshItem) { 
-                                activeItem = freshItem; 
-                                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                    renderOverviewData(); 
-                                } 
-                            }
+                            // Only re-render non-input elements so we don't disrupt typing
+                            if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                renderOverviewData(); 
+                            } 
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
                             checkForRequests(); 
@@ -1059,6 +1093,9 @@
                         
                         const dateStr = new Date().toISOString().split('T')[0];
                         const filename = `${itemBeingEdited.COMMONNAME}_${itemBeingEdited.CONTSIZE}_${itemBeingEdited.LOCATIONCODE}_${itemBeingEdited.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
+                        
+                        // UPDATE LOCAL STATE IMMEDIATELY (Prevent Flicker)
+                        itemBeingEdited.TIMESTAMP = new Date().toISOString(); 
                         
                         fetch(GOOGLE_SCRIPT_URL, { 
                             method: "POST", 
@@ -1989,313 +2026,6 @@
             if(lastView === 'drive') renderDriveNames(); 
             if(lastView === 'inventory') renderInventoryView();
             if(lastView === 'production') renderProductionView();
-        }
-
-        function openDetail(idx, originView) {
-            lastView = originView; 
-            currentOriginView = originView; 
-            activeItem = fullInventory[idx]; 
-            
-            // SAVE STATE FOR RELOAD
-            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
-            
-            // Hide everything including new views
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => {
-                document.getElementById(v).classList.add('hidden');
-            });
-            document.getElementById('view-detail').classList.remove('hidden'); 
-            
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
-            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
-            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
-            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
-            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
-            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
-            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; 
-            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; 
-            document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; 
-            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
-
-            document.getElementById('expand-section').classList.remove('expanded'); 
-            document.getElementById('expand-content').innerHTML = ''; 
-            
-            if (originView === 'viewer') { 
-                document.getElementById('expand-section').classList.add('hidden'); 
-            } else { 
-                document.getElementById('expand-section').classList.remove('hidden'); 
-            }
-            
-            // --- TAB LOGIC ---
-            const tabActions = document.getElementById('dtab-actions');
-            const tabGrower = document.getElementById('dtab-grower');
-
-            if (originView === 'production') {
-                tabActions.classList.add('hidden');
-                tabGrower.classList.remove('hidden');
-                // Populate Grower Inputs
-                document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || "";
-                document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || "";
-                document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || "";
-                document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || "";
-                document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || "";
-            } else {
-                tabActions.classList.remove('hidden');
-                tabGrower.classList.add('hidden');
-            }
-
-            renderOverviewData(); 
-            renderActionsTab(); 
-            switchDetailTab('overview');
-        }
-
-        function toggleExpand() { 
-            const section = document.getElementById('expand-section'); 
-            if (!section.classList.contains('expanded')) { 
-                renderAllFields(); 
-            } 
-            section.classList.toggle('expanded'); 
-        }
-
-        function renderActionsTab() {
-            const btnComplete = document.getElementById('request-complete-container');
-            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
-            const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
-
-            let canEditText = false;
-            // Admins can edit text fields from specific views
-            if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { 
-                canEditText = true; 
-            }
-
-            if (isMyRequest) { 
-                btnComplete.classList.remove('hidden'); 
-            } else { 
-                btnComplete.classList.add('hidden'); 
-            }
-            
-            if (canEditText && !hasData) { 
-                showEditMode(); 
-            } else { 
-                // Pass canEditText to determine if inputs are editable or readonly
-                // All users can see the camera (handled in showReadonlyMode)
-                showReadonlyMode(canEditText, hasData); 
-            }
-        }
-
-        function showEditMode() {
-            document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            document.getElementById('btn-save').classList.remove('hidden'); 
-            document.getElementById('btn-edit-container').classList.add('hidden'); 
-            document.getElementById('readonly-lock-banner').classList.add('hidden');
-            
-            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
-            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
-            
-            let dlHtml = `<datalist id="dl-notes">`; 
-            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); 
-            dlHtml += `</datalist>`;
-            
-            const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here...";
-            const cont = document.getElementById('input-container');
-            
-            cont.innerHTML = `
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
-                    <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label>
-                    <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
-                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">
-                    ${dlHtml}
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
-                    <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
-                    <textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea>
-                </div>
-            `;
-        }
-
-        function showReadonlyMode(canEditText, hasData) {
-            // UPDATED: Show camera button for ALL users so they can add photos
-            document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            
-            // Only show main "SAVE & LOCK" button if user can edit text fields
-            if (canEditText) {
-                 document.getElementById('btn-save').classList.remove('hidden'); 
-                 document.getElementById('btn-save').classList.add('hidden'); // Actually hide it, use UNLOCK button
-            } else {
-                 document.getElementById('btn-save').classList.add('hidden');
-            }
-            
-            if(hasData) { 
-                document.getElementById('readonly-lock-banner').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('readonly-lock-banner').classList.add('hidden'); 
-            }
-            
-            const cont = document.getElementById('input-container');
-            cont.innerHTML = `
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
-            `;
-            
-            // Only admins get the button to unlock text fields
-            if (canEditText) { 
-                document.getElementById('btn-edit-container').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('btn-edit-container').classList.add('hidden'); 
-            }
-        }
-
-        function renderAllFields() {
-            if(!activeItem) return;
-            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
-            let html = '<div class="grid grid-cols-1 gap-2">';
-            
-            for (const [key, value] of Object.entries(activeItem)) { 
-                if(hiddenKeys.includes(key)) continue; 
-                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; 
-            }
-            
-            html += '</div>'; 
-            document.getElementById('expand-content').innerHTML = html;
-        }
-
-        function renderOverviewData() {
-            const box = document.getElementById('user-data-box'); 
-            const grid = document.getElementById('dynamic-user-grid'); 
-            const photoDiv = document.getElementById('photo-preview'); 
-            const photoList = document.getElementById('photo-list-container');
-            
-            let h = "";
-            
-            // --- NEW: LOCATION NOTE HEADER (Only for Inventory View) ---
-            if(currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) {
-                h += `<div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;">
-                        <div class="overview-label text-red-600">Location Note</div>
-                        <div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div>
-                      </div>`;
-            }
-
-            if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
-            if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
-            if(activeItem.SAVED_SALES_DESC) h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
-            if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
-            if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            
-            if(activeItem.SAVED_PHOTO_LINK) {
-                photoDiv.classList.remove('hidden'); 
-                const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
-                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
-                let phHtml = "";
-                
-                urls.forEach((url, i) => {
-                    const dispName = names[i] || `Photo ${i+1}`; 
-                    let thumbUrl = url; 
-                    const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    
-                    if(idMatch && idMatch[1]) { 
-                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
-                    }
-                    
-                    let deleteBtn = "";
-                    if(isAdmin) {
-                        deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`;
-                    }
-
-                    phHtml += `
-                        <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
-                            <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
-                                <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy">
-                                <div class="flex-grow min-w-0">
-                                    <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
-                                    <div class="text-[10px] text-gray-400">Tap to view full size</div>
-                                </div>
-                                <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
-                            </a>
-                            ${deleteBtn}
-                        </div>
-                    `;
-                });
-                
-                photoList.innerHTML = phHtml; 
-                h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
-            } else { 
-                photoDiv.classList.add('hidden'); 
-            }
-            
-            if(h) { 
-                grid.innerHTML = h; 
-                box.classList.remove('hidden'); 
-            } else {
-                box.classList.add('hidden');
-            }
-        }
-
-        // --- UPDATED DELETE PHOTO FUNCTION ---
-        function deletePhoto(index) {
-            if(!confirm("Are you sure you want to delete this photo?")) return;
-            
-            if(autoSyncTimer) clearInterval(autoSyncTimer);
-            
-            let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
-            let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-            
-            links.splice(index, 1);
-            if(index < names.length) names.splice(index, 1);
-            
-            activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(',');
-            activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
-            
-            renderOverviewData();
-            showToast("Deleting...", "Removing photo from cloud...");
-            
-            const payload = { 
-                type: "update", 
-                id: activeItem.UNIQUE_ID, 
-                match: activeItem.SAVED_MATCH || "", 
-                spec: activeItem.SAVED_SPEC || "", 
-                pick: activeItem.SAVED_PICK || "", 
-                note: activeItem.SAVED_NOTE || "", 
-                salesDesc: activeItem.SAVED_SALES_DESC || "", 
-                photoLink: activeItem.SAVED_PHOTO_LINK, 
-                photoName: activeItem.SAVED_PHOTO_NAME, 
-                user: currentUser 
-            };
-            
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            })
-            .then(res => res.json())
-            .then(data => { 
-                if(data.status === 'success') {
-                    showToast("Success", "Photo permanently deleted.");
-                    setTimeout(() => {
-                        fetchData(true);
-                        startAutoSync(); 
-                    }, 2500);
-                } else {
-                    showToast("Error", "Could not delete: " + data.message, true);
-                    startAutoSync(); 
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Saved deletion offline.", true);
-                logFailedSave(payload);
-                startAutoSync(); 
-            });
         }
 
         // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
