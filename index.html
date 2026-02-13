@@ -890,7 +890,6 @@
 
         // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
-            // Allow Production module saving even if not admin
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             
             // 1. GET VALUES FROM EXISTING INPUTS
@@ -929,7 +928,7 @@
 
             activeItem.TIMESTAMP = new Date().toISOString();
 
-            // 4. UPDATE MASTER ARRAY
+            // 4. UPDATE MASTER ARRAY (CRITICAL FOR LIST VIEW REFRESH)
             const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
             if(masterIdx > -1) {
                 fullInventory[masterIdx] = activeItem;
@@ -1030,9 +1029,22 @@
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 const file = input.files[0];
+                
+                // 1. CRITICAL: Save current text inputs to memory BEFORE uploading
+                // This prevents text from disappearing when the view refreshes for the photo
+                if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+                if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+                if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+                if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+                if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+
+                // Save Grower inputs if visible
+                if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
+                if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
+
                 const itemBeingEdited = activeItem; 
                 
-                showToast("Uploading...", "Photo uploading in background. You can keep working.", false);
+                showToast("Uploading...", "Photo uploading... Text saved locally.", false);
                 
                 const reader = new FileReader(); 
                 reader.readAsDataURL(file);
@@ -1073,7 +1085,7 @@
                         .then(data => {
                             if(data.status === 'success') { 
                                 let links = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',') : []; 
-                                let names = itemBeingEdited.SAVED_PHOTO_NAME ? itemBeingEdited.SAVED_PHOTO_NAME.split(',') : [];
+                                let names = itemBeingEdited.SAVED_PHOTO_NAME ? itemBeingEdited.SAVED_PHOTO_NAME.split(',') : []; 
                                 
                                 links.push(data.url); 
                                 names.push(filename); 
@@ -1081,10 +1093,28 @@
                                 itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
                                 itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
+                                // 2. CRITICAL: Update the Master List immediately
+                                const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === itemBeingEdited.UNIQUE_ID);
+                                if(masterIdx > -1) {
+                                    fullInventory[masterIdx] = itemBeingEdited;
+                                }
+
+                                // Refresh the detail view to show the new photo AND the kept text
                                 if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
-                                    renderOverviewData(); 
+                                    renderOverviewData(); // Shows photo in overview
+                                    // We also need to refresh inputs to ensure they show the saved text
+                                    const canEdit = isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView);
+                                    const hasData = true;
+                                    
+                                    // If we are in edit mode, re-trigger it to populate values
+                                    if(canEdit) {
+                                        showEditMode();
+                                    } else {
+                                        showReadonlyMode(canEdit, hasData);
+                                    }
                                 }
                                 
+                                // Silent background save to ensure links are stored in sheet
                                 const payload = { 
                                     type: "update", 
                                     id: itemBeingEdited.UNIQUE_ID, 
@@ -1095,7 +1125,10 @@
                                     salesDesc: itemBeingEdited.SAVED_SALES_DESC || "", 
                                     photoLink: itemBeingEdited.SAVED_PHOTO_LINK, 
                                     photoName: itemBeingEdited.SAVED_PHOTO_NAME, 
-                                    user: currentUser 
+                                    user: currentUser,
+                                    // Include Grower Data
+                                    growerEval: itemBeingEdited.GROWER_EVAL || "",
+                                    growerNote: itemBeingEdited.GROWER_NOTE || ""
                                 };
                                 
                                 fetch(GOOGLE_SCRIPT_URL, { 
@@ -1103,7 +1136,7 @@
                                     body: JSON.stringify(payload) 
                                 }).catch(err => logFailedSave(payload));
 
-                                showToast("Success", "Photo securely uploaded and saved."); 
+                                showToast("Success", "Photo saved & Text preserved."); 
                             } else { 
                                 showToast("Upload Error", data.message, true); 
                             }
@@ -2475,6 +2508,7 @@
         }
 
         function createRowHtml(item, idx, source) {
+            // THUMBNAIL LOGIC
             let thumbHtml = '';
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
@@ -2482,17 +2516,17 @@
                 const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
                 
                 if(idMatch && idMatch[1]) { 
-                    // High-speed small thumbnail request from Google Drive
                     thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; 
                 }
-                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
+                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
             }
 
-            // TURBO BADGES
+            // BADGES
             let badges = '';
             if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
             if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
             if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
 
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
@@ -2506,7 +2540,7 @@
                         </div>
                         <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
                         <div class="text-xs text-gray-500 truncate mb-1">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}</div>
-                        ${badges}
+                        <div class="flex flex-wrap">${badges}</div>
                     </div>
                 </div>
             </div>`;
@@ -2565,7 +2599,7 @@
                     if(!oldNote.includes("[CAL REQUEST]")) { 
                         item.SAVED_PICK = "[CAL REQUEST] " + oldNote; 
                     } 
-                }
+                } 
                 
                 return { 
                     id: item.UNIQUE_ID, 
