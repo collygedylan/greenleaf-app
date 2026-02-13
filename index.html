@@ -739,11 +739,41 @@
             document.getElementById('pin-code').focus(); 
         }
         
+        // *** FIX: INSTANT LOGIN VIA CACHE ***
         function verifyPin() { 
             if (document.getElementById('pin-code').value === '1234') { 
                 document.getElementById('pin-container').classList.add('hidden'); 
-                document.getElementById('loading-spinner').classList.remove('hidden'); 
-                fetchData(); 
+                
+                // CHECK LOCAL CACHE
+                const cachedInv = localStorage.getItem('gl_inventory_cache');
+                
+                if (cachedInv) {
+                    // FAST LOAD PATH
+                    try {
+                        fullInventory = JSON.parse(cachedInv);
+                        noteTemplates = JSON.parse(localStorage.getItem('gl_notes_cache') || '[]');
+                        allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+                        
+                        applyAssignments(); 
+                        launchApp(); 
+                        startAutoSync(); 
+                        restoreSession();
+                        
+                        // BACKGROUND REFRESH (Silent)
+                        fetchData(true);
+                        showToast("Offline Mode", "Loaded cached data. Syncing...", false);
+                        
+                    } catch(e) {
+                        console.error("Cache Error", e);
+                        // Fallback to slow load
+                        document.getElementById('loading-spinner').classList.remove('hidden'); 
+                        fetchData(); 
+                    }
+                } else {
+                    // SLOW LOAD PATH (First Time)
+                    document.getElementById('loading-spinner').classList.remove('hidden'); 
+                    fetchData(); 
+                }
             } else { 
                 showToast("Error", "Incorrect PIN", true); 
             } 
@@ -764,7 +794,7 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- DATA FETCHING (WITH FIX) ---
+        // --- DATA FETCHING (WITH CACHE & FIX) ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -782,6 +812,10 @@
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
+                    // *** SAVE TO CACHE ***
+                    localStorage.setItem('gl_inventory_cache', JSON.stringify(cloudJson.data));
+                    if(cloudJson.templates) localStorage.setItem('gl_notes_cache', JSON.stringify(cloudJson.templates));
+
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
