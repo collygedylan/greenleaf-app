@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 004</title>
+    <title>Greenleaf Pro TURBO 005</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -37,34 +37,10 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* TURBO LIST RENDERING */
-        .drill-item { 
-            border-bottom: 1px solid #e5e7eb; 
-            padding: 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            cursor: pointer; 
-            background: white; 
-            transition: background 0.1s; 
-            user-select: none;
-            content-visibility: auto; 
-            contain-intrinsic-size: 50px; 
-        }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 50px; }
         .drill-item:active { background: #f3f4f6; }
         
-        .inv-card { 
-            border: 1px solid #e5e7eb; 
-            border-radius: 8px; 
-            padding: 10px; 
-            margin-bottom: 8px; 
-            background: white; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
-            transition: transform 0.1s; 
-            user-select: none; 
-            content-visibility: auto;
-            contain-intrinsic-size: 80px;
-        }
+        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
         
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
@@ -122,6 +98,18 @@
         .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); }
         .ms-option.selected { background-color: #f0fdf4; }
 
+        /* EDITOR MODAL STYLES */
+        #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
+        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
+        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
+        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
+        .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
+        .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
+
         /* PULL TO REFRESH */
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
@@ -145,11 +133,42 @@
 
     <div id="toast-notification"></div>
 
+    <div id="view-photo-editor">
+        <div class="p-4 bg-gray-900 text-white flex justify-between items-center pt-8">
+            <h3 class="font-bold text-lg">Greenleaf Lens Studio</h3>
+            <button onclick="closePhotoEditor()" class="text-gray-400 font-bold">Cancel</button>
+        </div>
+        <div class="editor-canvas-container">
+            <canvas id="photo-canvas" class="hidden"></canvas>
+            <img id="editor-preview" src="">
+        </div>
+        <div class="editor-controls">
+            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Enhance & Brand</div>
+            <div class="filter-scroll">
+                <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
+                <div class="filter-btn active" id="btn-logo" onclick="toggleEdit('logo')"><i class="ph-fill ph-stamp"></i> Logo</div>
+                <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
+            </div>
+            
+            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Tints (Background)</div>
+            <div class="filter-scroll">
+                <div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div>
+                <div class="filter-btn bg-lav" id="btn-bg-lav" onclick="setBg('lavender')">Lavender</div>
+                <div class="filter-btn bg-grn" id="btn-bg-grn" onclick="setBg('green')">Light Green</div>
+                <div class="filter-btn bg-gry" id="btn-bg-gry" onclick="setBg('grey')">Studio Grey</div>
+            </div>
+
+            <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO
+            </button>
+        </div>
+    </div>
+
     <div id="view-login">
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 004
+                TURBO 005
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -179,7 +198,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 004 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 005 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -620,6 +639,10 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
+        // PHOTO EDITOR STATE
+        let currentFile = null;
+        let editSettings = { pro: true, logo: true, dirt: false, bg: 'none' };
+
         // --- PWA INSTALLATION LOGIC ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { 
@@ -822,6 +845,7 @@
 
                             if (timeSinceUpdate < 60000) {
                                 console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
+                                // We DO NOT update activeItem here. We keep the local version.
                             } else {
                                 // Safe to update
                                 const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
@@ -1056,154 +1080,227 @@
             .catch(err => logFailedSave(payload));
         }
 
+        // --- NEW: PHOTO EDITOR LOGIC ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
-                const file = input.files[0];
+                currentFile = input.files[0];
                 
-                // *** FIX: SET PROTECTION TIMER ***
-                window.lastLocalUpdate = new Date().getTime();
-
-                // 1. CRITICAL: Save current text inputs to memory BEFORE uploading
-                // This prevents text from disappearing when the view refreshes for the photo
+                // Save current text inputs locally before switching views
                 if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
                 if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
                 if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
                 if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
                 if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
-
-                // Save Grower inputs if visible
                 if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
                 if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
 
-                // Force Update Master List NOW with the text data
-                const masterIdxPre = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                if(masterIdxPre > -1) {
-                    fullInventory[masterIdxPre] = activeItem;
+                openPhotoEditor();
+            }
+        }
+
+        function openPhotoEditor() {
+            const modal = document.getElementById('view-photo-editor');
+            const preview = document.getElementById('editor-preview');
+            modal.style.display = 'flex';
+            
+            // Read file for preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                // Once loaded, we will process it on the canvas internally
+                processCanvasPreview(); 
+            }
+            reader.readAsDataURL(currentFile);
+        }
+
+        function closePhotoEditor() {
+            document.getElementById('view-photo-editor').style.display = 'none';
+            document.getElementById('photo-canvas').classList.add('hidden');
+            document.getElementById('editor-preview').classList.remove('hidden');
+            currentFile = null;
+        }
+
+        function toggleEdit(type) {
+            const btn = document.getElementById('btn-' + type);
+            editSettings[type] = !editSettings[type];
+            btn.classList.toggle('active', editSettings[type]);
+            processCanvasPreview();
+        }
+
+        function setBg(color) {
+            editSettings.bg = color;
+            ['none', 'lav', 'grn', 'gry'].forEach(c => document.getElementById('btn-bg-' + c).classList.remove('border-2', 'border-white'));
+            
+            let btnId = 'btn-bg-none';
+            if(color === 'lavender') btnId = 'btn-bg-lav';
+            if(color === 'green') btnId = 'btn-bg-grn';
+            if(color === 'grey') btnId = 'btn-bg-gry';
+            
+            document.getElementById(btnId).classList.add('border-2', 'border-white');
+            processCanvasPreview();
+        }
+
+        function processCanvasPreview() {
+            const preview = document.getElementById('editor-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Hide img, show canvas
+            preview.classList.add('hidden');
+            canvas.classList.remove('hidden');
+
+            // Load Source Image
+            const img = new Image();
+            img.src = preview.src;
+            img.onload = function() {
+                // Set Canvas Size (Max 1024 width)
+                const MAX_WIDTH = 1024;
+                const scale = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scale;
+
+                // 1. Draw Background Tint if selected
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if(editSettings.bg !== 'none') {
+                    if(editSettings.bg === 'lavender') ctx.fillStyle = '#f3e8ff'; // Light Purple
+                    if(editSettings.bg === 'green') ctx.fillStyle = '#dcfce7'; // Light Green
+                    if(editSettings.bg === 'grey') ctx.fillStyle = '#f3f4f6'; // Light Grey
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
 
-                const itemBeingEdited = activeItem; 
-                
-                showToast("Uploading...", "Photo uploading... Text saved locally.", false);
-                
-                const reader = new FileReader(); 
-                reader.readAsDataURL(file);
-                
-                reader.onload = function(e) {
-                    const img = new Image(); 
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas'); 
-                        const MAX_WIDTH = 1024; 
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH; 
-                        canvas.height = img.height * scaleSize;
-                        
-                        const ctx = canvas.getContext('2d'); 
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
-                        const base64Data = dataUrl.split(',')[1];
-                        
-                        // SEQUENTIAL NAMING LOGIC
-                        const currentCount = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',').length : 0;
-                        const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
-                        
-                        const dateStr = new Date().toISOString().split('T')[0];
-                        const filename = `${itemBeingEdited.COMMONNAME}_${itemBeingEdited.CONTSIZE}_${itemBeingEdited.LOCATIONCODE}_${itemBeingEdited.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
-                        
-                        fetch(GOOGLE_SCRIPT_URL, { 
-                            method: "POST", 
-                            body: JSON.stringify({ 
-                                type: "image", 
-                                image: base64Data, 
-                                mimeType: "image/jpeg", 
-                                filename: filename 
-                            }) 
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.status === 'success') { 
-                                let links = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',') : []; 
-                                let names = itemBeingEdited.SAVED_PHOTO_NAME ? itemBeingEdited.SAVED_PHOTO_NAME.split(',') : []; 
-                                
-                                links.push(data.url); 
-                                names.push(filename); 
-                                
-                                itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
-                                itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
-                                
-                                // 2. CRITICAL: Update the Master List immediately AGAIN with the photo link
-                                const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === itemBeingEdited.UNIQUE_ID);
-                                if(masterIdx > -1) {
-                                    fullInventory[masterIdx] = itemBeingEdited;
-                                    // Make sure Active Item points to the same object reference
-                                    activeItem = fullInventory[masterIdx];
-                                }
+                // 2. Apply "Pro" Lighting Filter
+                if(editSettings.pro) {
+                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
+                } else {
+                    ctx.filter = 'none';
+                }
 
-                                // Refresh the detail view to show the new photo AND the kept text
-                                if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
-                                    renderOverviewData(); // Shows photo in overview
-                                    // We also need to refresh inputs to ensure they show the saved text
-                                    const canEdit = isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView);
-                                    const hasData = true;
-                                    
-                                    // If we are in edit mode, re-trigger it to populate values
-                                    if(canEdit) {
-                                        showEditMode();
-                                    } else {
-                                        showReadonlyMode(canEdit, hasData);
-                                    }
-                                }
-                                
-                                // Silent background save to ensure links are stored in sheet
-                                const payload = { 
-                                    type: "update", 
-                                    id: itemBeingEdited.UNIQUE_ID, 
-                                    match: itemBeingEdited.SAVED_MATCH || "", 
-                                    spec: itemBeingEdited.SAVED_SPEC || "", 
-                                    pick: itemBeingEdited.SAVED_PICK || "", 
-                                    note: itemBeingEdited.SAVED_NOTE || "", 
-                                    salesDesc: itemBeingEdited.SAVED_SALES_DESC || "", 
-                                    photoLink: itemBeingEdited.SAVED_PHOTO_LINK, 
-                                    photoName: itemBeingEdited.SAVED_PHOTO_NAME, 
-                                    user: currentUser,
-                                    // Include Grower Data
-                                    growerEval: itemBeingEdited.GROWER_EVAL || "",
-                                    growerNote: itemBeingEdited.GROWER_NOTE || ""
-                                };
-                                
-                                fetch(GOOGLE_SCRIPT_URL, { 
-                                    method: "POST", 
-                                    body: JSON.stringify(payload) 
-                                }).catch(err => logFailedSave(payload));
+                // 3. Draw Main Image
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none'; // Reset filter
 
-                                showToast("Success", "Photo saved & Text preserved."); 
-                            } else { 
-                                showToast("Upload Error", data.message, true); 
-                            }
-                        })
-                        .catch(err => showToast("Network Error", "Could not upload photo.", true));
+                // 4. "Pot Polish" (Dirt Remover Hack)
+                // Blurs the bottom 25% of the image to hide weeds/dirt
+                if(editSettings.dirt) {
+                    const potHeight = canvas.height * 0.25;
+                    const potY = canvas.height - potHeight;
+                    
+                    // Clip the bottom area
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, potY, canvas.width, potHeight);
+                    ctx.clip();
+                    
+                    // Apply heavy blur
+                    ctx.filter = 'blur(4px)';
+                    ctx.drawImage(canvas, 0, 0); // Draw itself blurred
+                    ctx.restore();
+                    ctx.filter = 'none';
+                }
+
+                // 5. Logo Overlay
+                if(editSettings.logo) {
+                    const logo = new Image();
+                    logo.crossOrigin = "Anonymous";
+                    logo.src = "https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512";
+                    logo.onload = function() {
+                        const logoW = 150;
+                        const logoH = 150 * (logo.height / logo.width);
+                        const logoX = (canvas.width - logoW) / 2;
+                        const logoY = canvas.height - logoH - 20; // 20px from bottom
+                        
+                        ctx.globalAlpha = 0.85; // Slight transparency
+                        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+                        ctx.globalAlpha = 1.0;
                     }
                 }
             }
+        }
+
+        function finalizeUpload() {
+            const canvas = document.getElementById('photo-canvas');
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% Quality
+            const base64Data = dataUrl.split(',')[1];
+            
+            // Generate Filename
+            const currentCount = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',').length : 0;
+            const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
+
+            // Close Editor & Show Toast
+            closePhotoEditor();
+            window.lastLocalUpdate = new Date().getTime();
+            showToast("Uploading...", "Pro photo processing...", false);
+
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ 
+                    type: "image", 
+                    image: base64Data, 
+                    mimeType: "image/jpeg", 
+                    filename: filename 
+                }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; 
+                    let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                    
+                    links.push(data.url); 
+                    names.push(filename); 
+                    
+                    activeItem.SAVED_PHOTO_LINK = links.join(','); 
+                    activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    
+                    // Update Master List
+                    const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                    if(masterIdx > -1) {
+                        fullInventory[masterIdx] = activeItem;
+                        activeItem = fullInventory[masterIdx];
+                    }
+
+                    // Refresh View
+                    renderOverviewData(); 
+                    
+                    // Save Metadata to Sheet
+                    const payload = { 
+                        type: "update", 
+                        id: activeItem.UNIQUE_ID, 
+                        match: activeItem.SAVED_MATCH || "", 
+                        spec: activeItem.SAVED_SPEC || "", 
+                        pick: activeItem.SAVED_PICK || "", 
+                        note: activeItem.SAVED_NOTE || "", 
+                        salesDesc: activeItem.SAVED_SALES_DESC || "", 
+                        photoLink: activeItem.SAVED_PHOTO_LINK, 
+                        photoName: activeItem.SAVED_PHOTO_NAME, 
+                        user: currentUser,
+                        growerEval: activeItem.GROWER_EVAL || "",
+                        growerNote: activeItem.GROWER_NOTE || ""
+                    };
+                    
+                    fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
+                    showToast("Success", "Photo saved & Text preserved."); 
+                } else { 
+                    showToast("Upload Error", data.message, true); 
+                }
+            })
+            .catch(err => showToast("Network Error", "Could not upload photo.", true));
         }
 
         // --- DIRECTORY LOGIC ---
         function renderDirectoryView() {
             const container = document.getElementById('directory-content');
             const term = document.getElementById('directory-search').value.toLowerCase();
-            
             let displayList = STATIC_DIRECTORY;
-            
-            if(term) {
-                displayList = displayList.filter(r => r.name.toLowerCase().includes(term));
-            }
+            if(term) { displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); }
             
             container.innerHTML = displayList.map(rep => {
                 let btns = '';
                 if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
                 if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
-                
                 return `
                 <div class="rep-card">
                     <div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
@@ -1213,9 +1310,7 @@
                         </div>
                         <i class="ph-bold ph-caret-right text-gray-300 mt-1"></i>
                     </div>
-                    
                     ${btns ? `<div class="contact-row">${btns}</div>` : ''}
-                    
                     <div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div>
                 </div>`;
             }).join('');
@@ -1231,48 +1326,28 @@
         }
 
         function fetchRepData(repIdentifier) {
-            if(!document.getElementById('view-directory').classList.contains('hidden')) {
-                switchView('soc');
-            }
-            
+            if(!document.getElementById('view-directory').classList.contains('hidden')) { switchView('soc'); }
             const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
             const queryParam = dirEntry ? dirEntry.name : repIdentifier;
-
             document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
             
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') { 
-                    socData = data.data; 
-                    socViewLevel = 1; 
-                    selectedSocRep = queryParam; 
-                    renderSocView(); 
-                    document.getElementById('soc-status').innerText = "";
+                    socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = "";
                 } else { 
-                    // Fallback to ID search
                     if(dirEntry && queryParam !== dirEntry.id) {
                          fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
                          .then(res2 => res2.json())
                          .then(data2 => {
                              if(data2.status === 'success') {
-                                 socData = data2.data;
-                                 socViewLevel = 1;
-                                 selectedSocRep = dirEntry.id;
-                                 renderSocView();
-                                 document.getElementById('soc-status').innerText = "";
-                             } else {
-                                 document.getElementById('soc-status').innerText = "Not found (Try running Process Script)";
-                             }
+                                 socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = "";
+                             } else { document.getElementById('soc-status').innerText = "Not found"; }
                          });
-                    } else {
-                        document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; 
-                    }
+                    } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
                 }
-            })
-            .catch(e => {
-                 document.getElementById('soc-status').innerText = "Connection Error";
-            });
+            }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; });
         }
 
         function renderSocView() {
@@ -1280,83 +1355,45 @@
             const term = document.getElementById('soc-search').value.toLowerCase();
             
             if (term && socData.length > 0) { 
-                const matched = socData.filter(i => 
-                    (i.CUSTOMERNAME||"").toLowerCase().includes(term) || 
-                    (i.ITEMCODE||"").toLowerCase().includes(term) || 
-                    (i.SALESREP||"").toLowerCase().includes(term)
-                ); 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
                 return; 
             }
-            
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
-                for(let i=1; i<=56; i++) {
-                    html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
-                }
-                html += '</div>';
-                container.innerHTML = html;
-                return;
+                for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
+                html += '</div>'; container.innerHTML = html; return;
             }
-
             if(socViewLevel === 0) { 
-                if(STATIC_DIRECTORY.length === 0) { 
-                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Directory Data.</div>`; 
-                    return; 
-                } 
-                
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => {
                     const disp = `${rep.name} - ${rep.id}`;
                     html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
                 });
                 container.innerHTML = html;
-
             } else if(socViewLevel === 1) { 
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
-                
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div>
-                <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>
-                ${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
-            
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             } else if(socViewLevel === 2) { 
                 const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
-                
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
-                <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
-                ${items.map(i => `
-                    <div class="inv-card">
-                        <div class="flex justify-between">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div>
-                        </div>
-                        <div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div>
-                        <div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
-                    </div>`).join('')}`; 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
             }
         }
         
-        function selectSocCust(c) { 
-            selectedSocCust = c; 
-            socViewLevel = 2; 
-            renderSocView(); 
-        }
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
         // --- NEW: DRIVE MODE FILTERS & LOGIC ---
         function initDriveFilters() {
-            // Populate Groups
             const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
             const grpDiv = document.getElementById('ms-group');
             grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + 
                 groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
 
-            // Populate Seasons
             const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
             const seaDiv = document.getElementById('ms-season');
             seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + 
                 seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
 
-            // Populate Lots
             const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
             const lotDiv = document.getElementById('ms-lot');
             lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + 
@@ -1365,7 +1402,6 @@
 
         function toggleMs(id) {
             const el = document.getElementById(id);
-            // Close others
             ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); });
             el.classList.toggle('show');
         }
@@ -1374,24 +1410,19 @@
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const checks = div.querySelectorAll('input[type="checkbox"]:checked');
             const values = Array.from(checks).map(c => c.value);
-            
             driveFilterState[type] = values;
             
-            // Update Label
             const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
             const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' };
             const count = values.length;
             document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
-            
             renderDriveView();
         }
 
         function toggleAllDrive(type) {
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const allChecks = div.querySelectorAll('input[type="checkbox"]');
-            // Check if all are checked
             const allChecked = Array.from(allChecks).every(c => c.checked);
-            
             allChecks.forEach(c => c.checked = !allChecked);
             updateDriveFilterState(type);
         }
@@ -1406,8 +1437,7 @@
             document.getElementById('lts-operator').value = 'gt';
             document.getElementById('drive-search').value = '';
             driveSearchTerm = '';
-            
-            driveViewLevel = 0; // Reset drill down too
+            driveViewLevel = 0; 
             renderDriveView();
         }
 
@@ -1422,23 +1452,16 @@
             const hasLtsFilter = !isNaN(val);
 
             return fullInventory.filter(i => {
-                // 1. Group Filter
                 if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false;
-                
-                // 2. Season Filter
                 if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false;
-                
-                // 3. Lot Filter
                 if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false;
 
-                // 4. LTS Value Filter
                 if (hasLtsFilter) {
-                    const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); // Handle mapped name or raw name
+                    const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); 
                     if (op === 'gt' && !(itemVal > val)) return false;
                     if (op === 'lt' && !(itemVal < val)) return false;
                 }
 
-                // 5. Text Search
                 if(driveSearchTerm) {
                     const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || 
                                   (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || 
@@ -1454,10 +1477,8 @@
         function renderDriveView() {
             const container = document.getElementById('drive-content');
             const crumb = document.getElementById('drive-crumb');
-            
             const filteredItems = getFilteredDriveItems();
 
-            // Auto-hide Dropdowns if clicking outside (simple hack)
             document.onclick = function(e) {
                 if(!e.target.closest('.ms-container')) {
                     document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show'));
@@ -1471,100 +1492,48 @@
             }
 
             if(driveViewLevel === 0) {
-                // LEVEL 0: COMMON NAMES
                 crumb.innerText = `Filtered Items (${filteredItems.length})`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                
-                container.innerHTML = names.map(n => {
-                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (driveViewLevel === 1) {
-                // LEVEL 1: SIZES (Filtered by Name)
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
-                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => {
-                    return `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                // LEVEL 2: ITEMS (Filtered by Name & Size, Sorted by Location)
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
-                
-                // Sort by Location so driving is efficient
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
             }
         }
 
-        function selectDriveName(n) {
-            selectedDriveName = n;
-            driveViewLevel = 1;
-            renderDriveView();
-        }
-
-        function selectDriveSize(s) {
-            selectedDriveSize = s;
-            driveViewLevel = 2;
-            renderDriveView();
-        }
-
-        function backToDriveSizes() {
-            driveViewLevel = 1;
-            selectedDriveSize = null;
-            renderDriveView();
-        }
-
-        function resetDriveView() {
-            driveViewLevel = 0;
-            selectedDriveName = null;
-            selectedDriveSize = null;
-            renderDriveView();
-        }
+        function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
+        function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
+        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
 
         // --- PRODUCTION MODE LOGIC ---
         function toggleProductionSeason(season, el) {
-            if(season === 'ALL') {
-                productionSelectedSeasons = ['ALL'];
-            } else {
+            if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else {
                 if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = [];
-                
-                if(productionSelectedSeasons.includes(season)) {
-                    productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season);
-                } else {
-                    productionSelectedSeasons.push(season);
-                }
-                
+                if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); }
                 if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL'];
             }
-            
             document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => {
                 const s = chip.innerText;
-                if(productionSelectedSeasons.includes(s)) chip.classList.add('active');
-                else chip.classList.remove('active');
+                if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active');
             });
-            
             renderProductionView();
         }
 
-        function handleProductionSearch(term) {
-            productionSearchTerm = term.toLowerCase();
-            renderProductionView();
-        }
+        function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
 
         function getFilteredProductionItems() {
             return fullInventory.filter(i => {
-                if(!productionSelectedSeasons.includes('ALL')) {
-                    if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false;
-                }
+                if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
                 if(productionSearchTerm) {
-                    const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || 
-                                  (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || 
-                                  (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm);
+                    const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm);
                     if(!match) return false;
                 }
                 return true;
@@ -1574,119 +1543,56 @@
         function renderProductionView() {
             const container = document.getElementById('production-content');
             const crumb = document.getElementById('production-crumb');
-            
-            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
             if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) {
                 crumb.innerText = `All Items (${allCommonNames.length})`;
-                container.innerHTML = allCommonNames.map(n => {
-                    return `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
+                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 return;
             }
-
             const filteredItems = getFilteredProductionItems();
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
-                crumb.innerText = "No Results";
-                return;
-            }
-
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(productionViewLevel === 0) {
-                // LEVEL 0: COMMON NAMES
                 crumb.innerText = `All Items (${filteredItems.length})`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                
-                container.innerHTML = names.map(n => {
-                    return `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (productionViewLevel === 1) {
-                // LEVEL 1: SIZES
                 crumb.innerText = selectedProductionName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
-                container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => {
-                    return `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                // LEVEL 2: ITEMS (Sorted by Location)
                 crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize);
-                
-                // Sort by Location
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
             }
         }
 
-        function selectProductionName(n) {
-            selectedProductionName = n;
-            productionViewLevel = 1;
-            renderProductionView();
-        }
+        function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
+        function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
+        function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
+        function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
 
-        function selectProductionSize(s) {
-            selectedProductionSize = s;
-            productionViewLevel = 2;
-            renderProductionView();
-        }
-
-        function backToProductionSizes() {
-            productionViewLevel = 1;
-            selectedProductionSize = null;
-            renderProductionView();
-        }
-
-        function resetProductionView() {
-            productionViewLevel = 0;
-            selectedProductionName = null;
-            selectedProductionSize = null;
-            renderProductionView();
-        }
-
-        // --- INVENTORY MODE LOGIC (NEW) ---
+        // --- INVENTORY MODE LOGIC ---
         function toggleInventorySeason(season, el) {
-            if(season === 'ALL') {
-                inventorySelectedSeasons = ['ALL'];
-            } else {
+            if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else {
                 if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = [];
-                
-                if(inventorySelectedSeasons.includes(season)) {
-                    inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season);
-                } else {
-                    inventorySelectedSeasons.push(season);
-                }
-                
+                if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); }
                 if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
             }
-            
             document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => {
                 const s = chip.innerText;
-                if(inventorySelectedSeasons.includes(s)) chip.classList.add('active');
-                else chip.classList.remove('active');
+                if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active');
             });
-            
             renderInventoryView();
         }
 
-        function handleInventorySearch(term) {
-            inventorySearchTerm = term.toLowerCase();
-            renderInventoryView();
-        }
+        function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
 
         function getFilteredInventoryItems() {
             return fullInventory.filter(i => {
-                if(!inventorySelectedSeasons.includes('ALL')) {
-                    if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false;
-                }
+                if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
                 if(inventorySearchTerm) {
-                    const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || 
-                                  (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || 
-                                  (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm);
+                    const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm);
                     if(!match) return false;
                 }
                 return true;
@@ -1696,98 +1602,50 @@
         function renderInventoryView() {
             const container = document.getElementById('inventory-content');
             const crumb = document.getElementById('inventory-crumb');
-
-            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
             if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) {
                 crumb.innerText = `All Items (${allCommonNames.length})`;
-                container.innerHTML = allCommonNames.map(n => {
-                    return `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
+                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 return;
             }
-
             const filteredItems = getFilteredInventoryItems();
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
-                crumb.innerText = "No Results";
-                return;
-            }
-
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(inventoryViewLevel === 0) {
-                // LEVEL 0: COMMON NAMES
                 crumb.innerText = `All Items (${filteredItems.length})`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                
-                container.innerHTML = names.map(n => {
-                    return `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (inventoryViewLevel === 1) {
-                // LEVEL 1: SIZES (Filtered by Name)
                 crumb.innerText = selectedInventoryName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
-                container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => {
-                    return `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-
+                container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                // LEVEL 2: ITEMS
                 crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize);
-                
-                // Sort by Location
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
             }
         }
 
-        function selectInventoryName(n) {
-            selectedInventoryName = n;
-            inventoryViewLevel = 1;
-            renderInventoryView();
-        }
-
-        function selectInventorySize(s) {
-            selectedInventorySize = s;
-            inventoryViewLevel = 2;
-            renderInventoryView();
-        }
-
-        function backToInventorySizes() {
-            inventoryViewLevel = 1;
-            selectedInventorySize = null;
-            renderInventoryView();
-        }
-
-        function resetInventoryView() {
-            inventoryViewLevel = 0;
-            selectedInventoryName = null;
-            selectedInventorySize = null;
-            renderInventoryView();
-        }
+        function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
+        function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
+        function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
+        function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
 
         // --- TASKS LOGIC ---
         function renderTasks() {
             const container = document.getElementById('task-content'); 
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
-            
             let myItems = []; 
             const now = new Date().getTime();
             
             const taskFilter = (i) => {
-                // --- NEW FILTER LOGIC FOR ASSIST TEAM ---
                 if (taskViewTargetUser === 'ASSIST') {
                     const assignee = (i.ASSIGNEDTO || "");
                     if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false;
                 } else {
                     if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
                 }
-                
                 if (i.TASK_TAB !== currentTab) return false;
                 if (i.TIMESTAMP) {
                     const saveTime = new Date(i.TIMESTAMP).getTime(); 
@@ -1802,19 +1660,13 @@
             
             if(currentTab === 'requests') {
                  if (taskViewTargetUser === 'ASSIST') {
-                      // For assist mode requests, combine Kayla and Morgan requests
-                      myItems = fullInventory.filter(i => 
-                        ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) 
-                        && i.TASK_TAB === 'requests'
-                      );
+                      myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
                       crumb.innerText = `Kayla & Morgan / Urgent Requests`;
                  } else {
                       myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  }
-            } else { 
-                myItems = fullInventory.filter(taskFilter); 
-            }
+            } else { myItems = fullInventory.filter(taskFilter); }
 
             const term = document.getElementById('task-search').value.toLowerCase();
             if (term) { 
@@ -1823,812 +1675,206 @@
                 return; 
             }
 
-            if(myItems.length === 0 && currentTab === 'requests') { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; 
-                return; 
-            }
-            
-            if(currentTab === 'requests') { 
-                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
-                return; 
-            }
+            if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
+            if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
 
-            // Determine display name for breadcrumbs
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
 
             if(currentTab === 'season' || currentTab === 'location') {
                 if(taskViewLevel === 0) {
                     crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
                     const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                    
-                    if(blocks.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
-                        return; 
-                    }
-                    
+                    if(blocks.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
                     container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => {
                         const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
                         return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
                     }).join('');
-                    
                 } else if (taskViewLevel === 1) {
                     crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
                     const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                    
-                    // LOCATION PREFIX AND NUMERIC SORT
                     const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-                    
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
                         const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
                         return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
                     }).join('');
-                    
                 } else {
                     crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
-                    
-                    // NUMERIC FULL SORT
                     let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
                     items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                    
                     container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
             }
         }
         
-        function renderTeamSelector() { 
-            document.getElementById('team-selector').classList.remove('hidden'); 
-            document.getElementById('task-tabs-container').classList.add('hidden'); 
-            document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; 
-            document.getElementById('task-crumb').innerText = "Team View"; 
-        }
-        
-        function setTaskUser(user) { 
-            taskViewTargetUser = user; 
-            document.getElementById('team-selector').classList.add('hidden'); 
-            document.getElementById('task-tabs-container').classList.remove('hidden'); 
-            taskViewLevel = 0; 
-            renderTasks(); 
-        }
-        
-        function setTaskTab(t) { 
-            currentTab = t; 
-            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
-            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
-            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
-            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
-            taskViewLevel = 0; 
-            renderTasks(); 
-        }
-        
-        function selectTaskBlock(b) { 
-            selectedTaskBlock = b; 
-            taskViewLevel = 1; 
-            renderTasks(); 
-        }
-        
-        function selectTaskLoc(l) { 
-            selectedTaskLoc = l; 
-            taskViewLevel = 2; 
-            renderTasks(); 
-        }
-        
-        function backToTaskLocs() { 
-            taskViewLevel = 1; 
-            selectedTaskLoc = null; 
-            renderTasks(); 
-        }
-        
-        function resetTaskView() { 
-            taskViewLevel = 0; 
-            selectedTaskBlock = null; 
-            selectedTaskLoc = null; 
-            renderTasks(); 
-        }
+        function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
+        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
+        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); taskViewLevel = 0; renderTasks(); }
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
         // --- VIEWER LOGIC ---
         function renderViewerNames() {
             const term = document.getElementById('viewer-search').value.toLowerCase();
-            
-            if(term) { 
-                const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
-                document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); 
-                return; 
-            }
-            
-            // PERFORMANCE OPTIMIZATION: Use cached names
+            if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; }
             document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
-        
-        function selectViewerName(name) { 
-            const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); 
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
-        }
-        
-        function selectViewerSize(name, size) { 
-            const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); 
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
-                const idx = fullInventory.indexOf(item); 
-                return createRowHtml(item, idx, 'viewer'); 
-            }).join(''); 
-        }
+        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
         // --- REVIEW LOGIC ---
         function renderReviewItems() {
-            const container = document.getElementById('review-content'); 
-            const crumb = document.getElementById('review-crumb'); 
-            const failContainer = document.getElementById('failed-saves-container');
-            
+            const container = document.getElementById('review-content'); const crumb = document.getElementById('review-crumb'); const failContainer = document.getElementById('failed-saves-container');
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-            if (failed.length > 0) { 
-                failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; 
-            } else { 
-                failContainer.innerHTML = ''; 
-            }
-            
-            const term = document.getElementById('review-search').value.toLowerCase(); 
-            const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            
-            if(term) { 
-                const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
-                return; 
-            }
-            
-            if(reviewItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; 
-                crumb.innerText = ""; 
-                return; 
-            }
-            
-            if(reviewViewLevel === 0) { 
-                crumb.innerText = "All Names"; 
-                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); 
-                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(reviewViewLevel === 1) { 
-                crumb.innerText = selectedReviewName; 
-                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); 
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
-            } else if(reviewViewLevel === 2) { 
-                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
-                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
-            }
+            if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
+            const term = document.getElementById('review-search').value.toLowerCase(); const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            if(term) { const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); return; }
+            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
+            if(reviewViewLevel === 0) { crumb.innerText = "All Names"; const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+            else if(reviewViewLevel === 1) { crumb.innerText = selectedReviewName; const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; }
+            else if(reviewViewLevel === 2) { crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; }
         }
-        
-        function selectReviewName(n) { 
-            selectedReviewName = n; 
-            reviewViewLevel = 1; 
-            renderReviewItems(); 
-        }
-        
-        function selectReviewSize(s) { 
-            selectedReviewSize = s; 
-            reviewViewLevel = 2; 
-            renderReviewItems(); 
-        }
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
         // --- SALES OFFICE LOGIC ---
         function renderSalesOffice() {
-            const container = document.getElementById('salesoffice-content'); 
-            const searchInput = document.getElementById('salesoffice-search'); 
-            const term = searchInput ? searchInput.value.toLowerCase() : '';
-            
-            const salesItems = fullInventory.filter(i => { 
-                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
-                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
-                return true; 
-            });
-            
-            if(salesItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; 
-                return; 
-            }
-            
+            const container = document.getElementById('salesoffice-content'); const searchInput = document.getElementById('salesoffice-search'); const term = searchInput ? searchInput.value.toLowerCase() : '';
+            const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
+            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
             salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
-            
-            container.innerHTML = salesItems.map(item => `
-                <div class="inv-card mb-3 !p-4 border-green-200">
-                    <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
-                    <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
-                    <div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
-                </div>
-            `).join('');
+            container.innerHTML = salesItems.map(item => `<div class="inv-card mb-3 !p-4 border-green-200"><div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`).join('');
         }
 
         // --- APP NAVIGATION ---
-        function launchApp() { 
-            document.getElementById('view-login').style.display = 'none'; 
-            document.getElementById('app-wrapper').classList.remove('hidden'); 
-            document.getElementById('header-user').innerText = currentUser; 
-            
-            if(isAdmin) { 
-                document.getElementById('home-btn-soc').classList.remove('hidden'); 
-                document.getElementById('home-btn-track').classList.remove('hidden'); 
-                document.getElementById('home-btn-review').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('home-btn-soc').classList.add('hidden'); 
-                document.getElementById('home-btn-track').classList.add('hidden'); 
-                document.getElementById('home-btn-review').classList.add('hidden'); 
-            } 
-            
-            switchView('home'); 
-        }
+        function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
         
         function applyAssignments() { 
-            let i = 0; 
-            fullInventory.forEach(item => { 
-                if(!item.ASSIGNEDTO) { 
-                    const group = (item.PLANTGROUPCODE || "").toString(); 
-                    if(group.includes("230") || group.includes("140")) {
-                        item.ASSIGNEDTO = "Dylan"; 
-                    } else if(group.includes("330") || group.includes("300")) {
-                        item.ASSIGNEDTO = "Kayla"; 
-                    } else { 
-                        const weight = i % 5; 
-                        item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); 
-                        i++; 
-                    } 
-                } 
-            }); 
+            let i = 0; fullInventory.forEach(item => { if(!item.ASSIGNEDTO) { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } } }); 
         }
         
         function switchView(v) { 
-            // SAVE STATE FOR RELOAD
             localStorage.setItem('gl_last_view', v);
-
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            }); 
-            
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(id => { document.getElementById(id).classList.add('hidden'); }); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
-            
-            if(v === 'drive') renderDriveNames(); 
-            if(v === 'inventory') renderInventoryView();
-            if(v === 'production') renderProductionView();
-            if(v === 'directory') renderDirectoryView(); // Load Directory
-            if(v === 'tasks') { 
-                if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
-                    renderTeamSelector(); 
-                } else { 
-                    renderTasks(); 
-                } 
-            } 
-            if(v === 'viewer') renderViewerNames(); 
-            if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } 
-            if(v === 'soc') { 
-                // Always make sure soc list is rendered even if not fetched yet
-                renderSocView(); 
-            } 
-            if(v === 'salesoffice') { renderSalesOffice(); } 
+            if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
+            if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
+            if(v === 'viewer') renderViewerNames(); if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
         function switchDetailTab(tab) { 
-            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); 
-            document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); 
-            document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
-
-            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); 
-            document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); 
-            document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
+            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
+            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
         }
         
-        function goBackFromDetail() { 
-            // Clear active item state
-            localStorage.removeItem('gl_active_item'); 
-            
-            document.getElementById('view-detail').classList.add('hidden'); 
-            document.getElementById('view-' + lastView).classList.remove('hidden'); 
-            if(lastView === 'tasks') renderTasks(); 
-            if(lastView === 'drive') renderDriveNames(); 
-            if(lastView === 'inventory') renderInventoryView();
-            if(lastView === 'production') renderProductionView();
-        }
+        function goBackFromDetail() { localStorage.removeItem('gl_active_item'); document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); if(lastView === 'tasks') renderTasks(); if(lastView === 'drive') renderDriveNames(); if(lastView === 'inventory') renderInventoryView(); if(lastView === 'production') renderProductionView(); }
 
         function openDetail(idx, originView) {
-            lastView = originView; 
-            currentOriginView = originView; 
-            activeItem = fullInventory[idx]; 
-            
-            // SAVE STATE FOR RELOAD
-            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
-            
-            // Hide everything including new views
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => {
-                document.getElementById(v).classList.add('hidden');
-            });
+            lastView = originView; currentOriginView = originView; activeItem = fullInventory[idx]; localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
             document.getElementById('view-detail').classList.remove('hidden'); 
-            
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
-            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
-            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
-            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
-            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
-            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
-            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; 
-            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; 
-            document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; 
-            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
-
-            document.getElementById('expand-section').classList.remove('expanded'); 
-            document.getElementById('expand-content').innerHTML = ''; 
-            
-            if (originView === 'viewer') { 
-                document.getElementById('expand-section').classList.add('hidden'); 
-            } else { 
-                document.getElementById('expand-section').classList.remove('hidden'); 
-            }
-            
-            // --- TAB LOGIC ---
-            const tabActions = document.getElementById('dtab-actions');
-            const tabGrower = document.getElementById('dtab-grower');
-
-            if (originView === 'production') {
-                tabActions.classList.add('hidden');
-                tabGrower.classList.remove('hidden');
-                // Populate Grower Inputs
-                document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || "";
-                document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || "";
-                document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || "";
-                document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || "";
-                document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || "";
-            } else {
-                tabActions.classList.remove('hidden');
-                tabGrower.classList.add('hidden');
-            }
-
-            renderOverviewData(); 
-            renderActionsTab(); 
-            switchDetailTab('overview');
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+            document.getElementById('expand-section').classList.remove('expanded'); document.getElementById('expand-content').innerHTML = ''; 
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
+            const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
+            if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
+            renderOverviewData(); renderActionsTab(); switchDetailTab('overview');
         }
 
-        function toggleExpand() { 
-            const section = document.getElementById('expand-section'); 
-            if (!section.classList.contains('expanded')) { 
-                renderAllFields(); 
-            } 
-            section.classList.toggle('expanded'); 
-        }
+        function toggleExpand() { const section = document.getElementById('expand-section'); if (!section.classList.contains('expanded')) { renderAllFields(); } section.classList.toggle('expanded'); }
 
         function renderActionsTab() {
-            const btnComplete = document.getElementById('request-complete-container');
-            const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP);
-            const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
-
-            let canEditText = false;
-            // Admins can edit text fields from specific views
-            if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { 
-                canEditText = true; 
-            }
-
-            if (isMyRequest) { 
-                btnComplete.classList.remove('hidden'); 
-            } else { 
-                btnComplete.classList.add('hidden'); 
-            }
-            
-            if (canEditText && !hasData) { 
-                showEditMode(); 
-            } else { 
-                // Pass canEditText to determine if inputs are editable or readonly
-                // All users can see the camera (handled in showReadonlyMode)
-                showReadonlyMode(canEditText, hasData); 
-            }
+            const btnComplete = document.getElementById('request-complete-container'); const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP); const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
+            let canEditText = false; if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { canEditText = true; }
+            if (isMyRequest) { btnComplete.classList.remove('hidden'); } else { btnComplete.classList.add('hidden'); }
+            if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
         }
 
         function showEditMode() {
-            document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            document.getElementById('btn-save').classList.remove('hidden'); 
-            document.getElementById('btn-edit-container').classList.add('hidden'); 
-            document.getElementById('readonly-lock-banner').classList.add('hidden');
-            
-            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
-            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
-            
-            let dlHtml = `<datalist id="dl-notes">`; 
-            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); 
-            dlHtml += `</datalist>`;
-            
-            const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here...";
-            const cont = document.getElementById('input-container');
-            
-            cont.innerHTML = `
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
-                    <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label>
-                    <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
-                    <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">
-                    ${dlHtml}
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
-                    <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
-                    <textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea>
-                </div>
-            `;
+            document.getElementById('btn-cam-container').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-edit-container').classList.add('hidden'); document.getElementById('readonly-lock-banner').classList.add('hidden');
+            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
+            let dlHtml = `<datalist id="dl-notes">`; validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); dlHtml += `</datalist>`;
+            const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
+            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
         }
 
         function showReadonlyMode(canEditText, hasData) {
-            // UPDATED: Show camera button for ALL users so they can add photos
             document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            
-            // Only show main "SAVE & LOCK" button if user can edit text fields
-            if (canEditText) {
-                 document.getElementById('btn-save').classList.remove('hidden'); 
-                 document.getElementById('btn-save').classList.add('hidden'); // Actually hide it, use UNLOCK button
-            } else {
-                 document.getElementById('btn-save').classList.add('hidden');
-            }
-            
-            if(hasData) { 
-                document.getElementById('readonly-lock-banner').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('readonly-lock-banner').classList.add('hidden'); 
-            }
-            
+            if (canEditText) { document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-save').classList.add('hidden'); } else { document.getElementById('btn-save').classList.add('hidden'); }
+            if(hasData) { document.getElementById('readonly-lock-banner').classList.remove('hidden'); } else { document.getElementById('readonly-lock-banner').classList.add('hidden'); }
             const cont = document.getElementById('input-container');
-            cont.innerHTML = `
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
-                <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>
-            `;
-            
-            // Only admins get the button to unlock text fields
-            if (canEditText) { 
-                document.getElementById('btn-edit-container').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('btn-edit-container').classList.add('hidden'); 
-            }
+            cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>`;
+            if (canEditText) { document.getElementById('btn-edit-container').classList.remove('hidden'); } else { document.getElementById('btn-edit-container').classList.add('hidden'); }
         }
 
         function renderAllFields() {
             if(!activeItem) return;
             const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
             let html = '<div class="grid grid-cols-1 gap-2">';
-            
-            for (const [key, value] of Object.entries(activeItem)) { 
-                if(hiddenKeys.includes(key)) continue; 
-                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; 
-            }
-            
-            html += '</div>'; 
-            document.getElementById('expand-content').innerHTML = html;
+            for (const [key, value] of Object.entries(activeItem)) { if(hiddenKeys.includes(key)) continue; html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; }
+            html += '</div>'; document.getElementById('expand-content').innerHTML = html;
         }
 
         function renderOverviewData() {
-            const box = document.getElementById('user-data-box'); 
-            const grid = document.getElementById('dynamic-user-grid'); 
-            const photoDiv = document.getElementById('photo-preview'); 
-            const photoList = document.getElementById('photo-list-container');
-            
+            const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid'); const photoDiv = document.getElementById('photo-preview'); const photoList = document.getElementById('photo-list-container');
             let h = "";
-            
-            // --- NEW: LOCATION NOTE HEADER (Only for Inventory View) ---
-            if(currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) {
-                h += `<div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;">
-                        <div class="overview-label text-red-600">Location Note</div>
-                        <div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div>
-                      </div>`;
-            }
-
+            if(currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) { h += `<div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;"><div class="overview-label text-red-600">Location Note</div><div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div></div>`; }
             if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
             if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
             if(activeItem.SAVED_SALES_DESC) h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
             if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
             if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            
             if(activeItem.SAVED_PHOTO_LINK) {
-                photoDiv.classList.remove('hidden'); 
-                const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
-                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
-                let phHtml = "";
-                
+                photoDiv.classList.remove('hidden'); const urls = activeItem.SAVED_PHOTO_LINK.split(','); const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; let phHtml = "";
                 urls.forEach((url, i) => {
-                    const dispName = names[i] || `Photo ${i+1}`; 
-                    let thumbUrl = url; 
-                    const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    
-                    if(idMatch && idMatch[1]) { 
-                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
-                    }
-                    
-                    let deleteBtn = "";
-                    if(isAdmin) {
-                        deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`;
-                    }
-
-                    phHtml += `
-                        <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
-                            <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
-                                <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy">
-                                <div class="flex-grow min-w-0">
-                                    <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
-                                    <div class="text-[10px] text-gray-400">Tap to view full size</div>
-                                </div>
-                                <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
-                            </a>
-                            ${deleteBtn}
-                        </div>
-                    `;
+                    const dispName = names[i] || `Photo ${i+1}`; let thumbUrl = url; const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
+                    let deleteBtn = ""; if(isAdmin) { deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`; }
+                    phHtml += `<div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50"><a href="${url}" target="_blank" class="flex-grow flex items-center gap-3"><img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy"><div class="flex-grow min-w-0"><div class="text-xs font-bold text-blue-600 truncate">${dispName}</div><div class="text-[10px] text-gray-400">Tap to view full size</div></div><i class="ph-bold ph-arrow-square-out text-gray-300"></i></a>${deleteBtn}</div>`;
                 });
-                
-                photoList.innerHTML = phHtml; 
-                h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
-            } else { 
-                photoDiv.classList.add('hidden'); 
-            }
-            
-            if(h) { 
-                grid.innerHTML = h; 
-                box.classList.remove('hidden'); 
-            } else {
-                box.classList.add('hidden');
-            }
+                photoList.innerHTML = phHtml; h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
+            } else { photoDiv.classList.add('hidden'); }
+            if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else { box.classList.add('hidden'); }
         }
 
-        // --- UPDATED DELETE PHOTO FUNCTION ---
         function deletePhoto(index) {
             if(!confirm("Are you sure you want to delete this photo?")) return;
-            
             if(autoSyncTimer) clearInterval(autoSyncTimer);
-            
-            let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
-            let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-            
-            links.splice(index, 1);
-            if(index < names.length) names.splice(index, 1);
-            
-            activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(',');
-            activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
-            
-            renderOverviewData();
-            showToast("Deleting...", "Removing photo from cloud...");
-            
-            const payload = { 
-                type: "update", 
-                id: activeItem.UNIQUE_ID, 
-                match: activeItem.SAVED_MATCH || "", 
-                spec: activeItem.SAVED_SPEC || "", 
-                pick: activeItem.SAVED_PICK || "", 
-                note: activeItem.SAVED_NOTE || "", 
-                salesDesc: activeItem.SAVED_SALES_DESC || "", 
-                photoLink: activeItem.SAVED_PHOTO_LINK, 
-                photoName: activeItem.SAVED_PHOTO_NAME, 
-                user: currentUser 
-            };
-            
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            })
-            .then(res => res.json())
-            .then(data => { 
-                if(data.status === 'success') {
-                    showToast("Success", "Photo permanently deleted.");
-                    setTimeout(() => {
-                        fetchData(true);
-                        startAutoSync(); 
-                    }, 2500);
-                } else {
-                    showToast("Error", "Could not delete: " + data.message, true);
-                    startAutoSync(); 
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Saved deletion offline.", true);
-                logFailedSave(payload);
-                startAutoSync(); 
-            });
+            let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+            links.splice(index, 1); if(index < names.length) names.splice(index, 1);
+            activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(','); activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
+            renderOverviewData(); showToast("Deleting...", "Removing photo from cloud...");
+            const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser };
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Photo permanently deleted."); setTimeout(() => { fetchData(true); startAutoSync(); }, 2500); } else { showToast("Error", "Could not delete: " + data.message, true); startAutoSync(); } }).catch(err => { showToast("Network Error", "Saved deletion offline.", true); logFailedSave(payload); startAutoSync(); });
         }
 
-        // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
-        function updateSelected() {
-            selectedIdx = [];
-            document.querySelectorAll('.select-check').forEach(cb => {
-                if (cb.checked) {
-                    selectedIdx.push(parseInt(cb.value));
-                }
-            });
-            
-            if (selectedIdx.length > 0) {
-                document.getElementById('action-bar').classList.add('visible');
-            } else {
-                document.getElementById('action-bar').classList.remove('visible');
-            }
-        }
-
-        function openAssignModal() {
-            if (selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            document.getElementById('assign-modal').style.display = 'flex';
-        }
-
+        function updateSelected() { selectedIdx = []; document.querySelectorAll('.select-check').forEach(cb => { if (cb.checked) { selectedIdx.push(parseInt(cb.value)); } }); if (selectedIdx.length > 0) { document.getElementById('action-bar').classList.add('visible'); } else { document.getElementById('action-bar').classList.remove('visible'); } }
+        function openAssignModal() { if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } document.getElementById('assign-modal').style.display = 'flex'; }
         function getBatchHtml() {
             let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
             selectedIdx.forEach(idx => {
                 let item = fullInventory[idx];
-                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
-                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
-                            <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
-                
-                // Build the secondary info block dynamically
-                let details = [];
-                if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`);
-                if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`);
-
-                // If we have match or spec, join them.
-                if(details.length > 0) html += details.join(' | ') + '<br>';
-
-                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
-                if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
-                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
-                    const urls = item.SAVED_PHOTO_LINK.split(','); 
-                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
-                    urls.forEach((url, i) => { 
-                        const name = names[i] || `View Photo ${i+1}`; 
-                        html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; 
-                    });
-                    html += `</div>`;
-                }
-                html += `</div>`;
-            });
-            return html + "</div>";
+                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br><span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                let details = []; if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`); if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`); if(details.length > 0) html += details.join(' | ') + '<br>';
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`; if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`; if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                if(item.SAVED_PHOTO_LINK) { html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`; const urls = item.SAVED_PHOTO_LINK.split(','); const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : []; urls.forEach((url, i) => { const name = names[i] || `View Photo ${i+1}`; html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; }); html += `</div>`; } html += `</div>`;
+            }); return html + "</div>";
         }
-
         function getBatchText() {
-            let text = "";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
-                
-                // Handle Match/Spec Line
-                let specLine = [];
-                if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`);
-                if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`);
-                if(specLine.length > 0) text += specLine.join(' | ') + '\n';
-
-                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`;
-                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    text += `Photos:\n`; 
-                    const urls = item.SAVED_PHOTO_LINK.split(','); 
-                    urls.forEach((url, i) => { 
-                        text += `• ${url.trim()}\n`; 
-                    });
-                }
-                text += `\n`;
-            });
-            return text;
+            let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text;
         }
-
-        function batchText() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
-        }
-        
-        function batchEmail() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            const html = getBatchHtml(); 
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); 
-            const blobText = new Blob([text], { type: "text/plain" });
-            
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
-                navigator.clipboard.write(data).then(() => { 
-                    showToast("Copied!", "Ready to paste into your email app."); 
-                    setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); 
-                    isBatch = false; 
-                    toggleBatch();
-                }).catch(err => { 
-                    fallbackCopy(html); 
-                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
-                });
-            } else { 
-                fallbackCopy(html); 
-                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
-            }
-        }
-        
-        function copyBatchData() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            const html = getBatchHtml(); 
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); 
-            const blobText = new Blob([text], { type: "text/plain" });
-            
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
-                navigator.clipboard.write(data).then(() => { 
-                    showToast("Copied!", "Data copied to clipboard."); 
-                    isBatch = false; 
-                    toggleBatch(); 
-                }).catch(err => { fallbackCopy(html); });
-            } else { 
-                fallbackCopy(html); 
-            }
-        }
-
-        function fallbackCopy(html) {
-            const tempDiv = document.createElement("div"); 
-            tempDiv.innerHTML = html; 
-            tempDiv.style.position = "fixed"; 
-            tempDiv.style.left = "-9999px"; 
-            document.body.appendChild(tempDiv);
-            
-            const range = document.createRange(); 
-            range.selectNodeContents(tempDiv); 
-            const sel = window.getSelection(); 
-            sel.removeAllRanges(); 
-            sel.addRange(range); 
-            document.execCommand('copy'); 
-            document.body.removeChild(tempDiv);
-            
-            showToast("Copied!", "Data copied (Legacy Mode)."); 
-            isBatch = false; 
-            toggleBatch();
-        }
-
-        function handleCardClick(idx, source) { 
-            if(isBatch) { 
-                const cb = document.getElementById('cb-' + idx); 
-                if(cb) { 
-                    cb.checked = !cb.checked; 
-                    updateSelected(); 
-                } 
-                return; 
-            } 
-            openDetail(idx, source); 
-        }
+        function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
+        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
+        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
+        function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
+        function handleCardClick(idx, source) { if(isBatch) { const cb = document.getElementById('cb-' + idx); if(cb) { cb.checked = !cb.checked; updateSelected(); } return; } openDetail(idx, source); }
 
         function createRowHtml(item, idx, source) {
-            // THUMBNAIL LOGIC
-            let thumbHtml = '';
-            if(item.SAVED_PHOTO_LINK) {
-                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
-                let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                
-                if(idMatch && idMatch[1]) { 
-                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; 
-                }
-                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
-            }
-
-            // BADGES
-            let badges = '';
-            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
-            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
-            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
-            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
-
+            let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
+            let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
+            
+            // --- UPDATED CARD DISPLAY ---
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
                 ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
@@ -2654,93 +1900,16 @@
             </div>`;
         }
         
-        function startLongPress() { 
-            if(!isAdmin) return; 
-            longPressTimer = setTimeout(() => { 
-                if(!isBatch) toggleBatch(); 
-                navigator.vibrate(100); 
-            }, 1500); 
-        }
-        
-        function cancelLongPress() { 
-            clearTimeout(longPressTimer); 
-        }
-        
-        function toggleBatch() { 
-            if(!isAdmin) return; 
-            isBatch = !isBatch; 
-            document.body.classList.toggle('batch-mode', isBatch); 
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
-            
-            if(!isBatch) { 
-                document.getElementById('action-bar').classList.remove('visible'); 
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
-                selectedIdx = []; 
-            } 
-        }
-
+        function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
+        function cancelLongPress() { clearTimeout(longPressTimer); }
+        function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; 
-            const k = document.getElementById('chk-kayla').checked; 
-            const m = document.getElementById('chk-morgan').checked; 
-            const isCalReq = document.getElementById('chk-cal-request').checked;
-            
-            let selected = []; 
-            if(d) selected.push("Dylan"); 
-            if(k) selected.push("Kayla"); 
-            if(m) selected.push("Morgan");
-            
-            if(selected.length === 0) { 
-                showToast("Warning", "Select at least one person.", true); 
-                return; 
-            }
-            
-            let target = selected.join(" & ");
-            
-            const updates = selectedIdx.map(idx => {
-                const item = fullInventory[idx]; 
-                item.REQUEST_ASSIGNED_TO = target; 
-                item.TASK_TAB = "requests"; 
-                
-                if(isCalReq) { 
-                    let oldNote = item.SAVED_PICK || ""; 
-                    if(!oldNote.includes("[CAL REQUEST]")) { 
-                        item.SAVED_PICK = "[CAL REQUEST] " + oldNote; 
-                    } 
-                } 
-                
-                return { 
-                    id: item.UNIQUE_ID, 
-                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
-                    taskTab: item.TASK_TAB, 
-                    match: item.SAVED_MATCH, 
-                    spec: item.SAVED_SPEC, 
-                    pick: item.SAVED_PICK, 
-                    note: item.SAVED_NOTE, 
-                    salesDesc: item.SAVED_SALES_DESC, 
-                    user: currentUser 
-                };
-            });
-
-            document.getElementById('assign-modal').style.display = 'none'; 
-            toggleBatch(); 
-            showToast("Saving", "Batch assigning items...");
-            
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ type: "batch_update", updates: updates }) 
-            })
-            .then(res => res.json())
-            .then(data => { 
-                if(data.status === 'success') { 
-                    fetchData(true); 
-                } else { 
-                    showToast("Error", data.message, true); 
-                } 
-            })
-            .catch(err => { 
-                showToast("Network Error", "Saved offline.", true); 
-            });
+            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked; const isCalReq = document.getElementById('chk-cal-request').checked;
+            let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
+            if(selected.length === 0) { showToast("Warning", "Select at least one person.", true); return; } let target = selected.join(" & ");
+            const updates = selectedIdx.map(idx => { const item = fullInventory[idx]; item.REQUEST_ASSIGNED_TO = target; item.TASK_TAB = "requests"; if(isCalReq) { let oldNote = item.SAVED_PICK || ""; if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } } return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser }; });
+            document.getElementById('assign-modal').style.display = 'none'; toggleBatch(); showToast("Saving", "Batch assigning items...");
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
     </script>
 </body>
