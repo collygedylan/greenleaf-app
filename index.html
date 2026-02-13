@@ -550,29 +550,10 @@
         
         const ADMINS = ["Dylan", "J.D."];
 
-        // --- PWA INSTALLATION LOGIC ---
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { 
-            e.preventDefault(); 
-            deferredPrompt = e; 
-            document.getElementById('install-btn').style.display = 'flex'; 
-        });
-
-        async function installPWA() { 
-            if(deferredPrompt){ 
-                deferredPrompt.prompt(); 
-                const {outcome} = await deferredPrompt.userChoice; 
-                if(outcome === 'accepted') {
-                    document.getElementById('install-btn').style.display='none'; 
-                }
-                deferredPrompt=null; 
-            } 
-        }
-
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
-        let allCommonNames = []; // CACHED NAMES FOR PERFORMANCE
+        let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
         let activeItem = null; 
@@ -595,7 +576,10 @@
         let currentOriginView = ''; 
         let longPressTimer; 
         let autoSyncTimer;
-        let debounceTimer; // SEARCH DEBOUNCE
+        let debounceTimer; 
+
+        // *** FIX: PROTECTION VARIABLE ***
+        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
 
         // DRIVE MODE STATE
         let driveViewLevel = 0;
@@ -618,7 +602,26 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
-        // --- STATIC DIRECTORY (HARDCODED FOR SPEED) ---
+        // --- PWA INSTALLATION LOGIC ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => { 
+            e.preventDefault(); 
+            deferredPrompt = e; 
+            document.getElementById('install-btn').style.display = 'flex'; 
+        });
+
+        async function installPWA() { 
+            if(deferredPrompt){ 
+                deferredPrompt.prompt(); 
+                const {outcome} = await deferredPrompt.userChoice; 
+                if(outcome === 'accepted') {
+                    document.getElementById('install-btn').style.display='none'; 
+                }
+                deferredPrompt=null; 
+            } 
+        }
+
+        // --- STATIC DIRECTORY ---
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
             { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
@@ -646,7 +649,6 @@
 
         let currentSocTab = 'reps';
 
-        // --- HELPER: LOC PREFIX ---
         function getLocPrefix(loc) {
             if (!loc) return "No Loc";
             let parts = loc.split('.');
@@ -656,17 +658,15 @@
             return loc;
         }
 
-        // --- SEARCH DEBOUNCE FUNCTION ---
         function handleSearchDebounced(val, type) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 if(type === 'drive') handleDriveSearch(val);
                 if(type === 'inventory') handleInventorySearch(val);
                 if(type === 'production') handleProductionSearch(val);
-            }, 300); // Waits 300ms after last keystroke to search
+            }, 300); 
         }
 
-        // --- UI TOAST ---
         function showToast(title, message, isAlert = false) {
             const toast = document.getElementById('toast-notification');
             toast.style.background = isAlert ? '#ef4444' : '#16a34a';
@@ -688,7 +688,6 @@
             document.getElementById('drawer-overlay').classList.toggle('open');
         }
 
-        // --- PULL TO REFRESH ---
         let ptrStartY = 0, ptrCurrentY = 0, ptrDragging = false;
         const scrollArea = document.getElementById('main-scroll-area'); 
         const spinner = document.getElementById('ptr-spinner');
@@ -730,7 +729,6 @@
             ptrCurrentY = 0;
         });
 
-        // --- AUTHENTICATION ---
         function selectUser(u) { 
             currentUser = u; 
             isAdmin = ADMINS.includes(u); 
@@ -766,7 +764,7 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- DATA FETCHING ---
+        // --- DATA FETCHING (WITH FIX) ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -787,7 +785,6 @@
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
-                    // PERFORMANCE: Pre-calculate unique names once
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
 
                     if(!isSilent) { 
@@ -796,22 +793,25 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
-                        // RE-RENDER CURRENT VIEW SILENTLY
+                        // *** THE FIX: PREVENT OVERWRITE IF SAVE WAS RECENT ***
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                             
-                            // CHECK: Only update if the user isn't currently looking at a new photo
-                            if(freshItem) { 
-                                // Logic: If local has photo, but fresh(cloud) does not, it means upload is still pending.
-                                const localHasPhoto = activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK.length > 0;
-                                const cloudHasPhoto = freshItem.SAVED_PHOTO_LINK && freshItem.SAVED_PHOTO_LINK.length > 0;
-                                const isUploading = localHasPhoto && !cloudHasPhoto;
-                                
-                                if(!isUploading) {
-                                    activeItem = freshItem; 
-                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                        renderOverviewData(); 
-                                    } 
+                            // Check if we saved locally recently (Last 60 seconds)
+                            const now = new Date().getTime();
+                            const lastUpdate = window.lastLocalUpdate || 0;
+                            const timeSinceUpdate = now - lastUpdate;
+
+                            if (timeSinceUpdate < 60000) {
+                                console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
+                                // We DO NOT update activeItem here. We keep the local version.
+                            } else {
+                                // Safe to update
+                                const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                                if(freshItem) { 
+                                     activeItem = freshItem; 
+                                     if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                         renderOverviewData(); 
+                                     } 
                                 }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
@@ -898,6 +898,9 @@
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             
+            // *** FIX: SET PROTECTION TIMER ***
+            window.lastLocalUpdate = new Date().getTime();
+
             // 1. GET VALUES FROM EXISTING INPUTS
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
@@ -983,6 +986,9 @@
         function markRequestComplete() {
             if(!activeItem) return;
             
+            // *** FIX: SET PROTECTION TIMER ***
+            window.lastLocalUpdate = new Date().getTime();
+            
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
@@ -1036,6 +1042,9 @@
             if(input.files && input.files[0]) {
                 const file = input.files[0];
                 
+                // *** FIX: SET PROTECTION TIMER ***
+                window.lastLocalUpdate = new Date().getTime();
+
                 // 1. CRITICAL: Save current text inputs to memory BEFORE uploading
                 // This prevents text from disappearing when the view refreshes for the photo
                 if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
