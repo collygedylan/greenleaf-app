@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro Turbo</title>
+    <title>Greenleaf Pro TURBO 001</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -155,7 +155,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512" alt="Company Logo" class="h-16 w-auto object-contain">
-                Greenleaf Pro
+                TURBO 001
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -185,7 +185,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Greenleaf Turbo <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -739,41 +739,11 @@
             document.getElementById('pin-code').focus(); 
         }
         
-        // *** FIX: INSTANT LOGIN VIA CACHE ***
         function verifyPin() { 
             if (document.getElementById('pin-code').value === '1234') { 
                 document.getElementById('pin-container').classList.add('hidden'); 
-                
-                // CHECK LOCAL CACHE
-                const cachedInv = localStorage.getItem('gl_inventory_cache');
-                
-                if (cachedInv) {
-                    // FAST LOAD PATH
-                    try {
-                        fullInventory = JSON.parse(cachedInv);
-                        noteTemplates = JSON.parse(localStorage.getItem('gl_notes_cache') || '[]');
-                        allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-                        
-                        applyAssignments(); 
-                        launchApp(); 
-                        startAutoSync(); 
-                        restoreSession();
-                        
-                        // BACKGROUND REFRESH (Silent)
-                        fetchData(true);
-                        showToast("Offline Mode", "Loaded cached data. Syncing...", false);
-                        
-                    } catch(e) {
-                        console.error("Cache Error", e);
-                        // Fallback to slow load
-                        document.getElementById('loading-spinner').classList.remove('hidden'); 
-                        fetchData(); 
-                    }
-                } else {
-                    // SLOW LOAD PATH (First Time)
-                    document.getElementById('loading-spinner').classList.remove('hidden'); 
-                    fetchData(); 
-                }
+                document.getElementById('loading-spinner').classList.remove('hidden'); 
+                fetchData(); 
             } else { 
                 showToast("Error", "Incorrect PIN", true); 
             } 
@@ -794,7 +764,7 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- DATA FETCHING (WITH CACHE & FIX) ---
+        // --- DATA FETCHING (WITH FIX) ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -812,10 +782,6 @@
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
-                    // *** SAVE TO CACHE ***
-                    localStorage.setItem('gl_inventory_cache', JSON.stringify(cloudJson.data));
-                    if(cloudJson.templates) localStorage.setItem('gl_notes_cache', JSON.stringify(cloudJson.templates));
-
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
