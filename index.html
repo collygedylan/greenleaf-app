@@ -1042,6 +1042,12 @@
                 if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
                 if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
 
+                // Force Update Master List NOW with the text data
+                const masterIdxPre = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                if(masterIdxPre > -1) {
+                    fullInventory[masterIdxPre] = activeItem;
+                }
+
                 const itemBeingEdited = activeItem; 
                 
                 showToast("Uploading...", "Photo uploading... Text saved locally.", false);
@@ -1093,7 +1099,7 @@
                                 itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
                                 itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
-                                // 2. CRITICAL: Update the Master List immediately
+                                // 2. CRITICAL: Update the Master List immediately AGAIN with the photo link
                                 const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === itemBeingEdited.UNIQUE_ID);
                                 if(masterIdx > -1) {
                                     fullInventory[masterIdx] = itemBeingEdited;
