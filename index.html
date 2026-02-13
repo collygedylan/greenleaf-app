@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 001</title>
+    <title>Greenleaf Pro TURBO 003</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -15,7 +15,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
@@ -38,34 +37,10 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* TURBO LIST RENDERING */
-        .drill-item { 
-            border-bottom: 1px solid #e5e7eb; 
-            padding: 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            cursor: pointer; 
-            background: white; 
-            transition: background 0.1s; 
-            user-select: none;
-            content-visibility: auto; 
-            contain-intrinsic-size: 50px; 
-        }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 50px; }
         .drill-item:active { background: #f3f4f6; }
         
-        .inv-card { 
-            border: 1px solid #e5e7eb; 
-            border-radius: 8px; 
-            padding: 10px; 
-            margin-bottom: 8px; 
-            background: white; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
-            transition: transform 0.1s; 
-            user-select: none; 
-            content-visibility: auto;
-            contain-intrinsic-size: 80px;
-        }
+        .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
         
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
@@ -113,21 +88,16 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
-        /* SEASON SCROLL BAR */
-        .season-scroll { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; -ms-overflow-style: none; }
-        .season-scroll::-webkit-scrollbar { display: none; }
-        .season-chip { padding: 8px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; font-size: 12px; font-weight: bold; color: #4b5563; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
-        .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; box-shadow: 0 2px 4px rgba(0,122,77,0.3); }
-        
-        /* DIRECTORY CARDS */
-        .rep-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .rep-name { font-size: 16px; font-weight: 800; color: #111827; }
-        .rep-id { font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 12px; }
-        .contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .contact-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
-        .btn-call { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-        .btn-mail { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-        
+        /* MULTI-SELECT DROPDOWN STYLES */
+        .ms-container { position: relative; margin-bottom: 8px; }
+        .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+        .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 4px; }
+        .ms-options.show { display: block; }
+        .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+        .ms-option:hover { background: #f9fafb; }
+        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); }
+        .ms-option.selected { background-color: #f0fdf4; }
+
         /* PULL TO REFRESH */
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
@@ -155,7 +125,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 001
+                TURBO 003
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -185,7 +155,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 003 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -262,21 +232,38 @@
             </div>
 
             <div id="view-drive" class="hidden">
-                <h2 class="text-sm font-bold text-blue-600 uppercase mb-4">Drive Mode</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-blue-600 uppercase">Drive Mode Filters</h2>
+                    <button onclick="resetDriveFilters()" class="text-xs font-bold text-gray-400">RESET ALL</button>
+                </div>
                 
-                <div class="season-scroll" id="drive-season-bar">
-                    <div class="season-chip active" onclick="toggleDriveSeason('ALL', this)">ALL</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('F1', this)">F1</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('S1', this)">S1</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('U1', this)">U1</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('U2', this)">U2</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('U3', this)">U3</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('X', this)">X</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('Y', this)">Y</div>
-                    <div class="season-chip" onclick="toggleDriveSeason('Z', this)">Z</div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="ms-container">
+                        <button class="ms-btn" onclick="toggleMs('ms-group')"><span id="lbl-group">Plant Group</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-group" class="ms-options"></div>
+                    </div>
+                    <div class="ms-container">
+                        <button class="ms-btn" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-season" class="ms-options"></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="ms-container">
+                        <button class="ms-btn" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot Code</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-lot" class="ms-options"></div>
+                    </div>
+                    
+                    <div class="flex gap-1">
+                        <select id="lts-operator" class="border rounded px-1 text-xs bg-white font-bold text-gray-600 w-1/3" onchange="renderDriveView()">
+                            <option value="gt">></option>
+                            <option value="lt"><</option>
+                        </select>
+                        <input type="number" id="lts-value" class="border rounded px-2 w-2/3 text-xs" placeholder="s_LTS Value" onkeyup="renderDriveView()">
+                    </div>
                 </div>
 
-                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'drive')">
+                <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleSearchDebounced(this.value, 'drive')">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
@@ -581,12 +568,19 @@
         // *** FIX: PROTECTION VARIABLE ***
         window.lastLocalUpdate = 0; // Tracks the last time you saved locally
 
-        // DRIVE MODE STATE
+        // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
         let driveSearchTerm = '';
-        let driveSelectedSeasons = ['ALL'];
+        
+        let driveFilterState = {
+            groups: [],
+            seasons: [],
+            lots: [],
+            ltsOp: 'gt',
+            ltsVal: ''
+        };
 
         // INVENTORY MODE STATE
         let inventoryViewLevel = 0;
@@ -789,6 +783,7 @@
 
                     if(!isSilent) { 
                         applyAssignments(); 
+                        initDriveFilters(); // NEW: INIT FILTERS
                         launchApp(); 
                         startAutoSync(); 
                         restoreSession();
@@ -803,7 +798,6 @@
 
                             if (timeSinceUpdate < 60000) {
                                 console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
-                                // We DO NOT update activeItem here. We keep the local version.
                             } else {
                                 // Safe to update
                                 const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
@@ -1046,18 +1040,15 @@
                 window.lastLocalUpdate = new Date().getTime();
 
                 // 1. CRITICAL: Save current text inputs to memory BEFORE uploading
-                // This prevents text from disappearing when the view refreshes for the photo
                 if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
                 if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
                 if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
                 if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
                 if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
 
-                // Save Grower inputs if visible
                 if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
                 if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
 
-                // Force Update Master List NOW with the text data
                 const masterIdxPre = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                 if(masterIdxPre > -1) {
                     fullInventory[masterIdxPre] = activeItem;
@@ -1086,7 +1077,6 @@
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
                         const base64Data = dataUrl.split(',')[1];
                         
-                        // SEQUENTIAL NAMING LOGIC
                         const currentCount = itemBeingEdited.SAVED_PHOTO_LINK ? itemBeingEdited.SAVED_PHOTO_LINK.split(',').length : 0;
                         const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
                         
@@ -1114,30 +1104,19 @@
                                 itemBeingEdited.SAVED_PHOTO_LINK = links.join(','); 
                                 itemBeingEdited.SAVED_PHOTO_NAME = names.join(',');
                                 
-                                // 2. CRITICAL: Update the Master List immediately AGAIN with the photo link
                                 const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === itemBeingEdited.UNIQUE_ID);
                                 if(masterIdx > -1) {
                                     fullInventory[masterIdx] = itemBeingEdited;
-                                    // Make sure Active Item points to the same object reference
                                     activeItem = fullInventory[masterIdx];
                                 }
 
-                                // Refresh the detail view to show the new photo AND the kept text
                                 if(activeItem && activeItem.UNIQUE_ID === itemBeingEdited.UNIQUE_ID && !document.getElementById('view-detail').classList.contains('hidden')) {
-                                    renderOverviewData(); // Shows photo in overview
-                                    // We also need to refresh inputs to ensure they show the saved text
+                                    renderOverviewData(); 
                                     const canEdit = isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView);
                                     const hasData = true;
-                                    
-                                    // If we are in edit mode, re-trigger it to populate values
-                                    if(canEdit) {
-                                        showEditMode();
-                                    } else {
-                                        showReadonlyMode(canEdit, hasData);
-                                    }
+                                    if(canEdit) { showEditMode(); } else { showReadonlyMode(canEdit, hasData); }
                                 }
                                 
-                                // Silent background save to ensure links are stored in sheet
                                 const payload = { 
                                     type: "update", 
                                     id: itemBeingEdited.UNIQUE_ID, 
@@ -1149,7 +1128,6 @@
                                     photoLink: itemBeingEdited.SAVED_PHOTO_LINK, 
                                     photoName: itemBeingEdited.SAVED_PHOTO_NAME, 
                                     user: currentUser,
-                                    // Include Grower Data
                                     growerEval: itemBeingEdited.GROWER_EVAL || "",
                                     growerNote: itemBeingEdited.GROWER_NOTE || ""
                                 };
@@ -1174,18 +1152,13 @@
         function renderDirectoryView() {
             const container = document.getElementById('directory-content');
             const term = document.getElementById('directory-search').value.toLowerCase();
-            
             let displayList = STATIC_DIRECTORY;
-            
-            if(term) {
-                displayList = displayList.filter(r => r.name.toLowerCase().includes(term));
-            }
+            if(term) { displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); }
             
             container.innerHTML = displayList.map(rep => {
                 let btns = '';
                 if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
                 if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
-                
                 return `
                 <div class="rep-card">
                     <div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
@@ -1195,9 +1168,7 @@
                         </div>
                         <i class="ph-bold ph-caret-right text-gray-300 mt-1"></i>
                     </div>
-                    
                     ${btns ? `<div class="contact-row">${btns}</div>` : ''}
-                    
                     <div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div>
                 </div>`;
             }).join('');
@@ -1213,48 +1184,28 @@
         }
 
         function fetchRepData(repIdentifier) {
-            if(!document.getElementById('view-directory').classList.contains('hidden')) {
-                switchView('soc');
-            }
-            
+            if(!document.getElementById('view-directory').classList.contains('hidden')) { switchView('soc'); }
             const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
             const queryParam = dirEntry ? dirEntry.name : repIdentifier;
-
             document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
             
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') { 
-                    socData = data.data; 
-                    socViewLevel = 1; 
-                    selectedSocRep = queryParam; 
-                    renderSocView(); 
-                    document.getElementById('soc-status').innerText = "";
+                    socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = "";
                 } else { 
-                    // Fallback to ID search
                     if(dirEntry && queryParam !== dirEntry.id) {
                          fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
                          .then(res2 => res2.json())
                          .then(data2 => {
                              if(data2.status === 'success') {
-                                 socData = data2.data;
-                                 socViewLevel = 1;
-                                 selectedSocRep = dirEntry.id;
-                                 renderSocView();
-                                 document.getElementById('soc-status').innerText = "";
-                             } else {
-                                 document.getElementById('soc-status').innerText = "Not found (Try running Process Script)";
-                             }
+                                 socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = "";
+                             } else { document.getElementById('soc-status').innerText = "Not found"; }
                          });
-                    } else {
-                        document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; 
-                    }
+                    } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
                 }
-            })
-            .catch(e => {
-                 document.getElementById('soc-status').innerText = "Connection Error";
-            });
+            }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; });
         }
 
         function renderSocView() {
@@ -1262,90 +1213,99 @@
             const term = document.getElementById('soc-search').value.toLowerCase();
             
             if (term && socData.length > 0) { 
-                const matched = socData.filter(i => 
-                    (i.CUSTOMERNAME||"").toLowerCase().includes(term) || 
-                    (i.ITEMCODE||"").toLowerCase().includes(term) || 
-                    (i.SALESREP||"").toLowerCase().includes(term)
-                ); 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
                 return; 
             }
-            
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
-                for(let i=1; i<=56; i++) {
-                    html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`;
-                }
-                html += '</div>';
-                container.innerHTML = html;
-                return;
+                for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
+                html += '</div>'; container.innerHTML = html; return;
             }
-
             if(socViewLevel === 0) { 
-                if(STATIC_DIRECTORY.length === 0) { 
-                    container.innerHTML = `<div class="text-center text-gray-400 p-4">No Directory Data.</div>`; 
-                    return; 
-                } 
-                
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => {
                     const disp = `${rep.name} - ${rep.id}`;
                     html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
                 });
                 container.innerHTML = html;
-
             } else if(socViewLevel === 1) { 
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
-                
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div>
-                <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>
-                ${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
-            
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             } else if(socViewLevel === 2) { 
                 const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
-                
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
-                <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>
-                ${items.map(i => `
-                    <div class="inv-card">
-                        <div class="flex justify-between">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div>
-                        </div>
-                        <div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div>
-                        <div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
-                    </div>`).join('')}`; 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
             }
         }
         
-        function selectSocCust(c) { 
-            selectedSocCust = c; 
-            socViewLevel = 2; 
-            renderSocView(); 
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+
+        // --- NEW: DRIVE MODE FILTERS & LOGIC ---
+        function initDriveFilters() {
+            // Populate Groups
+            const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            const grpDiv = document.getElementById('ms-group');
+            grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + 
+                groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
+
+            // Populate Seasons
+            const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            const seaDiv = document.getElementById('ms-season');
+            seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + 
+                seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
+
+            // Populate Lots
+            const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
+            const lotDiv = document.getElementById('ms-lot');
+            lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + 
+                lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
         }
 
-        // --- DRIVE MODE LOGIC ---
-        function toggleDriveSeason(season, el) {
-            if(season === 'ALL') {
-                driveSelectedSeasons = ['ALL'];
-            } else {
-                if(driveSelectedSeasons.includes('ALL')) driveSelectedSeasons = [];
-                
-                if(driveSelectedSeasons.includes(season)) {
-                    driveSelectedSeasons = driveSelectedSeasons.filter(s => s !== season);
-                } else {
-                    driveSelectedSeasons.push(season);
-                }
-                
-                if(driveSelectedSeasons.length === 0) driveSelectedSeasons = ['ALL'];
-            }
+        function toggleMs(id) {
+            const el = document.getElementById(id);
+            // Close others
+            ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); });
+            el.classList.toggle('show');
+        }
+
+        function updateDriveFilterState(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const checks = div.querySelectorAll('input[type="checkbox"]:checked');
+            const values = Array.from(checks).map(c => c.value);
             
-            document.querySelectorAll('#drive-season-bar .season-chip').forEach(chip => {
-                const s = chip.innerText;
-                if(driveSelectedSeasons.includes(s)) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
+            driveFilterState[type] = values;
             
+            // Update Label
+            const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
+            const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' };
+            const count = values.length;
+            document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
+            
+            renderDriveView();
+        }
+
+        function toggleAllDrive(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const allChecks = div.querySelectorAll('input[type="checkbox"]');
+            // Check if all are checked
+            const allChecked = Array.from(allChecks).every(c => c.checked);
+            
+            allChecks.forEach(c => c.checked = !allChecked);
+            updateDriveFilterState(type);
+        }
+
+        function resetDriveFilters() {
+            driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
+            document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
+            document.getElementById('lbl-group').innerText = 'Plant Group';
+            document.getElementById('lbl-season').innerText = 'Season';
+            document.getElementById('lbl-lot').innerText = 'Lot Code';
+            document.getElementById('lts-value').value = '';
+            document.getElementById('lts-operator').value = 'gt';
+            document.getElementById('drive-search').value = '';
+            driveSearchTerm = '';
+            
+            driveViewLevel = 0; // Reset drill down too
             renderDriveView();
         }
 
@@ -1355,10 +1315,28 @@
         }
 
         function getFilteredDriveItems() {
+            const op = document.getElementById('lts-operator').value;
+            const val = parseFloat(document.getElementById('lts-value').value);
+            const hasLtsFilter = !isNaN(val);
+
             return fullInventory.filter(i => {
-                if(!driveSelectedSeasons.includes('ALL')) {
-                    if(!driveSelectedSeasons.includes(i.SEASONSUPPLY)) return false;
+                // 1. Group Filter
+                if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false;
+                
+                // 2. Season Filter
+                if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false;
+                
+                // 3. Lot Filter
+                if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false;
+
+                // 4. LTS Value Filter
+                if (hasLtsFilter) {
+                    const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); // Handle mapped name or raw name
+                    if (op === 'gt' && !(itemVal > val)) return false;
+                    if (op === 'lt' && !(itemVal < val)) return false;
                 }
+
+                // 5. Text Search
                 if(driveSearchTerm) {
                     const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || 
                                   (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || 
@@ -1375,16 +1353,14 @@
             const container = document.getElementById('drive-content');
             const crumb = document.getElementById('drive-crumb');
             
-            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
-            if(!driveSearchTerm && driveSelectedSeasons.includes('ALL') && driveViewLevel === 0) {
-                crumb.innerText = `All Items (${allCommonNames.length})`;
-                container.innerHTML = allCommonNames.map(n => {
-                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                }).join('');
-                return;
-            }
-
             const filteredItems = getFilteredDriveItems();
+
+            // Auto-hide Dropdowns if clicking outside (simple hack)
+            document.onclick = function(e) {
+                if(!e.target.closest('.ms-container')) {
+                    document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show'));
+                }
+            }
 
             if (filteredItems.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
@@ -1394,7 +1370,7 @@
 
             if(driveViewLevel === 0) {
                 // LEVEL 0: COMMON NAMES
-                crumb.innerText = `All Items (${filteredItems.length})`;
+                crumb.innerText = `Filtered Items (${filteredItems.length})`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
                 
                 container.innerHTML = names.map(n => {
