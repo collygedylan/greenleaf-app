@@ -142,6 +142,9 @@
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+
+        /* PRODUCTION STYLES */
+        .text-production { color: #d97706; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -197,6 +200,7 @@
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
+            <div class="drawer-item" onclick="switchView('production'); toggleMenu();"><i class="ph-bold ph-plant"></i> Production</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
             <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
@@ -229,6 +233,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    <div onclick="switchView('production')" class="home-btn"><i class="ph-bold ph-plant home-icon text-production"></i><span class="font-bold">Production</span></div>
                     <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
                     <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
@@ -274,6 +279,26 @@
                 <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'drive')">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
+            </div>
+
+            <div id="view-production" class="hidden">
+                <h2 class="text-sm font-bold text-production uppercase mb-4">Production & Grower Notes</h2>
+                
+                <div class="season-scroll" id="prod-season-bar">
+                    <div class="season-chip active" onclick="toggleProductionSeason('ALL', this)">ALL</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('F1', this)">F1</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('S1', this)">S1</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('U1', this)">U1</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('U2', this)">U2</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('U3', this)">U3</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('X', this)">X</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('Y', this)">Y</div>
+                    <div class="season-chip" onclick="toggleProductionSeason('Z', this)">Z</div>
+                </div>
+
+                <input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleSearchDebounced(this.value, 'production')">
+                <div id="production-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
+                <div id="production-content"></div>
             </div>
 
             <div id="view-inventory" class="hidden">
@@ -359,6 +384,7 @@
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
                     <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
+                    <div class="detail-tab hidden" onclick="switchDetailTab('grower')" id="dtab-grower">Grower Notes</div>
                 </div>
                 
                 <div id="det-overview-content" class="py-4">
@@ -425,6 +451,54 @@
                     </div>
 
                     <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE & LOCK DATA</button>
+                </div>
+
+                <div id="det-grower-content" class="hidden py-4">
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded text-xs text-amber-800 font-bold mb-4">
+                        <i class="ph-bold ph-plant"></i> Production Evaluation
+                    </div>
+
+                    <div class="input-stack">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Evaluation</label>
+                            <select id="in-grower-eval" class="input-field bg-white">
+                                <option value="">-- Select Status --</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                                <option value="Scrap">Scrap</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Shear %</label>
+                                <input type="number" id="in-grower-shear" class="input-field" placeholder="%">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Water Status</label>
+                                <select id="in-grower-water" class="input-field bg-white">
+                                    <option value="">--</option>
+                                    <option value="Wet">Wet</option>
+                                    <option value="Perfect">Perfect</option>
+                                    <option value="Dry">Dry</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Root Status</label>
+                            <input type="text" id="in-grower-root" class="input-field" placeholder="e.g. Rooted out, Loose">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">General Grower Notes</label>
+                            <textarea id="in-grower-note" class="input-field h-24" placeholder="Production observations..."></textarea>
+                        </div>
+                    </div>
+
+                    <button class="w-full bg-amber-600 text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE GROWER DATA</button>
                 </div>
             </div>
         </div>
@@ -537,6 +611,13 @@
         let inventorySearchTerm = '';
         let inventorySelectedSeasons = ['ALL'];
 
+        // PRODUCTION MODE STATE
+        let productionViewLevel = 0;
+        let selectedProductionName = null;
+        let selectedProductionSize = null;
+        let productionSearchTerm = '';
+        let productionSelectedSeasons = ['ALL'];
+
         // --- STATIC DIRECTORY (HARDCODED FOR SPEED) ---
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
@@ -581,6 +662,7 @@
             debounceTimer = setTimeout(() => {
                 if(type === 'drive') handleDriveSearch(val);
                 if(type === 'inventory') handleInventorySearch(val);
+                if(type === 'production') handleProductionSearch(val);
             }, 300); // Waits 300ms after last keystroke to search
         }
 
@@ -741,6 +823,8 @@
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
                             renderSocView(); 
+                        } else if(!document.getElementById('view-production').classList.contains('hidden')) {
+                            renderProductionView();
                         }
                     }
                 } else { 
@@ -806,9 +890,10 @@
 
         // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
-            if(!isAdmin && currentOriginView !== 'tasks') return;
+            // Allow Production module saving even if not admin
+            if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             
-            // 1. GET VALUES FROM INPUTS
+            // 1. GET VALUES FROM EXISTING INPUTS
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
@@ -821,15 +906,30 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // 2. INSTANTLY UPDATE LOCAL MEMORY
+            // 2. GET VALUES FROM NEW GROWER INPUTS
+            const growerEval = document.getElementById('in-grower-eval') ? document.getElementById('in-grower-eval').value : (activeItem.GROWER_EVAL || "");
+            const growerShear = document.getElementById('in-grower-shear') ? document.getElementById('in-grower-shear').value : (activeItem.GROWER_SHEAR || "");
+            const growerWater = document.getElementById('in-grower-water') ? document.getElementById('in-grower-water').value : (activeItem.GROWER_WATER || "");
+            const growerRoot = document.getElementById('in-grower-root') ? document.getElementById('in-grower-root').value : (activeItem.GROWER_ROOT || "");
+            const growerNote = document.getElementById('in-grower-note') ? document.getElementById('in-grower-note').value : (activeItem.GROWER_NOTE || "");
+
+            // 3. INSTANTLY UPDATE LOCAL MEMORY
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc;
+            
+            // Update local memory with grower data
+            activeItem.GROWER_EVAL = growerEval;
+            activeItem.GROWER_SHEAR = growerShear;
+            activeItem.GROWER_WATER = growerWater;
+            activeItem.GROWER_ROOT = growerRoot;
+            activeItem.GROWER_NOTE = growerNote;
+
             activeItem.TIMESTAMP = new Date().toISOString();
 
-            // 3. UPDATE MASTER ARRAY
+            // 4. UPDATE MASTER ARRAY
             const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
             if(masterIdx > -1) {
                 fullInventory[masterIdx] = activeItem;
@@ -842,13 +942,20 @@
                 spec: spec, 
                 pick: pick, 
                 note: note, 
-                salesDesc: salesDesc, 
+                salesDesc: salesDesc,
+                // ADD NEW FIELDS TO PAYLOAD
+                growerEval: growerEval,
+                growerShear: growerShear,
+                growerWater: growerWater,
+                growerRoot: growerRoot,
+                growerNote: growerNote,
+
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser 
             };
             
-            // 4. INSTANT UI FEEDBACK (No waiting)
+            // 5. INSTANT UI FEEDBACK (No waiting)
             if(!silent) { 
                 goBackFromDetail(); 
                 showToast("Saved", "Update applied instantly.", false); 
@@ -856,7 +963,7 @@
                 renderOverviewData(); 
             }
             
-            // 5. SEND TO CLOUD IN BACKGROUND
+            // 6. SEND TO CLOUD IN BACKGROUND
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 body: JSON.stringify(payload) 
@@ -1285,6 +1392,128 @@
             renderDriveView();
         }
 
+        // --- PRODUCTION MODE LOGIC ---
+        function toggleProductionSeason(season, el) {
+            if(season === 'ALL') {
+                productionSelectedSeasons = ['ALL'];
+            } else {
+                if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = [];
+                
+                if(productionSelectedSeasons.includes(season)) {
+                    productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season);
+                } else {
+                    productionSelectedSeasons.push(season);
+                }
+                
+                if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL'];
+            }
+            
+            document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => {
+                const s = chip.innerText;
+                if(productionSelectedSeasons.includes(s)) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+            
+            renderProductionView();
+        }
+
+        function handleProductionSearch(term) {
+            productionSearchTerm = term.toLowerCase();
+            renderProductionView();
+        }
+
+        function getFilteredProductionItems() {
+            return fullInventory.filter(i => {
+                if(!productionSelectedSeasons.includes('ALL')) {
+                    if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false;
+                }
+                if(productionSearchTerm) {
+                    const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || 
+                                  (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || 
+                                  (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm);
+                    if(!match) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderProductionView() {
+            const container = document.getElementById('production-content');
+            const crumb = document.getElementById('production-crumb');
+            
+            // PERFORMANCE OPTIMIZATION: Use cached names if no filter
+            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) {
+                crumb.innerText = `All Items (${allCommonNames.length})`;
+                container.innerHTML = allCommonNames.map(n => {
+                    return `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+                return;
+            }
+
+            const filteredItems = getFilteredProductionItems();
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
+                crumb.innerText = "No Results";
+                return;
+            }
+
+            if(productionViewLevel === 0) {
+                // LEVEL 0: COMMON NAMES
+                crumb.innerText = `All Items (${filteredItems.length})`;
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                
+                container.innerHTML = names.map(n => {
+                    return `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+
+            } else if (productionViewLevel === 1) {
+                // LEVEL 1: SIZES
+                crumb.innerText = selectedProductionName;
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => {
+                    return `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`;
+                }).join('');
+
+            } else {
+                // LEVEL 2: ITEMS (Sorted by Location)
+                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`;
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize);
+                
+                // Sort by Location
+                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
+                container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
+            }
+        }
+
+        function selectProductionName(n) {
+            selectedProductionName = n;
+            productionViewLevel = 1;
+            renderProductionView();
+        }
+
+        function selectProductionSize(s) {
+            selectedProductionSize = s;
+            productionViewLevel = 2;
+            renderProductionView();
+        }
+
+        function backToProductionSizes() {
+            productionViewLevel = 1;
+            selectedProductionSize = null;
+            renderProductionView();
+        }
+
+        function resetProductionView() {
+            productionViewLevel = 0;
+            selectedProductionName = null;
+            selectedProductionSize = null;
+            renderProductionView();
+        }
+
         // --- INVENTORY MODE LOGIC (NEW) ---
         function toggleInventorySeason(season, el) {
             if(season === 'ALL') {
@@ -1439,15 +1668,15 @@
             
             if(currentTab === 'requests') {
                  if (taskViewTargetUser === 'ASSIST') {
-                     // For assist mode requests, combine Kayla and Morgan requests
-                     myItems = fullInventory.filter(i => 
+                      // For assist mode requests, combine Kayla and Morgan requests
+                      myItems = fullInventory.filter(i => 
                         ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) 
                         && i.TASK_TAB === 'requests'
-                     );
-                     crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                      );
+                      crumb.innerText = `Kayla & Morgan / Urgent Requests`;
                  } else {
-                     myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                     crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                      myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                      crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  }
             } else { 
                 myItems = fullInventory.filter(taskFilter); 
@@ -1714,7 +1943,7 @@
             // SAVE STATE FOR RELOAD
             localStorage.setItem('gl_last_view', v);
 
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory'].forEach(id => {
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             }); 
             
@@ -1722,6 +1951,7 @@
             
             if(v === 'drive') renderDriveNames(); 
             if(v === 'inventory') renderInventoryView();
+            if(v === 'production') renderProductionView();
             if(v === 'directory') renderDirectoryView(); // Load Directory
             if(v === 'tasks') { 
                 if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
@@ -1742,273 +1972,38 @@
         function switchDetailTab(tab) { 
             document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); 
             document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); 
+            document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
+
             document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); 
             document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); 
+            document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
         }
         
         function goBackFromDetail() { 
             // Clear active item state
-            localStorage.removeItem('gl_active_item');
+            localStorage.removeItem('gl_active_item'); 
             
             document.getElementById('view-detail').classList.add('hidden'); 
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             if(lastView === 'tasks') renderTasks(); 
             if(lastView === 'drive') renderDriveNames(); 
             if(lastView === 'inventory') renderInventoryView();
+            if(lastView === 'production') renderProductionView();
         }
 
-        // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
-        function updateSelected() {
-            selectedIdx = [];
-            document.querySelectorAll('.select-check').forEach(cb => {
-                if (cb.checked) {
-                    selectedIdx.push(parseInt(cb.value));
-                }
-            });
-            
-            if (selectedIdx.length > 0) {
-                document.getElementById('action-bar').classList.add('visible');
-            } else {
-                document.getElementById('action-bar').classList.remove('visible');
-            }
-        }
-
-        function openAssignModal() {
-            if (selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            document.getElementById('assign-modal').style.display = 'flex';
-        }
-
-        function getBatchHtml() {
-            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
-                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
-                            <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
-                
-                // Build the secondary info block dynamically
-                let details = [];
-                if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`);
-                if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`);
-
-                // If we have match or spec, join them.
-                if(details.length > 0) html += details.join(' | ') + '<br>';
-
-                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
-                if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
-                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
-                    const urls = item.SAVED_PHOTO_LINK.split(','); 
-                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
-                    urls.forEach((url, i) => { 
-                        const name = names[i] || `View Photo ${i+1}`; 
-                        html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; 
-                    });
-                    html += `</div>`;
-                }
-                html += `</div>`;
-            });
-            return html + "</div>";
-        }
-
-        function getBatchText() {
-            let text = "";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
-                
-                // Handle Match/Spec Line
-                let specLine = [];
-                if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`);
-                if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`);
-                if(specLine.length > 0) text += specLine.join(' | ') + '\n';
-
-                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
-                if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`;
-                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
-                
-                if(item.SAVED_PHOTO_LINK) {
-                    text += `Photos:\n`; 
-                    const urls = item.SAVED_PHOTO_LINK.split(','); 
-                    urls.forEach((url, i) => { 
-                        text += `• ${url.trim()}\n`; 
-                    });
-                }
-                text += `\n`;
-            });
-            return text;
-        }
-
-        function batchText() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
-        }
-        
-        function batchEmail() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            const html = getBatchHtml(); 
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); 
-            const blobText = new Blob([text], { type: "text/plain" });
-            
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
-                navigator.clipboard.write(data).then(() => { 
-                    showToast("Copied!", "Ready to paste into your email app."); 
-                    setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); 
-                    isBatch = false; 
-                    toggleBatch();
-                }).catch(err => { 
-                    fallbackCopy(html); 
-                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
-                });
-            } else { 
-                fallbackCopy(html); 
-                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
-            }
-        }
-        
-        function copyBatchData() { 
-            if(selectedIdx.length === 0) { 
-                showToast("Warning", "No items selected.", true); 
-                return; 
-            }
-            const html = getBatchHtml(); 
-            const text = getBatchText();
-            const blobHtml = new Blob([html], { type: "text/html" }); 
-            const blobText = new Blob([text], { type: "text/plain" });
-            
-            if (navigator.clipboard && navigator.clipboard.write) {
-                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
-                navigator.clipboard.write(data).then(() => { 
-                    showToast("Copied!", "Data copied to clipboard."); 
-                    isBatch = false; 
-                    toggleBatch(); 
-                }).catch(err => { fallbackCopy(html); });
-            } else { 
-                fallbackCopy(html); 
-            }
-        }
-
-        function fallbackCopy(html) {
-            const tempDiv = document.createElement("div"); 
-            tempDiv.innerHTML = html; 
-            tempDiv.style.position = "fixed"; 
-            tempDiv.style.left = "-9999px"; 
-            document.body.appendChild(tempDiv);
-            
-            const range = document.createRange(); 
-            range.selectNodeContents(tempDiv); 
-            const sel = window.getSelection(); 
-            sel.removeAllRanges(); 
-            sel.addRange(range); 
-            document.execCommand('copy'); 
-            document.body.removeChild(tempDiv);
-            
-            showToast("Copied!", "Data copied (Legacy Mode)."); 
-            isBatch = false; 
-            toggleBatch();
-        }
-
-        function handleCardClick(idx, source) { 
-            if(isBatch) { 
-                const cb = document.getElementById('cb-' + idx); 
-                if(cb) { 
-                    cb.checked = !cb.checked; 
-                    updateSelected(); 
-                } 
-                return; 
-            } 
-            openDetail(idx, source); 
-        }
-
-        function createRowHtml(item, idx, source) {
-            let thumbHtml = '';
-            if(item.SAVED_PHOTO_LINK) {
-                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
-                let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                
-                if(idMatch && idMatch[1]) { 
-                    // High-speed small thumbnail request from Google Drive
-                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; 
-                }
-                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
-            }
-
-            // TURBO BADGES
-            let badges = '';
-            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
-            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
-            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
-
-            return `
-            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
-                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
-                    ${thumbHtml}
-                    <div class="flex-grow min-w-0">
-                        <div class="flex justify-between items-start">
-                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
-                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
-                        </div>
-                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
-                        <div class="text-xs text-gray-500 truncate mb-1">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}</div>
-                        ${badges}
-                    </div>
-                </div>
-            </div>`;
-        }
-        
-        function startLongPress() { 
-            if(!isAdmin) return; 
-            longPressTimer = setTimeout(() => { 
-                if(!isBatch) toggleBatch(); 
-                navigator.vibrate(100); 
-            }, 1500); 
-        }
-        
-        function cancelLongPress() { 
-            clearTimeout(longPressTimer); 
-        }
-        
-        function toggleBatch() { 
-            if(!isAdmin) return; 
-            isBatch = !isBatch; 
-            document.body.classList.toggle('batch-mode', isBatch); 
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
-            
-            if(!isBatch) { 
-                document.getElementById('action-bar').classList.remove('visible'); 
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
-                selectedIdx = []; 
-            } 
-        }
-
-        // --- DETAIL VIEW LOGIC ---
         function openDetail(idx, originView) {
             lastView = originView; 
             currentOriginView = originView; 
-            activeItem = fullInventory[idx];
+            activeItem = fullInventory[idx]; 
             
             // SAVE STATE FOR RELOAD
-            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
+            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
             
-            document.getElementById('view-detail').classList.remove('hidden'); 
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory'].forEach(v => {
+            // Hide everything including new views
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => {
                 document.getElementById(v).classList.add('hidden');
             });
+            document.getElementById('view-detail').classList.remove('hidden'); 
             
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
@@ -2030,6 +2025,24 @@
                 document.getElementById('expand-section').classList.remove('hidden'); 
             }
             
+            // --- TAB LOGIC ---
+            const tabActions = document.getElementById('dtab-actions');
+            const tabGrower = document.getElementById('dtab-grower');
+
+            if (originView === 'production') {
+                tabActions.classList.add('hidden');
+                tabGrower.classList.remove('hidden');
+                // Populate Grower Inputs
+                document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || "";
+                document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || "";
+                document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || "";
+                document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || "";
+                document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || "";
+            } else {
+                tabActions.classList.remove('hidden');
+                tabGrower.classList.add('hidden');
+            }
+
             renderOverviewData(); 
             renderActionsTab(); 
             switchDetailTab('overview');
@@ -2283,6 +2296,245 @@
                 logFailedSave(payload);
                 startAutoSync(); 
             });
+        }
+
+        // --- NEW: CLEAN BATCH TEXT & ACTION BAR ---
+        function updateSelected() {
+            selectedIdx = [];
+            document.querySelectorAll('.select-check').forEach(cb => {
+                if (cb.checked) {
+                    selectedIdx.push(parseInt(cb.value));
+                }
+            });
+            
+            if (selectedIdx.length > 0) {
+                document.getElementById('action-bar').classList.add('visible');
+            } else {
+                document.getElementById('action-bar').classList.remove('visible');
+            }
+        }
+
+        function openAssignModal() {
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            document.getElementById('assign-modal').style.display = 'flex';
+        }
+
+        function getBatchHtml() {
+            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                
+                // Build the secondary info block dynamically
+                let details = [];
+                if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`);
+                if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`);
+
+                // If we have match or spec, join them.
+                if(details.length > 0) html += details.join(' | ') + '<br>';
+
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
+                if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
+                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => { 
+                        const name = names[i] || `View Photo ${i+1}`; 
+                        html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; 
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
+
+        function getBatchText() {
+            let text = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`;
+                
+                // Handle Match/Spec Line
+                let specLine = [];
+                if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`);
+                if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`);
+                if(specLine.length > 0) text += specLine.join(' | ') + '\n';
+
+                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`;
+                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`; 
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    urls.forEach((url, i) => { 
+                        text += `• ${url.trim()}\n`; 
+                    });
+                }
+                text += `\n`;
+            });
+            return text;
+        }
+
+        function batchText() { 
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
+        }
+        
+        function batchEmail() { 
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Ready to paste into your email app."); 
+                    setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); 
+                    isBatch = false; 
+                    toggleBatch();
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                });
+            } else { 
+                fallbackCopy(html); 
+                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+            }
+        }
+        
+        function copyBatchData() { 
+            if(selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Data copied to clipboard."); 
+                    isBatch = false; 
+                    toggleBatch(); 
+                }).catch(err => { fallbackCopy(html); });
+            } else { 
+                fallbackCopy(html); 
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div"); 
+            tempDiv.innerHTML = html; 
+            tempDiv.style.position = "fixed"; 
+            tempDiv.style.left = "-9999px"; 
+            document.body.appendChild(tempDiv);
+            
+            const range = document.createRange(); 
+            range.selectNodeContents(tempDiv); 
+            const sel = window.getSelection(); 
+            sel.removeAllRanges(); 
+            sel.addRange(range); 
+            document.execCommand('copy'); 
+            document.body.removeChild(tempDiv);
+            
+            showToast("Copied!", "Data copied (Legacy Mode)."); 
+            isBatch = false; 
+            toggleBatch();
+        }
+
+        function handleCardClick(idx, source) { 
+            if(isBatch) { 
+                const cb = document.getElementById('cb-' + idx); 
+                if(cb) { 
+                    cb.checked = !cb.checked; 
+                    updateSelected(); 
+                } 
+                return; 
+            } 
+            openDetail(idx, source); 
+        }
+
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink;
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                
+                if(idMatch && idMatch[1]) { 
+                    // High-speed small thumbnail request from Google Drive
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; 
+                }
+                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded mr-3 bg-gray-200" loading="lazy">`;
+            }
+
+            // TURBO BADGES
+            let badges = '';
+            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+
+            return `
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-start">
+                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
+                        </div>
+                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
+                        <div class="text-xs text-gray-500 truncate mb-1">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}</div>
+                        ${badges}
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        function startLongPress() { 
+            if(!isAdmin) return; 
+            longPressTimer = setTimeout(() => { 
+                if(!isBatch) toggleBatch(); 
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+        
+        function toggleBatch() { 
+            if(!isAdmin) return; 
+            isBatch = !isBatch; 
+            document.body.classList.toggle('batch-mode', isBatch); 
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
+            
+            if(!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
+                selectedIdx = []; 
+            } 
         }
 
         function batchAssign() {
