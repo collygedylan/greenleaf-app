@@ -784,9 +784,6 @@
                 const cloudJson = await cloudRes.json();
                 
                 if(cloudJson.status === 'success') { 
-                    // SMART SYNC: Only update local items if the cloud version is newer
-                    // Or if we don't have local modifications pending (simplification: simple overwrite for now unless we implement full diffing)
-                    // For "Turbo", we overwrite, but because saveData updates local immediately, it should be fine.
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     
@@ -801,12 +798,21 @@
                     } else {
                         // RE-RENDER CURRENT VIEW SILENTLY
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const freshItem = fullInventory.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                            const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                            
+                            // CHECK: Only update if the user isn't currently looking at a new photo
                             if(freshItem) { 
-                                activeItem = freshItem; 
-                                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                    renderOverviewData(); 
-                                } 
+                                // Logic: If local has photo, but fresh(cloud) does not, it means upload is still pending.
+                                const localHasPhoto = activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK.length > 0;
+                                const cloudHasPhoto = freshItem.SAVED_PHOTO_LINK && freshItem.SAVED_PHOTO_LINK.length > 0;
+                                const isUploading = localHasPhoto && !cloudHasPhoto;
+                                
+                                if(!isUploading) {
+                                    activeItem = freshItem; 
+                                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                        renderOverviewData(); 
+                                    } 
+                                }
                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
@@ -1103,6 +1109,8 @@
                                 const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === itemBeingEdited.UNIQUE_ID);
                                 if(masterIdx > -1) {
                                     fullInventory[masterIdx] = itemBeingEdited;
+                                    // Make sure Active Item points to the same object reference
+                                    activeItem = fullInventory[masterIdx];
                                 }
 
                                 // Refresh the detail view to show the new photo AND the kept text
@@ -1851,7 +1859,7 @@
         
         function selectViewerSize(name, size) { 
             const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); 
-            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
+            document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { 
                 const idx = fullInventory.indexOf(item); 
                 return createRowHtml(item, idx, 'viewer'); 
             }).join(''); 
