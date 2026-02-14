@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 012</title>
+    <title>Greenleaf Pro TURBO 013</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -22,10 +22,10 @@
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; transition: all 0.3s ease; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 18px; text-align: center; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 15px; outline: none; }
+        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: block; }
         
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
@@ -188,22 +188,30 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 012
+                TURBO 013
             </div>
+            
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
+            
             <div id="login-buttons">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Admin)</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
                 <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Admin)</button>
+                
                 <hr class="my-4 border-gray-200">
-                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()"><i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login</button>
+                
+                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()">
+                    <i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login
+                </button>
             </div>
+
             <div id="pin-container" class="hidden mt-4">
                 <input type="password" id="pin-code" class="pin-input w-full" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
+
             <div id="rep-login-container" class="hidden mt-4">
                 <h3 class="text-sm font-bold text-gray-700 mb-3">Sales Representative</h3>
                 <input type="email" id="rep-email" class="input-field mb-2" placeholder="Email Address">
@@ -211,6 +219,7 @@
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyRepLogin()">LOGIN</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
+
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
                 <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
@@ -219,12 +228,15 @@
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
+        
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 012 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
+                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                    </div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -234,6 +246,7 @@
         <div id="side-drawer">
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
+            
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             
@@ -418,7 +431,7 @@
     </div>
 
     <script>
-        // *** SCRIPT CONSTANTS ***
+        // *** CRITICAL UPDATE: YOUR SCRIPT URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
         const ADMINS = ["Dylan", "J.D."];
@@ -487,13 +500,28 @@
         // --- AUTHENTICATION ---
         function showRepLogin() { document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('rep-login-container').classList.remove('hidden'); }
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').focus(); }
-        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
+        function verifyPin() {
+             if (document.getElementById('pin-code').value === '1234') { 
+                 // Hide PIN screen immediately
+                 document.getElementById('pin-container').classList.add('hidden'); 
+                 // Show Spinner
+                 document.getElementById('loading-spinner').classList.remove('hidden'); 
+                 fetchData(); 
+             } else { 
+                 showToast("Error", "Incorrect PIN", true); 
+             } 
+        }
         function verifyRepLogin() {
             const email = document.getElementById('rep-email').value.trim();
             const pass = document.getElementById('rep-pass').value.trim();
             if (pass !== 'Greenleaf25') { showToast("Error", "Incorrect Password", true); return; }
             const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
-            if (rep) { currentUser = rep.name; isAdmin = false; taskViewTargetUser = currentUser; fetchData(false, 'inventory'); } 
+            if (rep) { 
+                currentUser = rep.name; isAdmin = false; taskViewTargetUser = currentUser; 
+                document.getElementById('rep-login-container').classList.add('hidden');
+                document.getElementById('loading-spinner').classList.remove('hidden');
+                fetchData(false, 'inventory'); 
+            } 
             else { showToast("Error", "Email not found in Directory", true); }
         }
         function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('rep-login-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); }
@@ -517,6 +545,7 @@
                         startAutoSync();
                         restoreSession();
                     } else {
+                        // Background update logic
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const now = new Date().getTime(); const lastUpdate = window.lastLocalUpdate || 0;
                             if (now - lastUpdate > 60000) {
@@ -532,9 +561,7 @@
                 }
             } catch(e) { console.error(e); }
         }
-
         function startAutoSync() { if(autoSyncTimer) clearInterval(autoSyncTimer); autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); }
-
         function launchApp(forceView = null) {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
@@ -565,12 +592,8 @@
             if(v === 'salesoffice') renderSalesOffice();
         }
 
-        // --- REQUEST LOGIC (Rep Side) ---
         function toggleBatch() { 
-            isBatch = !isBatch; 
-            document.body.classList.toggle('batch-mode', isBatch); 
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
-            
+            isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
             if(isBatch) { 
                 document.getElementById('action-bar').classList.add('visible'); 
                 if(!isAdmin) {
@@ -583,12 +606,9 @@
                     document.getElementById('action-bar').style.gridTemplateColumns = "1fr 1fr 1fr 1fr";
                 }
             } else { 
-                document.getElementById('action-bar').classList.remove('visible'); 
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
-                selectedIdx = []; 
+                document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; 
             } 
         }
-
         function openRequestModal() {
             if(selectedIdx.length === 0) { showToast("Error", "Select items first.", true); return; }
             const list = document.getElementById('req-item-list');
@@ -600,9 +620,7 @@
             list.innerHTML = html;
             document.getElementById('request-modal').style.display = 'flex';
         }
-
         function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
-
         function submitRequest() {
             const customer = document.getElementById('req-customer').value;
             if(!customer) { showToast("Error", "Customer Name required", true); return; }
@@ -640,7 +658,6 @@
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
         }
-
         function renderRepRequests() {
             const container = document.getElementById('my-requests-content');
             const myReqs = fullInventory.filter(i => i.TASK_TAB === 'rep_view' && i.REQ_STATUS === 'SENT'); 
@@ -745,6 +762,118 @@
                     </div>
                 </div>
             </div>`;
+        }
+
+        // --- DRIVE, INVENTORY, PRODUCTION, TASKS, SALES OFFICE LOGIC (Restored) ---
+        function initDriveFilters() { renderDriveFilterOptions(); }
+        function getAvailableOptions(type) {
+            let subset = fullInventory;
+            if (type !== 'groups') { if (driveFilterState.groups.length > 0) subset = subset.filter(i => driveFilterState.groups.includes(i.PLANTGROUPCODE)); }
+            if (type !== 'seasons') { if (driveFilterState.seasons.length > 0) subset = subset.filter(i => driveFilterState.seasons.includes(i.SEASONSUPPLY)); }
+            if (type !== 'lots') { if (driveFilterState.lots.length > 0) subset = subset.filter(i => driveFilterState.lots.includes(i.LOTCODE)); }
+            if (type === 'groups') return [...new Set(subset.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            if (type === 'seasons') return [...new Set(subset.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            if (type === 'lots') return [...new Set(subset.map(i => i.LOTCODE || "Unknown"))].sort();
+            return [];
+        }
+        function renderDriveFilterOptions() {
+            const groups = getAvailableOptions('groups'); document.getElementById('ms-group').innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + groups.map(g => `<label class="ms-option ${driveFilterState.groups.includes(g) ? 'selected' : ''}"><input type="checkbox" value="${g}" ${driveFilterState.groups.includes(g) ? 'checked' : ''} onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
+            const seasons = getAvailableOptions('seasons'); document.getElementById('ms-season').innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + seasons.map(s => `<label class="ms-option ${driveFilterState.seasons.includes(s) ? 'selected' : ''}"><input type="checkbox" value="${s}" ${driveFilterState.seasons.includes(s) ? 'checked' : ''} onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
+            const lots = getAvailableOptions('lots'); document.getElementById('ms-lot').innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + lots.map(l => `<label class="ms-option ${driveFilterState.lots.includes(l) ? 'selected' : ''}"><input type="checkbox" value="${l}" ${driveFilterState.lots.includes(l) ? 'checked' : ''} onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
+        }
+        function toggleMs(id) { const el = document.getElementById(id); ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); }); el.classList.toggle('show'); }
+        function updateDriveFilterState(type) { const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot'); const checks = div.querySelectorAll('input[type="checkbox"]:checked'); const values = Array.from(checks).map(c => c.value); driveFilterState[type] = values; const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' }; const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' }; const count = values.length; document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type]; renderDriveFilterOptions(); renderDriveView(); }
+        function toggleAllDrive(type) { const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot'); const allChecks = div.querySelectorAll('input[type="checkbox"]'); const allChecked = Array.from(allChecks).every(c => c.checked); if (!allChecked) { const newValues = Array.from(allChecks).map(c => c.value); driveFilterState[type] = [...new Set([...driveFilterState[type], ...newValues])]; } else { driveFilterState[type] = []; } renderDriveFilterOptions(); updateDriveFilterState(type); }
+        function resetDriveFilters() { driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' }; document.getElementById('lbl-group').innerText = 'Plant Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot Code'; document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = ''; driveSearchTerm = ''; driveViewLevel = 0; renderDriveFilterOptions(); renderDriveView(); }
+        function handleDriveSearch(t) { driveSearchTerm = t.toLowerCase(); renderDriveView(); }
+        function getFilteredDriveItems() { const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val); return fullInventory.filter(i => { if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false; if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false; if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false; if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; } if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; } return true; }); }
+        function renderDriveNames() { renderDriveView(); } 
+        function renderDriveView() { const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems(); document.onclick = function(e) { if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); }; if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(driveViewLevel === 0) { crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (driveViewLevel === 1) { crumb.innerText = selectedDriveName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); } }
+        function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
+        function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
+        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
+
+        function toggleInventorySeason(season) { if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else { if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = []; if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); } if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL']; } document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); }); renderInventoryView(); }
+        function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
+        function getFilteredInventoryItems() { return fullInventory.filter(i => { if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; } if(inventorySearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm); if(!match) return false; } return true; }); }
+        function renderInventoryView() { const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb'); if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; } const filteredItems = getFilteredInventoryItems(); if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(inventoryViewLevel === 0) { crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (inventoryViewLevel === 1) { crumb.innerText = selectedInventoryName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join(''); } }
+        function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
+        function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
+        function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
+        function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
+
+        function toggleProductionSeason(season) { if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else { if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = []; if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); } if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL']; } document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); }); renderProductionView(); }
+        function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
+        function getFilteredProductionItems() { return fullInventory.filter(i => { if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; } if(productionSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm); if(!match) return false; } return true; }); }
+        function renderProductionView() { const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb'); if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; } const filteredItems = getFilteredProductionItems(); if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(productionViewLevel === 0) { crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (productionViewLevel === 1) { crumb.innerText = selectedProductionName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join(''); } }
+        function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
+        function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
+        function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
+        function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
+
+        function renderTasks() {
+            const container = document.getElementById('task-content'); const crumb = document.getElementById('task-crumb'); document.getElementById('task-tabs-container').classList.remove('hidden'); let myItems = []; const now = new Date().getTime();
+            const taskFilter = (i) => { if (taskViewTargetUser === 'ASSIST') { const assignee = (i.ASSIGNEDTO || ""); if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false; } else { if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false; } if (i.TASK_TAB !== currentTab) return false; if (i.TIMESTAMP) { const saveTime = new Date(i.TIMESTAMP).getTime(); const daysOld = (now - saveTime) / (1000 * 3600 * 24); const ptr = parseFloat(i.PTRAVAILABLE) || 0; const ss = parseFloat(i.SEASONSUPPLY) || 0; const isLowStock = ss > 0 && ptr < (ss * 0.10); if (daysOld < 10 && !isLowStock) return false; } return true; };
+            if(currentTab === 'requests') { if (taskViewTargetUser === 'ASSIST') { myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests'); crumb.innerText = `Kayla & Morgan / Urgent Requests`; } else { myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); crumb.innerText = `${taskViewTargetUser} / Urgent Requests`; } } else { myItems = fullInventory.filter(taskFilter); }
+            const term = document.getElementById('task-search').value.toLowerCase(); if (term) { const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
+            if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
+            if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
+            if(currentTab === 'season' || currentTab === 'location') { if(taskViewLevel === 0) { crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); if(blocks.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; } container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); } else if (taskViewLevel === 1) { crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); } else { crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); } }
+        }
+        function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
+        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
+        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); taskViewLevel = 0; renderTasks(); }
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+
+        // --- SALES OFFICE RESTORED ---
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); const searchInput = document.getElementById('salesoffice-search'); const term = searchInput ? searchInput.value.toLowerCase() : '';
+            const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(i.OFFICE_DONE_TIME) return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
+            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            container.innerHTML = salesItems.map((item) => { const masterIndex = fullInventory.indexOf(item); return `<div class="inv-card mb-3 !p-4 border-green-200"><div class="flex justify-between items-start"><div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div><button onclick="markSalesOfficeDone(${masterIndex})" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-300 flex items-center gap-1 active:scale-95 transition-transform"><i class="ph-bold ph-check"></i> MARK DONE</button></div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Loc: <span class="text-gray-800">${item.LOCATIONCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`; }).join('');
+        }
+        function markSalesOfficeDone(masterIndex) { if(!confirm("Mark this item as read/done? It will be removed from this list.")) return; const item = fullInventory[masterIndex]; if(!item) return; item.OFFICE_DONE_TIME = new Date().toISOString(); renderSalesOffice(); showToast("Marked Done", "Removed from list."); const payload = { type: "update", id: item.UNIQUE_ID, markOfficeDone: true, user: currentUser }; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload)); }
+
+        // --- SOC RESTORED ---
+        function switchSocTab(tab) { currentSocTab = tab; document.getElementById('st-reps').classList.toggle('active', tab === 'reps'); document.getElementById('st-docks').classList.toggle('active', tab === 'docks'); socViewLevel = 0; renderSocView(); }
+        function fetchRepData(repIdentifier) { if(!document.getElementById('view-directory').classList.contains('hidden')) { switchView('soc'); } const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier); const queryParam = dirEntry ? dirEntry.name : repIdentifier; document.getElementById('soc-status').innerText = "Loading " + queryParam + "..."; fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam)).then(res => res.json()).then(data => { if(data.status === 'success') { socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { if(dirEntry && queryParam !== dirEntry.id) { fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id)).then(res2 => res2.json()).then(data2 => { if(data2.status === 'success') { socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { document.getElementById('soc-status').innerText = "Not found"; } }); } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; } } }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; }); }
+        function renderSocView() { const container = document.getElementById('soc-content'); const term = document.getElementById('soc-search').value.toLowerCase(); if (term && socData.length > 0) { const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; } if (currentSocTab === 'docks') { let html = '<div class="grid grid-cols-2 gap-2">'; for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; } html += '</div>'; container.innerHTML = html; return; } if(socViewLevel === 0) { let html = ''; STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; }); container.innerHTML = html; } else if(socViewLevel === 1) { const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; } else if(socViewLevel === 2) { const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; } }
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+
+        // --- BATCH COPY/TEXT/EMAIL RESTORED ---
+        function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
+        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
+        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
+        function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
+        function getBatchHtml() { let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>"; selectedIdx.forEach(idx => { let item = fullInventory[idx]; html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br><span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`; let details = []; if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`); if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`); if(details.length > 0) html += details.join(' | ') + '<br>'; if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`; if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`; if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`; if(item.SAVED_PHOTO_LINK) { html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`; const urls = item.SAVED_PHOTO_LINK.split(','); const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : []; urls.forEach((url, i) => { const name = names[i] || `View Photo ${i+1}`; html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; }); html += `</div>`; } html += `</div>`; }); return html + "</div>"; }
+        function getBatchText() { let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text; }
+        
+        // --- DRAFT/LOCAL LOGIC RESTORED ---
+        function saveDraft() {
+            if(!activeItem) return;
+            window.lastLocalUpdate = new Date().getTime(); 
+            if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+            if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+            if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+            if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+            if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
+            if(document.getElementById('in-grower-shear')) activeItem.GROWER_SHEAR = document.getElementById('in-grower-shear').value;
+            if(document.getElementById('in-grower-water')) activeItem.GROWER_WATER = document.getElementById('in-grower-water').value;
+            if(document.getElementById('in-grower-root')) activeItem.GROWER_ROOT = document.getElementById('in-grower-root').value;
+            if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
+            const draftKey = 'draft_' + activeItem.UNIQUE_ID;
+            localStorage.setItem(draftKey, JSON.stringify(activeItem));
+        }
+        function loadDraft(item) {
+            const draftKey = 'draft_' + item.UNIQUE_ID; const draftStr = localStorage.getItem(draftKey);
+            if (draftStr) { const draft = JSON.parse(draftStr); item.SAVED_MATCH = draft.SAVED_MATCH || item.SAVED_MATCH; item.SAVED_SPEC = draft.SAVED_SPEC || item.SAVED_SPEC; item.SAVED_PICK = draft.SAVED_PICK || item.SAVED_PICK; item.SAVED_NOTE = draft.SAVED_NOTE || item.SAVED_NOTE; item.SAVED_SALES_DESC = draft.SAVED_SALES_DESC || item.SAVED_SALES_DESC; item.GROWER_EVAL = draft.GROWER_EVAL || item.GROWER_EVAL; item.GROWER_SHEAR = draft.GROWER_SHEAR || item.GROWER_SHEAR; item.GROWER_WATER = draft.GROWER_WATER || item.GROWER_WATER; item.GROWER_ROOT = draft.GROWER_ROOT || item.GROWER_ROOT; item.GROWER_NOTE = draft.GROWER_NOTE || item.GROWER_NOTE; return true; } return false;
         }
     </script>
 </body>
