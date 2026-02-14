@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Greenleaf">
     
-    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512">
-    <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512">
+    <link rel="icon" type="image/png" href="GNC LOGO.png">
+    <link rel="apple-touch-icon" href="GNC LOGO.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -106,6 +106,7 @@
         .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
         .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
         .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        
         .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
         .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
         .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
@@ -150,12 +151,13 @@
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
             
-            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Tints (Background)</div>
+            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Backgrounds (Covers Floor)</div>
             <div class="filter-scroll">
                 <div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div>
-                <div class="filter-btn bg-lav" id="btn-bg-lav" onclick="setBg('lavender')">Lavender</div>
-                <div class="filter-btn bg-grn" id="btn-bg-grn" onclick="setBg('green')">Light Green</div>
-                <div class="filter-btn bg-gry" id="btn-bg-gry" onclick="setBg('grey')">Studio Grey</div>
+                <div class="filter-btn bg-white text-gray-800 border-gray-300" id="btn-bg-white" onclick="setBg('white')">White Frame</div>
+                <div class="filter-btn bg-gray-200 text-gray-800" id="btn-bg-gry" onclick="setBg('grey')">Grey Frame</div>
+                <div class="filter-btn bg-[#007a4d] text-white" id="btn-bg-grn" onclick="setBg('green')">Green Frame</div>
+                <div class="filter-btn bg-purple-200 text-purple-800" id="btn-bg-prp" onclick="setBg('purple')">Purple Frame</div>
             </div>
 
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
@@ -167,7 +169,7 @@
     <div id="view-login">
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
-                <img src="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512" alt="Company Logo" class="h-16 w-auto object-contain">
+                <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
                 TURBO 005
             </div>
             
@@ -229,7 +231,7 @@
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
-                    <img src="https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
+                    <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
                     <h1 class="text-2xl font-bold">Greenleaf Pro</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
@@ -852,7 +854,7 @@
                                 if(freshItem) { 
                                      activeItem = freshItem; 
                                      if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                         renderOverviewData(); 
+                                          renderOverviewData(); 
                                      } 
                                 }
                             }
@@ -1129,14 +1131,19 @@
 
         function setBg(color) {
             editSettings.bg = color;
-            ['none', 'lav', 'grn', 'gry'].forEach(c => document.getElementById('btn-bg-' + c).classList.remove('border-2', 'border-white'));
+            ['none', 'white', 'grn', 'gry', 'prp'].forEach(c => {
+                 const btn = document.getElementById('btn-bg-' + c);
+                 if(btn) btn.classList.remove('border-2', 'border-yellow-400');
+            });
             
             let btnId = 'btn-bg-none';
-            if(color === 'lavender') btnId = 'btn-bg-lav';
+            if(color === 'white') btnId = 'btn-bg-white';
             if(color === 'green') btnId = 'btn-bg-grn';
             if(color === 'grey') btnId = 'btn-bg-gry';
+            if(color === 'purple') btnId = 'btn-bg-prp';
             
-            document.getElementById(btnId).classList.add('border-2', 'border-white');
+            const activeBtn = document.getElementById(btnId);
+            if(activeBtn) activeBtn.classList.add('border-2', 'border-yellow-400');
             processCanvasPreview();
         }
 
@@ -1152,6 +1159,7 @@
             // Load Source Image
             const img = new Image();
             img.src = preview.src;
+            
             img.onload = function() {
                 // Set Canvas Size (Max 1024 width)
                 const MAX_WIDTH = 1024;
@@ -1159,60 +1167,69 @@
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scale;
 
-                // 1. Draw Background Tint if selected
-                ctx.globalCompositeOperation = 'source-over';
-                
+                // 1. Draw Background (Studio Frame)
                 if(editSettings.bg !== 'none') {
-                    if(editSettings.bg === 'lavender') ctx.fillStyle = '#f3e8ff'; // Light Purple
-                    if(editSettings.bg === 'green') ctx.fillStyle = '#dcfce7'; // Light Green
-                    if(editSettings.bg === 'grey') ctx.fillStyle = '#f3f4f6'; // Light Grey
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    if(editSettings.bg === 'white') ctx.fillStyle = '#FFFFFF';
+                    if(editSettings.bg === 'grey') ctx.fillStyle = '#f3f4f6';
+                    if(editSettings.bg === 'green') ctx.fillStyle = '#007a4d';
+                    if(editSettings.bg === 'purple') ctx.fillStyle = '#f3e8ff';
+                    
+                    // Fill Entire Canvas with Background Color
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-
-                // 2. Apply "Pro" Lighting Filter
-                if(editSettings.pro) {
-                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
+                    
+                    // Draw Image CENTERED and SCALED DOWN (Creates Frame Effect)
+                    const padding = 40; 
+                    const innerW = canvas.width - (padding * 2);
+                    const innerH = canvas.height - (padding * 2);
+                    
+                    ctx.shadowColor = "rgba(0,0,0,0.3)";
+                    ctx.shadowBlur = 15;
+                    ctx.drawImage(img, padding, padding, innerW, innerH);
+                    ctx.shadowBlur = 0; // Reset
+                    
                 } else {
+                    // Normal Mode (Full Bleed)
+                    if(editSettings.pro) {
+                        ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
+                    }
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     ctx.filter = 'none';
                 }
 
-                // 3. Draw Main Image
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none'; // Reset filter
-
-                // 4. "Pot Polish" (Dirt Remover Hack)
-                // Blurs the bottom 25% of the image to hide weeds/dirt
-                if(editSettings.dirt) {
+                // 2. Pot Polish (Only if no frame)
+                if(editSettings.dirt && editSettings.bg === 'none') {
                     const potHeight = canvas.height * 0.25;
                     const potY = canvas.height - potHeight;
                     
-                    // Clip the bottom area
                     ctx.save();
                     ctx.beginPath();
                     ctx.rect(0, potY, canvas.width, potHeight);
                     ctx.clip();
-                    
-                    // Apply heavy blur
                     ctx.filter = 'blur(4px)';
-                    ctx.drawImage(canvas, 0, 0); // Draw itself blurred
+                    ctx.drawImage(canvas, 0, 0); 
                     ctx.restore();
                     ctx.filter = 'none';
                 }
 
-                // 5. Logo Overlay
+                // 3. Logo Overlay
                 if(editSettings.logo) {
                     const logo = new Image();
                     logo.crossOrigin = "Anonymous";
-                    logo.src = "https://drive.google.com/thumbnail?id=1tm63DLr3E3lNfJRVKTxCoONDrZEnq4o5&sz=w512-h512";
+                    logo.src = "GNC LOGO.png"; // LOCAL FILE
+                    
                     logo.onload = function() {
-                        const logoW = 150;
-                        const logoH = 150 * (logo.height / logo.width);
+                        const logoW = 180;
+                        const logoH = 180 * (logo.height / logo.width);
                         const logoX = (canvas.width - logoW) / 2;
-                        const logoY = canvas.height - logoH - 20; // 20px from bottom
+                        const logoY = canvas.height - logoH - 30;
                         
-                        ctx.globalAlpha = 0.85; // Slight transparency
+                        ctx.shadowColor = "rgba(0,0,0,0.3)";
+                        ctx.shadowBlur = 5;
+                        ctx.globalAlpha = 1.0; 
                         ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-                        ctx.globalAlpha = 1.0;
+                        ctx.shadowBlur = 0;
                     }
                 }
             }
