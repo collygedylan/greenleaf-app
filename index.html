@@ -151,15 +151,6 @@
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
             
-            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Backgrounds (Solid Color)</div>
-            <div class="filter-scroll">
-                <div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div>
-                <div class="filter-btn bg-white text-gray-800 border-gray-300" id="btn-bg-white" onclick="setBg('white')">White</div>
-                <div class="filter-btn bg-gray-200 text-gray-800" id="btn-bg-gry" onclick="setBg('grey')">Grey</div>
-                <div class="filter-btn bg-[#007a4d] text-white" id="btn-bg-grn" onclick="setBg('green')">Green</div>
-                <div class="filter-btn bg-purple-200 text-purple-800" id="btn-bg-prp" onclick="setBg('purple')">Purple</div>
-            </div>
-
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
                 <i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO
             </button>
@@ -1129,24 +1120,7 @@
             processCanvasPreview();
         }
 
-        function setBg(color) {
-            editSettings.bg = color;
-            ['none', 'white', 'grn', 'gry', 'prp'].forEach(c => {
-                 const btn = document.getElementById('btn-bg-' + c);
-                 if(btn) btn.classList.remove('border-2', 'border-yellow-400');
-            });
-            
-            let btnId = 'btn-bg-none';
-            if(color === 'white') btnId = 'btn-bg-white';
-            if(color === 'green') btnId = 'btn-bg-grn';
-            if(color === 'grey') btnId = 'btn-bg-gry';
-            if(color === 'purple') btnId = 'btn-bg-prp';
-            
-            const activeBtn = document.getElementById(btnId);
-            if(activeBtn) activeBtn.classList.add('border-2', 'border-yellow-400');
-            processCanvasPreview();
-        }
-
+        // REVISED FUNCTION FOR FULL BLEED IMAGE
         function processCanvasPreview() {
             const preview = document.getElementById('editor-preview');
             const canvas = document.getElementById('photo-canvas');
@@ -1167,39 +1141,20 @@
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scale;
 
-                // 1. Draw Background (Studio Frame)
-                if(editSettings.bg !== 'none') {
-                    ctx.globalCompositeOperation = 'source-over';
-                    
-                    if(editSettings.bg === 'white') ctx.fillStyle = '#FFFFFF';
-                    if(editSettings.bg === 'grey') ctx.fillStyle = '#f3f4f6';
-                    if(editSettings.bg === 'green') ctx.fillStyle = '#007a4d';
-                    if(editSettings.bg === 'purple') ctx.fillStyle = '#f3e8ff';
-                    
-                    // Fill Entire Canvas with Background Color
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw Image CENTERED and FULL SIZE (Creates Frame Effect)
-                    const padding = 10; //Minimal Padding
-                    const innerW = canvas.width - (padding * 2);
-                    const innerH = canvas.height - (padding * 2);
-                    
-                    ctx.shadowColor = "rgba(0,0,0,0.3)";
-                    ctx.shadowBlur = 15;
-                    ctx.drawImage(img, padding, padding, innerW, innerH);
-                    ctx.shadowBlur = 0; // Reset
-                    
+                // 1. Draw Image Full Bleed (No Border)
+                // Apply Auto Light filter if active
+                if(editSettings.pro) {
+                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
                 } else {
-                    // Normal Mode (Full Bleed)
-                    if(editSettings.pro) {
-                        ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
-                    }
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     ctx.filter = 'none';
                 }
 
-                // 2. Pot Polish (Only if no frame)
-                if(editSettings.dirt && editSettings.bg === 'none') {
+                // Draw image filling the canvas from 0,0
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none'; // Reset filter
+
+                // 2. Pot Polish (Blur bottom 25%)
+                if(editSettings.dirt) {
                     const potHeight = canvas.height * 0.25;
                     const potY = canvas.height - potHeight;
                     
@@ -1213,21 +1168,24 @@
                     ctx.filter = 'none';
                 }
 
-                // 3. Logo Overlay
+                // 3. Logo Overlay (Watermark)
                 if(editSettings.logo) {
                     const logo = new Image();
                     logo.crossOrigin = "Anonymous";
                     logo.src = "GNC LOGO.png"; // LOCAL FILE
                     
                     logo.onload = function() {
-                        const logoW = 350; // Much Bigger Logo
-                        const logoH = 350 * (logo.height / logo.width);
-                        const logoX = (canvas.width - logoW) / 2;
-                        const logoY = canvas.height - logoH - 30; // 30px from bottom
+                        // Bigger Logo
+                        const logoW = 550; // Increased size
+                        const logoH = 550 * (logo.height / logo.width);
+
+                        // Position: Bottom Left with padding
+                        const logoX = 40;
+                        const logoY = canvas.height - logoH - 40;
                         
-                        ctx.shadowColor = "rgba(0,0,0,0.3)";
-                        ctx.shadowBlur = 5;
-                        ctx.globalAlpha = 1.0; 
+                        ctx.shadowColor = "rgba(0,0,0,0.5)";
+                        ctx.shadowBlur = 10;
+                        ctx.globalAlpha = 0.9; 
                         ctx.drawImage(logo, logoX, logoY, logoW, logoH);
                         ctx.shadowBlur = 0;
                     }
