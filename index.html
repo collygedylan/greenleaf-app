@@ -151,13 +151,13 @@
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
             
-            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Backgrounds (Covers Floor)</div>
+            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Backgrounds (Solid Color)</div>
             <div class="filter-scroll">
                 <div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div>
-                <div class="filter-btn bg-white text-gray-800 border-gray-300" id="btn-bg-white" onclick="setBg('white')">White Frame</div>
-                <div class="filter-btn bg-gray-200 text-gray-800" id="btn-bg-gry" onclick="setBg('grey')">Grey Frame</div>
-                <div class="filter-btn bg-[#007a4d] text-white" id="btn-bg-grn" onclick="setBg('green')">Green Frame</div>
-                <div class="filter-btn bg-purple-200 text-purple-800" id="btn-bg-prp" onclick="setBg('purple')">Purple Frame</div>
+                <div class="filter-btn bg-white text-gray-800 border-gray-300" id="btn-bg-white" onclick="setBg('white')">White</div>
+                <div class="filter-btn bg-gray-200 text-gray-800" id="btn-bg-gry" onclick="setBg('grey')">Grey</div>
+                <div class="filter-btn bg-[#007a4d] text-white" id="btn-bg-grn" onclick="setBg('green')">Green</div>
+                <div class="filter-btn bg-purple-200 text-purple-800" id="btn-bg-prp" onclick="setBg('purple')">Purple</div>
             </div>
 
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
@@ -1179,8 +1179,8 @@
                     // Fill Entire Canvas with Background Color
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // Draw Image CENTERED and SCALED DOWN (Creates Frame Effect)
-                    const padding = 40; 
+                    // Draw Image CENTERED and FULL SIZE (Creates Frame Effect)
+                    const padding = 10; //Minimal Padding
                     const innerW = canvas.width - (padding * 2);
                     const innerH = canvas.height - (padding * 2);
                     
@@ -1220,10 +1220,10 @@
                     logo.src = "GNC LOGO.png"; // LOCAL FILE
                     
                     logo.onload = function() {
-                        const logoW = 180;
-                        const logoH = 180 * (logo.height / logo.width);
+                        const logoW = 350; // Much Bigger Logo
+                        const logoH = 350 * (logo.height / logo.width);
                         const logoX = (canvas.width - logoW) / 2;
-                        const logoY = canvas.height - logoH - 30;
+                        const logoY = canvas.height - logoH - 30; // 30px from bottom
                         
                         ctx.shadowColor = "rgba(0,0,0,0.3)";
                         ctx.shadowBlur = 5;
