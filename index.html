@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 005</title>
+    <title>Greenleaf Pro TURBO 006</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -160,7 +160,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 005
+                TURBO 006
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -190,7 +190,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 005 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 006 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -433,6 +433,10 @@
                 </div>
                 
                 <div id="det-actions-content" class="hidden py-4">
+                    <div id="draft-alert" class="hidden bg-yellow-100 p-3 rounded text-xs text-yellow-800 mb-4 font-bold border border-yellow-200 flex items-center gap-2">
+                        <i class="ph-bold ph-floppy-disk text-lg"></i> Unsaved text restored from backup.
+                    </div>
+
                     <div id="request-complete-container" class="mb-6 hidden">
                         <button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2">
                             <i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE
@@ -483,7 +487,7 @@
                     <div class="input-stack">
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Evaluation</label>
-                            <select id="in-grower-eval" class="input-field bg-white">
+                            <select id="in-grower-eval" class="input-field bg-white" oninput="saveDraft()">
                                 <option value="">-- Select Status --</option>
                                 <option value="Excellent">Excellent</option>
                                 <option value="Good">Good</option>
@@ -496,11 +500,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Shear %</label>
-                                <input type="number" id="in-grower-shear" class="input-field" placeholder="%">
+                                <input type="number" id="in-grower-shear" class="input-field" placeholder="%" oninput="saveDraft()">
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Water Status</label>
-                                <select id="in-grower-water" class="input-field bg-white">
+                                <select id="in-grower-water" class="input-field bg-white" oninput="saveDraft()">
                                     <option value="">--</option>
                                     <option value="Wet">Wet</option>
                                     <option value="Perfect">Perfect</option>
@@ -511,12 +515,12 @@
 
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Root Status</label>
-                            <input type="text" id="in-grower-root" class="input-field" placeholder="e.g. Rooted out, Loose">
+                            <input type="text" id="in-grower-root" class="input-field" placeholder="e.g. Rooted out, Loose" oninput="saveDraft()">
                         </div>
 
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">General Grower Notes</label>
-                            <textarea id="in-grower-note" class="input-field h-24" placeholder="Production observations..."></textarea>
+                            <textarea id="in-grower-note" class="input-field h-24" placeholder="Production observations..." oninput="saveDraft()"></textarea>
                         </div>
                     </div>
 
@@ -805,6 +809,12 @@
                     document.getElementById('loading-spinner').classList.remove('hidden'); 
                 }
                 
+                // *** FIX: BLOCK AUTO-SYNC IF USER IS TYPING ***
+                if(isSilent && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                    console.log("Skipping sync: User is typing.");
+                    return;
+                }
+
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const textCheck = await cloudRes.clone().text();
                 
@@ -928,46 +938,56 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
+        // --- INSTANT DRAFT MODE (The Fix for Flashing/Deleting) ---
+        function saveDraft() {
+            if(!activeItem) return;
+            window.lastLocalUpdate = new Date().getTime(); // Reset protection
+            
+            // 1. Update JS Object
+            if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+            if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+            if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+            if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+            
+            if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
+            if(document.getElementById('in-grower-shear')) activeItem.GROWER_SHEAR = document.getElementById('in-grower-shear').value;
+            if(document.getElementById('in-grower-water')) activeItem.GROWER_WATER = document.getElementById('in-grower-water').value;
+            if(document.getElementById('in-grower-root')) activeItem.GROWER_ROOT = document.getElementById('in-grower-root').value;
+            if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
+
+            // 2. Save to Browser Hard Drive (LocalStorage)
+            const draftKey = 'draft_' + activeItem.UNIQUE_ID;
+            localStorage.setItem(draftKey, JSON.stringify(activeItem));
+        }
+
+        function loadDraft(item) {
+            const draftKey = 'draft_' + item.UNIQUE_ID;
+            const draftStr = localStorage.getItem(draftKey);
+            if (draftStr) {
+                const draft = JSON.parse(draftStr);
+                // Merge draft into item
+                item.SAVED_MATCH = draft.SAVED_MATCH || item.SAVED_MATCH;
+                item.SAVED_SPEC = draft.SAVED_SPEC || item.SAVED_SPEC;
+                item.SAVED_PICK = draft.SAVED_PICK || item.SAVED_PICK;
+                item.SAVED_NOTE = draft.SAVED_NOTE || item.SAVED_NOTE;
+                item.SAVED_SALES_DESC = draft.SAVED_SALES_DESC || item.SAVED_SALES_DESC;
+                item.GROWER_EVAL = draft.GROWER_EVAL || item.GROWER_EVAL;
+                item.GROWER_SHEAR = draft.GROWER_SHEAR || item.GROWER_SHEAR;
+                item.GROWER_WATER = draft.GROWER_WATER || item.GROWER_WATER;
+                item.GROWER_ROOT = draft.GROWER_ROOT || item.GROWER_ROOT;
+                item.GROWER_NOTE = draft.GROWER_NOTE || item.GROWER_NOTE;
+                
+                return true; // Draft loaded
+            }
+            return false;
+        }
+
         // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             
-            // *** FIX: SET PROTECTION TIMER ***
-            window.lastLocalUpdate = new Date().getTime();
-
-            // 1. GET VALUES FROM EXISTING INPUTS
-            const matchEl = document.getElementById('in-match'); 
-            const specEl = document.getElementById('in-spec');
-            const pickEl = document.getElementById('in-pick'); 
-            const noteEl = document.getElementById('in-note'); 
-            const salesDescEl = document.getElementById('in-sales-desc');
-
-            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
-            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
-            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
-            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
-            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
-
-            // 2. GET VALUES FROM NEW GROWER INPUTS
-            const growerEval = document.getElementById('in-grower-eval') ? document.getElementById('in-grower-eval').value : (activeItem.GROWER_EVAL || "");
-            const growerShear = document.getElementById('in-grower-shear') ? document.getElementById('in-grower-shear').value : (activeItem.GROWER_SHEAR || "");
-            const growerWater = document.getElementById('in-grower-water') ? document.getElementById('in-grower-water').value : (activeItem.GROWER_WATER || "");
-            const growerRoot = document.getElementById('in-grower-root') ? document.getElementById('in-grower-root').value : (activeItem.GROWER_ROOT || "");
-            const growerNote = document.getElementById('in-grower-note') ? document.getElementById('in-grower-note').value : (activeItem.GROWER_NOTE || "");
-
-            // 3. INSTANTLY UPDATE LOCAL MEMORY
-            activeItem.SAVED_MATCH = match;
-            activeItem.SAVED_SPEC = spec;
-            activeItem.SAVED_PICK = pick;
-            activeItem.SAVED_NOTE = note;
-            activeItem.SAVED_SALES_DESC = salesDesc;
-            
-            // Update local memory with grower data
-            activeItem.GROWER_EVAL = growerEval;
-            activeItem.GROWER_SHEAR = growerShear;
-            activeItem.GROWER_WATER = growerWater;
-            activeItem.GROWER_ROOT = growerRoot;
-            activeItem.GROWER_NOTE = growerNote;
+            saveDraft(); // Update object first
 
             activeItem.TIMESTAMP = new Date().toISOString();
 
@@ -980,17 +1000,17 @@
             const payload = { 
                 type: "update", 
                 id: activeItem.UNIQUE_ID, 
-                match: match, 
-                spec: spec, 
-                pick: pick, 
-                note: note, 
-                salesDesc: salesDesc,
+                match: activeItem.SAVED_MATCH || "", 
+                spec: activeItem.SAVED_SPEC || "", 
+                pick: activeItem.SAVED_PICK || "", 
+                note: activeItem.SAVED_NOTE || "", 
+                salesDesc: activeItem.SAVED_SALES_DESC || "",
                 // ADD NEW FIELDS TO PAYLOAD
-                growerEval: growerEval,
-                growerShear: growerShear,
-                growerWater: growerWater,
-                growerRoot: growerRoot,
-                growerNote: growerNote,
+                growerEval: activeItem.GROWER_EVAL || "",
+                growerShear: activeItem.GROWER_SHEAR || "",
+                growerWater: activeItem.GROWER_WATER || "",
+                growerRoot: activeItem.GROWER_ROOT || "",
+                growerNote: activeItem.GROWER_NOTE || "",
 
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
@@ -1012,34 +1032,20 @@
             })
             .then(res => res.json())
             .then(data => { 
-                if(data.status !== 'success') logFailedSave(payload); 
+                if(data.status === 'success') {
+                    // CLEAR DRAFT ON SUCCESS
+                    localStorage.removeItem('draft_' + activeItem.UNIQUE_ID);
+                } else {
+                    logFailedSave(payload); 
+                }
             })
             .catch(err => logFailedSave(payload));
         }
 
         function markRequestComplete() {
             if(!activeItem) return;
+            saveDraft();
             
-            // *** FIX: SET PROTECTION TIMER ***
-            window.lastLocalUpdate = new Date().getTime();
-            
-            const matchEl = document.getElementById('in-match'); 
-            const specEl = document.getElementById('in-spec');
-            const pickEl = document.getElementById('in-pick'); 
-            const noteEl = document.getElementById('in-note'); 
-            const salesDescEl = document.getElementById('in-sales-desc');
-
-            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
-            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
-            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
-            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
-            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
-
-            activeItem.SAVED_MATCH = match; 
-            activeItem.SAVED_SPEC = spec; 
-            activeItem.SAVED_PICK = pick;
-            activeItem.SAVED_NOTE = note; 
-            activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = ""; 
             activeItem.TASK_TAB = "review"; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
@@ -1049,11 +1055,11 @@
                 id: activeItem.UNIQUE_ID, 
                 requestAssignedTo: "", 
                 taskTab: "review", 
-                match: match, 
-                spec: spec, 
-                pick: pick, 
-                note: note, 
-                salesDesc: salesDesc, 
+                match: activeItem.SAVED_MATCH || "", 
+                spec: activeItem.SAVED_SPEC || "", 
+                pick: activeItem.SAVED_PICK || "", 
+                note: activeItem.SAVED_NOTE || "", 
+                salesDesc: activeItem.SAVED_SALES_DESC || "", 
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser 
@@ -1067,7 +1073,11 @@
             })
             .then(res => res.json())
             .then(data => { 
-                if(data.status !== 'success') logFailedSave(payload); 
+                if(data.status === 'success') {
+                    localStorage.removeItem('draft_' + activeItem.UNIQUE_ID);
+                } else {
+                    logFailedSave(payload);
+                }
             })
             .catch(err => logFailedSave(payload));
         }
@@ -1076,16 +1086,7 @@
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 currentFile = input.files[0];
-                
-                // Save current text inputs locally before switching views
-                if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-                if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-                if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-                if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-                if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
-                if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
-                if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
-
+                saveDraft(); // VITAL: Save draft before opening editor/camera
                 openPhotoEditor();
             }
         }
@@ -1292,6 +1293,7 @@
                     };
                     
                     fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
+                    localStorage.removeItem('draft_' + activeItem.UNIQUE_ID);
                     showToast("Success", "Photo saved & Text preserved."); 
                 } else { 
                     showToast("Upload Error", data.message, true); 
@@ -1392,22 +1394,59 @@
         
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
-        // --- NEW: DRIVE MODE FILTERS & LOGIC ---
+        // --- NEW: DRIVE MODE FILTERS & LOGIC (EXCEL STYLE) ---
         function initDriveFilters() {
-            const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            // Initial render with full inventory
+            renderDriveFilterOptions();
+        }
+
+        // Helper to get available options based on CURRENT filters (Cascading)
+        function getAvailableOptions(type) {
+            // To be Excel-like:
+            // The available options for "Group" should be based on the dataset filtered by "Season" and "Lot" (but NOT Group itself).
+            
+            let subset = fullInventory;
+
+            if (type !== 'groups') {
+                if (driveFilterState.groups.length > 0) {
+                    subset = subset.filter(i => driveFilterState.groups.includes(i.PLANTGROUPCODE));
+                }
+            }
+            if (type !== 'seasons') {
+                if (driveFilterState.seasons.length > 0) {
+                    subset = subset.filter(i => driveFilterState.seasons.includes(i.SEASONSUPPLY));
+                }
+            }
+            if (type !== 'lots') {
+                if (driveFilterState.lots.length > 0) {
+                    subset = subset.filter(i => driveFilterState.lots.includes(i.LOTCODE));
+                }
+            }
+            
+            if (type === 'groups') return [...new Set(subset.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            if (type === 'seasons') return [...new Set(subset.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            if (type === 'lots') return [...new Set(subset.map(i => i.LOTCODE || "Unknown"))].sort();
+            return [];
+        }
+
+        function renderDriveFilterOptions() {
+            // Render Group Options
+            const groups = getAvailableOptions('groups');
             const grpDiv = document.getElementById('ms-group');
             grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + 
-                groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
+                groups.map(g => `<label class="ms-option ${driveFilterState.groups.includes(g) ? 'selected' : ''}"><input type="checkbox" value="${g}" ${driveFilterState.groups.includes(g) ? 'checked' : ''} onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
 
-            const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            // Render Season Options
+            const seasons = getAvailableOptions('seasons');
             const seaDiv = document.getElementById('ms-season');
             seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + 
-                seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
+                seasons.map(s => `<label class="ms-option ${driveFilterState.seasons.includes(s) ? 'selected' : ''}"><input type="checkbox" value="${s}" ${driveFilterState.seasons.includes(s) ? 'checked' : ''} onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
 
-            const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
+            // Render Lot Options
+            const lots = getAvailableOptions('lots');
             const lotDiv = document.getElementById('ms-lot');
             lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + 
-                lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
+                lots.map(l => `<label class="ms-option ${driveFilterState.lots.includes(l) ? 'selected' : ''}"><input type="checkbox" value="${l}" ${driveFilterState.lots.includes(l) ? 'checked' : ''} onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
         }
 
         function toggleMs(id) {
@@ -1426,6 +1465,9 @@
             const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' };
             const count = values.length;
             document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
+            
+            // CRITICAL: Re-render options to show cascading effect
+            renderDriveFilterOptions();
             renderDriveView();
         }
 
@@ -1433,13 +1475,22 @@
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const allChecks = div.querySelectorAll('input[type="checkbox"]');
             const allChecked = Array.from(allChecks).every(c => c.checked);
-            allChecks.forEach(c => c.checked = !allChecked);
-            updateDriveFilterState(type);
+            
+            // If selecting all, we need to add all VISIBLE options to the state
+            // If deselecting, clear state
+            if (!allChecked) {
+                 const newValues = Array.from(allChecks).map(c => c.value);
+                 driveFilterState[type] = [...new Set([...driveFilterState[type], ...newValues])];
+            } else {
+                 driveFilterState[type] = [];
+            }
+
+            renderDriveFilterOptions();
+            updateDriveFilterState(type); 
         }
 
         function resetDriveFilters() {
             driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
-            document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
             document.getElementById('lbl-group').innerText = 'Plant Group';
             document.getElementById('lbl-season').innerText = 'Season';
             document.getElementById('lbl-lot').innerText = 'Lot Code';
@@ -1448,6 +1499,7 @@
             document.getElementById('drive-search').value = '';
             driveSearchTerm = '';
             driveViewLevel = 0; 
+            renderDriveFilterOptions();
             renderDriveView();
         }
 
@@ -1782,6 +1834,10 @@
 
         function openDetail(idx, originView) {
             lastView = originView; currentOriginView = originView; activeItem = fullInventory[idx]; localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
+            
+            // CHECK FOR SAVED DRAFT (CRASH RECOVERY)
+            const hasDraft = loadDraft(activeItem);
+
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
             document.getElementById('view-detail').classList.remove('hidden'); 
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
@@ -1789,6 +1845,9 @@
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
             const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
             if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
+            
+            if(hasDraft) { document.getElementById('draft-alert').classList.remove('hidden'); } else { document.getElementById('draft-alert').classList.add('hidden'); }
+
             renderOverviewData(); renderActionsTab(); switchDetailTab('overview');
         }
 
@@ -1806,7 +1865,7 @@
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
             let dlHtml = `<datalist id="dl-notes">`; validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); dlHtml += `</datalist>`;
             const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
-            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}" oninput="saveDraft()"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}" oninput="saveDraft()"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="saveDraft()"> ${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}" oninput="saveDraft()"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes..." oninput="saveDraft()">${activeItem.SAVED_NOTE||''}</textarea></div>`;
         }
 
         function showReadonlyMode(canEditText, hasData) {
