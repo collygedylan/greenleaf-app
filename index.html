@@ -148,7 +148,6 @@
             <div class="filter-scroll">
                 <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
                 <div class="filter-btn active" id="btn-logo" onclick="toggleEdit('logo')"><i class="ph-fill ph-stamp"></i> Logo</div>
-                <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
             
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
@@ -1120,7 +1119,24 @@
             processCanvasPreview();
         }
 
-        // REVISED FUNCTION FOR FULL BLEED IMAGE
+        function setBg(color) {
+            editSettings.bg = color;
+            ['none', 'white', 'grn', 'gry', 'prp'].forEach(c => {
+                 const btn = document.getElementById('btn-bg-' + c);
+                 if(btn) btn.classList.remove('border-2', 'border-yellow-400');
+            });
+            
+            let btnId = 'btn-bg-none';
+            if(color === 'white') btnId = 'btn-bg-white';
+            if(color === 'green') btnId = 'btn-bg-grn';
+            if(color === 'grey') btnId = 'btn-bg-gry';
+            if(color === 'purple') btnId = 'btn-bg-prp';
+            
+            const activeBtn = document.getElementById(btnId);
+            if(activeBtn) activeBtn.classList.add('border-2', 'border-yellow-400');
+            processCanvasPreview();
+        }
+
         function processCanvasPreview() {
             const preview = document.getElementById('editor-preview');
             const canvas = document.getElementById('photo-canvas');
@@ -1141,20 +1157,39 @@
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scale;
 
-                // 1. Draw Image Full Bleed (No Border)
-                // Apply Auto Light filter if active
-                if(editSettings.pro) {
-                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
+                // 1. Draw Background (Studio Frame)
+                if(editSettings.bg !== 'none') {
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    if(editSettings.bg === 'white') ctx.fillStyle = '#FFFFFF';
+                    if(editSettings.bg === 'grey') ctx.fillStyle = '#f3f4f6';
+                    if(editSettings.bg === 'green') ctx.fillStyle = '#007a4d';
+                    if(editSettings.bg === 'purple') ctx.fillStyle = '#f3e8ff';
+                    
+                    // Fill Entire Canvas with Background Color
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw Image CENTERED and FULL SIZE (Creates Frame Effect)
+                    const padding = 10; //Minimal Padding
+                    const innerW = canvas.width - (padding * 2);
+                    const innerH = canvas.height - (padding * 2);
+                    
+                    ctx.shadowColor = "rgba(0,0,0,0.3)";
+                    ctx.shadowBlur = 15;
+                    ctx.drawImage(img, padding, padding, innerW, innerH);
+                    ctx.shadowBlur = 0; // Reset
+                    
                 } else {
+                    // Normal Mode (Full Bleed)
+                    if(editSettings.pro) {
+                        ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
+                    }
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     ctx.filter = 'none';
                 }
 
-                // Draw image filling the canvas from 0,0
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none'; // Reset filter
-
-                // 2. Pot Polish (Blur bottom 25%)
-                if(editSettings.dirt) {
+                // 2. Pot Polish (Only if no frame)
+                if(editSettings.dirt && editSettings.bg === 'none') {
                     const potHeight = canvas.height * 0.25;
                     const potY = canvas.height - potHeight;
                     
@@ -1168,24 +1203,24 @@
                     ctx.filter = 'none';
                 }
 
-                // 3. Logo Overlay (Watermark)
+                // 3. Logo Overlay
                 if(editSettings.logo) {
                     const logo = new Image();
                     logo.crossOrigin = "Anonymous";
                     logo.src = "GNC LOGO.png"; // LOCAL FILE
                     
                     logo.onload = function() {
-                        // Bigger Logo
-                        const logoW = 550; // Increased size
-                        const logoH = 550 * (logo.height / logo.width);
-
-                        // Position: Bottom Left with padding
-                        const logoX = 40;
-                        const logoY = canvas.height - logoH - 40;
+                        const logoW = 500; // BIGGER LOGO
+                        const logoH = 500 * (logo.height / logo.width);
                         
-                        ctx.shadowColor = "rgba(0,0,0,0.5)";
-                        ctx.shadowBlur = 10;
-                        ctx.globalAlpha = 0.9; 
+                        // BOTTOM LEFT CORNER LOGIC
+                        const padding = 30; 
+                        const logoX = padding; 
+                        const logoY = canvas.height - logoH - padding;
+                        
+                        ctx.shadowColor = "rgba(0,0,0,0.3)";
+                        ctx.shadowBlur = 5;
+                        ctx.globalAlpha = 1.0; 
                         ctx.drawImage(logo, logoX, logoY, logoW, logoH);
                         ctx.shadowBlur = 0;
                     }
