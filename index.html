@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 013</title>
+    <title>Greenleaf Pro TURBO 014</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -22,10 +22,10 @@
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; transition: all 0.3s ease; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: block; }
+        .pin-input { width: 100%; padding: 14px; font-size: 18px; text-align: center; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 15px; outline: none; }
         
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
@@ -188,7 +188,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 013
+                TURBO 014
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -235,7 +235,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 014 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -532,7 +532,22 @@
             if(isSilent && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
-                const json = await res.json();
+                
+                // --- LOUD ERROR REPORTING ---
+                if (!res.ok) {
+                    alert("Network Error: " + res.status + " " + res.statusText + "\nURL: " + GOOGLE_SCRIPT_URL);
+                    throw new Error("Network Response Failed");
+                }
+                
+                const text = await response.text();
+                // Check if HTML returned (Permissions Error)
+                if (text.trim().startsWith("<!DOCTYPE") || text.includes("<html")) {
+                    alert("PERMISSIONS ERROR: The script returned HTML instead of JSON.\n\nFix: Go to Script -> Deploy -> New Version -> 'Anyone'");
+                    throw new Error("Script returned HTML (Auth Error)");
+                }
+                
+                const json = JSON.parse(text);
+                
                 if(json.status === 'success') {
                     fullInventory = json.data;
                     noteTemplates = json.templates || [];
@@ -558,8 +573,16 @@
                             if(!document.getElementById('view-my-requests').classList.contains('hidden')) renderRepRequests();
                         }
                     }
+                } else {
+                    alert("API Error: " + json.message);
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.error(e); 
+                if(!isSilent) {
+                     alert("Fatal Error: " + e.message + "\n\nCheck your URL and Internet Connection.");
+                     resetLogin();
+                }
+            }
         }
         function startAutoSync() { if(autoSyncTimer) clearInterval(autoSyncTimer); autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); }
         function launchApp(forceView = null) {
