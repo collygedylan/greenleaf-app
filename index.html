@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 022</title>
+    <title>Greenleaf Pro TURBO 023</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -18,6 +18,7 @@
         /* CORE */
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
+        .nav-header { background: var(--brand-green); color: white; padding-top: max(1rem, env(safe-area-inset-top)); }
         .hidden { display: none !important; }
 
         /* LOGIN */
@@ -32,14 +33,14 @@
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
         #drawer-overlay.open { display: block; }
+        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; padding-top: max(20px, env(safe-area-inset-top)); }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
         /* CARDS */
         .inv-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
-
-        /* COLORS */
+        
         .card-green { background-color: #f0fdf4; border-color: #86efac; }
         .card-yellow { background-color: #fefce8; border-color: #fde047; }
         .card-red { background-color: #fef2f2; border-color: #fca5a5; }
@@ -53,13 +54,13 @@
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s; display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
         #loading-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; }
-        
+
         /* TABS */
         .task-tabs, .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab, .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .task-tab.active, .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
 
-        /* ACTIONS & BATCH */
+        /* ACTIONS */
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
@@ -73,11 +74,13 @@
         .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; }
         .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .text-production { color: #d97706; }
+        .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
 
         /* MODALS */
         #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 10px; }
         .req-card { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        
         #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
         .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
         .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; }
@@ -101,6 +104,9 @@
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
+        
+        #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -111,7 +117,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 022
+                TURBO 023
             </div>
             
             <div id="login-buttons">
@@ -120,7 +126,9 @@
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
                 <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Admin)</button>
                 <hr class="my-4 border-gray-200">
-                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()"><i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login</button>
+                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()">
+                    <i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login
+                </button>
             </div>
 
             <div id="pin-container" class="hidden mt-4">
@@ -141,21 +149,21 @@
                 <div class="w-8 h-8 border-4 border-gray-200 border-t-[#007a4d] rounded-full animate-spin"></div>
                 <div id="loading-text" class="text-gray-500 font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
             </div>
-            
-            <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-xs"></div>
         </div>
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
-                <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
+                <div onclick="toggleMenu()" class="p-2 cursor-pointer rounded hover:bg-green-700 active:bg-green-800 transition-colors">
+                    <i class="ph-bold ph-list text-2xl text-white"></i>
+                </div>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 022 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 023 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
                 </div>
             </div>
-            <div id="batch-indicator" onclick="toggleBatch()">BATCH ON</div>
+            <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -179,6 +187,7 @@
         </div>
 
         <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32 relative">
+            <div id="ptr-spinner"><i class="ph-bold ph-arrows-clockwise"></i></div>
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
@@ -200,7 +209,7 @@
 
             <div id="view-inventory" class="hidden">
                 <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory Lookup</h2>
-                <div class="season-scroll" id="inv-season-bar"><div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div><div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div><div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div><div class="season-chip" onclick="toggleInventorySeason('U1', this)">U1</div><div class="season-chip" onclick="toggleInventorySeason('U2', this)">U2</div><div class="season-chip" onclick="toggleInventorySeason('U3', this)">U3</div><div class="season-chip" onclick="toggleInventorySeason('X', this)">X</div><div class="season-chip" onclick="toggleInventorySeason('Y', this)">Y</div><div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div></div>
+                <div class="season-scroll" id="inv-season-bar"><div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div><div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div><div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div></div>
                 <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'inventory')">
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
@@ -322,7 +331,7 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        // *** CRITICAL: UPDATE THIS URL TO YOUR NEW SCRIPT URL ***
+        // *** CRITICAL UPDATE: YOUR SCRIPT URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
         const ADMINS = ["Dylan", "J.D."];
@@ -353,7 +362,7 @@
             { name: "J.D. Jones", id: "ADMIN", email: "jd_jones@greenleafnursery.com" }
         ];
 
-        // SAFE DOM HELPER
+        // Safe DOM Helper
         function safeClass(id, action, className) {
             const el = document.getElementById(id);
             if (el) {
@@ -430,20 +439,6 @@
             });
             switchView(forceView || 'home');
         }
-        
-        // *** HERE IS THE MISSING FUNCTION THAT CAUSED THE ERROR ***
-        function applyAssignments() { 
-            let i = 0; 
-            fullInventory.forEach(item => { 
-                if(!item.ASSIGNEDTO) { 
-                    const group = (item.PLANTGROUPCODE || "").toString(); 
-                    if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } 
-                    else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } 
-                    else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } 
-                } 
-            }); 
-        }
-
         function switchView(v) {
             localStorage.setItem('gl_last_view', v);
             const views = ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production', 'view-my-requests'];
@@ -458,6 +453,19 @@
             if(v === 'salesoffice') renderSalesOffice();
         }
 
+        // --- DEFINED: applyAssignments (THE MISSING PIECE) ---
+        function applyAssignments() { 
+            let i = 0; 
+            fullInventory.forEach(item => { 
+                if(!item.ASSIGNEDTO) { 
+                    const group = (item.PLANTGROUPCODE || "").toString(); 
+                    if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } 
+                    else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } 
+                    else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } 
+                } 
+            }); 
+        }
+
         function restoreSession() {
             const savedView = localStorage.getItem('gl_last_view');
             const savedId = localStorage.getItem('gl_active_item');
@@ -465,6 +473,11 @@
                 const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId);
                 if (itemIndex > -1) { openDetail(itemIndex, savedView || 'drive'); }
             }
+        }
+        
+        function toggleMenu() {
+            document.getElementById('side-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
         }
 
         // --- CORE FUNCTIONS (DRIVE/INV/PROD/TASKS) ---
