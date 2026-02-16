@@ -20,13 +20,14 @@
         .nav-header { background: var(--brand-green); color: white; padding-top: max(1rem, env(safe-area-inset-top)); }
         .hidden { display: none !important; }
 
-        /* Login */
+        /* LOGIN */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; cursor: pointer; }
+        .user-btn:active { background-color: #f3f4f6; transform: scale(0.98); }
         .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: block; }
-
-        /* Navigation */
+        
+        /* DRAWER & NAV */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
@@ -34,59 +35,38 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; padding-top: max(20px, env(safe-area-inset-top)); }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        /* List & Cards */
+        /* CARDS */
         .inv-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
         .card-green { background-color: #f0fdf4; border-color: #86efac; }
         .card-yellow { background-color: #fefce8; border-color: #fde047; }
         .card-red { background-color: #fef2f2; border-color: #fca5a5; }
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
 
-        /* Detail View Specifics */
+        /* UI ELEMENTS */
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
-        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
-        .full-width { grid-column: span 2; }
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
         
-        /* Modals */
-        #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 10px; }
-        .req-card { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
-
-        /* Photo Editor */
-        #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
-        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
-        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; }
-        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
-        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
-        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
-
-        /* Misc */
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s; display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
         #loading-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; }
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-        .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
-        .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        
+        /* TABS */
+        .task-tabs, .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
+        .task-tab, .detail-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
+        .task-tab.active, .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+
+        /* ACTIONS */
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
+
+        /* FILTERS */
         .season-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px; }
         .season-chip { flex: 0 0 auto; padding: 6px 16px; background: #f3f4f6; border-radius: 20px; font-size: 11px; font-weight: 700; color: #374151; cursor: pointer; border: 1px solid #e5e7eb; }
         .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; }
@@ -95,6 +75,23 @@
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
         .text-production { color: #d97706; }
+
+        /* MODALS */
+        #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 10px; }
+        .req-card { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
+
+        /* PHOTO EDITOR */
+        #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
+        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
+        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
+        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+
+        /* MULTI-SELECT */
         .ms-container { position: relative; margin-bottom: 8px; }
         .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
         .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 4px; }
@@ -102,6 +99,20 @@
         .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
         .ms-option:hover { background: #f9fafb; }
         .ms-option.selected { background-color: #f0fdf4; }
+
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
+        .full-width { grid-column: span 2; }
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+
+        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
+        .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
+
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
     </style>
@@ -124,7 +135,9 @@
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
                 <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Admin)</button>
                 <hr class="my-4 border-gray-200">
-                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()"><i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login</button>
+                <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()">
+                    <i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login
+                </button>
             </div>
 
             <div id="pin-container" class="hidden mt-4">
@@ -145,15 +158,15 @@
                 <div class="w-8 h-8 border-4 border-gray-200 border-t-[#007a4d] rounded-full animate-spin"></div>
                 <div id="loading-text" class="text-gray-500 font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
             </div>
-            
-            <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-xs"></div>
         </div>
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
-                <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
+                <div onclick="toggleMenu()" class="p-2 cursor-pointer rounded hover:bg-green-700 active:bg-green-800 transition-colors">
+                    <i class="ph-bold ph-list text-2xl text-white"></i>
+                </div>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 029 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
@@ -284,16 +297,29 @@
                     </div>
                     <div id="expand-section" class="mt-6"><div class="expand-trigger" onclick="toggleExpand()"><span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i></div><div id="expand-content" class="expand-content"></div></div>
                 </div>
+                
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="draft-alert" class="hidden bg-yellow-100 p-3 rounded text-xs text-yellow-800 mb-4 font-bold border border-yellow-200 flex items-center gap-2"><i class="ph-bold ph-floppy-disk text-lg"></i> Unsaved text restored from backup.</div>
-                    <div id="request-complete-container" class="mb-6 hidden"><button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE</button></div>
-                    <div id="readonly-lock-banner" class="hidden bg-gray-100 p-3 rounded text-xs text-gray-500 mb-4 font-bold border border-gray-200 flex items-center gap-2"><i class="ph-bold ph-lock-key text-lg"></i> Data is locked. (10-Day / 10% Rule Active)</div>
+                    
                     <div id="photo-preview" class="mb-4 hidden"><p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p><div id="photo-list-container" class="space-y-2"></div></div>
-                    <div id="btn-cam-container" class="hidden"><div class="cam-grid"><label class="camera-btn"><i class="ph-fill ph-camera text-3xl"></i><span class="text-xs font-bold mt-1">CAMERA</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label><label class="lib-btn"><i class="ph-fill ph-image text-3xl"></i><span class="text-xs font-bold mt-1">LIBRARY</span><input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)"></label></div></div>
-                    <div id="input-container" class="input-stack"></div>
-                    <div id="btn-edit-container" class="hidden mt-4 mb-4"><button onclick="showEditMode()" class="w-full bg-yellow-500 text-white font-bold py-3 rounded-xl shadow border-2 border-yellow-600 flex items-center justify-center gap-2"><i class="ph-bold ph-lock-key-open text-xl"></i> UNLOCK TO EDIT</button><p class="text-xs text-center text-gray-400 mt-2">Admin override.</p></div>
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE & LOCK DATA</button>
+                    
+                    <div id="btn-cam-container" class="cam-grid">
+                        <label class="camera-btn"><i class="ph-fill ph-camera text-3xl"></i><span class="text-xs font-bold mt-1">CAMERA</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)"></label>
+                        <label class="lib-btn"><i class="ph-fill ph-image text-3xl"></i><span class="text-xs font-bold mt-1">LIBRARY</span><input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)"></label>
+                    </div>
+
+                    <div id="input-container" class="input-stack mt-4">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" oninput="saveDraft()"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" oninput="saveDraft()"></div>
+                        <div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label><input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50" placeholder="Tap to select or type..." oninput="saveDraft()"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" oninput="saveDraft()"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes..." oninput="saveDraft()"></textarea></div>
+                    </div>
+                    
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE & LOCK DATA</button>
+                    <div id="request-complete-container" class="mt-4 hidden"><button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE</button></div>
                 </div>
+
                 <div id="det-grower-content" class="hidden py-4">
                     <div class="input-stack"><div><label class="text-[10px] font-bold text-gray-500 uppercase">Evaluation</label><select id="in-grower-eval" class="input-field bg-white" oninput="saveDraft()"><option value="">--</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Fair">Fair</option><option value="Poor">Poor</option><option value="Scrap">Scrap</option></select></div>
                     <div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-gray-500 uppercase">Shear %</label><input type="number" id="in-grower-shear" class="input-field" placeholder="%" oninput="saveDraft()"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Water Status</label><select id="in-grower-water" class="input-field bg-white" oninput="saveDraft()"><option value="">--</option><option value="Wet">Wet</option><option value="Perfect">Perfect</option><option value="Dry">Dry</option></select></div></div>
@@ -407,6 +433,7 @@
                     if(!isSilent) {
                         applyAssignments(); initDriveFilters(); launchApp(forceView); startAutoSync(); restoreSession();
                     } else {
+                        // Background update logic
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                             const now = new Date().getTime(); const lastUpdate = window.lastLocalUpdate || 0;
                             if (now - lastUpdate > 60000) {
@@ -471,7 +498,7 @@
             }
         }
 
-        // --- CORE FUNCTIONS ---
+        // --- CORE FUNCTIONS (DRIVE/INV/PROD/TASKS) ---
         function initDriveFilters() { renderDriveFilterOptions(); }
         function getAvailableOptions(type) {
             let subset = fullInventory;
