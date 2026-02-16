@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 029</title>
+    <title>Greenleaf Pro TURBO 035</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -128,7 +128,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 029
+                TURBO 035
             </div>
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
@@ -170,7 +170,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 029 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 035 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -418,13 +418,10 @@
                         const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
                         currentUser = rep ? rep.name : "Sales Rep";
                         isAdmin = false;
-                        
-                        // *** FIX: Map Full Name to Short Name for Task View ***
                         taskViewTargetUser = currentUser;
                         if(currentUser.startsWith("Dylan")) taskViewTargetUser = "Dylan";
                         if(currentUser.startsWith("Kayla")) taskViewTargetUser = "Kayla";
                         if(currentUser.startsWith("Morgan")) taskViewTargetUser = "Morgan";
-                        
                         safeClass('rep-login-container', 'add', 'hidden');
                         safeClass('loading-spinner', 'remove', 'hidden');
                         fetchData(false, 'inventory');
@@ -471,6 +468,10 @@
                     fullInventory = json.data;
                     noteTemplates = json.templates || [];
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+                    
+                    // *** CLIENT SIDE WINNER/LOSER LOGIC ***
+                    applyLocalLogic(); 
+
                     if(!isSilent) {
                         applyAssignments(); initDriveFilters(); launchApp(forceView); startAutoSync(); restoreSession();
                     } else {
@@ -489,6 +490,55 @@
                 } else { alert("API Error: " + json.message); }
             } catch(e) { console.error(e); if(!isSilent) { alert("Error: " + e.message); resetLogin(); } }
         }
+
+        // *** NEW FUNCTION: Client-Side Logic for Winners/Losers ***
+        function applyLocalLogic() {
+            let groups = {};
+            // 1. Group by ItemCode
+            fullInventory.forEach(item => {
+                if (!item.ITEMCODE) return;
+                if (!groups[item.ITEMCODE]) groups[item.ITEMCODE] = [];
+                groups[item.ITEMCODE].push(item);
+            });
+
+            // 2. Process each group
+            for (const code in groups) {
+                let items = groups[code];
+                
+                // Get items with Priority
+                let priItems = items.filter(i => (parseFloat(i.PRIORITY) || 0) > 0);
+                
+                if (priItems.length > 0) {
+                    // Sort: Lowest Priority # first, then Highest Qty
+                    priItems.sort((a, b) => {
+                        let pa = parseFloat(a.PRIORITY);
+                        let pb = parseFloat(b.PRIORITY);
+                        if (pa !== pb) return pa - pb;
+                        let qa = parseFloat(a.PTRAVAILABLE) || 0;
+                        let qb = parseFloat(b.PTRAVAILABLE) || 0;
+                        return qb - qa; // High qty first
+                    });
+
+                    let winner = priItems[0];
+                    let winnerQty = parseFloat(winner.PTRAVAILABLE) || 0;
+                    let winnerSupply = parseFloat(winner.SEASONSUPPLY) || 0;
+
+                    // 10% Rule Check
+                    if (winnerQty > (winnerSupply * 0.10)) {
+                        // WINNER FOUND
+                        winner.TASK_TAB = 'season';
+                        // The rest go to location
+                        for (let i = 1; i < priItems.length; i++) {
+                            priItems[i].TASK_TAB = 'location';
+                        }
+                    } else {
+                        // NO WINNER (Low Stock) -> ALL go to Manager Review
+                        priItems.forEach(i => i.TASK_TAB = 'manager_review');
+                    }
+                }
+            }
+        }
+
         function startAutoSync() { if(autoSyncTimer) clearInterval(autoSyncTimer); autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); }
         function launchApp(forceView = null) {
             document.getElementById('view-login').style.display = 'none';
@@ -586,15 +636,9 @@
         function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
         function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
 
-        // *** FIX: USER ASSIGNMENT CHECK ***
-        // Helper to check if item user and selected user match
         function matchesUser(assigned, target) {
             if (!assigned) return false;
-            // If viewing "ASSIST", match either Kayla OR Morgan
-            if (target === 'ASSIST') {
-                return assigned.includes("Kayla") || assigned.includes("Morgan");
-            }
-            // Otherwise, match exact string OR first name
+            if (target === 'ASSIST') { return assigned.includes("Kayla") || assigned.includes("Morgan"); }
             return assigned.includes(target) || (target.includes(" ") && assigned.includes(target.split(" ")[0]));
         }
 
@@ -605,42 +649,23 @@
             let myItems = []; 
             const now = new Date().getTime();
             
-            // TASK FILTER LOGIC
             const taskFilter = (i) => { 
-                // 1. User Check (Fixed)
                 if (!matchesUser(i.ASSIGNEDTO, taskViewTargetUser)) return false;
                 
-                // 2. Tab Check
-                if (i.TASK_TAB !== currentTab) return false;
-                
-                // 3. 10-Day Rule (Fixed: Only hide if older than 10 days AND it has data)
-                // New items without timestamps are shown.
-                // Items with timestamps are checked.
-                if (i.TIMESTAMP) { 
-                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
-                    const daysOld = (now - saveTime) / (1000 * 3600 * 24); 
-                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
-                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
-                    const isLowStock = ss > 0 && ptr < (ss * 0.10); 
-                    
-                    // Only hide if: Old (>10d) AND Not Low Stock AND (Has Note OR Match data)
-                    // This ensures "new" imports that got timestamps don't vanish immediately
-                    if (daysOld < 10 && !isLowStock && (i.SAVED_NOTE || i.SAVED_MATCH)) return false; 
-                } 
+                // *** FIX: Strict Tab Filtering ***
+                if (currentTab === 'requests') {
+                    if (i.TASK_TAB !== 'requests') return false;
+                } else if (currentTab === 'season') {
+                    if (i.TASK_TAB !== 'season') return false;
+                } else if (currentTab === 'location') {
+                    if (i.TASK_TAB !== 'location') return false;
+                } else {
+                    return false;
+                }
                 return true; 
             };
             
-            if(currentTab === 'requests') { 
-                if (taskViewTargetUser === 'ASSIST') { 
-                    myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests'); 
-                    crumb.innerText = `Kayla & Morgan / Urgent Requests`; 
-                } else { 
-                    myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                    crumb.innerText = `${taskViewTargetUser} / Urgent Requests`; 
-                } 
-            } else { 
-                myItems = fullInventory.filter(taskFilter); 
-            }
+            myItems = fullInventory.filter(taskFilter);
             
             const term = document.getElementById('task-search').value.toLowerCase(); 
             if (term) { 
@@ -649,8 +674,8 @@
                 return; 
             }
             
-            if(myItems.length === 0 && currentTab === 'requests') { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; 
+            if(myItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found for this tab.</div>`; 
                 return; 
             }
             
@@ -701,8 +726,10 @@
         function setReviewTab(t) { currentReviewTab = t; document.querySelectorAll('#view-review .task-tab').forEach(el => el.classList.remove('active')); document.getElementById('rtab-'+t).classList.add('active'); reviewViewLevel = 0; renderReviewItems(); }
         function renderReviewItems() {
             const container = document.getElementById('review-content'); const term = document.getElementById('review-search').value.toLowerCase(); let filteredItems = [];
-            if(currentReviewTab === 'inventory') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review' && !i.REQ_STATUS);
-            else if (currentReviewTab === 'pending') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review' && i.REQ_STATUS === 'NEW');
+            
+            // Logic: Manager Review now holds 'manager_review' status items (Failed Winners)
+            if(currentReviewTab === 'inventory') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review');
+            else if (currentReviewTab === 'pending') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review_req' || (i.REQ_STATUS === 'NEW' && i.TASK_TAB !== 'rep_view'));
             else if (currentReviewTab === 'completed') filteredItems = fullInventory.filter(i => i.REQ_STATUS === 'WORKED');
 
             if(term) filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term));
@@ -788,7 +815,6 @@
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
         }
 
-        // --- NEW: CARD HTML WITH COLORS ---
         function createRowHtml(item, idx, source) {
             let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
             let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
@@ -817,8 +843,6 @@
                 </div>
             </div>`;
         }
-
-        // --- DETAIL VIEW LOGIC (MISSING PART ADDED) ---
 
         function handleCardClick(idx, source) {
             if (isBatch) {
