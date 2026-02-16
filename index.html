@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 048</title>
+    <title>Greenleaf Pro TURBO 043</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -15,98 +15,571 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <style>
-        :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: #f3f4f6; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
-        .nav-header { background: var(--brand-green); color: white; padding-top: max(1rem, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 50; padding-bottom: 10px; }
-        .hidden { display: none !important; }
+        :root { 
+            --brand-green: #007a4d; 
+            --brand-gold: #e3a000; 
+            --text-main: #111827; 
+        }
+        body { 
+            font-family: "Amazon Ember", Arial, sans-serif; 
+            background-color: #f3f4f6; 
+            color: var(--text-main); 
+            overscroll-behavior-y: contain; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .nav-header { 
+            background: var(--brand-green); 
+            color: white; 
+            padding-top: max(1rem, env(safe-area-inset-top)); 
+        }
+        .hidden { 
+            display: none !important; 
+        }
 
-        /* Login */
-        #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
-        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; cursor: pointer; }
-        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: block; }
+        /* Login Styles */
+        #view-login { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: var(--brand-green); 
+            z-index: 9999; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        .login-card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+        }
+        .user-btn { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 12px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            color: #374151; 
+            background: white; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            transition: transform 0.1s; 
+            cursor: pointer; 
+        }
+        .user-btn:active { 
+            transform: scale(0.98); 
+            background-color: #f9fafb; 
+        }
+        .pin-input { 
+            width: 100%; 
+            padding: 14px; 
+            font-size: 24px; 
+            text-align: center; 
+            letter-spacing: 8px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            outline: none; 
+            display: block; 
+            font-weight: bold; 
+        }
 
-        /* Navigation */
-        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
-        #side-drawer.open { left: 0; }
-        #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
-        #drawer-overlay.open { display: block; }
-        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; padding-top: max(20px, env(safe-area-inset-top)); }
-        .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
+        /* Navigation Drawer */
+        #side-drawer { 
+            position: fixed; 
+            top: 0; 
+            left: -280px; 
+            width: 280px; 
+            height: 100%; 
+            background: white; 
+            z-index: 2000; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
+            transition: left 0.3s ease-in-out; 
+        }
+        #side-drawer.open { 
+            left: 0; 
+        }
+        #drawer-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1999; 
+            display: none; 
+        }
+        #drawer-overlay.open { 
+            display: block; 
+        }
+        .drawer-header { 
+            background: var(--brand-green); 
+            color: white; 
+            padding: 20px; 
+            font-weight: bold; 
+            font-size: 18px; 
+            padding-top: max(20px, env(safe-area-inset-top)); 
+        }
+        .drawer-item { 
+            padding: 16px 20px; 
+            border-bottom: 1px solid #f3f4f6; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            color: #374151; 
+            font-weight: 600; 
+            font-size: 15px; 
+        }
+        .drawer-item:active { 
+            background-color: #f3f4f6; 
+        }
 
-        /* List & Cards */
-        .inv-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); position: relative; }
-        .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
+        /* Inventory Cards */
+        .inv-card { 
+            border: 1px solid #e5e7eb; 
+            border-radius: 10px; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            background: white; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            transition: transform 0.1s; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .inv-card:active { 
+            transform: scale(0.99); 
+        }
+        .inv-card.selecting { 
+            background-color: #eff6ff; 
+            border-color: #3b82f6; 
+        }
         .card-green { border-left: 5px solid #22c55e; }
         .card-yellow { border-left: 5px solid #eab308; background-color: #fefce8; }
         .card-red { border-left: 5px solid #ef4444; background-color: #fef2f2; }
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
+        
+        .drill-item { 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 18px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            background: white; 
+        }
+        .drill-item:active { 
+            background-color: #f9fafb; 
+        }
 
-        /* Detail View Specifics */
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
-        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; position: sticky; top: 0; z-index: 10; }
-        .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
-        .full-width { grid-column: span 2; }
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
+        /* Detail View Styles */
+        .back-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: #4b5563; 
+            font-size: 14px; 
+            font-weight: 700; 
+            margin-bottom: 15px; 
+            cursor: pointer; 
+            padding: 5px 0; 
+        }
+        .detail-tabs { 
+            display: flex; 
+            border-bottom: 1px solid #e5e7eb; 
+            background: white; 
+            margin-bottom: 15px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+        }
+        .detail-tab { 
+            flex: 1; 
+            text-align: center; 
+            padding: 14px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+        }
+        .detail-tab.active { 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
+            background: #f0fdf4; 
+        }
         
-        /* New Stacked Inputs */
-        .input-stack { display: flex; flex-direction: column; gap: 15px; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
-        .input-label { font-size: 11px; font-weight: 800; color: #6b7280; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 0; background: white; }
-        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-        
+        /* Stacked Input Layout (Notes & Actions) */
+        .input-stack { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            width: 100%; 
+        }
+        .input-label { 
+            font-size: 11px; 
+            font-weight: 800; 
+            color: #6b7280; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        .input-field { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            background: white; 
+            -webkit-appearance: none; 
+        }
+        .input-field:focus { 
+            border-color: var(--brand-green); 
+            outline: none; 
+            ring: 2px var(--brand-green); 
+        }
+        textarea.input-field { 
+            min-height: 100px; 
+            resize: none; 
+        }
+
+        /* Overview Grid */
+        .overview-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        .overview-card { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid #e5e7eb; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02); 
+        }
+        .overview-label { 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: #9ca3af; 
+            text-transform: uppercase; 
+            margin-bottom: 4px; 
+        }
+        .overview-val { 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: #111827; 
+            word-break: break-word; 
+            line-height: 1.3; 
+        }
+        .full-width { 
+            grid-column: span 2; 
+        }
+
         /* Modals */
-        #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 10px; }
-        .req-card { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
-        #batch-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 6000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        #flyer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 6000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #request-modal, #batch-modal, #flyer-modal, #assign-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 6000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+            backdrop-filter: blur(2px); 
+        }
+        .modal-card { 
+            background: white; 
+            width: 100%; 
+            max-width: 400px; 
+            border-radius: 16px; 
+            padding: 24px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); 
+            animation: slideUp 0.2s ease-out; 
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideUp { 
+            from { transform: translateY(20px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+
+        /* Batch Floating Bar */
+        #batch-bar { 
+            position: fixed; 
+            bottom: 85px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(150%); 
+            background: #1f2937; 
+            color: white; 
+            padding: 8px 12px 8px 20px; 
+            border-radius: 100px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            width: 90%; 
+            max-width: 380px; 
+            z-index: 5000; 
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        #batch-bar.active { 
+            transform: translateX(-50%) translateY(0); 
+        }
+        .batch-count { 
+            font-weight: 700; 
+            font-size: 14px; 
+            white-space: nowrap; 
+        }
+        .batch-action-btn { 
+            background: #22c55e; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 50px; 
+            font-weight: 800; 
+            font-size: 11px; 
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 2px 10px rgba(34,197,94,0.4); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        
+        /* Checkbox Logic */
+        .batch-mode .select-check { 
+            transform: scale(1); 
+            width: 24px; 
+            height: 24px; 
+            margin-right: 12px; 
+            opacity: 1; 
+        }
+        .select-check { 
+            width: 0; 
+            margin: 0; 
+            opacity: 0; 
+            transition: all 0.2s; 
+            accent-color: var(--brand-green); 
+        }
+        .batch-row { 
+            display: flex; 
+            align-items: center; 
+            padding: 0 4px; 
+        }
 
         /* Photo Editor */
-        #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
-        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
-        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; }
-        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
-        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
-        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        #view-photo-editor { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #000; 
+            z-index: 7000; 
+            display: none; 
+            flex-direction: column; 
+        }
+        .editor-canvas-container { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        .editor-canvas-container img { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 8px; 
+        }
+        .editor-controls { 
+            background: #111827; 
+            padding: 20px; 
+            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+        }
+        .filter-scroll { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        .filter-btn { 
+            flex: 0 0 auto; 
+            background: #374151; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: 1px solid #4b5563; 
+        }
+        .filter-btn.active { 
+            background: #007a4d; 
+            border-color: #007a4d; 
+        }
 
-        /* Misc */
-        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s; display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
-        #toast-notification.show { top: 20px; }
-        #loading-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; }
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-        .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
-        .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        /* Misc Components */
+        #toast-notification { 
+            position: fixed; 
+            top: -100px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: #16a34a; 
+            color: white; 
+            padding: 12px 20px; 
+            border-radius: 50px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
+            z-index: 9999; 
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            width: auto; 
+            min-width: 200px; 
+            justify-content: center; 
+            font-weight: 600; 
+            font-size: 14px; 
+            pointer-events: none; 
+        }
+        #toast-notification.show { 
+            top: 20px; 
+        }
+        .task-tabs { 
+            display: flex; 
+            background: white; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid #e5e7eb; 
+            overflow-x: auto; 
+        }
+        .task-tab { 
+            padding: 12px 16px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            white-space: nowrap; 
+        }
+        .task-tab.active { 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
+        }
         
-        /* New Batch Bar */
-        #batch-bar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150%); background: #111827; color: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: space-between; width: 90%; max-width: 400px; z-index: 4000; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #batch-bar.active { transform: translateX(-50%) translateY(0); }
-        .batch-count { font-weight: 700; font-size: 14px; margin-left: 10px; }
-        .batch-complete-btn { background: #007a4d; color: white; padding: 10px 24px; border-radius: 30px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
-        .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
+        .season-scroll { 
+            display: flex; 
+            gap: 8px; 
+            overflow-x: auto; 
+            margin-bottom: 12px; 
+            padding: 4px 0; 
+        }
+        .season-chip { 
+            flex: 0 0 auto; 
+            padding: 8px 16px; 
+            background: white; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #374151; 
+            cursor: pointer; 
+        }
+        .season-chip.active { 
+            background: #007a4d; 
+            color: white; 
+            border-color: #007a4d; 
+        }
+        
+        /* Batch Grid */
+        .batch-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        .batch-btn { 
+            background: #f9fafb; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 12px; 
+            padding: 16px; 
+            text-align: center; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
+        .batch-btn:active { 
+            background: #e5e7eb; 
+        }
+        .batch-btn i { 
+            font-size: 28px; 
+        }
+        .batch-btn span { 
+            font-weight: 700; 
+            font-size: 12px; 
+            color: #374151; 
+        }
+        .batch-header { 
+            font-size: 11px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            color: #9ca3af; 
+            margin: 15px 0 8px 0; 
+        }
 
-        .season-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px; }
-        .season-chip { flex: 0 0 auto; padding: 6px 16px; background: #f3f4f6; border-radius: 20px; font-size: 11px; font-weight: 700; color: #374151; cursor: pointer; border: 1px solid #e5e7eb; }
-        .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; }
-        .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
-        .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-        .text-production { color: #d97706; }
+        .home-btn { 
+            background: white; 
+            padding: 24px; 
+            border-radius: 12px; 
+            border: 1px solid #e5e7eb; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
         
+        #ptr-spinner { 
+            position: absolute; 
+            top: -40px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 10; 
+            transition: top 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 30px; 
+            height: 30px; 
+            background: white; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        #ptr-spinner i { 
+            color: var(--brand-green); 
+            font-size: 18px; 
+        }
+
         .ms-container { position: relative; margin-bottom: 8px; }
         .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
         .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 4px; }
@@ -114,16 +587,6 @@
         .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
         .ms-option:hover { background: #f9fafb; }
         .ms-option.selected { background-color: #f0fdf4; }
-        #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
-
-        /* Batch Modal Grid */
-        .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .batch-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
-        .batch-btn:active { background: #e5e7eb; transform: scale(0.98); }
-        .batch-btn i { font-size: 24px; margin-bottom: 8px; display: block; }
-        .batch-btn span { font-weight: 700; font-size: 12px; color: #374151; display: block; }
-        .batch-section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -135,8 +598,10 @@
             <i class="ph-bold ph-lock-key text-4xl text-yellow-500 mb-4"></i>
             <h2 class="text-xl font-bold text-gray-800 mb-2">Security Update</h2>
             <p class="text-sm text-gray-500 mb-6">Please update your password to continue.</p>
+            
             <input type="password" id="new-pass-1" class="input-field mb-3 text-center" placeholder="New Password">
             <input type="password" id="new-pass-2" class="input-field mb-6 text-center" placeholder="Confirm Password">
+            
             <button onclick="submitNewPassword()" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-lg">UPDATE PASSWORD</button>
             <div id="pwd-error" class="text-red-500 text-xs font-bold mt-4 hidden">Passwords do not match</div>
         </div>
@@ -146,11 +611,11 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 048
+                TURBO 043
             </div>
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
-            <div id="login-buttons">
+            <div id="login-buttons" class="w-full">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Admin)</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
                 <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
@@ -159,26 +624,24 @@
                 <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()"><i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login</button>
             </div>
 
-            <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input w-full" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
-                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
+            <div id="pin-container" class="hidden mt-4 w-full">
+                <input type="password" id="pin-code" class="pin-input w-full" placeholder="PIN" maxlength="4" inputmode="numeric">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl mb-3 shadow-lg" onclick="verifyPin()">ENTER</button>
+                <button class="text-gray-400 text-sm font-bold underline w-full" onclick="resetLogin()">Cancel</button>
             </div>
 
-            <div id="rep-login-container" class="hidden mt-4">
-                <h3 class="text-sm font-bold text-gray-700 mb-3">Sales Representative</h3>
+            <div id="rep-login-container" class="hidden mt-4 w-full">
+                <h3 class="text-sm font-bold text-gray-700 mb-3 text-left">Sales Representative</h3>
                 <input type="email" id="rep-email" class="input-field mb-2" placeholder="Email Address">
-                <input type="password" id="rep-pass" class="input-field mb-3" placeholder="Password">
-                <button id="btn-rep-login" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyRepLogin()">LOGIN</button>
-                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
+                <input type="password" id="rep-pass" class="input-field mb-4" placeholder="Password">
+                <button id="btn-rep-login" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl mb-3 shadow-lg" onclick="verifyRepLogin()">LOGIN</button>
+                <button class="text-gray-400 text-sm font-bold underline w-full" onclick="resetLogin()">Cancel</button>
             </div>
 
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="w-8 h-8 border-4 border-gray-200 border-t-[#007a4d] rounded-full animate-spin"></div>
                 <div id="loading-text" class="text-gray-500 font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
             </div>
-            
-            <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 text-xs"></div>
         </div>
     </div>
 
@@ -188,10 +651,10 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 048 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 043 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
                 </div>
             </div>
-            <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
+            <div id="batch-indicator" class="text-[10px] font-bold bg-white text-[#007a4d] px-2 py-1 rounded hidden" onclick="toggleBatch()">BATCH ON</div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -236,9 +699,8 @@
             </div>
 
             <div id="view-inventory" class="hidden">
-                <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory Lookup</h2>
-                <div class="season-scroll" id="inv-season-bar"><div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div><div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div><div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div><div class="season-chip" onclick="toggleInventorySeason('U1', this)">U1</div><div class="season-chip" onclick="toggleInventorySeason('U2', this)">U2</div><div class="season-chip" onclick="toggleInventorySeason('U3', this)">U3</div><div class="season-chip" onclick="toggleInventorySeason('X', this)">X</div><div class="season-chip" onclick="toggleInventorySeason('Y', this)">Y</div><div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div></div>
                 <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'inventory')">
+                <div class="season-scroll" id="inv-season-bar"><div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div><div class="season-chip" onclick="toggleInventorySeason('S1', this)">S1</div><div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div><div class="season-chip" onclick="toggleInventorySeason('U1', this)">U1</div></div>
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
             </div>
@@ -252,28 +714,28 @@
                 <div id="drive-content"></div>
             </div>
 
-            <div id="view-production" class="hidden">
-                <h2 class="text-sm font-bold text-production uppercase mb-4">Production & Grower Notes</h2>
-                <div class="season-scroll" id="prod-season-bar"><div class="season-chip active" onclick="toggleProductionSeason('ALL', this)">ALL</div><div class="season-chip" onclick="toggleProductionSeason('S1', this)">S1</div><div class="season-chip" onclick="toggleProductionSeason('F1', this)">F1</div></div>
-                <input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleSearchDebounced(this.value, 'production')">
-                <div id="production-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
-                <div id="production-content"></div>
-            </div>
+            <div id="view-production" class="hidden"><input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleSearchDebounced(this.value, 'production')"><div id="production-content"></div></div>
+            <div id="view-my-requests" class="hidden"><h2 class="text-sm font-bold text-purple-600 uppercase mb-4">My Requests</h2><div id="my-requests-content"></div></div>
+            <div id="view-review" class="hidden"><h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2><div class="task-tabs mb-4"><div id="rtab-inventory" class="task-tab active" onclick="setReviewTab('inventory')">Inventory</div><div id="rtab-pending" class="task-tab" onclick="setReviewTab('pending')">Pending Reqs</div><div id="rtab-completed" class="task-tab" onclick="setReviewTab('completed')">Done Reqs</div></div><div id="review-content"></div></div>
+            <div id="view-salesoffice" class="hidden"><h2 class="text-sm font-bold text-green-700 uppercase mb-4">Sales Office</h2><div id="salesoffice-content"></div></div>
+            <div id="view-soc" class="hidden"><div id="soc-content"></div></div>
+            <div id="view-directory" class="hidden"><div id="directory-content"></div></div>
+            <div id="view-viewer" class="hidden"><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search All..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
 
             <div id="view-tasks" class="hidden">
-                <div class="flex justify-between items-center mb-4"><h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2><span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span></div>
+                <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-gray-800">My Tasks</h2><span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span></div>
                 <input type="text" id="task-search" class="input-field mb-4" placeholder="Search tasks..." onkeyup="renderTasks()">
                 <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
-                    <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
-                    <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
-                    <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
-                    <div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer" onclick="setTaskUser('ASSIST')">Assist Team (K & M)</div>
+                    <div class="p-4 border rounded-xl text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
+                    <div class="p-4 border rounded-xl text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
+                    <div class="p-4 border rounded-xl text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
+                    <div class="p-4 border rounded-xl text-center font-bold bg-orange-50 text-orange-700 cursor-pointer" onclick="setTaskUser('ASSIST')">Assist Team</div>
                 </div>
                 <div id="task-tabs-container" class="task-tabs hidden">
-                    <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
-                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
-                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div>
-                    <div id="ttab-flyer" class="task-tab text-indigo-600" onclick="setTaskTab('flyer')">Flyer</div>
+                    <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">REQUESTS</div>
+                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">SEASON</div>
+                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">LOCATION</div>
+                    <div id="ttab-flyer" class="task-tab text-indigo-600" onclick="setTaskTab('flyer')">FLYER</div>
                 </div>
                 <div id="flyer-sub-tabs" class="hidden season-scroll mb-2">
                     <div class="season-chip active" onclick="setFlyerCat('Crop Update', this)">Crop Update</div>
@@ -283,35 +745,18 @@
                 <div id="task-content"></div>
             </div>
 
-            <div id="view-my-requests" class="hidden"><h2 class="text-sm font-bold text-purple-600 uppercase mb-4">My Completed Requests</h2><div id="my-requests-content"></div></div>
-
-            <div id="view-review" class="hidden">
-                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
-                <div class="task-tabs mb-4"><div id="rtab-inventory" class="task-tab active" onclick="setReviewTab('inventory')">Inventory</div><div id="rtab-pending" class="task-tab" onclick="setReviewTab('pending')">Pending Reqs</div><div id="rtab-completed" class="task-tab" onclick="setReviewTab('completed')">Done Reqs</div></div>
-                <div id="failed-saves-container"></div>
-                <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewItems()">
-                <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
-                <div id="review-content"></div>
-            </div>
-
-            <div id="view-salesoffice" class="hidden"><h2 class="text-sm font-bold text-green-700 uppercase mb-4">Sales Office Notes</h2><input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderSalesOffice()"><div id="salesoffice-content"></div></div>
-            <div id="view-soc" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2><div class="task-tabs mb-4"><div id="st-reps" class="task-tab active" onclick="switchSocTab('reps')">Sales Reps</div><div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div></div><input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderSocView()"><div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div><div id="soc-content"></div></div>
-            <div id="view-tracking" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Tracking</h2><input type="text" id="tracking-search" class="input-field mb-4" placeholder="Search Tracking..."></div>
-            <div id="view-viewer" class="hidden"><h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Viewer</h2><input type="text" id="viewer-search" class="input-field mb-4" placeholder="Search All Items..." onkeyup="renderViewerNames()"><div id="viewer-content"></div></div>
-            <div id="view-directory" class="hidden"><h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-address-book text-xl"></i> Company Directory</h2><div class="task-tabs mb-4"><div class="task-tab active">Sales Reps</div></div><input type="text" id="directory-search" class="input-field mb-4" placeholder="Search Rep Name..." onkeyup="renderDirectoryView()"><div id="directory-content"></div></div>
-
             <div id="view-detail" class="hidden">
                 <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
-                <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
-                <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
+                <h1 id="det-common" class="text-2xl font-bold text-[#007a4d] leading-tight mb-1">--</h1>
+                <p id="det-size" class="text-gray-500 font-bold mb-4 text-lg">--</p>
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
                     <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
-                    <div class="detail-tab hidden" onclick="switchDetailTab('grower')" id="dtab-grower">Grower Notes</div>
+                    <div class="detail-tab hidden" onclick="switchDetailTab('grower')" id="dtab-grower">Grower</div>
                 </div>
                 
                 <div id="det-overview-content" class="py-4">
-                    <div id="live-field-data" class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6 hidden">
+                    <div id="live-field-data" class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6 hidden">
                         <h3 class="text-[10px] font-bold text-blue-800 uppercase mb-3 flex items-center gap-2"><i class="ph-fill ph-note-pencil"></i> Live Field Data</h3>
                         <div class="grid grid-cols-2 gap-4">
                             <div><div class="text-[10px] text-gray-500 font-bold uppercase">Match %</div><div id="lfd-match" class="font-bold text-gray-800">--</div></div>
@@ -334,10 +779,7 @@
                 </div>
 
                 <div id="det-actions-content" class="hidden py-4">
-                    <div id="draft-alert" class="hidden bg-yellow-100 p-3 rounded text-xs text-yellow-800 mb-4 font-bold border border-yellow-200 flex items-center gap-2"><i class="ph-bold ph-floppy-disk text-lg"></i> Unsaved text restored from backup.</div>
-                    <div id="request-complete-container" class="mb-6 hidden"><button onclick="markRequestComplete()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg border-2 border-blue-800 flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle text-2xl"></i> MARK REQUEST COMPLETE</button></div>
-                    <div id="readonly-lock-banner" class="hidden bg-gray-100 p-3 rounded text-xs text-gray-500 mb-4 font-bold border border-gray-200 flex items-center gap-2"><i class="ph-bold ph-lock-key text-lg"></i> Data is locked. (10-Day / 10% Rule Active)</div>
-                    <div id="photo-preview" class="mb-4 hidden"><p class="text-[10px] font-bold text-blue-600 mb-1">PHOTOS ON FILE</p><div id="photo-list-container" class="space-y-2"></div></div>
+                    <div id="photo-preview" class="mb-6 hidden"><p class="text-[10px] font-bold text-blue-600 mb-2 uppercase">Photos on File</p><div id="photo-list-container" class="space-y-2"></div></div>
                     
                     <div class="cam-grid grid grid-cols-2 gap-4 mb-6">
                         <label class="bg-gray-100 border border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer active:bg-gray-200">
@@ -353,7 +795,7 @@
                     <div id="input-container" class="input-stack">
                         </div>
                     
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-6" onclick="saveData()">SAVE & LOCK DATA</button>
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-6 text-lg" onclick="saveData()">SAVE & LOCK DATA</button>
                 </div>
                 
                 <div id="det-grower-content" class="hidden py-4">
@@ -372,10 +814,8 @@
                 <i class="ph-fill ph-check-circle text-2xl text-green-400"></i>
                 <span id="batch-count" class="batch-count">0 Selected</span>
             </div>
-            <button class="batch-complete-btn" onclick="openBatchModal()">COMPLETE ACTIONS <i class="ph-bold ph-caret-right"></i></button>
+            <button class="batch-action-btn" onclick="openBatchModal()">Complete Actions <i class="ph-bold ph-caret-right"></i></button>
         </div>
-
-        <datalist id="sales-notes-datalist"></datalist>
 
         <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
@@ -392,21 +832,21 @@
                 <i class="ph-bold ph-x text-2xl cursor-pointer text-gray-400" onclick="closeBatchModal()"></i>
             </div>
             
-            <div class="batch-section-title">Assign To Team</div>
+            <div class="batch-header">Assign Team</div>
             <div class="batch-grid">
-                <div class="batch-btn" onclick="batchAssign('Dylan')"><i class="ph-fill ph-user text-blue-600"></i><span>Dylan</span></div>
-                <div class="batch-btn" onclick="batchAssign('Kayla')"><i class="ph-fill ph-user text-pink-600"></i><span>Kayla</span></div>
-                <div class="batch-btn" onclick="batchAssign('Morgan')"><i class="ph-fill ph-user text-purple-600"></i><span>Morgan</span></div>
-                <div class="batch-btn" onclick="batchAssign('Kayla, Morgan')"><i class="ph-fill ph-users text-orange-600"></i><span>Assist (K&M)</span></div>
-                <div class="batch-btn col-span-2 bg-green-50 border-green-200" onclick="batchAssign('Dylan, Kayla, Morgan')"><i class="ph-fill ph-users-three text-[#007a4d]"></i><span>All 3 (Team)</span></div>
+                <div class="batch-btn" onclick="batchAssign('Dylan')"><i class="ph-fill ph-user text-blue-500"></i><span>Dylan</span></div>
+                <div class="batch-btn" onclick="batchAssign('Kayla')"><i class="ph-fill ph-user text-pink-500"></i><span>Kayla</span></div>
+                <div class="batch-btn" onclick="batchAssign('Morgan')"><i class="ph-fill ph-user text-purple-500"></i><span>Morgan</span></div>
+                <div class="batch-btn" onclick="batchAssign('Kayla, Morgan')"><i class="ph-fill ph-users text-orange-500"></i><span>Assist (K&M)</span></div>
+                <div class="batch-btn col-span-2 bg-green-50 border-green-200" onclick="batchAssign('Dylan, Kayla, Morgan')"><i class="ph-fill ph-users-three text-green-600"></i><span>All 3 (Team)</span></div>
             </div>
 
-            <div class="batch-section-title">Admin Actions</div>
+            <div class="batch-header">Tools</div>
             <div class="batch-grid">
-                <div class="batch-btn bg-indigo-50 border-indigo-200 text-indigo-800 col-span-2" onclick="openFlyerModal()"><i class="ph-fill ph-newspaper text-indigo-600"></i><span>Assign to Flyer</span></div>
-                <div class="batch-btn" onclick="batchEmail()"><i class="ph-fill ph-envelope text-gray-600"></i><span>Email</span></div>
+                <div class="batch-btn bg-indigo-50 border-indigo-200 text-indigo-700 col-span-2" onclick="openFlyerModal()"><i class="ph-fill ph-newspaper"></i><span>Assign to Flyer</span></div>
+                <div class="batch-btn" onclick="batchEmail()"><i class="ph-fill ph-envelope text-gray-500"></i><span>Email</span></div>
                 <div class="batch-btn" onclick="batchText()"><i class="ph-fill ph-chat-text text-gray-600"></i><span>Text</span></div>
-                <div class="batch-btn" onclick="copyBatchData()"><i class="ph-fill ph-copy text-gray-600"></i><span>Copy</span></div>
+                <div class="batch-btn" onclick="copyBatchData()"><i class="ph-fill ph-copy text-gray-500"></i><span>Copy</span></div>
                 <div class="batch-btn bg-purple-50 border-purple-200 text-purple-800" onclick="batchAssignRepView()"><i class="ph-fill ph-storefront text-purple-600"></i><span>Sales Rep View</span></div>
             </div>
         </div>
@@ -568,20 +1008,14 @@
             if(isSilent && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
-                const json = await res.json();
+                if (!res.ok) { alert("Network Error: " + res.status); throw new Error("Network Response Failed"); }
+                const text = await res.text();
+                if (text.trim().startsWith("<!DOCTYPE") || text.includes("<html")) { alert("PERMISSIONS ERROR: Set Script to 'Anyone'."); throw new Error("Permissions Error"); }
+                const json = JSON.parse(text);
                 if(json.status === 'success') {
                     fullInventory = json.data;
                     noteTemplates = json.templates || [];
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-                    
-                    // Populate Datalist for Sales Notes
-                    const datalist = document.getElementById('sales-notes-datalist');
-                    datalist.innerHTML = "";
-                    noteTemplates.forEach(t => {
-                        const opt = document.createElement('option');
-                        opt.value = t.note;
-                        datalist.appendChild(opt);
-                    });
                     
                     applyLocalLogic(); 
 
@@ -757,15 +1191,14 @@
         }
 
         function renderTasks() {
-            const container = document.getElementById('task-content'); 
-            const crumb = document.getElementById('task-crumb'); 
-            document.getElementById('task-tabs-container').classList.remove('hidden'); 
+            const container = document.getElementById('task-content'); 
+            const crumb = document.getElementById('task-crumb'); 
+            document.getElementById('task-tabs-container').classList.remove('hidden'); 
             document.getElementById('flyer-sub-tabs').classList.add('hidden'); // Default hide
 
-            let myItems = []; 
-            const now = new Date().getTime();
+            let myItems = []; 
             
-            const taskFilter = (i) => { 
+            const taskFilter = (i) => { 
                 if (!matchesUser(i.ASSIGNEDTO, taskViewTargetUser)) return false;
                 
                 // *** STRICT TAB FILTERING ***
@@ -782,7 +1215,7 @@
                 } else {
                     return false;
                 }
-                return true; 
+                return true; 
             };
             
             if (currentTab === 'flyer') {
@@ -792,57 +1225,57 @@
 
             myItems = fullInventory.filter(taskFilter);
             
-            const term = document.getElementById('task-search').value.toLowerCase(); 
-            if (term) { 
-                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
-                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
-                return; 
+            const term = document.getElementById('task-search').value.toLowerCase(); 
+            if (term) { 
+                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
             }
             
-            if(myItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found for this tab.</div>`; 
-                return; 
+            if(myItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found for this tab.</div>`; 
+                return; 
             }
             
-            if(currentTab === 'requests' || currentTab === 'flyer') { 
+            if(currentTab === 'requests' || currentTab === 'flyer') { 
                 // Flat list for requests and flyer
                 let backHtml = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>`;
-                container.innerHTML = backHtml + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
-                return; 
+                container.innerHTML = backHtml + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
             }
             
             // --- Normal Drill Down for Season/Location ---
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
             
-            if(taskViewLevel === 0) { 
-                crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
-                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); 
-                if(blocks.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
-                    return; 
-                } 
-                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
-            } else if (taskViewLevel === 1) { 
-                crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
-                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); 
-                const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); 
-                container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
-            } else { 
-                crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
-                let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); 
-                items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
-                container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
-            } 
+            if(taskViewLevel === 0) { 
+                crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); 
+                if(blocks.length === 0) { 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
+                    return; 
+                } 
+                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+            } else if (taskViewLevel === 1) { 
+                crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
+                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); 
+                const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); 
+                container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+            } else { 
+                crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); 
+                items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
+                container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+            } 
         }
         
         function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
         function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
-        function setTaskTab(t) { 
-            currentTab = t; 
+        function setTaskTab(t) { 
+            currentTab = t; 
             document.querySelectorAll('.task-tab').forEach(el => el.classList.remove('active'));
             document.getElementById('ttab-'+t).classList.add('active');
-            taskViewLevel = 0; 
-            renderTasks(); 
+            taskViewLevel = 0; 
+            renderTasks(); 
         }
         function setFlyerCat(cat, el) {
             currentFlyerCat = cat;
@@ -904,7 +1337,7 @@
         function batchAssign(userStr) {
             const updates = selectedIdx.map(idx => {
                 const item = fullInventory[idx];
-                item.ASSIGNEDTO = userStr; 
+                item.ASSIGNEDTO = userStr; 
                 return { id: item.UNIQUE_ID, assignedTo: userStr };
             });
             closeBatchModal();
@@ -942,13 +1375,13 @@
                 item.ASSIGNEDTO = user;
                 item.FLYER_DEADLINE = dead;
                 item.FLYER_INSTRUCTIONS = instr;
-                return { 
-                    id: item.UNIQUE_ID, 
-                    taskTab: 'flyer', 
-                    flyerCat: cat, 
-                    assignedTo: user, 
-                    flyerDeadline: dead, 
-                    flyerInstr: instr 
+                return { 
+                    id: item.UNIQUE_ID, 
+                    taskTab: 'flyer', 
+                    flyerCat: cat, 
+                    assignedTo: user, 
+                    flyerDeadline: dead, 
+                    flyerInstr: instr 
                 };
             });
 
@@ -957,8 +1390,8 @@
             showToast("Assigned", `Added to Flyer: ${cat}`);
 
             // Send payload to backend to save data AND trigger email
-            const payload = { 
-                type: "assign_flyer", 
+            const payload = { 
+                type: "assign_flyer", 
                 updates: updates,
                 adminName: currentUser
             };
@@ -1002,7 +1435,7 @@
 
             // HOLD/STOP LOGIC
             let stopCode = (item.HOLDSTOPCODE || "").toUpperCase();
-            let cardClass = "card-green"; 
+            let cardClass = "card-green"; 
             if (stopCode.includes("H")) cardClass = "card-yellow";
             if (stopCode.includes("S")) cardClass = "card-red";
 
@@ -1024,31 +1457,6 @@
             </div>`;
         }
 
-        // --- BATCH LOGIC (2.0s Hold - Fixed) ---
-        function startPress(id) {
-            if(isBatch) { 
-                let cb = document.querySelector(`input[value="${id}"]`);
-                if(cb) { cb.checked = !cb.checked; updateBatch(); }
-                return;
-            }
-            pressTimer = setTimeout(() => {
-                isBatch = true;
-                document.body.classList.add('batch-mode');
-                document.getElementById('batch-indicator').classList.remove('hidden');
-                let cb = document.querySelector(`input[value="${id}"]`);
-                if(cb) { cb.checked = true; updateBatch(); }
-                navigator.vibrate(50); 
-            }, 2000); 
-        }
-        
-        function cancelPress(id) { 
-            clearTimeout(pressTimer); 
-            if(!isBatch && id && !document.querySelector(`input[value="${id}"]`).checked) {
-                // Simple Tap = Open Detail
-                openDetail(inventory.find(i => i.UNIQUEID === id));
-            }
-        }
-        
         function handleCardClick(idx, source) {
             if (isBatch) {
                 const cb = document.getElementById('cb-' + idx);
@@ -1063,7 +1471,7 @@
 
         function openDetail(idx, source) {
             activeItem = fullInventory[idx];
-            currentOriginView = source; 
+            currentOriginView = source; 
             localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
             switchView('detail');
             renderOverviewData();
@@ -1081,7 +1489,208 @@
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
             document.getElementById('ov-sales').innerText = activeItem.SAVED_SALES_DESC || "--";
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILE || "--";
-             
+            
+            // LIVE FIELD DATA VISIBILITY
+            const liveBox = document.getElementById('live-field-data');
+            if (activeItem.SAVED_NOTE || activeItem.SAVED_MATCH || activeItem.SAVED_SPEC) {
+                liveBox.classList.remove('hidden');
+                document.getElementById('lfd-match').innerText = activeItem.SAVED_MATCH ? activeItem.SAVED_MATCH + "%" : "--";
+                document.getElementById('lfd-spec').innerText = activeItem.SAVED_SPEC || "--";
+                document.getElementById('lfd-note').innerText = activeItem.SAVED_NOTE || "No notes.";
+            } else {
+                liveBox.classList.add('hidden');
+            }
+
+            switchDetailTab('overview');
+        }
+
+        function goBackFromDetail() {
+            activeItem = null;
+            localStorage.removeItem('gl_active_item');
+            if (currentOriginView) {
+                switchView(currentOriginView);
+            } else {
+                switchView('home');
+            }
+        }
+
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+
+        // --- VIEWER LOGIC ---
+        function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; } document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+
+        // --- NEW: MANAGER REVIEW TABS ---
+        function setReviewTab(t) { currentReviewTab = t; document.querySelectorAll('#view-review .task-tab').forEach(el => el.classList.remove('active')); document.getElementById('rtab-'+t).classList.add('active'); reviewViewLevel = 0; renderReviewItems(); }
+        function renderReviewItems() {
+            const container = document.getElementById('review-content'); const term = document.getElementById('review-search').value.toLowerCase(); let filteredItems = [];
+            
+            // Logic: Manager Review now holds 'manager_review' status items (Failed Winners)
+            if(currentReviewTab === 'inventory') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review');
+            else if (currentReviewTab === 'pending') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review_req' || (i.REQ_STATUS === 'NEW' && i.TASK_TAB !== 'rep_view'));
+            else if (currentReviewTab === 'completed') filteredItems = fullInventory.filter(i => i.REQ_STATUS === 'WORKED');
+
+            if(term) filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term));
+            if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
+
+            if(reviewViewLevel === 0) {
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if(reviewViewLevel === 1) {
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else {
+                const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && i.CONTSIZE === selectedReviewSize);
+                const html = finalItems.map(item => {
+                    let actionBtn = ""; if(currentReviewTab === 'completed') actionBtn = `<div class="p-2"><button onclick="sendToRep('${item.UNIQUE_ID}')" class="w-full bg-purple-600 text-white font-bold py-2 rounded text-xs">SEND TO REP</button></div>`;
+                    return createRowHtml(item, fullInventory.indexOf(item), 'review') + actionBtn;
+                }).join('');
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + html;
+            }
+        }
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
+        function sendToRep(id) {
+            const item = fullInventory.find(i => i.UNIQUE_ID === id); if(!confirm("Send this completed request back to " + item.UPDATEDBY + "?")) return;
+            item.TASK_TAB = 'rep_view'; item.REQ_STATUS = 'SENT'; renderReviewItems();
+            const payload = { type: "send_to_rep", id: id, reqId: item.REQUEST_ID, customer: item.CUSTOMER_NAME, user: currentUser, repEmail: STATIC_DIRECTORY.find(r => r.name === item.UPDATEDBY)?.email || "" };
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+        }
+
+        // --- SALES OFFICE LOGIC ---
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); const searchInput = document.getElementById('salesoffice-search'); const term = searchInput ? searchInput.value.toLowerCase() : '';
+            const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(i.OFFICE_DONE_TIME) return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
+            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            container.innerHTML = salesItems.map((item) => { const masterIndex = fullInventory.indexOf(item); 
+                // *** ADDED: Thumbnail support for Sales Office ***
+                let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded bg-gray-200 mr-2">`; }
+                return `<div class="inv-card mb-3 !p-4 border-green-200"><div class="flex justify-between items-start"><div class="flex items-center gap-2">${thumbHtml}<div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div></div><button onclick="markSalesOfficeDone(${masterIndex})" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-300 flex items-center gap-1 active:scale-95 transition-transform"><i class="ph-bold ph-check"></i> MARK DONE</button></div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Loc: <span class="text-gray-800">${item.LOCATIONCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`; 
+            }).join('');
+        }
+        function markSalesOfficeDone(masterIndex) { if(!confirm("Mark this item as read/done? It will be removed from this list.")) return; const item = fullInventory[masterIndex]; if(!item) return; item.OFFICE_DONE_TIME = new Date().toISOString(); renderSalesOffice(); showToast("Marked Done", "Removed from list."); const payload = { type: "update", id: item.UNIQUE_ID, markOfficeDone: true, user: currentUser }; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload)); }
+
+        // --- NEW: REP REQUESTS VIEW ---
+        function renderRepRequests() {
+            const container = document.getElementById('my-requests-content');
+            if(!container) return;
+            const myReqs = fullInventory.filter(i => i.TASK_TAB === 'rep_view' && i.REQ_STATUS === 'SENT'); 
+            if(myReqs.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed requests.</div>`; return; }
+            container.innerHTML = myReqs.map((item, idx) => createRowHtml(item, fullInventory.indexOf(item), 'my-requests')).join('');
+        }
+
+        // --- REQUEST SYSTEM ---
+        function openRequestModal() {
+            if(selectedIdx.length === 0) { showToast("Error", "Select items first.", true); return; }
+            const list = document.getElementById('req-item-list');
+            let html = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                html += `<div class="flex justify-between items-center mb-2"><span class="truncate w-1/2 font-bold">${item.COMMONNAME}</span><input type="number" id="qty-${item.UNIQUE_ID}" class="border rounded p-1 w-20 text-center" placeholder="Qty" value="1"></div>`;
+            });
+            list.innerHTML = html;
+            document.getElementById('request-modal').style.display = 'flex';
+        }
+        function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
+        function submitRequest() {
+            const customer = document.getElementById('req-customer').value;
+            if(!customer) { showToast("Error", "Customer Name required", true); return; }
+            let initials = "REP";
+            if(currentUser) {
+                const parts = currentUser.split(" ");
+                if(parts.length >= 2) initials = parts[0][0] + "." + parts[1][0];
+                else initials = currentUser.substring(0,3);
+            }
+            const date = new Date().toISOString().split('T')[0];
+            const seq = Math.floor(Math.random() * 10000); 
+            const reqId = `${initials.toUpperCase()}-${customer.substring(0,10).toUpperCase()}-${seq}-${date}`;
+            const items = selectedIdx.map(idx => {
+                let item = fullInventory[idx];
+                let qty = document.getElementById('qty-' + item.UNIQUE_ID).value;
+                return { id: item.UNIQUE_ID, qty: qty };
+            });
+            const payload = {
+                type: "create_request", requestId: reqId, repName: currentUser,
+                repEmail: STATIC_DIRECTORY.find(r => r.name === currentUser)?.email || "",
+                customer: customer, shipTime: document.getElementById('req-ship').value, endUse: document.getElementById('req-use').value, items: items
+            };
+            closeRequestModal(); toggleBatch(); showToast("Submitting...", "Sending request to managers...");
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
+        }
+
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
+            let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
+            if(item.REQUEST_ID) badges += `<span class="data-badge" style="background:#fef3c7; color:#d97706; border:1px solid #fcd34d">REQ: ${item.CUSTOMER_NAME}</span>`;
+            
+            // Flyer Badges
+            if(item.TASK_TAB === 'flyer') {
+                badges += `<div class="w-full mt-2 text-[10px] bg-indigo-50 border border-indigo-200 p-2 rounded text-indigo-800">
+                    <div class="font-bold flex justify-between"><span>DUE: ${item.FLYER_DEADLINE || 'N/A'}</span></div>
+                    <div class="italic mt-1">"${item.FLYER_INSTRUCTIONS || ''}"</div>
+                </div>`;
+            }
+
+            // HOLD/STOP LOGIC
+            let stopCode = (item.HOLDSTOPCODE || "").toUpperCase();
+            let cardClass = "card-green"; 
+            if (stopCode.includes("H")) cardClass = "card-yellow";
+            if (stopCode.includes("S")) cardClass = "card-red";
+
+            return `<div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                ${(isAdmin || !isAdmin && source === 'inventory') ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-start">
+                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
+                        </div>
+                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
+                        <div class="text-xs text-gray-500 truncate">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong></div>
+                        <div class="text-xs text-gray-500 truncate mb-1">Tag Color: <strong>${item.FIELDTAGCOLOR || 'N/A'}</strong> | Lot: ${item.LOTCODE || '-'} | Stop: <strong>${item.HOLDSTOPCODE || ''}</strong></div>
+                        <div class="flex flex-wrap">${badges}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function handleCardClick(idx, source) {
+            if (isBatch) {
+                const cb = document.getElementById('cb-' + idx);
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    updateSelected();
+                }
+                return;
+            }
+            openDetail(idx, source);
+        }
+
+        function openDetail(idx, source) {
+            activeItem = fullInventory[idx];
+            currentOriginView = source; 
+            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
+            switchView('detail');
+            renderOverviewData();
+        }
+
+        function renderOverviewData() {
+            if (!activeItem) return;
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME || "Unknown";
+            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
+            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
+            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
+            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
+            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
+            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
+            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
+            document.getElementById('ov-sales').innerText = activeItem.SAVED_SALES_DESC || "--";
+            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILE || "--";
+            
             // LIVE FIELD DATA VISIBILITY
             const liveBox = document.getElementById('live-field-data');
             if (activeItem.SAVED_NOTE || activeItem.SAVED_MATCH || activeItem.SAVED_SPEC) {
@@ -1172,10 +1781,9 @@
             container.innerHTML = `
                 <div class="input-group">
                     <span class="input-label">Season Sales Note (Dropdown)</span>
-                    <input list="sales-notes-list" id="in-sales-desc" class="input-field" placeholder="Select or Type..." oninput="this.value = this.value.toUpperCase(); saveDraft();">
-                    <datalist id="sales-notes-list">
-                         ${noteOptions}
-                    </datalist>
+                    <select id="in-sales-desc" class="input-field bg-white" onchange="saveDraft()">
+                        ${noteOptions}
+                    </select>
                 </div>
                 
                 <div class="input-group">
@@ -1223,7 +1831,7 @@
 
         function saveDraft() {
             const btn = document.getElementById('btn-save');
-            if(btn) btn.innerText = "SAVE CHANGES *"; 
+            if(btn) btn.innerText = "SAVE CHANGES *"; 
         }
 
         function saveData() {
@@ -1244,15 +1852,15 @@
             
             showToast("Saving...", "Syncing to database...");
             
-            const payload = { 
-                type: "update_item", 
-                id: activeItem.UNIQUE_ID, 
-                note: note, 
+            const payload = { 
+                type: "update_item", 
+                id: activeItem.UNIQUE_ID, 
+                note: note, 
                 salesDesc: salesDesc,
-                match: match, 
-                spec: spec, 
+                match: match, 
+                spec: spec, 
                 caliper: caliper,
-                user: currentUser 
+                user: currentUser 
             };
             
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
@@ -1275,8 +1883,8 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     img.src = e.target.result;
-                    editor.style.display = 'flex'; 
-                    currentFile = file; 
+                    editor.style.display = 'flex'; 
+                    currentFile = file; 
                 }
                 reader.readAsDataURL(file);
                 input.value = '';
