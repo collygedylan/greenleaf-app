@@ -672,6 +672,147 @@
                 </div>
             </div>`;
         }
+
+        // --- DETAIL VIEW LOGIC (MISSING PART ADDED) ---
+
+        function handleCardClick(idx, source) {
+            // If we are in "Batch Mode", clicking the card selects it instead of opening it
+            if (isBatch) {
+                const cb = document.getElementById('cb-' + idx);
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    updateSelected();
+                }
+                return;
+            }
+            // Otherwise, open the detail view
+            openDetail(idx, source);
+        }
+
+        function openDetail(idx, source) {
+            activeItem = fullInventory[idx];
+            currentOriginView = source; // Remembers where we came from (Inventory, Drive, etc.)
+            
+            // Save for session restore
+            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
+            
+            // Switch screen
+            switchView('detail');
+            
+            // Populate the data
+            renderOverviewData();
+        }
+
+        function renderOverviewData() {
+            if (!activeItem) return;
+
+            // Header Info
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME || "Unknown";
+            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
+
+            // Grid Info
+            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
+            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
+            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
+            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
+            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
+            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
+            document.getElementById('ov-sales').innerText = activeItem.SAVED_SALES_DESC || "--";
+            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILE || "--";
+
+            // Reset Tabs in Detail View
+            switchDetailTab('overview');
+        }
+
+        function goBackFromDetail() {
+            activeItem = null;
+            localStorage.removeItem('gl_active_item');
+            
+            // Go back to the view we came from (e.g., 'inventory', 'drive', 'tasks')
+            if (currentOriginView) {
+                switchView(currentOriginView);
+            } else {
+                switchView('home');
+            }
+        }
+
+        function switchDetailTab(tab) {
+            // Update Tab UI
+            document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('dtab-' + tab).classList.add('active');
+
+            // Show/Hide Content Areas
+            document.getElementById('det-overview-content').classList.add('hidden');
+            document.getElementById('det-actions-content').classList.add('hidden');
+            document.getElementById('det-grower-content').classList.add('hidden');
+
+            document.getElementById('det-' + tab + '-content').classList.remove('hidden');
+        }
+
+        // Required for the Batch selection logic inside handleCardClick
+        function updateSelected() {
+            const checkboxes = document.querySelectorAll('.select-check:checked');
+            selectedIdx = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            // Show/Hide Action Bar based on selection
+            const actionBar = document.getElementById('action-bar');
+            if (selectedIdx.length > 0) {
+                actionBar.classList.add('visible');
+            } else {
+                actionBar.classList.remove('visible');
+            }
+        }
+        
+        // Toggle Batch Mode (referenced in HTML header)
+        function toggleBatch() {
+            isBatch = !isBatch;
+            const indicator = document.getElementById('batch-indicator');
+            const mainBody = document.body;
+            
+            if (isBatch) {
+                indicator.style.display = 'block';
+                mainBody.classList.add('batch-mode');
+            } else {
+                indicator.style.display = 'none';
+                mainBody.classList.remove('batch-mode');
+                // Clear selections when exiting batch mode
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false);
+                updateSelected();
+            }
+        }
+
+        function handleSearchDebounced(val, type) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (type === 'inventory') handleInventorySearch(val);
+                if (type === 'drive') handleDriveSearch(val);
+                if (type === 'production') handleProductionSearch(val);
+            }, 300);
+        }
+
+        function getLocPrefix(loc) {
+            if (!loc) return "Unassigned";
+            return loc.split('-')[0];
+        }
+
+        function showToast(title, msg, isError = false) {
+            const toast = document.getElementById('toast-notification');
+            toast.innerHTML = isError ? `<i class="ph-bold ph-warning-circle text-2xl"></i><div><div class="font-bold">${title}</div><div class="text-xs">${msg}</div></div>` : `<i class="ph-bold ph-check-circle text-2xl"></i><div><div class="font-bold">${title}</div><div class="text-xs">${msg}</div></div>`;
+            toast.style.backgroundColor = isError ? "#ef4444" : "#16a34a";
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // Dummy implementations for features referenced but not fully provided in snippet
+        function installPWA() { alert("Use browser menu to 'Add to Home Screen'"); }
+        function toggleMenu() { 
+            const d = document.getElementById('side-drawer'); 
+            const o = document.getElementById('drawer-overlay');
+            if(d.classList.contains('open')) { d.classList.remove('open'); o.classList.remove('open'); }
+            else { d.classList.add('open'); o.classList.add('open'); }
+        }
+        function startLongPress() { longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); }, 800); }
+        function cancelLongPress() { clearTimeout(longPressTimer); }
     </script>
 </body>
 </html>
