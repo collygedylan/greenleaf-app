@@ -418,7 +418,13 @@
                         const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
                         currentUser = rep ? rep.name : "Sales Rep";
                         isAdmin = false;
+                        
+                        // *** FIX: Map Full Name to Short Name for Task View ***
                         taskViewTargetUser = currentUser;
+                        if(currentUser.startsWith("Dylan")) taskViewTargetUser = "Dylan";
+                        if(currentUser.startsWith("Kayla")) taskViewTargetUser = "Kayla";
+                        if(currentUser.startsWith("Morgan")) taskViewTargetUser = "Morgan";
+                        
                         safeClass('rep-login-container', 'add', 'hidden');
                         safeClass('loading-spinner', 'remove', 'hidden');
                         fetchData(false, 'inventory');
@@ -580,16 +586,104 @@
         function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
         function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
 
-        function renderTasks() {
-            const container = document.getElementById('task-content'); const crumb = document.getElementById('task-crumb'); document.getElementById('task-tabs-container').classList.remove('hidden'); let myItems = []; const now = new Date().getTime();
-            const taskFilter = (i) => { if (taskViewTargetUser === 'ASSIST') { const assignee = (i.ASSIGNEDTO || ""); if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false; } else { if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false; } if (i.TASK_TAB !== currentTab) return false; if (i.TIMESTAMP) { const saveTime = new Date(i.TIMESTAMP).getTime(); const daysOld = (now - saveTime) / (1000 * 3600 * 24); const ptr = parseFloat(i.PTRAVAILABLE) || 0; const ss = parseFloat(i.SEASONSUPPLY) || 0; const isLowStock = ss > 0 && ptr < (ss * 0.10); if (daysOld < 10 && !isLowStock) return false; } return true; };
-            if(currentTab === 'requests') { if (taskViewTargetUser === 'ASSIST') { myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests'); crumb.innerText = `Kayla & Morgan / Urgent Requests`; } else { myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); crumb.innerText = `${taskViewTargetUser} / Urgent Requests`; } } else { myItems = fullInventory.filter(taskFilter); }
-            const term = document.getElementById('task-search').value.toLowerCase(); if (term) { const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
-            if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
-            if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
-            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
-            if(currentTab === 'season' || currentTab === 'location') { if(taskViewLevel === 0) { crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); if(blocks.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; } container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); } else if (taskViewLevel === 1) { crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); } else { crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); } }
+        // *** FIX: USER ASSIGNMENT CHECK ***
+        // Helper to check if item user and selected user match
+        function matchesUser(assigned, target) {
+            if (!assigned) return false;
+            // If viewing "ASSIST", match either Kayla OR Morgan
+            if (target === 'ASSIST') {
+                return assigned.includes("Kayla") || assigned.includes("Morgan");
+            }
+            // Otherwise, match exact string OR first name
+            return assigned.includes(target) || (target.includes(" ") && assigned.includes(target.split(" ")[0]));
         }
+
+        function renderTasks() {
+            const container = document.getElementById('task-content'); 
+            const crumb = document.getElementById('task-crumb'); 
+            document.getElementById('task-tabs-container').classList.remove('hidden'); 
+            let myItems = []; 
+            const now = new Date().getTime();
+            
+            // TASK FILTER LOGIC
+            const taskFilter = (i) => { 
+                // 1. User Check (Fixed)
+                if (!matchesUser(i.ASSIGNEDTO, taskViewTargetUser)) return false;
+                
+                // 2. Tab Check
+                if (i.TASK_TAB !== currentTab) return false;
+                
+                // 3. 10-Day Rule (Fixed: Only hide if older than 10 days AND it has data)
+                // New items without timestamps are shown.
+                // Items with timestamps are checked.
+                if (i.TIMESTAMP) { 
+                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24); 
+                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
+                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10); 
+                    
+                    // Only hide if: Old (>10d) AND Not Low Stock AND (Has Note OR Match data)
+                    // This ensures "new" imports that got timestamps don't vanish immediately
+                    if (daysOld < 10 && !isLowStock && (i.SAVED_NOTE || i.SAVED_MATCH)) return false; 
+                } 
+                return true; 
+            };
+            
+            if(currentTab === 'requests') { 
+                if (taskViewTargetUser === 'ASSIST') { 
+                    myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests'); 
+                    crumb.innerText = `Kayla & Morgan / Urgent Requests`; 
+                } else { 
+                    myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                    crumb.innerText = `${taskViewTargetUser} / Urgent Requests`; 
+                } 
+            } else { 
+                myItems = fullInventory.filter(taskFilter); 
+            }
+            
+            const term = document.getElementById('task-search').value.toLowerCase(); 
+            if (term) { 
+                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+            
+            if(myItems.length === 0 && currentTab === 'requests') { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; 
+                return; 
+            }
+            
+            if(currentTab === 'requests') { 
+                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+            
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
+            
+            if(currentTab === 'season' || currentTab === 'location') { 
+                if(taskViewLevel === 0) { 
+                    crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); 
+                    if(blocks.length === 0) { 
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
+                        return; 
+                    } 
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+                } else if (taskViewLevel === 1) { 
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
+                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); 
+                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); 
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+                } else { 
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); 
+                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
+                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                } 
+            } 
+        }
+        
         function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
         function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
         function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); taskViewLevel = 0; renderTasks(); }
