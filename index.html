@@ -1576,12 +1576,12 @@
             
             if(currentTab === 'requests') {
                  if (taskViewTargetUser === 'ASSIST') {
-                      myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
-                      crumb.innerText = `Kayla & Morgan / Urgent Requests`;
-                 } else {
-                      myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                      crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
-                 }
+                       myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
+                       crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                  } else {
+                       myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                  }
             } else if (currentTab === 'flyer') {
                 myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
             } else { 
@@ -1804,23 +1804,80 @@
             if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
         }
 
+        // --- SMART FILL & EDIT MODE UPDATE ---
+
+        function handleSmartFill(el) {
+            // 1. Live Save (Fixes the "Data Missing" bug)
+            if(el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
+            if(el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
+            if(el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
+            if(el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
+            if(el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
+            
+            // 2. Smart Replacement Logic
+            const specVal = document.getElementById('in-spec').value;
+            const salesEl = document.getElementById('in-sales-desc');
+            let salesVal = salesEl.value;
+
+            // If we have a Spec and the Sales Description contains the magic word "SPEC"
+            if (specVal && salesVal.toUpperCase().includes("SPEC")) {
+                // Replace "SPEC" with the actual value (case insensitive)
+                const newVal = salesVal.replace(/SPEC/gi, specVal);
+                salesEl.value = newVal;
+                activeItem.SAVED_SALES_DESC = newVal; // Save to memory immediately
+                showToast("Smart Fill", "Replaced 'SPEC' with " + specVal);
+            }
+        }
+
         function showEditMode() {
-            document.getElementById('btn-cam-container').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-edit-container').classList.add('hidden'); document.getElementById('readonly-lock-banner').classList.add('hidden');
+            document.getElementById('btn-cam-container').classList.remove('hidden'); 
+            document.getElementById('btn-save').classList.remove('hidden'); 
+            document.getElementById('btn-edit-container').classList.add('hidden'); 
+            document.getElementById('readonly-lock-banner').classList.add('hidden');
+            
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
             
-            // NEW DROPDOWN LOGIC
+            // Generate Dropdown Options
             const cName = String(activeItem.COMMONNAME || "").toUpperCase();
             const noteOptions = salesNoteMap[cName] || [];
             
             let dlHtml = `<datalist id="dl-notes">`; 
+            // Add a "Smart Template" option automatically
+            dlHtml += `<option value="Nice Full Plants / SPEC">`; 
+            dlHtml += `<option value="Consistent Grade / SPEC">`; 
+            
             noteOptions.forEach(n => { dlHtml += `<option value="${n}">`; }); 
             const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
             validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
             dlHtml += `</datalist>`;
             
-            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
+            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap for templates or type 'SPEC'..." : "Type 'SPEC' to pull from column above..."; 
+            const cont = document.getElementById('input-container');
             
-            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase()">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+            // UPDATED HTML: Added onchange/oninput events for Smart Fill and Live Saving
+            cont.innerHTML = `
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
+                <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label>
+                <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
+                <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase(); handleSmartFill(this)" onchange="handleSmartFill(this)">
+                ${dlHtml}
+                <div class="text-[9px] text-green-600 font-bold text-right mt-[-8px] mb-2">Tip: Type "SPEC" to auto-fill size</div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
+                <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
+                <textarea id="in-note" class="input-field h-24" placeholder="Any other notes..." oninput="handleSmartFill(this)">${activeItem.SAVED_NOTE||''}</textarea>
+            </div>`;
         }
 
         function showReadonlyMode(canEditText, hasData) {
