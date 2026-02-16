@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 037</title>
+    <title>Greenleaf Pro TURBO 041</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -61,7 +61,7 @@
         /* Modals */
         #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 10px; }
         .req-card { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #batch-modal, #flyer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
 
         /* Photo Editor */
@@ -81,12 +81,16 @@
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-        #action-bar.visible { transform: translateY(0); }
-        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
-        .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
+        
+        /* NEW BATCH BAR */
+        #batch-bar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150%); background: #111827; color: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: space-between; width: 90%; max-width: 400px; z-index: 4000; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #batch-bar.active { transform: translateX(-50%) translateY(0); }
+        .batch-count { font-weight: 700; font-size: 14px; margin-left: 10px; }
+        .batch-complete-btn { background: #007a4d; color: white; padding: 10px 24px; border-radius: 30px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
+        .select-check { width: 0; margin: 0; transition: all 0.2s; }
+        .batch-row { display: flex; align-items: center; padding: 0 4px; }
+
         .season-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px; }
         .season-chip { flex: 0 0 auto; padding: 6px 16px; background: #f3f4f6; border-radius: 20px; font-size: 11px; font-weight: 700; color: #374151; cursor: pointer; border: 1px solid #e5e7eb; }
         .season-chip.active { background: #007a4d; color: white; border-color: #007a4d; }
@@ -104,6 +108,14 @@
         .ms-option.selected { background-color: #f0fdf4; }
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
+        
+        /* Batch Modal Styles */
+        .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .batch-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .batch-btn:active { background: #e5e7eb; transform: scale(0.98); }
+        .batch-btn i { font-size: 24px; margin-bottom: 8px; display: block; }
+        .batch-btn span { font-weight: 700; font-size: 12px; color: #374151; display: block; }
+        .batch-section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -128,7 +140,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 037
+                TURBO 041
             </div>
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
@@ -170,7 +182,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 037 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 041 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -251,7 +263,17 @@
                     <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
                     <div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer" onclick="setTaskUser('ASSIST')">Assist Team (K & M)</div>
                 </div>
-                <div id="task-tabs-container" class="task-tabs hidden"><div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div><div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div><div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div></div>
+                <div id="task-tabs-container" class="task-tabs hidden">
+                    <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
+                    <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
+                    <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div>
+                    <div id="ttab-flyer" class="task-tab text-indigo-600" onclick="setTaskTab('flyer')">Flyer</div>
+                </div>
+                <div id="flyer-sub-tabs" class="hidden season-scroll mb-2">
+                    <div class="season-chip active" onclick="setFlyerCat('Crop Update', this)">Crop Update</div>
+                    <div class="season-chip" onclick="setFlyerCat('End Cap', this)">End Cap</div>
+                    <div class="season-chip" onclick="setFlyerCat('Spotlight', this)">Spotlight</div>
+                </div>
                 <div id="task-content"></div>
             </div>
 
@@ -318,12 +340,12 @@
             </div>
         </div>
 
-        <div id="action-bar">
-            <div id="act-text" class="action-btn bg-blue-600" onclick="batchText()"><i class="ph-bold ph-chat-text text-xl"></i> Text</div>
-            <div id="act-email" class="action-btn bg-purple-600" onclick="batchEmail()"><i class="ph-bold ph-envelope text-xl"></i> Email</div>
-            <div id="act-copy" class="action-btn bg-gray-700" onclick="copyBatchData()"><i class="ph-bold ph-copy text-xl"></i> Copy</div>
-            <div id="act-assign" class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus text-xl"></i> Assign</div>
-            <div id="act-request" class="action-btn bg-[#007a4d] hidden w-full col-span-4" onclick="openRequestModal()"><i class="ph-bold ph-plus-circle text-xl"></i> CREATE REQUEST</div>
+        <div id="batch-bar">
+            <div class="flex items-center">
+                <i class="ph-bold ph-check-circle text-2xl text-[#007a4d]"></i>
+                <span id="batch-count" class="batch-count">0 Selected</span>
+            </div>
+            <button class="batch-complete-btn" onclick="openBatchModal()">COMPLETE ACTIONS <i class="ph-bold ph-caret-right"></i></button>
         </div>
 
         <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
@@ -335,7 +357,97 @@
     </div>
 
     <div id="request-modal"><div class="req-card"><h2 class="text-xl font-bold text-gray-800 mb-2">Create Customer Request</h2><div class="text-xs text-gray-500 mb-4">Request items for a specific customer. These will be sent to managers for assignment.</div><div id="req-item-list" class="mb-4 text-sm text-gray-600 border-b pb-2 max-h-32 overflow-y-auto"></div><label class="block text-xs font-bold text-gray-500 uppercase">Customer Name</label><input type="text" id="req-customer" class="input-field mb-2" placeholder="Enter Customer Name"><label class="block text-xs font-bold text-gray-500 uppercase mt-2">Ship Time Frame</label><select id="req-ship" class="input-field bg-white mb-2"><option value="ASAP">ASAP</option><option value="1 Week">1 Week</option><option value="2 Weeks">2 Weeks</option><option value="3 Weeks">3 Weeks</option><option value="General Update">General Update</option></select><label class="block text-xs font-bold text-gray-500 uppercase mt-2">End Use</label><select id="req-use" class="input-field bg-white mb-2"><option value="Retail">Retail</option><option value="Rewholesale">Rewholesale</option><option value="High End Retail">High End Retail</option><option value="Landscape">Landscape</option></select><div class="flex gap-2 mt-6"><button class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg" onclick="closeRequestModal()">Cancel</button><button class="flex-1 py-3 bg-[#007a4d] text-white font-bold rounded-lg" onclick="submitRequest()">SUBMIT</button></div></div></div>
-    <div id="assign-modal"><div class="modal-card"><h2 class="text-xl font-bold text-gray-800 mb-4">Create Requests</h2><div class="bg-blue-50 text-blue-800 p-3 rounded text-xs mb-4">These items will appear in the <strong>Requests</strong> tab for the selected users.</div><div class="mb-4 p-3 border rounded bg-gray-50"><label class="flex items-center gap-2"><input type="checkbox" id="chk-cal-request" class="w-5 h-5 accent-red-600"><span class="font-bold text-red-600 text-sm">MARK AS CALIPER REQUEST</span></label></div><div class="space-y-3 mb-6"><label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Dylan</span></label><label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label><label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label></div><div class="flex gap-3"><button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button><button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">DONE</button></div></div></div>
+    
+    <div id="batch-modal">
+        <div class="modal-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Batch Actions</h2>
+                <i class="ph-bold ph-x text-2xl cursor-pointer" onclick="closeBatchModal()"></i>
+            </div>
+            
+            <div class="batch-section-title">Assign To Team</div>
+            <div class="batch-grid">
+                <div class="batch-btn" onclick="batchAssign('Dylan')">
+                    <i class="ph-fill ph-user text-blue-600"></i>
+                    <span>Dylan</span>
+                </div>
+                <div class="batch-btn" onclick="batchAssign('Kayla')">
+                    <i class="ph-fill ph-user text-pink-600"></i>
+                    <span>Kayla</span>
+                </div>
+                <div class="batch-btn" onclick="batchAssign('Morgan')">
+                    <i class="ph-fill ph-user text-purple-600"></i>
+                    <span>Morgan</span>
+                </div>
+                <div class="batch-btn" onclick="batchAssign('Kayla, Morgan')">
+                    <i class="ph-fill ph-users text-orange-600"></i>
+                    <span>Assist (K&M)</span>
+                </div>
+                <div class="batch-btn col-span-2 bg-green-50 border-green-200" onclick="batchAssign('Dylan, Kayla, Morgan')">
+                    <i class="ph-fill ph-users-three text-[#007a4d]"></i>
+                    <span>All 3 (Team)</span>
+                </div>
+            </div>
+
+            <div class="batch-section-title">Admin Actions</div>
+            <div class="batch-grid">
+                <div class="batch-btn bg-indigo-50 border-indigo-200 text-indigo-800 col-span-2" onclick="openFlyerModal()">
+                    <i class="ph-fill ph-newspaper text-indigo-600"></i>
+                    <span>Assign to Flyer</span>
+                </div>
+                <div class="batch-btn" onclick="batchEmail()">
+                    <i class="ph-fill ph-envelope text-gray-600"></i>
+                    <span>Email</span>
+                </div>
+                <div class="batch-btn" onclick="batchText()">
+                    <i class="ph-fill ph-chat-text text-gray-600"></i>
+                    <span>Text</span>
+                </div>
+                <div class="batch-btn" onclick="copyBatchData()">
+                    <i class="ph-fill ph-copy text-gray-600"></i>
+                    <span>Copy</span>
+                </div>
+                <div class="batch-btn bg-purple-50 border-purple-200 text-purple-800" onclick="batchAssignRepView()">
+                    <i class="ph-fill ph-storefront text-purple-600"></i>
+                    <span>Sales Rep View</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="flyer-modal">
+        <div class="modal-card">
+            <h2 class="text-xl font-bold text-indigo-800 mb-2">Assign to Flyer</h2>
+            <div class="text-xs text-gray-500 mb-4">Assign selected items to a flyer category with instructions.</div>
+            
+            <label class="block text-xs font-bold text-gray-500 uppercase mt-2">Flyer Category</label>
+            <select id="flyer-cat" class="input-field bg-white mb-2">
+                <option value="Crop Update">Crop Update</option>
+                <option value="End Cap">End Cap</option>
+                <option value="Spotlight">Spotlight</option>
+            </select>
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mt-2">Assign To</label>
+            <select id="flyer-assignee" class="input-field bg-white mb-2">
+                <option value="Dylan">Dylan</option>
+                <option value="Kayla">Kayla</option>
+                <option value="Morgan">Morgan</option>
+                <option value="Dylan, Kayla, Morgan">Team (All 3)</option>
+            </select>
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mt-2">Completion Deadline</label>
+            <input type="date" id="flyer-deadline" class="input-field mb-2">
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mt-2">Instructions</label>
+            <textarea id="flyer-instructions" class="input-field h-20" placeholder="E.g. Clean up weeds, take star shot..."></textarea>
+
+            <div class="flex gap-2 mt-4">
+                <button class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg" onclick="document.getElementById('flyer-modal').style.display='none'">Cancel</button>
+                <button class="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-lg" onclick="submitFlyerAssignment()">ASSIGN</button>
+            </div>
+        </div>
+    </div>
+
     <div id="view-photo-editor"><div class="p-4 bg-gray-900 text-white flex justify-between items-center pt-8"><h3 class="font-bold text-lg">Greenleaf Lens Studio</h3><button onclick="closePhotoEditor()" class="text-gray-400 font-bold">Cancel</button></div><div class="editor-canvas-container"><canvas id="photo-canvas" class="hidden"></canvas><img id="editor-preview" src=""></div><div class="editor-controls"><div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Enhance & Brand</div><div class="filter-scroll"><div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div><div class="filter-btn active" id="btn-logo" onclick="toggleEdit('logo')"><i class="ph-fill ph-stamp"></i> Logo</div><div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div></div><div class="text-[10px] uppercase font-bold text-gray-400 mb-2 mt-2">Studio Tints (Background)</div><div class="filter-scroll"><div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div><div class="filter-btn bg-lav" id="btn-bg-lav" onclick="setBg('lavender')">Lavender</div><div class="filter-btn bg-grn" id="btn-bg-grn" onclick="setBg('green')">Light Green</div><div class="filter-btn bg-gry" id="btn-bg-gry" onclick="setBg('grey')">Studio Grey</div></div><button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2"><i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO</button></div></div>
 
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
@@ -391,6 +503,7 @@
         let productionViewLevel = 0, selectedProductionName = null, selectedProductionSize = null;
         let editSettings = { pro: true, logo: true, dirt: false, bg: 'none' };
         let socData = [], socViewLevel = 0, selectedSocRep = null, selectedSocCust = null, currentSocTab = 'reps';
+        let currentFlyerCat = 'Crop Update'; // Default
         window.lastLocalUpdate = 0;
 
         function showRepLogin() { safeClass('login-buttons', 'add', 'hidden'); safeClass('rep-login-container', 'remove', 'hidden'); }
@@ -469,7 +582,6 @@
                     noteTemplates = json.templates || [];
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
                     
-                    // *** CLIENT SIDE WINNER/LOSER LOGIC ***
                     applyLocalLogic(); 
 
                     if(!isSilent) {
@@ -491,48 +603,38 @@
             } catch(e) { console.error(e); if(!isSilent) { alert("Error: " + e.message); resetLogin(); } }
         }
 
-        // *** NEW FUNCTION: Client-Side Logic for Winners/Losers ***
         function applyLocalLogic() {
             let groups = {};
-            // 1. Group by ItemCode
             fullInventory.forEach(item => {
                 if (!item.ITEMCODE) return;
                 if (!groups[item.ITEMCODE]) groups[item.ITEMCODE] = [];
                 groups[item.ITEMCODE].push(item);
             });
 
-            // 2. Process each group
             for (const code in groups) {
                 let items = groups[code];
-                
-                // Get items with Priority
                 let priItems = items.filter(i => (parseFloat(i.PRIORITY) || 0) > 0);
                 
                 if (priItems.length > 0) {
-                    // Sort: Lowest Priority # first, then Highest Qty
                     priItems.sort((a, b) => {
                         let pa = parseFloat(a.PRIORITY);
                         let pb = parseFloat(b.PRIORITY);
                         if (pa !== pb) return pa - pb;
                         let qa = parseFloat(a.PTRAVAILABLE) || 0;
                         let qb = parseFloat(b.PTRAVAILABLE) || 0;
-                        return qb - qa; // High qty first
+                        return qb - qa; 
                     });
 
                     let winner = priItems[0];
                     let winnerQty = parseFloat(winner.PTRAVAILABLE) || 0;
                     let winnerSupply = parseFloat(winner.SEASONSUPPLY) || 0;
 
-                    // 10% Rule Check
                     if (winnerQty > (winnerSupply * 0.10)) {
-                        // WINNER FOUND
                         winner.TASK_TAB = 'season';
-                        // The rest go to location
                         for (let i = 1; i < priItems.length; i++) {
                             priItems[i].TASK_TAB = 'location';
                         }
                     } else {
-                        // NO WINNER (Low Stock) -> ALL go to Manager Review
                         priItems.forEach(i => i.TASK_TAB = 'manager_review');
                     }
                 }
@@ -560,16 +662,13 @@
                     const group = (item.PLANTGROUPCODE || "").toString(); 
                     const size = (item.CONTSIZE || "").toUpperCase();
                     
-                    // Dylan's Assignments
                     if (["#7", "7DP", "#10", "#15", "#25", "#45"].includes(size) || 
                         ["230", "140", "150", "151", "155", "160"].some(g => group.includes(g))) { 
                         item.ASSIGNEDTO = "Dylan"; 
                     } 
-                    // Kayla's Assignments
                     else if(group.includes("330") || group.includes("300")) { 
                         item.ASSIGNEDTO = "Kayla"; 
                     } 
-                    // Default / Split
                     else { 
                         const weight = i % 5; 
                         item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); 
@@ -660,25 +759,36 @@
             const container = document.getElementById('task-content'); 
             const crumb = document.getElementById('task-crumb'); 
             document.getElementById('task-tabs-container').classList.remove('hidden'); 
+            document.getElementById('flyer-sub-tabs').classList.add('hidden'); // Default hide
+
             let myItems = []; 
             const now = new Date().getTime();
             
             const taskFilter = (i) => { 
                 if (!matchesUser(i.ASSIGNEDTO, taskViewTargetUser)) return false;
                 
-                // *** FIX: Strict Tab Filtering ***
+                // *** STRICT TAB FILTERING ***
                 if (currentTab === 'requests') {
                     if (i.TASK_TAB !== 'requests') return false;
                 } else if (currentTab === 'season') {
                     if (i.TASK_TAB !== 'season') return false;
                 } else if (currentTab === 'location') {
                     if (i.TASK_TAB !== 'location') return false;
+                } else if (currentTab === 'flyer') {
+                    if (i.TASK_TAB !== 'flyer') return false;
+                    // Sub-tab filter
+                    if (i.FLYER_CATEGORY !== currentFlyerCat) return false;
                 } else {
                     return false;
                 }
                 return true; 
             };
             
+            if (currentTab === 'flyer') {
+                document.getElementById('flyer-sub-tabs').classList.remove('hidden');
+                crumb.innerText = `${taskViewTargetUser} / Flyer / ${currentFlyerCat}`;
+            }
+
             myItems = fullInventory.filter(taskFilter);
             
             const term = document.getElementById('task-search').value.toLowerCase(); 
@@ -693,151 +803,202 @@
                 return; 
             }
             
-            if(currentTab === 'requests') { 
-                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+            if(currentTab === 'requests' || currentTab === 'flyer') { 
+                // Flat list for requests and flyer
+                let backHtml = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>`;
+                container.innerHTML = backHtml + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
                 return; 
             }
             
+            // --- Normal Drill Down for Season/Location ---
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
             
-            if(currentTab === 'season' || currentTab === 'location') { 
-                if(taskViewLevel === 0) { 
-                    crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
-                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); 
-                    if(blocks.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
-                        return; 
-                    } 
-                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
-                } else if (taskViewLevel === 1) { 
-                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
-                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); 
-                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); 
-                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
-                } else { 
-                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
-                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); 
-                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
-                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+            if(taskViewLevel === 0) { 
+                crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort(); 
+                if(blocks.length === 0) { 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
+                    return; 
                 } 
+                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => { const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length; return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+            } else if (taskViewLevel === 1) { 
+                crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
+                const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock); 
+                const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})); 
+                container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => { const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length; return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`; }).join(''); 
+            } else { 
+                crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc); 
+                items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
+                container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
             } 
         }
         
         function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
         function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
-        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); taskViewLevel = 0; renderTasks(); }
-        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
-        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
-        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.querySelectorAll('.task-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('ttab-'+t).classList.add('active');
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+        function setFlyerCat(cat, el) {
+            currentFlyerCat = cat;
+            document.querySelectorAll('#flyer-sub-tabs .season-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderTasks();
+        }
 
-        // --- VIEWER LOGIC ---
-        function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; } document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
-
-        // --- NEW: MANAGER REVIEW TABS ---
-        function setReviewTab(t) { currentReviewTab = t; document.querySelectorAll('#view-review .task-tab').forEach(el => el.classList.remove('active')); document.getElementById('rtab-'+t).classList.add('active'); reviewViewLevel = 0; renderReviewItems(); }
-        function renderReviewItems() {
-            const container = document.getElementById('review-content'); const term = document.getElementById('review-search').value.toLowerCase(); let filteredItems = [];
+        // --- NEW BATCH LOGIC START ---
+        function updateSelected() {
+            const checkboxes = document.querySelectorAll('.select-check:checked');
+            selectedIdx = Array.from(checkboxes).map(cb => parseInt(cb.value));
             
-            // Logic: Manager Review now holds 'manager_review' status items (Failed Winners)
-            if(currentReviewTab === 'inventory') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review');
-            else if (currentReviewTab === 'pending') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review_req' || (i.REQ_STATUS === 'NEW' && i.TASK_TAB !== 'rep_view'));
-            else if (currentReviewTab === 'completed') filteredItems = fullInventory.filter(i => i.REQ_STATUS === 'WORKED');
-
-            if(term) filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term));
-            if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
-
-            if(reviewViewLevel === 0) {
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-            } else if(reviewViewLevel === 1) {
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            const batchBar = document.getElementById('batch-bar');
+            const countLabel = document.getElementById('batch-count');
+            
+            if (selectedIdx.length > 0) {
+                if (selectedIdx.length > 50) {
+                    countLabel.innerText = "Limit: 50 Items";
+                    countLabel.style.color = "red";
+                } else {
+                    countLabel.innerText = selectedIdx.length + " Selected";
+                    countLabel.style.color = "white";
+                }
+                batchBar.classList.add('active');
             } else {
-                const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && i.CONTSIZE === selectedReviewSize);
-                const html = finalItems.map(item => {
-                    let actionBtn = ""; if(currentReviewTab === 'completed') actionBtn = `<div class="p-2"><button onclick="sendToRep('${item.UNIQUE_ID}')" class="w-full bg-purple-600 text-white font-bold py-2 rounded text-xs">SEND TO REP</button></div>`;
-                    return createRowHtml(item, fullInventory.indexOf(item), 'review') + actionBtn;
-                }).join('');
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + html;
+                batchBar.classList.remove('active');
             }
         }
-        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
-        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
-        function sendToRep(id) {
-            const item = fullInventory.find(i => i.UNIQUE_ID === id); if(!confirm("Send this completed request back to " + item.UPDATEDBY + "?")) return;
-            item.TASK_TAB = 'rep_view'; item.REQ_STATUS = 'SENT'; renderReviewItems();
-            const payload = { type: "send_to_rep", id: id, reqId: item.REQUEST_ID, customer: item.CUSTOMER_NAME, user: currentUser, repEmail: STATIC_DIRECTORY.find(r => r.name === item.UPDATEDBY)?.email || "" };
+        
+        function toggleBatch() {
+            isBatch = !isBatch;
+            const indicator = document.getElementById('batch-indicator');
+            const mainBody = document.body;
+            if (isBatch) {
+                indicator.style.display = 'block';
+                mainBody.classList.add('batch-mode');
+            } else {
+                indicator.style.display = 'none';
+                mainBody.classList.remove('batch-mode');
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false);
+                updateSelected();
+            }
+        }
+
+        function openBatchModal() {
+            if (selectedIdx.length === 0) return;
+            if (selectedIdx.length > 50) { showToast("Limit Exceeded", "Please select 50 or fewer items.", true); return; }
+            document.getElementById('batch-modal').style.display = 'flex';
+        }
+
+        function closeBatchModal() { document.getElementById('batch-modal').style.display = 'none'; }
+
+        function openFlyerModal() {
+            closeBatchModal();
+            document.getElementById('flyer-modal').style.display = 'flex';
+        }
+
+        function batchAssign(userStr) {
+            const updates = selectedIdx.map(idx => {
+                const item = fullInventory[idx];
+                item.ASSIGNEDTO = userStr; 
+                return { id: item.UNIQUE_ID, assignedTo: userStr };
+            });
+            closeBatchModal();
+            toggleBatch();
+            showToast("Assigned", `Items assigned to ${userStr}`);
+            // Logic to send to backend would go here if needed
+        }
+
+        function batchAssignRepView() {
+            const updates = selectedIdx.map(idx => {
+                const item = fullInventory[idx];
+                item.TASK_TAB = 'rep_view';
+                item.REQ_STATUS = 'SENT';
+                return { id: item.UNIQUE_ID, taskTab: 'rep_view', reqStatus: 'SENT' };
+            });
+            closeBatchModal();
+            toggleBatch();
+            showToast("Sent", "Items sent to Sales Rep View");
+            const payload = { type: "batch_update", updates: updates };
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
         }
 
-        // --- SALES OFFICE LOGIC ---
-        function renderSalesOffice() {
-            const container = document.getElementById('salesoffice-content'); const searchInput = document.getElementById('salesoffice-search'); const term = searchInput ? searchInput.value.toLowerCase() : '';
-            const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(i.OFFICE_DONE_TIME) return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
-            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
-            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
-            container.innerHTML = salesItems.map((item) => { const masterIndex = fullInventory.indexOf(item); 
-                // *** ADDED: Thumbnail support for Sales Office ***
-                let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded bg-gray-200 mr-2">`; }
-                return `<div class="inv-card mb-3 !p-4 border-green-200"><div class="flex justify-between items-start"><div class="flex items-center gap-2">${thumbHtml}<div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div></div><button onclick="markSalesOfficeDone(${masterIndex})" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-300 flex items-center gap-1 active:scale-95 transition-transform"><i class="ph-bold ph-check"></i> MARK DONE</button></div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Loc: <span class="text-gray-800">${item.LOCATIONCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`; 
-            }).join('');
-        }
-        function markSalesOfficeDone(masterIndex) { if(!confirm("Mark this item as read/done? It will be removed from this list.")) return; const item = fullInventory[masterIndex]; if(!item) return; item.OFFICE_DONE_TIME = new Date().toISOString(); renderSalesOffice(); showToast("Marked Done", "Removed from list."); const payload = { type: "update", id: item.UNIQUE_ID, markOfficeDone: true, user: currentUser }; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload)); }
+        function submitFlyerAssignment() {
+            const cat = document.getElementById('flyer-cat').value;
+            const user = document.getElementById('flyer-assignee').value;
+            const dead = document.getElementById('flyer-deadline').value;
+            const instr = document.getElementById('flyer-instructions').value;
 
-        // --- NEW: REP REQUESTS VIEW ---
-        function renderRepRequests() {
-            const container = document.getElementById('my-requests-content');
-            if(!container) return;
-            const myReqs = fullInventory.filter(i => i.TASK_TAB === 'rep_view' && i.REQ_STATUS === 'SENT'); 
-            if(myReqs.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed requests.</div>`; return; }
-            container.innerHTML = myReqs.map((item, idx) => createRowHtml(item, fullInventory.indexOf(item), 'my-requests')).join('');
-        }
+            if(!dead) { showToast("Error", "Please pick a deadline", true); return; }
 
-        // --- REQUEST SYSTEM ---
-        function openRequestModal() {
-            if(selectedIdx.length === 0) { showToast("Error", "Select items first.", true); return; }
-            const list = document.getElementById('req-item-list');
-            let html = "";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                html += `<div class="flex justify-between items-center mb-2"><span class="truncate w-1/2 font-bold">${item.COMMONNAME}</span><input type="number" id="qty-${item.UNIQUE_ID}" class="border rounded p-1 w-20 text-center" placeholder="Qty" value="1"></div>`;
+            const updates = selectedIdx.map(idx => {
+                const item = fullInventory[idx];
+                item.TASK_TAB = 'flyer';
+                item.FLYER_CATEGORY = cat;
+                item.ASSIGNEDTO = user;
+                item.FLYER_DEADLINE = dead;
+                item.FLYER_INSTRUCTIONS = instr;
+                return { 
+                    id: item.UNIQUE_ID, 
+                    taskTab: 'flyer', 
+                    flyerCat: cat, 
+                    assignedTo: user, 
+                    flyerDeadline: dead, 
+                    flyerInstr: instr 
+                };
             });
-            list.innerHTML = html;
-            document.getElementById('request-modal').style.display = 'flex';
-        }
-        function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
-        function submitRequest() {
-            const customer = document.getElementById('req-customer').value;
-            if(!customer) { showToast("Error", "Customer Name required", true); return; }
-            let initials = "REP";
-            if(currentUser) {
-                const parts = currentUser.split(" ");
-                if(parts.length >= 2) initials = parts[0][0] + "." + parts[1][0];
-                else initials = currentUser.substring(0,3);
-            }
-            const date = new Date().toISOString().split('T')[0];
-            const seq = Math.floor(Math.random() * 10000); 
-            const reqId = `${initials.toUpperCase()}-${customer.substring(0,10).toUpperCase()}-${seq}-${date}`;
-            const items = selectedIdx.map(idx => {
-                let item = fullInventory[idx];
-                let qty = document.getElementById('qty-' + item.UNIQUE_ID).value;
-                return { id: item.UNIQUE_ID, qty: qty };
-            });
-            const payload = {
-                type: "create_request", requestId: reqId, repName: currentUser,
-                repEmail: STATIC_DIRECTORY.find(r => r.name === currentUser)?.email || "",
-                customer: customer, shipTime: document.getElementById('req-ship').value, endUse: document.getElementById('req-use').value, items: items
+
+            document.getElementById('flyer-modal').style.display = 'none';
+            toggleBatch();
+            showToast("Assigned", `Added to Flyer: ${cat}`);
+
+            // Send payload to backend to save data AND trigger email
+            const payload = { 
+                type: "assign_flyer", 
+                updates: updates,
+                adminName: currentUser
             };
-            closeRequestModal(); toggleBatch(); showToast("Submitting...", "Sending request to managers...");
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
         }
+
+        function batchEmail() {
+            const items = selectedIdx.map(idx => fullInventory[idx].COMMONNAME).join('%0D%0A');
+            window.open(`mailto:?subject=Inventory List&body=${items}`);
+            closeBatchModal();
+        }
+
+        function batchText() {
+            const items = selectedIdx.map(idx => fullInventory[idx].COMMONNAME).join('%0A');
+            window.open(`sms:?body=${items}`);
+            closeBatchModal();
+        }
+
+        function copyBatchData() {
+            const text = selectedIdx.map(idx => {
+                const i = fullInventory[idx];
+                return `${i.COMMONNAME} (${i.CONTSIZE}) - Qty: ${i.PTRAVAILABLE} @ ${i.LOCATIONCODE}`;
+            }).join('\n');
+            navigator.clipboard.writeText(text).then(() => showToast("Copied", "List copied to clipboard"));
+            closeBatchModal();
+        }
+        // --- NEW BATCH LOGIC END ---
 
         function createRowHtml(item, idx, source) {
             let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
             let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
             if(item.REQUEST_ID) badges += `<span class="data-badge" style="background:#fef3c7; color:#d97706; border:1px solid #fcd34d">REQ: ${item.CUSTOMER_NAME}</span>`;
             
+            // Flyer Badges
+            if(item.TASK_TAB === 'flyer') {
+                badges += `<div class="w-full mt-2 text-[10px] bg-indigo-50 border border-indigo-200 p-2 rounded text-indigo-800">
+                    <div class="font-bold flex justify-between"><span>DUE: ${item.FLYER_DEADLINE || 'N/A'}</span></div>
+                    <div class="italic mt-1">"${item.FLYER_INSTRUCTIONS || ''}"</div>
+                </div>`;
+            }
+
             // HOLD/STOP LOGIC
             let stopCode = (item.HOLDSTOPCODE || "").toUpperCase();
             let cardClass = "card-green"; 
@@ -906,64 +1067,6 @@
                 switchView('home');
             }
         }
-
-        function updateSelected() {
-            const checkboxes = document.querySelectorAll('.select-check:checked');
-            selectedIdx = Array.from(checkboxes).map(cb => parseInt(cb.value));
-            const actionBar = document.getElementById('action-bar');
-            if (selectedIdx.length > 0) {
-                actionBar.classList.add('visible');
-            } else {
-                actionBar.classList.remove('visible');
-            }
-        }
-        
-        function toggleBatch() {
-            isBatch = !isBatch;
-            const indicator = document.getElementById('batch-indicator');
-            const mainBody = document.body;
-            if (isBatch) {
-                indicator.style.display = 'block';
-                mainBody.classList.add('batch-mode');
-            } else {
-                indicator.style.display = 'none';
-                mainBody.classList.remove('batch-mode');
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false);
-                updateSelected();
-            }
-        }
-
-        function handleSearchDebounced(val, type) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                if (type === 'inventory') handleInventorySearch(val);
-                if (type === 'drive') handleDriveSearch(val);
-                if (type === 'production') handleProductionSearch(val);
-            }, 300);
-        }
-
-        function getLocPrefix(loc) {
-            if (!loc) return "Unassigned";
-            return loc.split('-')[0];
-        }
-
-        function showToast(title, msg, isError = false) {
-            const toast = document.getElementById('toast-notification');
-            toast.innerHTML = isError ? `<i class="ph-bold ph-warning-circle text-2xl"></i><div><div class="font-bold">${title}</div><div class="text-xs">${msg}</div></div>` : `<i class="ph-bold ph-check-circle text-2xl"></i><div><div class="font-bold">${title}</div><div class="text-xs">${msg}</div></div>`;
-            toast.style.backgroundColor = isError ? "#ef4444" : "#16a34a";
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 3000);
-        }
-
-        function installPWA() { alert("Use browser menu to 'Add to Home Screen'"); }
-        function toggleMenu() { 
-            const d = document.getElementById('side-drawer'); 
-            const o = document.getElementById('drawer-overlay');
-            if(d.classList.contains('open')) { d.classList.remove('open'); o.classList.remove('open'); }
-            else { d.classList.add('open'); o.classList.add('open'); }
-        }
-        function startLongPress() { longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); }, 800); }
-        function cancelLongPress() { clearTimeout(longPressTimer); }
 
         // --- 1. ACCORDION LOGIC ---
         function toggleExpand() {
