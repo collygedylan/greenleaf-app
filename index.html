@@ -556,31 +556,36 @@
         <div class="modal-card">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Assignment</h2>
             
-            <div class="bg-gray-100 p-3 rounded mb-4">
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Project Note / Reason</label>
-                <input type="text" id="assign-note" class="w-full p-2 border rounded text-sm mt-1" placeholder="e.g. Spring Flyer 2024">
-                <p class="text-[10px] text-gray-400 mt-1">Added to "General Note" for selected items.</p>
-            </div>
-
             <div id="auth-flyer-options" class="hidden mb-6 border-b pb-6">
-                <h3 class="text-sm font-bold text-[#007a4d] uppercase mb-2">Marketing Flyer</h3>
+                <h3 class="text-sm font-bold text-[#007a4d] uppercase mb-2">Marketing Flyer Project</h3>
+                <div class="bg-green-50 p-3 rounded border border-green-200 mb-3">
+                    <label class="text-[10px] font-bold text-green-800 uppercase">Project / Folder Name</label>
+                    <input type="text" id="flyer-project-name" list="dl-projects" class="w-full p-2 border rounded text-sm mt-1 bg-white" placeholder="e.g. Spring Promo 2024">
+                    <datalist id="dl-projects"></datalist>
+                </div>
                 <div class="space-y-2">
-                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
                         <input type="radio" name="flyer_assign" value="flyer_crop" class="w-4 h-4 accent-[#007a4d]">
                         <span class="text-sm font-bold">Crop Update</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
                         <input type="radio" name="flyer_assign" value="flyer_endcap" class="w-4 h-4 accent-[#007a4d]">
                         <span class="text-sm font-bold">End Cap</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
                         <input type="radio" name="flyer_assign" value="flyer_spot" class="w-4 h-4 accent-[#007a4d]">
                         <span class="text-sm font-bold">Spotlight</span>
                     </label>
                 </div>
             </div>
 
-            <h3 class="text-sm font-bold text-gray-500 uppercase mb-2">Create Request</h3>
+            <h3 class="text-sm font-bold text-gray-500 uppercase mb-2">Standard Request</h3>
+            
+            <div class="bg-gray-100 p-3 rounded mb-4">
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Note / Context</label>
+                <input type="text" id="assign-note" class="w-full p-2 border rounded text-sm mt-1" placeholder="Reason for assignment...">
+            </div>
+
             <div class="mb-4 p-3 border rounded bg-gray-50">
                 <label class="flex items-center gap-2">
                     <input type="checkbox" id="chk-cal-request" class="w-5 h-5 accent-red-600">
@@ -620,7 +625,8 @@
         let isAdmin = false; 
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
-        let currentFlyerTab = 'flyer_crop'; // Default sub-tab
+        let currentFlyerTab = 'flyer_crop'; 
+        let selectedFlyerProject = null; // Holds the active project name
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
@@ -639,7 +645,7 @@
         let debounceTimer; 
 
         // *** FIX: PROTECTION VARIABLE ***
-        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
+        window.lastLocalUpdate = 0; 
 
         // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
@@ -860,24 +866,19 @@
 
                     if(!isSilent) { 
                         applyAssignments(); 
-                        initDriveFilters(); // NEW: INIT FILTERS
+                        initDriveFilters(); 
                         launchApp(); 
                         startAutoSync(); 
                         restoreSession();
                     } else {
-                        // *** THE FIX: PREVENT OVERWRITE IF SAVE WAS RECENT ***
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            
-                            // Check if we saved locally recently (Last 60 seconds)
                             const now = new Date().getTime();
                             const lastUpdate = window.lastLocalUpdate || 0;
                             const timeSinceUpdate = now - lastUpdate;
 
                             if (timeSinceUpdate < 60000) {
                                 console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
-                                // We DO NOT update activeItem here. We keep the local version.
                             } else {
-                                // Safe to update
                                 const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                                 if(freshItem) { 
                                      activeItem = freshItem; 
@@ -969,11 +970,8 @@
         // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
-            
-            // *** FIX: SET PROTECTION TIMER ***
             window.lastLocalUpdate = new Date().getTime();
 
-            // 1. GET VALUES FROM EXISTING INPUTS
             const matchEl = document.getElementById('in-match'); 
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
@@ -986,21 +984,18 @@
             const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
             const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
 
-            // 2. GET VALUES FROM NEW GROWER INPUTS
             const growerEval = document.getElementById('in-grower-eval') ? document.getElementById('in-grower-eval').value : (activeItem.GROWER_EVAL || "");
             const growerShear = document.getElementById('in-grower-shear') ? document.getElementById('in-grower-shear').value : (activeItem.GROWER_SHEAR || "");
             const growerWater = document.getElementById('in-grower-water') ? document.getElementById('in-grower-water').value : (activeItem.GROWER_WATER || "");
             const growerRoot = document.getElementById('in-grower-root') ? document.getElementById('in-grower-root').value : (activeItem.GROWER_ROOT || "");
             const growerNote = document.getElementById('in-grower-note') ? document.getElementById('in-grower-note').value : (activeItem.GROWER_NOTE || "");
 
-            // 3. INSTANTLY UPDATE LOCAL MEMORY
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc;
             
-            // Update local memory with grower data
             activeItem.GROWER_EVAL = growerEval;
             activeItem.GROWER_SHEAR = growerShear;
             activeItem.GROWER_WATER = growerWater;
@@ -1009,7 +1004,6 @@
 
             activeItem.TIMESTAMP = new Date().toISOString();
 
-            // 4. UPDATE MASTER ARRAY (CRITICAL FOR LIST VIEW REFRESH)
             const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
             if(masterIdx > -1) {
                 fullInventory[masterIdx] = activeItem;
@@ -1023,19 +1017,16 @@
                 pick: pick, 
                 note: note, 
                 salesDesc: salesDesc,
-                // ADD NEW FIELDS TO PAYLOAD
                 growerEval: growerEval,
                 growerShear: growerShear,
                 growerWater: growerWater,
                 growerRoot: growerRoot,
                 growerNote: growerNote,
-
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser 
             };
             
-            // 5. INSTANT UI FEEDBACK (No waiting)
             if(!silent) { 
                 goBackFromDetail(); 
                 showToast("Saved", "Update applied instantly.", false); 
@@ -1043,7 +1034,6 @@
                 renderOverviewData(); 
             }
             
-            // 6. SEND TO CLOUD IN BACKGROUND
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 body: JSON.stringify(payload) 
@@ -1057,8 +1047,6 @@
 
         function markRequestComplete() {
             if(!activeItem) return;
-            
-            // *** FIX: SET PROTECTION TIMER ***
             window.lastLocalUpdate = new Date().getTime();
             
             const matchEl = document.getElementById('in-match'); 
@@ -1114,8 +1102,6 @@
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 currentFile = input.files[0];
-                
-                // Save current text inputs locally before switching views
                 if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
                 if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
                 if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
@@ -1123,7 +1109,6 @@
                 if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
                 if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
                 if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
-
                 openPhotoEditor();
             }
         }
@@ -1132,12 +1117,9 @@
             const modal = document.getElementById('view-photo-editor');
             const preview = document.getElementById('editor-preview');
             modal.style.display = 'flex';
-            
-            // Read file for preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
-                // Once loaded, we will process it on the canvas internally
                 processCanvasPreview(); 
             }
             reader.readAsDataURL(currentFile);
@@ -1157,74 +1139,36 @@
             processCanvasPreview();
         }
 
-        // REVISED FUNCTION FOR FULL BLEED IMAGE
         function processCanvasPreview() {
             const preview = document.getElementById('editor-preview');
             const canvas = document.getElementById('photo-canvas');
             const ctx = canvas.getContext('2d');
-            
-            // Hide img, show canvas
             preview.classList.add('hidden');
             canvas.classList.remove('hidden');
-
-            // Load Source Image
             const img = new Image();
             img.src = preview.src;
-            
             img.onload = function() {
-                // Set Canvas Size (Max 1024 width)
                 const MAX_WIDTH = 1024;
                 const scale = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scale;
-
-                // 1. Draw Image Full Bleed (No Border)
-                // Apply Auto Light filter if active
-                if(editSettings.pro) {
-                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)';
-                } else {
-                    ctx.filter = 'none';
-                }
-
-                // Draw image filling the canvas from 0,0
+                if(editSettings.pro) { ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)'; } else { ctx.filter = 'none'; }
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none'; // Reset filter
-
-                // 2. Pot Polish (Blur bottom 25%)
+                ctx.filter = 'none'; 
                 if(editSettings.dirt) {
                     const potHeight = canvas.height * 0.25;
                     const potY = canvas.height - potHeight;
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.rect(0, potY, canvas.width, potHeight);
-                    ctx.clip();
-                    ctx.filter = 'blur(4px)';
-                    ctx.drawImage(canvas, 0, 0); 
-                    ctx.restore();
-                    ctx.filter = 'none';
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, potY, canvas.width, potHeight); ctx.clip(); ctx.filter = 'blur(4px)'; ctx.drawImage(canvas, 0, 0); ctx.restore(); ctx.filter = 'none';
                 }
-
-                // 3. Logo Overlay (Watermark)
                 if(editSettings.logo) {
                     const logo = new Image();
                     logo.crossOrigin = "Anonymous";
-                    logo.src = "GNC LOGO.png"; // LOCAL FILE
-                    
+                    logo.src = "GNC LOGO.png"; 
                     logo.onload = function() {
-                        // Bigger Logo
-                        const logoW = 550; // Increased size
-                        const logoH = 550 * (logo.height / logo.width);
-
-                        // Position: Bottom Left with padding
-                        const logoX = 40;
-                        const logoY = canvas.height - logoH - 40;
-                        
-                        ctx.shadowColor = "rgba(0,0,0,0.5)";
-                        ctx.shadowBlur = 10;
-                        ctx.globalAlpha = 0.9; 
-                        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-                        ctx.shadowBlur = 0;
+                        const logoW = 550; const logoH = 550 * (logo.height / logo.width);
+                        const logoX = 40; const logoY = canvas.height - logoH - 40;
+                        ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10; ctx.globalAlpha = 0.9; 
+                        ctx.drawImage(logo, logoX, logoY, logoW, logoH); ctx.shadowBlur = 0;
                     }
                 }
             }
@@ -1232,72 +1176,33 @@
 
         function finalizeUpload() {
             const canvas = document.getElementById('photo-canvas');
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // 80% Quality
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             const base64Data = dataUrl.split(',')[1];
-            
-            // Generate Filename
             const currentCount = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',').length : 0;
             const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
             const dateStr = new Date().toISOString().split('T')[0];
             const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
-
-            // Close Editor & Show Toast
             closePhotoEditor();
             window.lastLocalUpdate = new Date().getTime();
             showToast("Uploading...", "Pro photo processing...", false);
-
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
-                body: JSON.stringify({ 
-                    type: "image", 
-                    image: base64Data, 
-                    mimeType: "image/jpeg", 
-                    filename: filename 
-                }) 
+                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
             })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') { 
                     let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; 
                     let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
-                    
-                    links.push(data.url); 
-                    names.push(filename); 
-                    
-                    activeItem.SAVED_PHOTO_LINK = links.join(','); 
-                    activeItem.SAVED_PHOTO_NAME = names.join(',');
-                    
-                    // Update Master List
+                    links.push(data.url); names.push(filename); 
+                    activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
                     const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                    if(masterIdx > -1) {
-                        fullInventory[masterIdx] = activeItem;
-                        activeItem = fullInventory[masterIdx];
-                    }
-
-                    // Refresh View
+                    if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; activeItem = fullInventory[masterIdx]; }
                     renderOverviewData(); 
-                    
-                    // Save Metadata to Sheet
-                    const payload = { 
-                        type: "update", 
-                        id: activeItem.UNIQUE_ID, 
-                        match: activeItem.SAVED_MATCH || "", 
-                        spec: activeItem.SAVED_SPEC || "", 
-                        pick: activeItem.SAVED_PICK || "", 
-                        note: activeItem.SAVED_NOTE || "", 
-                        salesDesc: activeItem.SAVED_SALES_DESC || "", 
-                        photoLink: activeItem.SAVED_PHOTO_LINK, 
-                        photoName: activeItem.SAVED_PHOTO_NAME, 
-                        user: currentUser,
-                        growerEval: activeItem.GROWER_EVAL || "",
-                        growerNote: activeItem.GROWER_NOTE || ""
-                    };
-                    
+                    const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser, growerEval: activeItem.GROWER_EVAL || "", growerNote: activeItem.GROWER_NOTE || "" };
                     fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
                     showToast("Success", "Photo saved & Text preserved."); 
-                } else { 
-                    showToast("Upload Error", data.message, true); 
-                }
+                } else { showToast("Upload Error", data.message, true); }
             })
             .catch(err => showToast("Network Error", "Could not upload photo.", true));
         }
@@ -1308,23 +1213,11 @@
             const term = document.getElementById('directory-search').value.toLowerCase();
             let displayList = STATIC_DIRECTORY;
             if(term) { displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); }
-            
             container.innerHTML = displayList.map(rep => {
                 let btns = '';
                 if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
                 if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
-                return `
-                <div class="rep-card">
-                    <div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
-                        <div>
-                            <div class="rep-name">${rep.name}</div>
-                            <div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div>
-                        </div>
-                        <i class="ph-bold ph-caret-right text-gray-300 mt-1"></i>
-                    </div>
-                    ${btns ? `<div class="contact-row">${btns}</div>` : ''}
-                    <div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div>
-                </div>`;
+                return `<div class="rep-card"><div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><div><div class="rep-name">${rep.name}</div><div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div></div><i class="ph-bold ph-caret-right text-gray-300 mt-1"></i></div>${btns ? `<div class="contact-row">${btns}</div>` : ''}<div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div></div>`;
             }).join('');
         }
 
@@ -1342,20 +1235,14 @@
             const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
             const queryParam = dirEntry ? dirEntry.name : repIdentifier;
             document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
-            
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') { 
-                    socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = "";
-                } else { 
+                if(data.status === 'success') { socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = ""; } 
+                else { 
                     if(dirEntry && queryParam !== dirEntry.id) {
-                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
-                         .then(res2 => res2.json())
-                         .then(data2 => {
-                             if(data2.status === 'success') {
-                                 socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = "";
-                             } else { document.getElementById('soc-status').innerText = "Not found"; }
+                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id)).then(res2 => res2.json()).then(data2 => {
+                             if(data2.status === 'success') { socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { document.getElementById('soc-status').innerText = "Not found"; }
                          });
                     } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
                 }
@@ -1365,11 +1252,9 @@
         function renderSocView() {
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
-            
             if (term && socData.length > 0) { 
                 const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
-                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); 
-                return; 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
             }
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
@@ -1378,10 +1263,7 @@
             }
             if(socViewLevel === 0) { 
                 let html = '';
-                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => {
-                    const disp = `${rep.name} - ${rep.id}`;
-                    html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`;
-                });
+                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
                 container.innerHTML = html;
             } else if(socViewLevel === 1) { 
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
@@ -1391,46 +1273,33 @@
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
             }
         }
-        
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
 
         // --- NEW: DRIVE MODE FILTERS & LOGIC ---
         function initDriveFilters() {
             const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
             const grpDiv = document.getElementById('ms-group');
-            grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + 
-                groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
-
+            grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
             const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
             const seaDiv = document.getElementById('ms-season');
-            seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + 
-                seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
-
+            seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
             const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
             const lotDiv = document.getElementById('ms-lot');
-            lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + 
-                lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
+            lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
         }
 
-        function toggleMs(id) {
-            const el = document.getElementById(id);
-            ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); });
-            el.classList.toggle('show');
-        }
-
+        function toggleMs(id) { const el = document.getElementById(id); ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); }); el.classList.toggle('show'); }
         function updateDriveFilterState(type) {
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const checks = div.querySelectorAll('input[type="checkbox"]:checked');
             const values = Array.from(checks).map(c => c.value);
             driveFilterState[type] = values;
-            
             const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
             const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' };
             const count = values.length;
             document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
             renderDriveView();
         }
-
         function toggleAllDrive(type) {
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const allChecks = div.querySelectorAll('input[type="checkbox"]');
@@ -1438,88 +1307,41 @@
             allChecks.forEach(c => c.checked = !allChecked);
             updateDriveFilterState(type);
         }
-
         function resetDriveFilters() {
             driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
             document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
-            document.getElementById('lbl-group').innerText = 'Plant Group';
-            document.getElementById('lbl-season').innerText = 'Season';
-            document.getElementById('lbl-lot').innerText = 'Lot Code';
-            document.getElementById('lts-value').value = '';
-            document.getElementById('lts-operator').value = 'gt';
-            document.getElementById('drive-search').value = '';
-            driveSearchTerm = '';
-            driveViewLevel = 0; 
-            renderDriveView();
+            document.getElementById('lbl-group').innerText = 'Plant Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot Code';
+            document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = '';
+            driveSearchTerm = ''; driveViewLevel = 0; renderDriveView();
         }
-
-        function handleDriveSearch(term) {
-            driveSearchTerm = term.toLowerCase();
-            renderDriveView();
-        }
-
+        function handleDriveSearch(term) { driveSearchTerm = term.toLowerCase(); renderDriveView(); }
         function getFilteredDriveItems() {
-            const op = document.getElementById('lts-operator').value;
-            const val = parseFloat(document.getElementById('lts-value').value);
-            const hasLtsFilter = !isNaN(val);
-
+            const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val);
             return fullInventory.filter(i => {
                 if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false;
                 if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false;
                 if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false;
-
-                if (hasLtsFilter) {
-                    const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); 
-                    if (op === 'gt' && !(itemVal > val)) return false;
-                    if (op === 'lt' && !(itemVal < val)) return false;
-                }
-
-                if(driveSearchTerm) {
-                    const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || 
-                                  (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || 
-                                  (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm);
-                    if(!match) return false;
-                }
+                if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; }
+                if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; }
                 return true;
             });
         }
-
         function renderDriveNames() { renderDriveView(); } 
-
         function renderDriveView() {
-            const container = document.getElementById('drive-content');
-            const crumb = document.getElementById('drive-crumb');
-            const filteredItems = getFilteredDriveItems();
-
-            document.onclick = function(e) {
-                if(!e.target.closest('.ms-container')) {
-                    document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show'));
-                }
-            }
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`;
-                crumb.innerText = "No Results";
-                return;
-            }
-
+            const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems();
+            document.onclick = function(e) { if(!e.target.closest('.ms-container')) { document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); } }
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(driveViewLevel === 0) {
-                crumb.innerText = `Filtered Items (${filteredItems.length})`;
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
                 container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (driveViewLevel === 1) {
-                crumb.innerText = selectedDriveName;
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                crumb.innerText = selectedDriveName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
-                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
                 container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
             }
         }
-
         function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
         function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
@@ -1532,53 +1354,30 @@
                 if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); }
                 if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL'];
             }
-            document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => {
-                const s = chip.innerText;
-                if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active');
-            });
+            document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderProductionView();
         }
-
         function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
-
         function getFilteredProductionItems() {
             return fullInventory.filter(i => {
                 if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
-                if(productionSearchTerm) {
-                    const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm);
-                    if(!match) return false;
-                }
+                if(productionSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm); if(!match) return false; }
                 return true;
             });
         }
-
         function renderProductionView() {
-            const container = document.getElementById('production-content');
-            const crumb = document.getElementById('production-crumb');
-            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) {
-                crumb.innerText = `All Items (${allCommonNames.length})`;
-                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                return;
-            }
+            const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb');
+            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
             const filteredItems = getFilteredProductionItems();
             if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(productionViewLevel === 0) {
-                crumb.innerText = `All Items (${filteredItems.length})`;
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (productionViewLevel === 1) {
-                crumb.innerText = selectedProductionName;
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                crumb.innerText = selectedProductionName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`;
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize);
-                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
+                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
             }
         }
-
         function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
         function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
         function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
@@ -1591,53 +1390,30 @@
                 if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); }
                 if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
             }
-            document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => {
-                const s = chip.innerText;
-                if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active');
-            });
+            document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderInventoryView();
         }
-
         function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
-
         function getFilteredInventoryItems() {
             return fullInventory.filter(i => {
                 if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
-                if(inventorySearchTerm) {
-                    const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm);
-                    if(!match) return false;
-                }
+                if(inventorySearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm); if(!match) return false; }
                 return true;
             });
         }
-
         function renderInventoryView() {
-            const container = document.getElementById('inventory-content');
-            const crumb = document.getElementById('inventory-crumb');
-            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) {
-                crumb.innerText = `All Items (${allCommonNames.length})`;
-                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                return;
-            }
+            const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb');
+            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
             const filteredItems = getFilteredInventoryItems();
             if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(inventoryViewLevel === 0) {
-                crumb.innerText = `All Items (${filteredItems.length})`;
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (inventoryViewLevel === 1) {
-                crumb.innerText = selectedInventoryName;
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                crumb.innerText = selectedInventoryName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else {
-                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`;
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize);
-                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
+                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
             }
         }
-
         function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
         function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
         function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
@@ -1650,11 +1426,7 @@
             document.getElementById('task-tabs-container').classList.remove('hidden');
             
             // SHOW/HIDE FLYER SUB TABS
-            if(currentTab === 'flyer') {
-                document.getElementById('flyer-sub-tabs').classList.remove('hidden');
-            } else {
-                document.getElementById('flyer-sub-tabs').classList.add('hidden');
-            }
+            if(currentTab === 'flyer') { document.getElementById('flyer-sub-tabs').classList.remove('hidden'); } else { document.getElementById('flyer-sub-tabs').classList.add('hidden'); }
 
             let myItems = []; 
             const now = new Date().getTime();
@@ -1687,7 +1459,6 @@
                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  }
             } else if (currentTab === 'flyer') {
-                // FILTER FOR SPECIFIC FLYER SUB-TYPE
                 myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
             } else { 
                 myItems = fullInventory.filter(taskFilter); 
@@ -1705,15 +1476,50 @@
 
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
 
-            // NEW: FLYER LOGIC (Flat List)
+            // NEW: FLYER LOGIC (Folders)
             if(currentTab === 'flyer') {
                 const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
-                crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
-                if(myItems.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No items in ${mapName[currentFlyerTab]}.</div>`; 
-                    return; 
+                
+                // LEVEL 0: SHOW PROJECT FOLDERS
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
+                    
+                    if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; return; }
+
+                    // Group by Project Name (stored in REQUEST_ASSIGNED_TO)
+                    const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + 
+                    projects.map(p => {
+                        const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
+                        return `<div class="drill-item" onclick="openFlyerProject('${p.replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-3">
+                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                        <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                    </div>
+                                    <i class="ph-bold ph-caret-right"></i>
+                                </div>`;
+                    }).join('');
                 }
-                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                // LEVEL 1: SHOW ITEMS INSIDE PROJECT
+                else if (taskViewLevel === 1) {
+                    crumb.innerText = `Flyer / ${selectedFlyerProject}`;
+                    const projectItems = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
+                    
+                    let completeBtn = '';
+                    if(ADMINS.includes(currentUser)) {
+                        completeBtn = `<div class="p-4 bg-white border-b border-gray-100">
+                            <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
+                            </button>
+                            <p class="text-[10px] text-center text-gray-400 mt-2">Removes items from this folder.</p>
+                        </div>`;
+                    }
+
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Projects</div>` + 
+                                          completeBtn + 
+                                          projectItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
                 return;
             }
 
@@ -1753,7 +1559,6 @@
             document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
             document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
             document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
-
             taskViewLevel = 0; 
             renderTasks(); 
         }
@@ -1763,9 +1568,11 @@
             document.getElementById('fst-crop').classList.toggle('active', sub === 'flyer_crop');
             document.getElementById('fst-endcap').classList.toggle('active', sub === 'flyer_endcap');
             document.getElementById('fst-spot').classList.toggle('active', sub === 'flyer_spot');
+            taskViewLevel = 0;
             renderTasks();
         }
         
+        function openFlyerProject(projName) { selectedFlyerProject = projName; taskViewLevel = 1; renderTasks(); }
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
@@ -1914,6 +1721,9 @@
             // SHOW FLYER OPTIONS IF AUTHORIZED
             if (FLYER_AUTH.includes(currentUser)) {
                 document.getElementById('auth-flyer-options').classList.remove('hidden');
+                // Auto-fill existing projects into datalist
+                const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p);
+                document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join('');
             } else {
                 document.getElementById('auth-flyer-options').classList.add('hidden');
             }
@@ -2009,6 +1819,7 @@
             const m = document.getElementById('chk-morgan').checked; 
             const isCalReq = document.getElementById('chk-cal-request').checked;
             const noteText = document.getElementById('assign-note').value;
+            const flyerProjectName = document.getElementById('flyer-project-name').value;
             
             // CHECK FLYER SELECTION
             let flyerSelection = null;
@@ -2021,14 +1832,18 @@
             if(k) selected.push("Kayla"); 
             if(m) selected.push("Morgan");
             
-            if(selected.length === 0 && !flyerSelection) { 
+            if(flyerSelection && !flyerProjectName) {
+                showToast("Warning", "Please enter a Project Name.", true);
+                return;
+            }
+
+            if(!flyerSelection && selected.length === 0) { 
                 showToast("Warning", "Select a person or a flyer category.", true); 
                 return; 
             } 
             
-            let target = selected.join(" & ");
-            // If flyer is selected but no user, assign to self so it shows in list
-            if(flyerSelection && target === "") target = currentUser;
+            // IF FLYER SELECTED, TARGET IS PROJECT NAME. ELSE TARGET IS PERSON.
+            let target = flyerSelection ? flyerProjectName : selected.join(" & ");
 
             const updates = selectedIdx.map(idx => { 
                 const item = fullInventory[idx]; 
@@ -2051,7 +1866,6 @@
                 
                 if(noteText) {
                     let oldGen = item.SAVED_NOTE || "";
-                    // Avoid duplicate notes
                     if(!oldGen.includes(noteText)) {
                         item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
                     }
@@ -2076,12 +1890,52 @@
             
             // CLEAR MODAL INPUTS
             document.getElementById('assign-note').value = "";
+            document.getElementById('flyer-project-name').value = "";
             for(let radio of flyerRadios) radio.checked = false;
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
             .then(data => { 
                 if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } 
+            })
+            .catch(err => { showToast("Network Error", "Saved offline.", true); });
+        }
+
+        // --- NEW: COMPLETE PROJECT LOGIC ---
+        function markProjectComplete(projName) {
+            if(!confirm(`Are you sure you want to complete and archive project: "${projName}"?`)) return;
+            
+            // Find all items in this project
+            const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_"));
+            
+            if(projItems.length === 0) return;
+
+            const updates = projItems.map(item => {
+                // Reset local data
+                item.REQUEST_ASSIGNED_TO = "";
+                item.TASK_TAB = "review"; // Or keep current tab? Usually 'review' or reset to standard flow. Let's send to 'review' so it disappears from flyer tab.
+                
+                return {
+                    id: item.UNIQUE_ID,
+                    requestAssignedTo: "",
+                    taskTab: "review",
+                    user: currentUser
+                };
+            });
+
+            // Update UI Immediately
+            resetTaskView();
+            showToast("Completing...", `Archiving ${projName}...`);
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') { 
+                    showToast("Success", "Project archived."); 
+                    fetchData(true); 
+                } else { 
+                    showToast("Error", data.message, true); 
+                } 
             })
             .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
