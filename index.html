@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 007</title>
+    <title>Greenleaf Pro TURBO 008</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -95,7 +95,6 @@
         
         /* EXCEL STYLE FILTERS ROW */
         .filter-row-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        /* Hide Scrollbar */
         .filter-row-container::-webkit-scrollbar { display: none; }
         .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
         
@@ -172,7 +171,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 007
+                TURBO 008
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -202,11 +201,15 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 007 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 008 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
-            <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
+            
+            <div class="flex items-center gap-2">
+                <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
+                <img src="GNC LOGO.png" alt="Logo" class="h-8 w-auto object-contain">
+            </div>
         </header>
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
@@ -620,6 +623,7 @@
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
+        let salesNoteMap = {}; // Stores { CommonName: [notes...] }
         let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
@@ -866,6 +870,7 @@
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
+                    salesNoteMap = cloudJson.salesMap || {}; // NEW SALES MAP
                     
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
 
@@ -1706,11 +1711,23 @@
 
         function showEditMode() {
             document.getElementById('btn-cam-container').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-edit-container').classList.add('hidden'); document.getElementById('readonly-lock-banner').classList.add('hidden');
-            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
-            let dlHtml = `<datalist id="dl-notes">`; validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); dlHtml += `</datalist>`;
-            const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
+            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
             
-            // ADDED ONINPUT TO FORCE UPPERCASE HERE
+            // NEW DROPDOWN LOGIC
+            // Look up common name in salesNoteMap
+            const cName = String(activeItem.COMMONNAME || "").toUpperCase();
+            const noteOptions = salesNoteMap[cName] || [];
+            
+            let dlHtml = `<datalist id="dl-notes">`; 
+            // Add from external sheet
+            noteOptions.forEach(n => { dlHtml += `<option value="${n}">`; }); 
+            // Add from internal template if any (fallback)
+            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
+            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
+            dlHtml += `</datalist>`;
+            
+            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
+            
             cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase()">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
         }
 
