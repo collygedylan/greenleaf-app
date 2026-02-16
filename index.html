@@ -1846,18 +1846,46 @@
         function handleCardClick(idx, source) { if(isBatch) { const cb = document.getElementById('cb-' + idx); if(cb) { cb.checked = !cb.checked; updateSelected(); } return; } openDetail(idx, source); }
 
         function createRowHtml(item, idx, source) {
-            let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
-            let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
+                let thumbUrl = firstLink;
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
+                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
+            }
             
-            // --- UPDATED CARD DISPLAY ---
+            let badges = '';
+            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
+
+            // NEW: HOLD/STOP LOGIC
+            // Checks HOLDSTOPCODE. Blank=Green, H=Yellow, S=Red
+            let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
+            let cardClass = "!bg-green-50 !border-green-300"; // Default (Green for blank/null)
+            let indicator = "";
+
+            if (holdCode === "S") {
+                cardClass = "!bg-red-50 !border-red-300";
+                indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`;
+            } else if (holdCode === "H") {
+                cardClass = "!bg-yellow-50 !border-yellow-300";
+                indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`;
+            }
+
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
                 ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow flex items-center" onclick="handleCardClick(${idx}, '${source}')">
+                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">
                     ${thumbHtml}
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-start">
-                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
+                            <div class="font-bold text-[#007a4d] truncate text-base flex items-center">
+                                ${item.LOCATIONCODE || 'No Loc'}
+                                ${indicator}
+                            </div>
                             <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
                         </div>
                         <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
