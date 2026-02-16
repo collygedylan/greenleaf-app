@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 005</title>
+    <title>Greenleaf Pro TURBO 006</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -166,7 +166,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 005
+                TURBO 006
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -196,7 +196,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 005 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 006 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -380,6 +380,7 @@
                 
                 <div class="task-tabs mb-4">
                     <div id="st-reps" class="task-tab active" onclick="switchSocTab('reps')">Sales Reps</div>
+                    <div id="st-item" class="task-tab" onclick="switchSocTab('item')">Item Lookup</div>
                     <div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div>
                 </div>
 
@@ -626,7 +627,7 @@
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
         let currentFlyerTab = 'flyer_crop'; 
-        let selectedFlyerProject = null; // Holds the active project name
+        let selectedFlyerProject = null; 
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
@@ -635,7 +636,9 @@
         let selectedReviewSize = null; 
         let socViewLevel = 0; 
         let selectedSocRep = null; 
-        let selectedSocCust = null; 
+        let selectedSocCust = null;
+        let selectedSocCommon = null; 
+        let selectedSocSize = null; 
         let isBatch = false; 
         let selectedIdx = []; 
         let lastView = 'drive'; 
@@ -645,7 +648,7 @@
         let debounceTimer; 
 
         // *** FIX: PROTECTION VARIABLE ***
-        window.lastLocalUpdate = 0; 
+        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
 
         // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
@@ -901,7 +904,7 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            renderSocView(); 
+                            // Don't auto-render SOC to avoid clearing active drill down state unless necessary
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1225,6 +1228,7 @@
         function switchSocTab(tab) {
             currentSocTab = tab;
             document.getElementById('st-reps').classList.toggle('active', tab === 'reps');
+            document.getElementById('st-item').classList.toggle('active', tab === 'item');
             document.getElementById('st-docks').classList.toggle('active', tab === 'docks');
             socViewLevel = 0;
             renderSocView();
@@ -1252,15 +1256,53 @@
         function renderSocView() {
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
+            
+            // GLOBAL SEARCH (If typing)
             if (term && socData.length > 0) { 
-                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term)); 
-                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded Rep</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Ship To: ${i.CONSIGNEENAME || 'Same'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.COMMONNAME||"").toLowerCase().includes(term)); 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
             }
+
+            // DOCKS TAB
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
                 for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
                 html += '</div>'; container.innerHTML = html; return;
             }
+
+            // ITEM LOOKUP TAB
+            if (currentSocTab === 'item') {
+                // If no data loaded yet, show prompt
+                if(socData.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; return; }
+
+                if (socViewLevel === 0) {
+                    // List Unique Common Names
+                    const names = [...new Set(socData.map(i => i.COMMONNAME || "Unknown"))].sort();
+                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectSocCommonName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 1) {
+                    // List Sizes for selected Common Name
+                    const namedItems = socData.filter(i => i.COMMONNAME === selectedSocCommon);
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
+                    sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 2) {
+                    // List Customers for Item + Size
+                    const finalItems = socData.filter(i => i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
+                    finalItems.map(i => `
+                    <div class="inv-card">
+                        <div class="flex justify-between">
+                            <div class="font-bold text-gray-800">${i.CUSTOMERNAME || 'Unknown'}</div>
+                            <div class="font-bold text-black bg-gray-100 px-2 rounded">Qty: ${i.QTYORDERED || i.QTY || 0}</div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">Rep: <strong>${i.SALESREP || '-'}</strong> | Order: ${i.ORDERNO || '-'}</div>
+                        <div class="text-xs text-gray-400">Ship: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
+                    </div>`).join('');
+                }
+                return;
+            }
+
+            // SALES REPS TAB (Default Drill Down)
             if(socViewLevel === 0) { 
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
@@ -1273,7 +1315,12 @@
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
             }
         }
+        
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        
+        // NEW SOC DRILL FUNCTIONS
+        function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = 1; renderSocView(); }
+        function selectSocSize(s) { selectedSocSize = s; socViewLevel = 2; renderSocView(); }
 
         // --- NEW: DRIVE MODE FILTERS & LOGIC ---
         function initDriveFilters() {
@@ -1866,6 +1913,7 @@
                 
                 if(noteText) {
                     let oldGen = item.SAVED_NOTE || "";
+                    // Avoid duplicate notes
                     if(!oldGen.includes(noteText)) {
                         item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
                     }
