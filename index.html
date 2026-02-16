@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 011</title>
+    <title>Greenleaf Pro TURBO 012</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -23,6 +23,9 @@
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
+        
+        /* IPAD & MOBILE SAFE AREA FIX */
+        .pt-safe { padding-top: max(10px, env(safe-area-inset-top)); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
@@ -46,7 +49,7 @@
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
         
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 15px; cursor: pointer; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
@@ -175,7 +178,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 011
+                TURBO 012
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -205,7 +208,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 011 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 012 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -270,7 +273,7 @@
             <div id="view-salesoffice" class="hidden">
                 <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes</h2>
                 <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100">
-                    <strong>Published Descriptions:</strong> Ready-to-sell items recently updated by the field team.
+                    <strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.
                 </div>
                 <input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search Plants or Codes..." onkeyup="renderSalesOffice()">
                 <div id="salesoffice-content"></div>
@@ -420,7 +423,7 @@
                 <div id="viewer-content"></div>
             </div>
 
-            <div id="view-detail" class="hidden">
+            <div id="view-detail" class="hidden pt-safe">
                 <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
@@ -1032,6 +1035,9 @@
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc;
             
+            // --- NEW: Reset Approval Status on Edit ---
+            activeItem.SO_STATUS = "PENDING"; // Whenever field edits, it resets to Pending
+            
             activeItem.GROWER_EVAL = growerEval;
             activeItem.GROWER_SHEAR = growerShear;
             activeItem.GROWER_WATER = growerWater;
@@ -1053,6 +1059,7 @@
                 pick: pick, 
                 note: note, 
                 salesDesc: salesDesc,
+                soStatus: "PENDING", // Send new status
                 growerEval: growerEval,
                 growerShear: growerShear,
                 growerWater: growerWater,
@@ -1065,7 +1072,7 @@
             
             if(!silent) { 
                 goBackFromDetail(); 
-                showToast("Saved", "Update applied instantly.", false); 
+                showToast("Saved", "Sent to Sales Office.", false); 
             } else { 
                 renderOverviewData(); 
             }
@@ -1573,6 +1580,7 @@
                     const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
                     const ss = parseFloat(i.SEASONSUPPLY) || 0; 
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    // 10-Day Rule: Only show if OLDER than 10 days OR Low Stock
                     if (daysOld < 10 && !isLowStock) return false; 
                 }
                 return true;
@@ -1755,13 +1763,73 @@
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
-        // --- SALES OFFICE LOGIC ---
+        // --- SALES OFFICE LOGIC (Updated) ---
         function renderSalesOffice() {
-            const container = document.getElementById('salesoffice-content'); const searchInput = document.getElementById('salesoffice-search'); const term = searchInput ? searchInput.value.toLowerCase() : '';
-            const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
+            const container = document.getElementById('salesoffice-content'); 
+            const searchInput = document.getElementById('salesoffice-search'); 
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            // Only show items that have a Sales Note
+            const salesItems = fullInventory.filter(i => { 
+                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
+                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
+                return true; 
+            });
+            
             if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
+            
             salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
-            container.innerHTML = salesItems.map(item => `<div class="inv-card mb-3 !p-4 border-green-200"><div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`).join('');
+            
+            container.innerHTML = salesItems.map(item => {
+                const isApproved = item.SO_STATUS === 'APPROVED';
+                const statusColor = isApproved ? 'bg-green-100 border-green-300' : 'bg-white border-gray-200';
+                const btnHtml = isApproved 
+                    ? `<div class="mt-2 text-xs font-bold text-green-700 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Approved</div>`
+                    : `<button onclick="approveSalesItem('${item.UNIQUE_ID}')" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded shadow text-xs flex items-center justify-center gap-2"><i class="ph-bold ph-check"></i> APPROVE & PUBLISH</button>`;
+
+                return `<div class="inv-card mb-3 !p-4 border ${statusColor}">
+                            <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                            <div class="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-800 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
+                            ${btnHtml}
+                        </div>`;
+            }).join('');
+        }
+
+        function approveSalesItem(id) {
+            const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
+            if (itemIdx === -1) return;
+            
+            const item = fullInventory[itemIdx];
+            
+            // 1. Update Status
+            item.SO_STATUS = "APPROVED";
+            // 2. Reset Timestamp to NOW so 10-day timer starts fresh for field users
+            item.TIMESTAMP = new Date().toISOString(); 
+            
+            // 3. Render and Save
+            renderSalesOffice();
+            showToast("Approved", "10-day timer started for field team.");
+            
+            const payload = { 
+                type: "update", 
+                id: item.UNIQUE_ID, 
+                soStatus: "APPROVED",
+                // We send the other fields to ensure nothing gets overwritten blank
+                match: item.SAVED_MATCH||"", 
+                spec: item.SAVED_SPEC||"", 
+                pick: item.SAVED_PICK||"", 
+                note: item.SAVED_NOTE||"", 
+                salesDesc: item.SAVED_SALES_DESC||"",
+                photoLink: item.SAVED_PHOTO_LINK||"",
+                photoName: item.SAVED_PHOTO_NAME||"",
+                user: currentUser
+            };
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            }).catch(err => logFailedSave(payload));
         }
 
         // --- APP NAVIGATION ---
