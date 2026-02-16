@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 010</title>
+    <title>Greenleaf Pro TURBO 011</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -101,12 +101,22 @@
         /* MULTI-SELECT DROPDOWN STYLES */
         .ms-container { position: relative; }
         .ms-btn { background: white; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; }
-        .ms-options { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; }
+        
+        /* FIXED POSITION DROPDOWNS (Z-INDEX FIX) */
+        .ms-options { display: none; position: fixed; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 9999; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 220px; }
         .ms-options.show { display: block; }
+        
         .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; color: #1f2937; white-space: normal; }
         .ms-option:hover { background: #f9fafb; }
         .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
         .ms-option.selected { background-color: #f0fdf4; }
+
+        /* CUSTOM COMBOBOX STYLES */
+        .combo-container { position: relative; width: 100%; }
+        .combo-input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; background: #f0fdf4; border-color: #16a34a; }
+        .combo-list { position: absolute; top: 100%; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #d1d5db; border-radius: 8px; z-index: 50; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; margin-top: 4px; }
+        .combo-item { padding: 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; cursor: pointer; }
+        .combo-item:hover { background: #f9fafb; }
 
         /* EDITOR MODAL STYLES */
         #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
@@ -171,7 +181,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 010
+                TURBO 011
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -201,7 +211,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 010 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 011 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -286,15 +296,15 @@
                 
                 <div class="filter-row-container">
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button id="btn-ms-group" class="ms-btn w-full" onclick="toggleMs('ms-group', this)"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-group" class="ms-options"></div>
                     </div>
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button id="btn-ms-season" class="ms-btn w-full" onclick="toggleMs('ms-season', this)"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-season" class="ms-options"></div>
                     </div>
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button id="btn-ms-lot" class="ms-btn w-full" onclick="toggleMs('ms-lot', this)"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-lot" class="ms-options"></div>
                     </div>
                     
@@ -389,7 +399,7 @@
                     <div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div>
                 </div>
 
-                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="handleSearchDebounced(this.value, 'soc')">
+                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderSocView()">
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
                 <div id="soc-content"></div>
             </div>
@@ -623,7 +633,7 @@
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
-        let salesNoteMap = {}; // Stores { CommonName: [notes...] }
+        let salesNoteMap = {}; 
         let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
@@ -653,8 +663,7 @@
         let autoSyncTimer;
         let debounceTimer; 
 
-        // *** FIX: PROTECTION VARIABLE ***
-        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
+        window.lastLocalUpdate = 0; 
 
         // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
@@ -752,7 +761,6 @@
                 if(type === 'production') handleProductionSearch(val);
                 if(type === 'soc') {
                     if (currentSocTab === 'item') {
-                         // Only search server if text length > 2 to save calls
                          if(val.length > 2) {
                              document.getElementById('soc-status').innerText = "Searching Global Database...";
                              fetch(GOOGLE_SCRIPT_URL + "?action=searchSoc&term=" + encodeURIComponent(val))
@@ -760,7 +768,7 @@
                              .then(data => {
                                  if(data.status === 'success') {
                                      socData = data.data;
-                                     socViewLevel = 0; // Reset drill down
+                                     socViewLevel = 0; 
                                      renderSocView();
                                      document.getElementById('soc-status').innerText = data.data.length + " matches found.";
                                  } else {
@@ -769,7 +777,7 @@
                              });
                          }
                     } else {
-                         renderSocView(); // Local filter for Reps/Docks
+                         renderSocView(); 
                     }
                 }
             }, 500); 
@@ -933,7 +941,7 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
                         } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            // Don't auto-render SOC to avoid clearing active drill down state unless necessary
+                            // Don't auto-render SOC
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1008,7 +1016,7 @@
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
             const noteEl = document.getElementById('in-note'); 
-            const salesDescEl = document.getElementById('in-sales-desc');
+            const salesDescEl = document.getElementById('combo-input-sales');
 
             const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
             const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
@@ -1085,7 +1093,7 @@
             const specEl = document.getElementById('in-spec');
             const pickEl = document.getElementById('in-pick'); 
             const noteEl = document.getElementById('in-note'); 
-            const salesDescEl = document.getElementById('in-sales-desc');
+            const salesDescEl = document.getElementById('combo-input-sales');
 
             const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
             const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
@@ -1138,7 +1146,7 @@
                 if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
                 if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
                 if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-                if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+                if(document.getElementById('combo-input-sales')) activeItem.SAVED_SALES_DESC = document.getElementById('combo-input-sales').value;
                 if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
                 if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
                 openPhotoEditor();
@@ -1285,53 +1293,30 @@
         function renderSocView() {
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
-            
-            // GLOBAL SEARCH (If typing)
             if (term && socData.length > 0) { 
                 const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.COMMONNAME||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
             }
-
-            // DOCKS TAB
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
                 for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
                 html += '</div>'; container.innerHTML = html; return;
             }
-
-            // ITEM LOOKUP TAB
             if (currentSocTab === 'item') {
-                // If no data loaded yet, show prompt
                 if(socData.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; return; }
-
                 if (socViewLevel === 0) {
-                    // List Unique Common Names
                     const names = [...new Set(socData.map(i => i.COMMONNAME || "Unknown"))].sort();
                     container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectSocCommonName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (socViewLevel === 1) {
-                    // List Sizes for selected Common Name
                     const namedItems = socData.filter(i => i.COMMONNAME === selectedSocCommon);
                     const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
-                    sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (socViewLevel === 2) {
-                    // List Customers for Item + Size
                     const finalItems = socData.filter(i => i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
-                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
-                    finalItems.map(i => `
-                    <div class="inv-card">
-                        <div class="flex justify-between">
-                            <div class="font-bold text-gray-800">${i.CUSTOMERNAME || 'Unknown'}</div>
-                            <div class="font-bold text-black bg-gray-100 px-2 rounded">Qty: ${i.QTYORDERED || i.QTY || 0}</div>
-                        </div>
-                        <div class="text-xs text-gray-500 mt-1">Rep: <strong>${i.SALESREP || '-'}</strong> | Order: ${i.ORDERNO || '-'}</div>
-                        <div class="text-xs text-gray-400">Ship: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
-                    </div>`).join('');
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + finalItems.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-gray-800">${i.CUSTOMERNAME || 'Unknown'}</div><div class="font-bold text-black bg-gray-100 px-2 rounded">Qty: ${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500 mt-1">Rep: <strong>${i.SALESREP || '-'}</strong> | Order: ${i.ORDERNO || '-'}</div><div class="text-xs text-gray-400">Ship: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('');
                 }
                 return;
             }
-
-            // SALES REPS TAB (Default Drill Down)
             if(socViewLevel === 0) { 
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
@@ -1344,14 +1329,11 @@
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
             }
         }
-        
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
-        
-        // NEW SOC DRILL FUNCTIONS
         function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = 1; renderSocView(); }
         function selectSocSize(s) { selectedSocSize = s; socViewLevel = 2; renderSocView(); }
 
-        // --- NEW: DRIVE MODE FILTERS & LOGIC ---
+        // --- NEW: DRIVE MODE FILTERS & LOGIC (FIXED POSITION DROPDOWNS) ---
         function initDriveFilters() {
             const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
             const grpDiv = document.getElementById('ms-group');
@@ -1364,7 +1346,23 @@
             lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
         }
 
-        function toggleMs(id) { const el = document.getElementById(id); ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); }); el.classList.toggle('show'); }
+        // New Logic to Position Dropdown Over Everything
+        function toggleMs(id, btn) {
+            const el = document.getElementById(id);
+            const isOpen = el.classList.contains('show');
+            
+            // Close all others
+            ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { document.getElementById(mid).classList.remove('show'); });
+
+            if (!isOpen) {
+                // Calculate position relative to button
+                const rect = btn.getBoundingClientRect();
+                el.style.top = (rect.bottom + 5) + 'px';
+                el.style.left = rect.left + 'px';
+                el.classList.add('show');
+            }
+        }
+
         function updateDriveFilterState(type) {
             const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
             const checks = div.querySelectorAll('input[type="checkbox"]:checked');
@@ -1405,7 +1403,14 @@
         function renderDriveNames() { renderDriveView(); } 
         function renderDriveView() {
             const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems();
-            document.onclick = function(e) { if(!e.target.closest('.ms-container')) { document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); } }
+            
+            // Close dropdowns if clicking outside
+            document.addEventListener('click', function(e) {
+                if(!e.target.closest('.filter-item') && !e.target.closest('.ms-options')) {
+                    document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show'));
+                }
+            });
+
             if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             if(driveViewLevel === 0) {
                 crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
@@ -1731,27 +1736,67 @@
             if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
         }
 
+        // --- CUSTOM COMBOBOX LOGIC ---
         function showEditMode() {
             document.getElementById('btn-cam-container').classList.remove('hidden'); document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-edit-container').classList.add('hidden'); document.getElementById('readonly-lock-banner').classList.add('hidden');
-            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
+            const cont = document.getElementById('input-container');
+            const currentSalesDesc = activeItem.SAVED_SALES_DESC || '';
+
+            cont.innerHTML = `
+            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div>
+            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div>
             
-            // NEW DROPDOWN LOGIC
-            // Look up common name in salesNoteMap
-            const cName = String(activeItem.COMMONNAME || "").toUpperCase();
-            const noteOptions = salesNoteMap[cName] || [];
+            <div class="mb-4">
+                <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label>
+                <div class="combo-container">
+                    <input type="text" id="combo-input-sales" class="combo-input" placeholder="Type or Select..." value="${currentSalesDesc}" oninput="filterSalesDesc(this.value); this.value = this.value.toUpperCase();" onfocus="filterSalesDesc(this.value)">
+                    <div id="combo-list-sales" class="combo-list"></div>
+                </div>
+            </div>
+
+            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div>
+            <div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
             
-            let dlHtml = `<datalist id="dl-notes">`; 
-            // Add from external sheet
-            noteOptions.forEach(n => { dlHtml += `<option value="${n}">`; }); 
-            // Add from internal template if any (fallback)
-            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
-            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
-            dlHtml += `</datalist>`;
-            
-            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
-            
-            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase()">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+            // Close combo when clicking outside
+            document.addEventListener('click', function(e) {
+                if(!e.target.closest('.combo-container')) {
+                    document.getElementById('combo-list-sales').style.display = 'none';
+                }
+            });
         }
+
+        function filterSalesDesc(val) {
+            const list = document.getElementById('combo-list-sales');
+            const cName = String(activeItem.COMMONNAME || "").toUpperCase();
+            
+            // Get options from new map + legacy templates
+            let options = salesNoteMap[cName] || [];
+            
+            // Add legacy templates if not already there
+            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,'');
+            const legacy = noteTemplates.filter(n => n.itemCode === myItemCode).map(n => n.note);
+            legacy.forEach(l => { if(!options.includes(l)) options.push(l); });
+
+            // Filter based on input
+            if(val) {
+                const vUpper = val.toUpperCase();
+                options = options.filter(o => o.toUpperCase().includes(vUpper));
+            }
+
+            if(options.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+
+            list.innerHTML = options.map(o => `<div class="combo-item" onclick="selectSalesDesc('${o.replace(/'/g, "\\'")}')">${o}</div>`).join('');
+            list.style.display = 'block';
+        }
+
+        function selectSalesDesc(val) {
+            document.getElementById('combo-input-sales').value = val;
+            document.getElementById('combo-list-sales').style.display = 'none';
+        }
+        // ------------------------------
 
         function showReadonlyMode(canEditText, hasData) {
             document.getElementById('btn-cam-container').classList.remove('hidden'); 
