@@ -327,7 +327,6 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        // *** CRITICAL UPDATE: YOUR SCRIPT URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
         const ADMINS = ["Dylan", "J.D."];
@@ -358,7 +357,6 @@
             { name: "J.D. Jones", id: "ADMIN", email: "jd_jones@greenleafnursery.com" }
         ];
 
-        // Safe DOM Helper
         function safeClass(id, action, className) {
             const el = document.getElementById(id);
             if (el) {
@@ -676,7 +674,6 @@
         // --- DETAIL VIEW LOGIC (MISSING PART ADDED) ---
 
         function handleCardClick(idx, source) {
-            // If we are in "Batch Mode", clicking the card selects it instead of opening it
             if (isBatch) {
                 const cb = document.getElementById('cb-' + idx);
                 if (cb) {
@@ -685,32 +682,21 @@
                 }
                 return;
             }
-            // Otherwise, open the detail view
             openDetail(idx, source);
         }
 
         function openDetail(idx, source) {
             activeItem = fullInventory[idx];
-            currentOriginView = source; // Remembers where we came from (Inventory, Drive, etc.)
-            
-            // Save for session restore
+            currentOriginView = source; 
             localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
-            
-            // Switch screen
             switchView('detail');
-            
-            // Populate the data
             renderOverviewData();
         }
 
         function renderOverviewData() {
             if (!activeItem) return;
-
-            // Header Info
             document.getElementById('det-common').innerText = activeItem.COMMONNAME || "Unknown";
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
-
-            // Grid Info
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
             document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
@@ -719,16 +705,12 @@
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
             document.getElementById('ov-sales').innerText = activeItem.SAVED_SALES_DESC || "--";
             document.getElementById('ov-source').innerText = activeItem.SOURCE_FILE || "--";
-
-            // Reset Tabs in Detail View
             switchDetailTab('overview');
         }
 
         function goBackFromDetail() {
             activeItem = null;
             localStorage.removeItem('gl_active_item');
-            
-            // Go back to the view we came from (e.g., 'inventory', 'drive', 'tasks')
             if (currentOriginView) {
                 switchView(currentOriginView);
             } else {
@@ -736,25 +718,9 @@
             }
         }
 
-        function switchDetailTab(tab) {
-            // Update Tab UI
-            document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('dtab-' + tab).classList.add('active');
-
-            // Show/Hide Content Areas
-            document.getElementById('det-overview-content').classList.add('hidden');
-            document.getElementById('det-actions-content').classList.add('hidden');
-            document.getElementById('det-grower-content').classList.add('hidden');
-
-            document.getElementById('det-' + tab + '-content').classList.remove('hidden');
-        }
-
-        // Required for the Batch selection logic inside handleCardClick
         function updateSelected() {
             const checkboxes = document.querySelectorAll('.select-check:checked');
             selectedIdx = Array.from(checkboxes).map(cb => parseInt(cb.value));
-            
-            // Show/Hide Action Bar based on selection
             const actionBar = document.getElementById('action-bar');
             if (selectedIdx.length > 0) {
                 actionBar.classList.add('visible');
@@ -763,19 +729,16 @@
             }
         }
         
-        // Toggle Batch Mode (referenced in HTML header)
         function toggleBatch() {
             isBatch = !isBatch;
             const indicator = document.getElementById('batch-indicator');
             const mainBody = document.body;
-            
             if (isBatch) {
                 indicator.style.display = 'block';
                 mainBody.classList.add('batch-mode');
             } else {
                 indicator.style.display = 'none';
                 mainBody.classList.remove('batch-mode');
-                // Clear selections when exiting batch mode
                 document.querySelectorAll('.select-check').forEach(cb => cb.checked = false);
                 updateSelected();
             }
@@ -803,7 +766,6 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
-        // Dummy implementations for features referenced but not fully provided in snippet
         function installPWA() { alert("Use browser menu to 'Add to Home Screen'"); }
         function toggleMenu() { 
             const d = document.getElementById('side-drawer'); 
@@ -813,6 +775,118 @@
         }
         function startLongPress() { longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); }, 800); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
+
+        // --- 1. ACCORDION LOGIC ---
+        function toggleExpand() {
+            const section = document.getElementById('expand-section');
+            section.classList.toggle('expanded');
+            const content = document.getElementById('expand-content');
+            if (section.classList.contains('expanded') && content.innerHTML === "") {
+                renderExpandContent();
+            }
+        }
+
+        function renderExpandContent() {
+            if (!activeItem) return;
+            let html = '<div class="grid grid-cols-1 gap-2">';
+            for (const [key, val] of Object.entries(activeItem)) {
+                if (key !== 'UNIQUE_ID' && key !== 'SAVED_PHOTO_LINK' && key !== 'HTML_ROW') {
+                    html += `<div class="flex flex-col bg-white p-2 border rounded"><span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">${key}</span><span class="text-xs font-semibold text-gray-800 break-all">${val || '-'}</span></div>`;
+                }
+            }
+            html += '</div>';
+            document.getElementById('expand-content').innerHTML = html;
+        }
+
+        // --- 2. NOTES & ACTIONS TAB LOGIC ---
+        function renderActionsTab() {
+            if (!activeItem) return;
+            const container = document.getElementById('input-container');
+            container.innerHTML = `<div class="mb-4"><label class="text-[10px] font-bold text-gray-500 uppercase">Sales / Field Notes</label><textarea id="in-note" class="input-field h-24" placeholder="Type your observations here..." oninput="saveDraft()">${activeItem.SAVED_NOTE || ''}</textarea></div><div class="grid grid-cols-2 gap-4 mb-4"><div><label class="text-[10px] font-bold text-gray-500 uppercase">Crop Match %</label><select id="in-match" class="input-field bg-white" onchange="saveDraft()"><option value="">-- Select --</option><option value="100" ${activeItem.SAVED_MATCH == '100' ? 'selected' : ''}>100% (Identical)</option><option value="90" ${activeItem.SAVED_MATCH == '90' ? 'selected' : ''}>90% (Very Close)</option><option value="75" ${activeItem.SAVED_MATCH == '75' ? 'selected' : ''}>75% (Similar)</option><option value="50" ${activeItem.SAVED_MATCH == '50' ? 'selected' : ''}>50% (Variable)</option><option value="0" ${activeItem.SAVED_MATCH == '0' ? 'selected' : ''}>0% (No Match)</option></select></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec / Quality</label><select id="in-spec" class="input-field bg-white" onchange="saveDraft()"><option value="">-- Select --</option><option value="Heavy" ${activeItem.SAVED_SPEC == 'Heavy' ? 'selected' : ''}>Heavy / Full</option><option value="Nice" ${activeItem.SAVED_SPEC == 'Nice' ? 'selected' : ''}>Nice / Standard</option><option value="Avg" ${activeItem.SAVED_SPEC == 'Avg' ? 'selected' : ''}>Average</option><option value="Light" ${activeItem.SAVED_SPEC == 'Light' ? 'selected' : ''}>Light</option><option value="Scrap" ${activeItem.SAVED_SPEC == 'Scrap' ? 'selected' : ''}>Scrap</option></select></div></div>`;
+            renderPhotoPreview();
+            document.getElementById('btn-cam-container').classList.remove('hidden');
+            document.getElementById('btn-save').classList.remove('hidden');
+        }
+
+        function renderPhotoPreview() {
+            const wrapper = document.getElementById('photo-preview');
+            const list = document.getElementById('photo-list-container');
+            if (activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK.length > 5) {
+                wrapper.classList.remove('hidden');
+                const links = activeItem.SAVED_PHOTO_LINK.split(',');
+                list.innerHTML = links.map(link => {
+                    let thumbUrl = link;
+                    const idMatch = link.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
+                    return `<div class="flex items-center justify-between bg-white border p-2 rounded-lg shadow-sm"><div class="flex items-center gap-3"><img src="${thumbUrl}" class="w-10 h-10 rounded object-cover bg-gray-200"><span class="text-xs font-bold text-gray-500">Photo Attached</span></div><a href="${link}" target="_blank" class="text-blue-600 text-xs font-bold bg-blue-50 px-3 py-1 rounded">VIEW</a></div>`;
+                }).join('');
+            } else {
+                wrapper.classList.add('hidden');
+                list.innerHTML = '';
+            }
+        }
+
+        function saveDraft() {
+            const btn = document.getElementById('btn-save');
+            if(btn) btn.innerText = "SAVE CHANGES *"; 
+        }
+
+        function saveData() {
+            if(!activeItem) return;
+            const note = document.getElementById('in-note') ? document.getElementById('in-note').value : "";
+            const match = document.getElementById('in-match') ? document.getElementById('in-match').value : "";
+            const spec = document.getElementById('in-spec') ? document.getElementById('in-spec').value : "";
+            activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.UPDATEDBY = currentUser;
+            activeItem.TIMESTAMP = new Date().toISOString();
+            showToast("Saving...", "Syncing to database...");
+            const payload = { type: "update_item", id: activeItem.UNIQUE_ID, note: note, match: match, spec: spec, user: currentUser };
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast("Success", "Data saved successfully.");
+                    document.getElementById('btn-save').innerText = "SAVE & LOCK DATA";
+                    renderOverviewData();
+                } else { showToast("Error", "Save failed: " + data.message, true); }
+            })
+            .catch(err => { console.error(err); showToast("Error", "Network error. Try again.", true); });
+        }
+
+        function handlePhotoUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const editor = document.getElementById('view-photo-editor');
+                const img = document.getElementById('editor-preview');
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    editor.style.display = 'flex'; 
+                    currentFile = file; 
+                }
+                reader.readAsDataURL(file);
+                input.value = '';
+            }
+        }
+
+        function closePhotoEditor() { document.getElementById('view-photo-editor').style.display = 'none'; }
+        function finalizeUpload() {
+            showToast("Uploading...", "Sending photo to cloud...");
+            closePhotoEditor();
+            setTimeout(() => { showToast("Success", "Photo uploaded (Simulation)"); }, 1500);
+        }
+
+        function switchDetailTab(tab) {
+            document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('dtab-' + tab).classList.add('active');
+            document.getElementById('det-overview-content').classList.add('hidden');
+            document.getElementById('det-actions-content').classList.add('hidden');
+            document.getElementById('det-grower-content').classList.add('hidden');
+            document.getElementById('det-' + tab + '-content').classList.remove('hidden');
+            if (tab === 'actions') { renderActionsTab(); }
+        }
     </script>
 </body>
 </html>
