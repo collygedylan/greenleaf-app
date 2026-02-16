@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 005</title>
+    <title>Greenleaf Pro TURBO 006</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Greenleaf">
+    
     <link rel="icon" type="image/png" href="GNC LOGO.png">
+    <link rel="apple-touch-icon" href="GNC LOGO.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -18,13 +21,13 @@
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
         
-        #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; }
-
-        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s; display: flex; align-items: center; gap: 12px; pointer-events: none; }
+        .pin-input { width: 100%; padding: 14px; font-size: 18px; text-align: center; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 15px; outline: none; }
+        
+        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
         
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
@@ -34,13 +37,13 @@
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
 
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; }
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 50px; }
         .drill-item:active { background: #f3f4f6; }
         
-        .inv-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; }
+        .inv-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
         .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
         
-        /* CARD COLORS */
+        /* CARD COLORS BASED ON HOLDSTOP */
         .card-green { background-color: #f0fdf4; border-color: #86efac; }
         .card-yellow { background-color: #fefce8; border-color: #fde047; }
         .card-red { background-color: #fef2f2; border-color: #fca5a5; }
@@ -50,23 +53,25 @@
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 0; margin: 0; transform: scale(0); transition: transform 0.2s; }
+        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
         
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-around; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
-        .action-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
         
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; }
+        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         .home-icon { font-size: 32px; margin-bottom: 4px; }
 
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         
-        .overview-grid, .task-info-grid, .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
@@ -78,38 +83,60 @@
         
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        
+        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
         .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
 
-        /* MODALS */
-        #assign-modal, #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #request-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; }
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
+        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
-        /* FILTERS & EDITOR */
+        /* MULTI-SELECT DROPDOWN STYLES */
         .ms-container { position: relative; margin-bottom: 8px; }
-        .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; }
-        .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; margin-top: 4px; }
+        .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+        .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 4px; }
         .ms-options.show { display: block; }
         .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
-        .season-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 10px; }
-        .season-chip { padding: 6px 12px; background: #e5e7eb; color: #4b5563; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-        .season-chip.active { background: #007a4d; color: white; }
-        
+        .ms-option:hover { background: #f9fafb; }
+        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); }
+        .ms-option.selected { background-color: #f0fdf4; }
+
+        /* EDITOR MODAL STYLES */
         #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
         .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
-        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
         .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
         .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
         .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        
+        .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
+        .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
+        .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
 
+        /* PULL TO REFRESH */
+        #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
+        #ptr-spinner.loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* DATA BADGES */
         .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+
+        /* PRODUCTION STYLES */
         .text-production { color: #d97706; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .season-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 10px; }
+        .season-chip { padding: 6px 12px; background: #e5e7eb; color: #4b5563; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .season-chip.active { background: #007a4d; color: white; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -130,7 +157,18 @@
             <div class="filter-scroll">
                 <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
                 <div class="filter-btn active" id="btn-logo" onclick="toggleEdit('logo')"><i class="ph-fill ph-stamp"></i> Logo</div>
+                <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
+            
+            <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Studio Backgrounds (Solid Color)</div>
+            <div class="filter-scroll">
+                <div class="filter-btn active" id="btn-bg-none" onclick="setBg('none')">None</div>
+                <div class="filter-btn bg-white text-gray-800 border-gray-300" id="btn-bg-white" onclick="setBg('white')">White</div>
+                <div class="filter-btn bg-gray-200 text-gray-800" id="btn-bg-gry" onclick="setBg('grey')">Grey</div>
+                <div class="filter-btn bg-[#007a4d] text-white" id="btn-bg-grn" onclick="setBg('green')">Green</div>
+                <div class="filter-btn bg-purple-200 text-purple-800" id="btn-bg-prp" onclick="setBg('purple')">Purple</div>
+            </div>
+
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
                 <i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO
             </button>
@@ -144,6 +182,7 @@
                 TURBO 005
             </div>
             
+            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             <div id="login-buttons">
                 <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Admin)</button>
                 <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
@@ -151,11 +190,12 @@
                 <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Admin)</button>
                 
                 <hr class="my-4 border-gray-200">
+                
                 <button class="user-btn border-green-300 bg-green-50 text-green-800" onclick="showRepLogin()">
                     <i class="ph-bold ph-user-circle text-xl"></i> Sales Rep Login
                 </button>
             </div>
-            
+
             <div id="pin-container" class="hidden mt-4">
                 <input type="password" id="pin-code" class="pin-input w-full" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
@@ -178,12 +218,15 @@
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
+        
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 005</div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
+                        TURBO 005 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                    </div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -192,6 +235,7 @@
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
         <div id="side-drawer">
             <div class="drawer-header">Greenleaf Menu</div>
+            <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
@@ -296,6 +340,7 @@
 
             <div id="view-production" class="hidden">
                 <h2 class="text-sm font-bold text-production uppercase mb-4">Production & Grower Notes</h2>
+                
                 <div class="season-scroll" id="prod-season-bar">
                     <div class="season-chip active" onclick="toggleProductionSeason('ALL', this)">ALL</div>
                     <div class="season-chip" onclick="toggleProductionSeason('F1', this)">F1</div>
@@ -307,6 +352,7 @@
                     <div class="season-chip" onclick="toggleProductionSeason('Y', this)">Y</div>
                     <div class="season-chip" onclick="toggleProductionSeason('Z', this)">Z</div>
                 </div>
+
                 <input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleSearchDebounced(this.value, 'production')">
                 <div id="production-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="production-content"></div>
@@ -314,6 +360,7 @@
 
             <div id="view-inventory" class="hidden">
                 <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory Lookup</h2>
+                
                 <div class="season-scroll" id="inv-season-bar">
                     <div class="season-chip active" onclick="toggleInventorySeason('ALL', this)">ALL</div>
                     <div class="season-chip" onclick="toggleInventorySeason('F1', this)">F1</div>
@@ -325,6 +372,7 @@
                     <div class="season-chip" onclick="toggleInventorySeason('Y', this)">Y</div>
                     <div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div>
                 </div>
+
                 <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'inventory')">
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
@@ -352,10 +400,12 @@
 
             <div id="view-soc" class="hidden">
                 <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
+                
                 <div class="task-tabs mb-4">
                     <div id="st-reps" class="task-tab active" onclick="switchSocTab('reps')">Sales Reps</div>
                     <div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div>
                 </div>
+
                 <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderSocView()">
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
                 <div id="soc-content"></div>
@@ -698,31 +748,70 @@
             let myItems = [];
             const now = new Date().getTime();
 
-            // 1. ORIGINAL MAINTENANCE FILTER (10-Day / 10% Rule)
-            const maintenanceFilter = (i) => {
+            // 1. Calculate Priority Logic Dynamically
+            // This function assigns 'season' or 'location' to COMPUTED_TAB based on your rules
+            const calculateTaskStatuses = () => {
+                const grouped = {};
+                // Group by ITEMCODE
+                fullInventory.forEach(item => {
+                    if (!item.ITEMCODE) return;
+                    if (!grouped[item.ITEMCODE]) grouped[item.ITEMCODE] = [];
+                    grouped[item.ITEMCODE].push(item);
+                });
+
+                Object.keys(grouped).forEach(code => {
+                    const items = grouped[code];
+                    
+                    // Filter "Season" candidates: Priority > 0 AND Stock > 10% Season Supply
+                    const seasonCandidates = items.filter(i => 
+                        (parseFloat(i.PRIORITY) || 0) > 0 && 
+                        (parseFloat(i.PTRAVAILABLE) || 0) > ((parseFloat(i.SEASONSUPPLY) || 0) * 0.10)
+                    );
+
+                    // Sort candidates by Priority ASC (Lowest number wins)
+                    seasonCandidates.sort((a,b) => (parseFloat(a.PRIORITY) || 999) - (parseFloat(b.PRIORITY) || 999));
+                    
+                    let winnerId = null;
+                    if (seasonCandidates.length > 0) {
+                        winnerId = seasonCandidates[0].UNIQUE_ID;
+                    }
+
+                    // Assign statuses
+                    items.forEach(i => {
+                        const pri = parseFloat(i.PRIORITY) || 0;
+                        if (pri > 0) {
+                            if (i.UNIQUE_ID === winnerId) {
+                                i.COMPUTED_TAB = 'season';
+                            } else {
+                                i.COMPUTED_TAB = 'location';
+                            }
+                        } else {
+                            i.COMPUTED_TAB = 'none'; 
+                        }
+                    });
+                });
+            };
+
+            // Run calculation
+            calculateTaskStatuses();
+
+            // 2. Filter Function
+            const taskFilter = (i) => {
+                // User Filter
                 if (taskViewTargetUser === 'ASSIST') {
                     const assignee = (i.ASSIGNEDTO || "");
                     if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false;
                 } else {
                     if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
                 }
-                // Filter by Tab (Season/Location)
-                if(currentTab === 'season' || currentTab === 'location') {
-                    // Logic: Only show if updated recently (<10 days) OR low stock
-                    if (i.TIMESTAMP) {
-                        const saveTime = new Date(i.TIMESTAMP).getTime();
-                        const daysOld = (now - saveTime) / (1000 * 3600 * 24);
-                        const ptr = parseFloat(i.PTRAVAILABLE) || 0;
-                        const ss = parseFloat(i.SEASONSUPPLY) || 0;
-                        const isLowStock = ss > 0 && ptr < (ss * 0.10);
-                        if (daysOld < 10 && !isLowStock) return false;
-                    } else {
-                        // If never updated, maybe show? Or hide? 
-                        // Your original logic implied hiding unless it matches specific criteria.
-                        // Assuming basic assignment display for brevity unless hidden by your logic.
-                    }
+
+                // Tab Filter
+                if (currentTab === 'season' || currentTab === 'location') {
+                    // MUST have a priority to even be considered (COMPUTED_TAB is set)
+                    if (i.COMPUTED_TAB === currentTab) return true;
+                    return false;
                 }
-                return true; 
+                return true;
             };
 
             if(currentTab === 'requests') {
@@ -735,26 +824,29 @@
                 container.innerHTML = myItems.length ? myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('') : `<div class="p-8 text-center text-gray-400">No active requests.</div>`;
                 return;
             } else {
-                // OLD: Maintenance View
-                myItems = fullInventory.filter(maintenanceFilter);
+                // NEW LOGIC: Priority View
+                myItems = fullInventory.filter(taskFilter);
                 
                 // [RESTORED DRILL DOWN LOGIC]
                 if(taskViewLevel === 0) {
-                    if(currentTab === 'season') {
-                       // Drill down by Season or Block? Original code drilled by Block usually
-                       // Assuming block drill down
-                       const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                       container.innerHTML = blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
-                    } else {
-                       // Location Tab logic
-                       const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                       container.innerHTML = blocks.map(b => `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold">${b}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    // Group by Block
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                    if(blocks.length === 0) {
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items in this category.</div>`;
+                        return;
                     }
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => {
+                         const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
+                         return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold">${b} <span class="text-xs text-gray-400">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
                 } else if(taskViewLevel === 1) {
                     // Inside Block -> Show Locs
                     const itemsInBlock = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                     const locs = [...new Set(itemsInBlock.map(i => getLocPrefix(i.LOCATIONCODE)))].sort();
-                    container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back</div>` + locs.map(l => `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                    container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back</div>` + locs.map(l => {
+                        const count = itemsInBlock.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span>${l} <span class="text-xs text-gray-400">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
                 } else {
                     // Inside Loc -> Show Items
                     const finalItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
