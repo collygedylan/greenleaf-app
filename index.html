@@ -50,6 +50,11 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
+        /* FLYER SUB TABS */
+        .flyer-sub-tabs { display: flex; padding: 8px; gap: 8px; background: #fff; overflow-x: auto; border-bottom: 1px solid #f3f4f6; }
+        .flyer-pill { white-space: nowrap; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; flex: 1; text-align: center; }
+        .flyer-pill.active { background: #007a4d; color: white; border-color: #007a4d; }
+
         .batch-row { display: flex; align-items: center; padding: 0 4px; }
         .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
         .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
@@ -83,8 +88,8 @@
         .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
         .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
 
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; }
+        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; }
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
@@ -362,6 +367,11 @@
                     <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div>
                     <div id="ttab-flyer" class="task-tab" onclick="setTaskTab('flyer')">Flyer</div>
                 </div>
+                <div id="flyer-sub-tabs" class="flyer-sub-tabs hidden">
+                    <div id="fst-crop" class="flyer-pill active" onclick="setFlyerSubTab('flyer_crop')">Crop Update</div>
+                    <div id="fst-endcap" class="flyer-pill" onclick="setFlyerSubTab('flyer_endcap')">End Cap</div>
+                    <div id="fst-spot" class="flyer-pill" onclick="setFlyerSubTab('flyer_spot')">Spotlight</div>
+                </div>
                 <div id="task-content"></div>
             </div>
 
@@ -544,10 +554,33 @@
 
     <div id="assign-modal">
         <div class="modal-card">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Create Requests</h2>
-            <div class="bg-blue-50 text-blue-800 p-3 rounded text-xs mb-4">
-                These items will appear in the <strong>Requests</strong> tab for the selected users.
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Assignment</h2>
+            
+            <div class="bg-gray-100 p-3 rounded mb-4">
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Project Note / Reason</label>
+                <input type="text" id="assign-note" class="w-full p-2 border rounded text-sm mt-1" placeholder="e.g. Spring Flyer 2024">
+                <p class="text-[10px] text-gray-400 mt-1">Added to "General Note" for selected items.</p>
             </div>
+
+            <div id="auth-flyer-options" class="hidden mb-6 border-b pb-6">
+                <h3 class="text-sm font-bold text-[#007a4d] uppercase mb-2">Marketing Flyer</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                        <input type="radio" name="flyer_assign" value="flyer_crop" class="w-4 h-4 accent-[#007a4d]">
+                        <span class="text-sm font-bold">Crop Update</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                        <input type="radio" name="flyer_assign" value="flyer_endcap" class="w-4 h-4 accent-[#007a4d]">
+                        <span class="text-sm font-bold">End Cap</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 border rounded bg-green-50">
+                        <input type="radio" name="flyer_assign" value="flyer_spot" class="w-4 h-4 accent-[#007a4d]">
+                        <span class="text-sm font-bold">Spotlight</span>
+                    </label>
+                </div>
+            </div>
+
+            <h3 class="text-sm font-bold text-gray-500 uppercase mb-2">Create Request</h3>
             <div class="mb-4 p-3 border rounded bg-gray-50">
                 <label class="flex items-center gap-2">
                     <input type="checkbox" id="chk-cal-request" class="w-5 h-5 accent-red-600">
@@ -559,6 +592,7 @@
                 <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label>
                 <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label>
             </div>
+            
             <div class="flex gap-3">
                 <button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
                 <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">DONE</button>
@@ -573,6 +607,7 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
         const ADMINS = ["Dylan", "J.D."];
+        const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
 
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
@@ -585,6 +620,7 @@
         let isAdmin = false; 
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
+        let currentFlyerTab = 'flyer_crop'; // Default sub-tab
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
@@ -1612,6 +1648,14 @@
             const container = document.getElementById('task-content'); 
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
+            
+            // SHOW/HIDE FLYER SUB TABS
+            if(currentTab === 'flyer') {
+                document.getElementById('flyer-sub-tabs').classList.remove('hidden');
+            } else {
+                document.getElementById('flyer-sub-tabs').classList.add('hidden');
+            }
+
             let myItems = []; 
             const now = new Date().getTime();
             
@@ -1642,7 +1686,12 @@
                       myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
                  }
-            } else { myItems = fullInventory.filter(taskFilter); }
+            } else if (currentTab === 'flyer') {
+                // FILTER FOR SPECIFIC FLYER SUB-TYPE
+                myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
+            } else { 
+                myItems = fullInventory.filter(taskFilter); 
+            }
 
             const term = document.getElementById('task-search').value.toLowerCase();
             if (term) { 
@@ -1658,9 +1707,10 @@
 
             // NEW: FLYER LOGIC (Flat List)
             if(currentTab === 'flyer') {
-                crumb.innerText = `${displayUser} / Flyer`;
+                const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
+                crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
                 if(myItems.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No flyer items found.</div>`; 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No items in ${mapName[currentFlyerTab]}.</div>`; 
                     return; 
                 }
                 container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
@@ -1702,11 +1752,18 @@
             document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
             document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
             document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
-            // NEW: Highlight Flyer Tab
             document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
 
             taskViewLevel = 0; 
             renderTasks(); 
+        }
+
+        function setFlyerSubTab(sub) {
+            currentFlyerTab = sub;
+            document.getElementById('fst-crop').classList.toggle('active', sub === 'flyer_crop');
+            document.getElementById('fst-endcap').classList.toggle('active', sub === 'flyer_endcap');
+            document.getElementById('fst-spot').classList.toggle('active', sub === 'flyer_spot');
+            renderTasks();
         }
         
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
@@ -1850,7 +1907,20 @@
         }
 
         function updateSelected() { selectedIdx = []; document.querySelectorAll('.select-check').forEach(cb => { if (cb.checked) { selectedIdx.push(parseInt(cb.value)); } }); if (selectedIdx.length > 0) { document.getElementById('action-bar').classList.add('visible'); } else { document.getElementById('action-bar').classList.remove('visible'); } }
-        function openAssignModal() { if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } document.getElementById('assign-modal').style.display = 'flex'; }
+        
+        function openAssignModal() { 
+            if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } 
+            
+            // SHOW FLYER OPTIONS IF AUTHORIZED
+            if (FLYER_AUTH.includes(currentUser)) {
+                document.getElementById('auth-flyer-options').classList.remove('hidden');
+            } else {
+                document.getElementById('auth-flyer-options').classList.add('hidden');
+            }
+            
+            document.getElementById('assign-modal').style.display = 'flex'; 
+        }
+
         function getBatchHtml() {
             let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
             selectedIdx.forEach(idx => {
@@ -1931,13 +2001,89 @@
         function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
         function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
+        
         function batchAssign() {
-            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked; const isCalReq = document.getElementById('chk-cal-request').checked;
-            let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
-            if(selected.length === 0) { showToast("Warning", "Select at least one person.", true); return; } let target = selected.join(" & ");
-            const updates = selectedIdx.map(idx => { const item = fullInventory[idx]; item.REQUEST_ASSIGNED_TO = target; item.TASK_TAB = "requests"; if(isCalReq) { let oldNote = item.SAVED_PICK || ""; if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } } return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser }; });
-            document.getElementById('assign-modal').style.display = 'none'; toggleBatch(); showToast("Saving", "Batch assigning items...");
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); });
+            // READ INPUTS
+            const d = document.getElementById('chk-dylan').checked; 
+            const k = document.getElementById('chk-kayla').checked; 
+            const m = document.getElementById('chk-morgan').checked; 
+            const isCalReq = document.getElementById('chk-cal-request').checked;
+            const noteText = document.getElementById('assign-note').value;
+            
+            // CHECK FLYER SELECTION
+            let flyerSelection = null;
+            const flyerRadios = document.getElementsByName('flyer_assign');
+            for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; }
+
+            // BUILD TEAM STRING
+            let selected = []; 
+            if(d) selected.push("Dylan"); 
+            if(k) selected.push("Kayla"); 
+            if(m) selected.push("Morgan");
+            
+            if(selected.length === 0 && !flyerSelection) { 
+                showToast("Warning", "Select a person or a flyer category.", true); 
+                return; 
+            } 
+            
+            let target = selected.join(" & ");
+            // If flyer is selected but no user, assign to self so it shows in list
+            if(flyerSelection && target === "") target = currentUser;
+
+            const updates = selectedIdx.map(idx => { 
+                const item = fullInventory[idx]; 
+                
+                // Base Updates
+                item.REQUEST_ASSIGNED_TO = target; 
+                
+                // DETERMINE TAB
+                if (flyerSelection) {
+                    item.TASK_TAB = flyerSelection; // e.g., 'flyer_crop'
+                } else {
+                    item.TASK_TAB = "requests"; 
+                }
+
+                // APPEND NOTES
+                if(isCalReq) { 
+                    let oldNote = item.SAVED_PICK || ""; 
+                    if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } 
+                }
+                
+                if(noteText) {
+                    let oldGen = item.SAVED_NOTE || "";
+                    // Avoid duplicate notes
+                    if(!oldGen.includes(noteText)) {
+                        item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
+                    }
+                }
+
+                return { 
+                    id: item.UNIQUE_ID, 
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
+                    taskTab: item.TASK_TAB, 
+                    match: item.SAVED_MATCH, 
+                    spec: item.SAVED_SPEC, 
+                    pick: item.SAVED_PICK, 
+                    note: item.SAVED_NOTE, 
+                    salesDesc: item.SAVED_SALES_DESC, 
+                    user: currentUser 
+                }; 
+            });
+
+            document.getElementById('assign-modal').style.display = 'none'; 
+            toggleBatch(); 
+            showToast("Saving", "Batch assigning items...");
+            
+            // CLEAR MODAL INPUTS
+            document.getElementById('assign-note').value = "";
+            for(let radio of flyerRadios) radio.checked = false;
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } 
+            })
+            .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
     </script>
 </body>
