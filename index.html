@@ -781,7 +781,7 @@
                 <div id="det-actions-content" class="hidden py-4">
                     <div id="photo-preview" class="mb-6 hidden"><p class="text-[10px] font-bold text-blue-600 mb-2 uppercase">Photos on File</p><div id="photo-list-container" class="space-y-2"></div></div>
                     
-                    <div class="cam-grid grid grid-cols-2 gap-4 mb-6">
+                    <div class="cam-grid grid grid-cols-2 gap-4 mb-6" id="btn-cam-container">
                         <label class="bg-gray-100 border border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer active:bg-gray-200">
                             <i class="ph-fill ph-camera text-3xl text-gray-600"></i><span class="text-xs font-bold mt-2 text-gray-600">CAMERA</span>
                             <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
@@ -941,6 +941,61 @@
         let currentFlyerCat = 'Crop Update';
         window.lastLocalUpdate = 0;
 
+        // --- ADDED MISSING HELPER FUNCTIONS HERE ---
+        function toggleMenu() {
+            document.getElementById('side-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
+        }
+
+        function showToast(title, msg, isError = false) {
+            const toast = document.getElementById('toast-notification');
+            if(!toast) return;
+            toast.innerHTML = isError ? `<i class="ph-bold ph-warning-circle"></i> ${msg}` : `<i class="ph-bold ph-check-circle"></i> ${msg}`;
+            toast.style.backgroundColor = isError ? "#ef4444" : "#16a34a";
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function handleSearchDebounced(val, view) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (view === 'inventory') handleInventorySearch(val);
+                if (view === 'drive') handleDriveSearch(val);
+                if (view === 'production') handleProductionSearch(val);
+            }, 300);
+        }
+
+        function startLongPress() {
+            longPressTimer = setTimeout(() => {
+                toggleBatch();
+                if(navigator.vibrate) navigator.vibrate(50);
+            }, 600);
+        }
+
+        function cancelLongPress() {
+            clearTimeout(longPressTimer);
+        }
+
+        function installPWA() {
+            showToast("Info", "Use Browser Menu to Install", false);
+        }
+
+        function toggleEdit(filter) {
+            const btn = document.getElementById('btn-' + filter);
+            if(btn) btn.classList.toggle('active');
+            editSettings[filter] = !editSettings[filter];
+        }
+
+        function setBg(color) {
+            document.querySelectorAll('.filter-scroll .filter-btn').forEach(b => {
+                 if(b.id.startsWith('btn-bg')) b.classList.remove('active');
+            });
+            const btn = document.getElementById('btn-bg-' + (color === 'green' ? 'grn' : color === 'lavender' ? 'lav' : color === 'grey' ? 'gry' : 'none'));
+            if(btn) btn.classList.add('active');
+            editSettings.bg = color;
+        }
+        // --- END ADDED FUNCTIONS ---
+
         function showRepLogin() { safeClass('login-buttons', 'add', 'hidden'); safeClass('rep-login-container', 'remove', 'hidden'); }
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; safeClass('login-buttons', 'add', 'hidden'); safeClass('pin-container', 'remove', 'hidden'); document.getElementById('pin-code').focus(); }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { safeClass('pin-container', 'add', 'hidden'); safeClass('loading-spinner', 'remove', 'hidden'); fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
@@ -1008,9 +1063,9 @@
             if(isSilent && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
-                if (!res.ok) { alert("Network Error: " + res.status); throw new Error("Network Response Failed"); }
+                if (!res.ok) { throw new Error("Network Response Failed"); }
                 const text = await res.text();
-                if (text.trim().startsWith("<!DOCTYPE") || text.includes("<html")) { alert("PERMISSIONS ERROR: Set Script to 'Anyone'."); throw new Error("Permissions Error"); }
+                if (text.trim().startsWith("<!DOCTYPE") || text.includes("<html")) { throw new Error("Permissions Error"); }
                 const json = JSON.parse(text);
                 if(json.status === 'success') {
                     fullInventory = json.data;
@@ -1160,7 +1215,7 @@
         function handleDriveSearch(t) { driveSearchTerm = t.toLowerCase(); renderDriveView(); }
         function getFilteredDriveItems() { const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val); return fullInventory.filter(i => { if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false; if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false; if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false; if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; } if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; } return true; }); }
         function renderDriveNames() { renderDriveView(); } 
-        function renderDriveView() { const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems(); document.onclick = function(e) { if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); }; if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(driveViewLevel === 0) { crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (driveViewLevel === 1) { crumb.innerText = selectedDriveName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); finalItems.sort((a,b) => { const pA = a.PRIORITY ? parseFloat(a.PRIORITY) : Infinity; const pB = b.PRIORITY ? parseFloat(b.PRIORITY) : Infinity; if (pA === pB) { return (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}); } return pA - pB; }); container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); } }
+        function renderDriveView() { const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); document.onclick = function(e) { if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); }; if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(driveViewLevel === 0) { crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (driveViewLevel === 1) { crumb.innerText = selectedDriveName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); finalItems.sort((a,b) => { const pA = a.PRIORITY ? parseFloat(a.PRIORITY) : Infinity; const pB = b.PRIORITY ? parseFloat(b.PRIORITY) : Infinity; if (pA === pB) { return (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}); } return pA - pB; }); container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); } }
         function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
         function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
@@ -1514,11 +1569,6 @@
             }
         }
 
-        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
-        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
-        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
-        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
-
         // --- VIEWER LOGIC ---
         function renderViewerNames() { const term = document.getElementById('viewer-search').value.toLowerCase(); if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; } document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
@@ -1527,7 +1577,7 @@
         // --- NEW: MANAGER REVIEW TABS ---
         function setReviewTab(t) { currentReviewTab = t; document.querySelectorAll('#view-review .task-tab').forEach(el => el.classList.remove('active')); document.getElementById('rtab-'+t).classList.add('active'); reviewViewLevel = 0; renderReviewItems(); }
         function renderReviewItems() {
-            const container = document.getElementById('review-content'); const term = document.getElementById('review-search').value.toLowerCase(); let filteredItems = [];
+            const container = document.getElementById('review-content'); const term = document.getElementById('review-search') ? document.getElementById('review-search').value.toLowerCase() : ''; let filteredItems = [];
             
             // Logic: Manager Review now holds 'manager_review' status items (Failed Winners)
             if(currentReviewTab === 'inventory') filteredItems = fullInventory.filter(i => i.TASK_TAB === 'manager_review');
@@ -1619,100 +1669,6 @@
             };
             closeRequestModal(); toggleBatch(); showToast("Submitting...", "Sending request to managers...");
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
-        }
-
-        function createRowHtml(item, idx, source) {
-            let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`; }
-            let badges = ''; if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`; if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`; if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`; if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
-            if(item.REQUEST_ID) badges += `<span class="data-badge" style="background:#fef3c7; color:#d97706; border:1px solid #fcd34d">REQ: ${item.CUSTOMER_NAME}</span>`;
-            
-            // Flyer Badges
-            if(item.TASK_TAB === 'flyer') {
-                badges += `<div class="w-full mt-2 text-[10px] bg-indigo-50 border border-indigo-200 p-2 rounded text-indigo-800">
-                    <div class="font-bold flex justify-between"><span>DUE: ${item.FLYER_DEADLINE || 'N/A'}</span></div>
-                    <div class="italic mt-1">"${item.FLYER_INSTRUCTIONS || ''}"</div>
-                </div>`;
-            }
-
-            // HOLD/STOP LOGIC
-            let stopCode = (item.HOLDSTOPCODE || "").toUpperCase();
-            let cardClass = "card-green"; 
-            if (stopCode.includes("H")) cardClass = "card-yellow";
-            if (stopCode.includes("S")) cardClass = "card-red";
-
-            return `<div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
-                ${(isAdmin || !isAdmin && source === 'inventory') ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">
-                    ${thumbHtml}
-                    <div class="flex-grow min-w-0">
-                        <div class="flex justify-between items-start">
-                            <div class="font-bold text-[#007a4d] truncate text-base">${item.LOCATIONCODE || 'No Loc'}</div>
-                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
-                        </div>
-                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
-                        <div class="text-xs text-gray-500 truncate">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong></div>
-                        <div class="text-xs text-gray-500 truncate mb-1">Tag Color: <strong>${item.FIELDTAGCOLOR || 'N/A'}</strong> | Lot: ${item.LOTCODE || '-'} | Stop: <strong>${item.HOLDSTOPCODE || ''}</strong></div>
-                        <div class="flex flex-wrap">${badges}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        function handleCardClick(idx, source) {
-            if (isBatch) {
-                const cb = document.getElementById('cb-' + idx);
-                if (cb) {
-                    cb.checked = !cb.checked;
-                    updateSelected();
-                }
-                return;
-            }
-            openDetail(idx, source);
-        }
-
-        function openDetail(idx, source) {
-            activeItem = fullInventory[idx];
-            currentOriginView = source; 
-            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID);
-            switchView('detail');
-            renderOverviewData();
-        }
-
-        function renderOverviewData() {
-            if (!activeItem) return;
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME || "Unknown";
-            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
-            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
-            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0";
-            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
-            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
-            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
-            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
-            document.getElementById('ov-sales').innerText = activeItem.SAVED_SALES_DESC || "--";
-            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILE || "--";
-            
-            // LIVE FIELD DATA VISIBILITY
-            const liveBox = document.getElementById('live-field-data');
-            if (activeItem.SAVED_NOTE || activeItem.SAVED_MATCH || activeItem.SAVED_SPEC) {
-                liveBox.classList.remove('hidden');
-                document.getElementById('lfd-match').innerText = activeItem.SAVED_MATCH ? activeItem.SAVED_MATCH + "%" : "--";
-                document.getElementById('lfd-spec').innerText = activeItem.SAVED_SPEC || "--";
-                document.getElementById('lfd-note').innerText = activeItem.SAVED_NOTE || "No notes.";
-            } else {
-                liveBox.classList.add('hidden');
-            }
-
-            switchDetailTab('overview');
-        }
-
-        function goBackFromDetail() {
-            activeItem = null;
-            localStorage.removeItem('gl_active_item');
-            if (currentOriginView) {
-                switchView(currentOriginView);
-            } else {
-                switchView('home');
-            }
         }
 
         // --- 1. ACCORDION LOGIC ---
@@ -1921,6 +1877,12 @@
             document.getElementById('det-grower-content').classList.add('hidden');
             document.getElementById('det-' + tab + '-content').classList.remove('hidden');
             if (tab === 'actions') { renderActionsTab(); }
+        }
+        
+        // --- HELPER FOR LOCATION PREFIX EXTRACTION ---
+        function getLocPrefix(loc) {
+            if(!loc) return "Unassigned";
+            return loc.split('-')[0];
         }
     </script>
 </body>
