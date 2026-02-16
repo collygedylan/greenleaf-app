@@ -493,7 +493,51 @@
         function handleDriveSearch(t) { driveSearchTerm = t.toLowerCase(); renderDriveView(); }
         function getFilteredDriveItems() { const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val); return fullInventory.filter(i => { if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false; if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false; if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false; if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; } if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; } return true; }); }
         function renderDriveNames() { renderDriveView(); } 
-        function renderDriveView() { const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems(); document.onclick = function(e) { if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); }; if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(driveViewLevel === 0) { crumb.innerText = `Filtered Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (driveViewLevel === 1) { crumb.innerText = selectedDriveName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); } }
+        
+        // --- 2. UPDATED DRIVE VIEW (SORTED) ---
+        function renderDriveView() { 
+            const container = document.getElementById('drive-content'); 
+            const crumb = document.getElementById('drive-crumb'); 
+            const filteredItems = getFilteredDriveItems(); 
+            
+            document.onclick = function(e) { if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); }; 
+            
+            if (filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
+                crumb.innerText = "No Results"; 
+                return; 
+            } 
+            
+            if(driveViewLevel === 0) { 
+                crumb.innerText = `Filtered Items (${filteredItems.length})`; 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            else if (driveViewLevel === 1) { 
+                crumb.innerText = selectedDriveName; 
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); 
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            else { 
+                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); 
+                
+                // *** PRIORITY SORT LOGIC ***
+                finalItems.sort((a,b) => {
+                    const pA = a.PRIORITY ? parseFloat(a.PRIORITY) : Infinity;
+                    const pB = b.PRIORITY ? parseFloat(b.PRIORITY) : Infinity;
+                    
+                    if (pA === pB) {
+                        return (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true});
+                    }
+                    return pA - pB;
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join(''); 
+            } 
+        }
+
         function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
         function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
@@ -502,7 +546,60 @@
         function toggleInventorySeason(season, el) { if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else { if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = []; if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); } if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL']; } document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); }); renderInventoryView(); }
         function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
         function getFilteredInventoryItems() { return fullInventory.filter(i => { if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; } if(inventorySearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm); if(!match) return false; } return true; }); }
-        function renderInventoryView() { const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb'); if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; } const filteredItems = getFilteredInventoryItems(); if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(inventoryViewLevel === 0) { crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (inventoryViewLevel === 1) { crumb.innerText = selectedInventoryName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join(''); } }
+        
+        // --- 1. UPDATED INVENTORY VIEW (SORTED) ---
+        function renderInventoryView() { 
+            const container = document.getElementById('inventory-content'); 
+            const crumb = document.getElementById('inventory-crumb'); 
+            
+            // Level 0: List all Names
+            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { 
+                crumb.innerText = `All Items (${allCommonNames.length})`; 
+                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                return; 
+            } 
+            
+            const filteredItems = getFilteredInventoryItems(); 
+            if (filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
+                crumb.innerText = "No Results"; 
+                return; 
+            } 
+            
+            // Level 0 (Filtered)
+            if(inventoryViewLevel === 0) { 
+                crumb.innerText = `All Items (${filteredItems.length})`; 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            // Level 1: List Sizes
+            else if (inventoryViewLevel === 1) { 
+                crumb.innerText = selectedInventoryName; 
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); 
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            // Level 2: List Cards (SORTED BY PRIORITY)
+            else { 
+                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; 
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); 
+                
+                // *** PRIORITY SORT LOGIC ***
+                finalItems.sort((a,b) => {
+                    const pA = a.PRIORITY ? parseFloat(a.PRIORITY) : Infinity; // Infinity pushes nulls to bottom
+                    const pB = b.PRIORITY ? parseFloat(b.PRIORITY) : Infinity;
+                    
+                    if (pA === pB) {
+                        // Tie-breaker: Location Code
+                        return (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true});
+                    }
+                    return pA - pB;
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join(''); 
+            } 
+        }
+
         function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
         function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
         function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
@@ -511,7 +608,55 @@
         function toggleProductionSeason(season, el) { if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else { if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = []; if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); } if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL']; } document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); }); renderProductionView(); }
         function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
         function getFilteredProductionItems() { return fullInventory.filter(i => { if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; } if(productionSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm); if(!match) return false; } return true; }); }
-        function renderProductionView() { const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb'); if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; } const filteredItems = getFilteredProductionItems(); if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; } if(productionViewLevel === 0) { crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else if (productionViewLevel === 1) { crumb.innerText = selectedProductionName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); } else { crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join(''); } }
+        
+        // --- 3. UPDATED PRODUCTION VIEW (SORTED) ---
+        function renderProductionView() { 
+            const container = document.getElementById('production-content'); 
+            const crumb = document.getElementById('production-crumb'); 
+            
+            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { 
+                crumb.innerText = `All Items (${allCommonNames.length})`; 
+                container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                return; 
+            } 
+            
+            const filteredItems = getFilteredProductionItems(); 
+            if (filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
+                crumb.innerText = "No Results"; 
+                return; 
+            } 
+            
+            if(productionViewLevel === 0) { 
+                crumb.innerText = `All Items (${filteredItems.length})`; 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            else if (productionViewLevel === 1) { 
+                crumb.innerText = selectedProductionName; 
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); 
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            } 
+            else { 
+                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; 
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); 
+                
+                // *** PRIORITY SORT LOGIC ***
+                finalItems.sort((a,b) => {
+                    const pA = a.PRIORITY ? parseFloat(a.PRIORITY) : Infinity;
+                    const pB = b.PRIORITY ? parseFloat(b.PRIORITY) : Infinity;
+                    
+                    if (pA === pB) {
+                        return (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true});
+                    }
+                    return pA - pB;
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join(''); 
+            } 
+        }
+
         function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
         function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
         function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
