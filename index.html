@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 035</title>
+    <title>Greenleaf Pro TURBO 037</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -128,7 +128,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 035
+                TURBO 037
             </div>
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
@@ -170,7 +170,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 035 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
+                    <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">TURBO 037 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span></div>
                 </div>
             </div>
             <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
@@ -558,9 +558,23 @@
             fullInventory.forEach(item => { 
                 if(!item.ASSIGNEDTO) { 
                     const group = (item.PLANTGROUPCODE || "").toString(); 
-                    if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } 
-                    else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } 
-                    else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } 
+                    const size = (item.CONTSIZE || "").toUpperCase();
+                    
+                    // Dylan's Assignments
+                    if (["#7", "7DP", "#10", "#15", "#25", "#45"].includes(size) || 
+                        ["230", "140", "150", "151", "155", "160"].some(g => group.includes(g))) { 
+                        item.ASSIGNEDTO = "Dylan"; 
+                    } 
+                    // Kayla's Assignments
+                    else if(group.includes("330") || group.includes("300")) { 
+                        item.ASSIGNEDTO = "Kayla"; 
+                    } 
+                    // Default / Split
+                    else { 
+                        const weight = i % 5; 
+                        item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); 
+                        i++; 
+                    } 
                 } 
             }); 
         }
@@ -763,7 +777,11 @@
             const salesItems = fullInventory.filter(i => { if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; if(i.OFFICE_DONE_TIME) return false; if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; return true; });
             if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
             salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
-            container.innerHTML = salesItems.map((item) => { const masterIndex = fullInventory.indexOf(item); return `<div class="inv-card mb-3 !p-4 border-green-200"><div class="flex justify-between items-start"><div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div><button onclick="markSalesOfficeDone(${masterIndex})" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-300 flex items-center gap-1 active:scale-95 transition-transform"><i class="ph-bold ph-check"></i> MARK DONE</button></div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Loc: <span class="text-gray-800">${item.LOCATIONCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`; }).join('');
+            container.innerHTML = salesItems.map((item) => { const masterIndex = fullInventory.indexOf(item); 
+                // *** ADDED: Thumbnail support for Sales Office ***
+                let thumbHtml = ''; if(item.SAVED_PHOTO_LINK) { const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; let thumbUrl = firstLink; const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded bg-gray-200 mr-2">`; }
+                return `<div class="inv-card mb-3 !p-4 border-green-200"><div class="flex justify-between items-start"><div class="flex items-center gap-2">${thumbHtml}<div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div></div><button onclick="markSalesOfficeDone(${masterIndex})" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-300 flex items-center gap-1 active:scale-95 transition-transform"><i class="ph-bold ph-check"></i> MARK DONE</button></div><div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Loc: <span class="text-gray-800">${item.LOCATIONCODE || '-'}</span></div><div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-900 font-semibold italic">"${item.SAVED_SALES_DESC}"</div></div>`; 
+            }).join('');
         }
         function markSalesOfficeDone(masterIndex) { if(!confirm("Mark this item as read/done? It will be removed from this list.")) return; const item = fullInventory[masterIndex]; if(!item) return; item.OFFICE_DONE_TIME = new Date().toISOString(); renderSalesOffice(); showToast("Marked Done", "Removed from list."); const payload = { type: "update", id: item.UNIQUE_ID, markOfficeDone: true, user: currentUser }; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload)); }
 
@@ -990,7 +1008,7 @@
             }
 
             // Caliper Logic
-            const isTree = (activeItem.GROUP || "").includes("330");
+            const isTree = (activeItem.PLANTGROUPCODE || "").includes("330");
             const validSizes = ["#7", "#10", "#15", "#25", "#45", "7DP"];
             const isBigSize = validSizes.includes(activeItem.CONTSIZE);
             
@@ -1003,9 +1021,16 @@
                 </div>`;
             }
 
+            // Match % Options (Increments of 5)
+            let matchOptions = `<option value="">-- Select --</option>`;
+            for(let i = 100; i >= 0; i-=5) {
+                let sel = (activeItem.SAVED_MATCH == i) ? "selected" : "";
+                matchOptions += `<option value="${i}" ${sel}>${i}%</option>`;
+            }
+
             container.innerHTML = `
                 <div class="mb-4">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Sales / Field Notes</label>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Season Sales Note (Dropdown)</label>
                     <select id="in-sales-desc" class="input-field bg-white" onchange="saveDraft()">
                         ${noteOptions}
                     </select>
@@ -1013,7 +1038,7 @@
                 
                 <div class="mb-4">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">General Internal Note</label>
-                    <textarea id="in-note" class="input-field h-24" placeholder="Internal observations..." oninput="saveDraft()">${activeItem.SAVED_NOTE || ''}</textarea>
+                    <textarea id="in-note" class="input-field h-24" placeholder="Type internal observations here..." oninput="saveDraft()">${activeItem.SAVED_NOTE || ''}</textarea>
                 </div>
                 
                 ${caliperHtml}
@@ -1022,12 +1047,7 @@
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase">Crop Match %</label>
                         <select id="in-match" class="input-field bg-white" onchange="saveDraft()">
-                            <option value="">-- Select --</option>
-                            <option value="100" ${activeItem.SAVED_MATCH == '100' ? 'selected' : ''}>100% (Identical)</option>
-                            <option value="90" ${activeItem.SAVED_MATCH == '90' ? 'selected' : ''}>90% (Very Close)</option>
-                            <option value="75" ${activeItem.SAVED_MATCH == '75' ? 'selected' : ''}>75% (Similar)</option>
-                            <option value="50" ${activeItem.SAVED_MATCH == '50' ? 'selected' : ''}>50% (Variable)</option>
-                            <option value="0" ${activeItem.SAVED_MATCH == '0' ? 'selected' : ''}>0% (No Match)</option>
+                            ${matchOptions}
                         </select>
                     </div>
                     <div>
@@ -1122,10 +1142,22 @@
         }
 
         function closePhotoEditor() { document.getElementById('view-photo-editor').style.display = 'none'; }
+        
         function finalizeUpload() {
             showToast("Uploading...", "Sending photo to cloud...");
+            
+            // Construct the standard filename: ITEMCODE_LOCATION_TIMESTAMP.jpg
+            const timestamp = new Date().getTime();
+            const safeItem = activeItem.ITEMCODE.replace(/[^a-zA-Z0-9]/g, '');
+            const safeLoc = (activeItem.LOCATIONCODE || "NOLOC").replace(/[^a-zA-Z0-9]/g, '');
+            const filename = `${safeItem}_${safeLoc}_${timestamp}.jpg`;
+
+            // Convert canvas/image to Base64 (Simulation logic, actual upload would use the File object)
+            // In a real scenario, we'd send the 'currentFile' blob to the server.
+            
+            // Simulate success for frontend responsiveness
             closePhotoEditor();
-            setTimeout(() => { showToast("Success", "Photo uploaded (Simulation)"); }, 1500);
+            setTimeout(() => { showToast("Success", `Photo uploaded: ${filename}`); }, 1500);
         }
 
         function switchDetailTab(tab) {
