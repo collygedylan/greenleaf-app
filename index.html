@@ -369,7 +369,6 @@
             { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" },
             { name: "Dylan Collyge", id: "ADMIN", email: "dylan_collyge@greenleafnursery.com" },
             { name: "J.D. Jones", id: "ADMIN", email: "jd_jones@greenleafnursery.com" },
-            // NEW REPS ADDED
             { name: "Morgan Anderson", email: "morgan_anderson@greenleafnursery.com" },
             { name: "Kayla Knepp", email: "kayla_knepp@greenleafnursery.com" },
             { name: "Jay Baker", email: "jay_baker@greenleafnursery.com" }
@@ -398,95 +397,56 @@
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; safeClass('login-buttons', 'add', 'hidden'); safeClass('pin-container', 'remove', 'hidden'); document.getElementById('pin-code').focus(); }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { safeClass('pin-container', 'add', 'hidden'); safeClass('loading-spinner', 'remove', 'hidden'); fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
         
-        // --- NEW SERVER-SIDE LOGIN ---
         function verifyRepLogin() {
             const email = document.getElementById('rep-email').value.trim();
             const pass = document.getElementById('rep-pass').value.trim();
-            
             if (!email || !pass) { showToast("Error", "Please fill in all fields", true); return; }
-            
             const btn = document.getElementById('btn-rep-login');
             btn.innerText = "VERIFYING...";
             btn.disabled = true;
-
             const payload = { type: 'login', email: email, pass: pass };
-            
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
                 btn.innerText = "LOGIN";
                 btn.disabled = false;
-                
                 if (data.status === 'success') {
-                    // Check if password reset is required
                     if (data.forceReset) {
                         document.getElementById('view-change-password').style.display = 'flex';
-                        // Store email for the update call
                         localStorage.setItem('temp_reset_email', email);
                     } else {
-                        // Success! Log them in
                         const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
                         currentUser = rep ? rep.name : "Sales Rep";
                         isAdmin = false;
                         taskViewTargetUser = currentUser;
-                        
                         safeClass('rep-login-container', 'add', 'hidden');
                         safeClass('loading-spinner', 'remove', 'hidden');
                         fetchData(false, 'inventory');
                     }
-                } else {
-                    showToast("Error", data.message, true);
-                }
+                } else { showToast("Error", data.message, true); }
             })
-            .catch(err => {
-                console.error(err);
-                btn.innerText = "LOGIN";
-                btn.disabled = false;
-                showToast("Error", "Network Error", true);
-            });
+            .catch(err => { console.error(err); btn.innerText = "LOGIN"; btn.disabled = false; showToast("Error", "Network Error", true); });
         }
 
-        // --- NEW PASSWORD CHANGE LOGIC ---
         function submitNewPassword() {
             const p1 = document.getElementById('new-pass-1').value;
             const p2 = document.getElementById('new-pass-2').value;
             const email = localStorage.getItem('temp_reset_email');
-            
-            if (p1 !== p2) {
-                document.getElementById('pwd-error').innerText = "Passwords do not match";
-                document.getElementById('pwd-error').classList.remove('hidden');
-                return;
-            }
-            if (p1.length < 6) {
-                document.getElementById('pwd-error').innerText = "Password must be at least 6 characters";
-                document.getElementById('pwd-error').classList.remove('hidden');
-                return;
-            }
-            
+            if (p1 !== p2) { document.getElementById('pwd-error').innerText = "Passwords do not match"; document.getElementById('pwd-error').classList.remove('hidden'); return; }
+            if (p1.length < 6) { document.getElementById('pwd-error').innerText = "Password must be at least 6 characters"; document.getElementById('pwd-error').classList.remove('hidden'); return; }
             document.getElementById('pwd-error').classList.add('hidden');
             showToast("Updating...", "Securing your account...");
-            
             const payload = { type: 'change_password', email: email, newPass: p1 };
-            
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
                     showToast("Success", "Password Updated! Please Login.");
                     document.getElementById('view-change-password').style.display = 'none';
-                    // Clear fields
                     document.getElementById('rep-pass').value = "";
                     document.getElementById('new-pass-1').value = "";
                     document.getElementById('new-pass-2').value = "";
-                } else {
-                    showToast("Error", data.message, true);
-                }
+                } else { showToast("Error", data.message, true); }
             });
         }
 
@@ -895,7 +855,69 @@
         function renderActionsTab() {
             if (!activeItem) return;
             const container = document.getElementById('input-container');
-            container.innerHTML = `<div class="mb-4"><label class="text-[10px] font-bold text-gray-500 uppercase">Sales / Field Notes</label><textarea id="in-note" class="input-field h-24" placeholder="Type your observations here..." oninput="saveDraft()">${activeItem.SAVED_NOTE || ''}</textarea></div><div class="grid grid-cols-2 gap-4 mb-4"><div><label class="text-[10px] font-bold text-gray-500 uppercase">Crop Match %</label><select id="in-match" class="input-field bg-white" onchange="saveDraft()"><option value="">-- Select --</option><option value="100" ${activeItem.SAVED_MATCH == '100' ? 'selected' : ''}>100% (Identical)</option><option value="90" ${activeItem.SAVED_MATCH == '90' ? 'selected' : ''}>90% (Very Close)</option><option value="75" ${activeItem.SAVED_MATCH == '75' ? 'selected' : ''}>75% (Similar)</option><option value="50" ${activeItem.SAVED_MATCH == '50' ? 'selected' : ''}>50% (Variable)</option><option value="0" ${activeItem.SAVED_MATCH == '0' ? 'selected' : ''}>0% (No Match)</option></select></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec / Quality</label><select id="in-spec" class="input-field bg-white" onchange="saveDraft()"><option value="">-- Select --</option><option value="Heavy" ${activeItem.SAVED_SPEC == 'Heavy' ? 'selected' : ''}>Heavy / Full</option><option value="Nice" ${activeItem.SAVED_SPEC == 'Nice' ? 'selected' : ''}>Nice / Standard</option><option value="Avg" ${activeItem.SAVED_SPEC == 'Avg' ? 'selected' : ''}>Average</option><option value="Light" ${activeItem.SAVED_SPEC == 'Light' ? 'selected' : ''}>Light</option><option value="Scrap" ${activeItem.SAVED_SPEC == 'Scrap' ? 'selected' : ''}>Scrap</option></select></div></div>`;
+            
+            // Generate Sales Note Dropdown Options based on Common Name
+            let noteOptions = `<option value="">-- Select Sales Note --</option>`;
+            const commonName = (activeItem.COMMONNAME || "").toUpperCase().trim();
+            const relevantNotes = noteTemplates.filter(t => t.commonName === commonName);
+            
+            if (relevantNotes.length > 0) {
+                relevantNotes.forEach(note => {
+                    // Check if this specific note is the one already saved
+                    const isSelected = (activeItem.SAVED_SALES_DESC === note.note) ? "selected" : "";
+                    noteOptions += `<option value="${note.note.replace(/"/g, '&quot;')}" ${isSelected}>${note.note}</option>`;
+                });
+            } else {
+                noteOptions += `<option value="" disabled>No templates found for ${commonName}</option>`;
+            }
+
+            // Caliper Logic
+            const isTree = (activeItem.GROUP || "").includes("330");
+            const validSizes = ["#7", "#10", "#15", "#25", "#45", "7DP"];
+            const isBigSize = validSizes.includes(activeItem.CONTSIZE);
+            
+            let caliperHtml = '';
+            if (isTree && isBigSize) {
+                caliperHtml = `
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Caliper</label>
+                    <input type="text" id="in-caliper" class="input-field" placeholder="Enter Caliper..." value="${activeItem.CALIPER || ''}" oninput="saveDraft()">
+                </div>`;
+            }
+
+            container.innerHTML = `
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Sales / Field Notes</label>
+                    <select id="in-sales-desc" class="input-field bg-white" onchange="saveDraft()">
+                        ${noteOptions}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">General Internal Note</label>
+                    <textarea id="in-note" class="input-field h-24" placeholder="Internal observations..." oninput="saveDraft()">${activeItem.SAVED_NOTE || ''}</textarea>
+                </div>
+                
+                ${caliperHtml}
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Crop Match %</label>
+                        <select id="in-match" class="input-field bg-white" onchange="saveDraft()">
+                            <option value="">-- Select --</option>
+                            <option value="100" ${activeItem.SAVED_MATCH == '100' ? 'selected' : ''}>100% (Identical)</option>
+                            <option value="90" ${activeItem.SAVED_MATCH == '90' ? 'selected' : ''}>90% (Very Close)</option>
+                            <option value="75" ${activeItem.SAVED_MATCH == '75' ? 'selected' : ''}>75% (Similar)</option>
+                            <option value="50" ${activeItem.SAVED_MATCH == '50' ? 'selected' : ''}>50% (Variable)</option>
+                            <option value="0" ${activeItem.SAVED_MATCH == '0' ? 'selected' : ''}>0% (No Match)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Spec / Quality</label>
+                        <input type="text" id="in-spec" class="input-field" placeholder="Type Spec..." value="${activeItem.SAVED_SPEC || ''}" oninput="saveDraft()">
+                    </div>
+                </div>
+            `;
             renderPhotoPreview();
             document.getElementById('btn-cam-container').classList.remove('hidden');
             document.getElementById('btn-save').classList.remove('hidden');
@@ -927,15 +949,32 @@
         function saveData() {
             if(!activeItem) return;
             const note = document.getElementById('in-note') ? document.getElementById('in-note').value : "";
+            const salesDesc = document.getElementById('in-sales-desc') ? document.getElementById('in-sales-desc').value : "";
             const match = document.getElementById('in-match') ? document.getElementById('in-match').value : "";
             const spec = document.getElementById('in-spec') ? document.getElementById('in-spec').value : "";
+            const caliper = document.getElementById('in-caliper') ? document.getElementById('in-caliper').value : "";
+
             activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.SAVED_MATCH = match;
             activeItem.SAVED_SPEC = spec;
+            activeItem.CALIPER = caliper;
             activeItem.UPDATEDBY = currentUser;
             activeItem.TIMESTAMP = new Date().toISOString();
+            
             showToast("Saving...", "Syncing to database...");
-            const payload = { type: "update_item", id: activeItem.UNIQUE_ID, note: note, match: match, spec: spec, user: currentUser };
+            
+            const payload = { 
+                type: "update_item", 
+                id: activeItem.UNIQUE_ID, 
+                note: note, 
+                salesDesc: salesDesc,
+                match: match, 
+                spec: spec, 
+                caliper: caliper,
+                user: currentUser 
+            };
+            
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(res => res.json())
             .then(data => {
