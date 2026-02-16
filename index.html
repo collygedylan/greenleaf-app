@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 012</title>
+    <title>Greenleaf Pro TURBO 013</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -164,7 +164,6 @@
             <div class="text-[10px] uppercase font-bold text-gray-400 mb-2">Enhance & Brand</div>
             <div class="filter-scroll">
                 <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
-                <div class="filter-btn active" id="btn-logo" onclick="toggleEdit('logo')"><i class="ph-fill ph-stamp"></i> Logo</div>
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
             
@@ -178,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 012
+                TURBO 013
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -208,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 012 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -694,7 +693,7 @@
 
         // PHOTO EDITOR STATE
         let currentFile = null;
-        let editSettings = { pro: true, logo: true, dirt: false, bg: 'none' };
+        let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
 
         // --- PWA INSTALLATION LOGIC ---
         let deferredPrompt;
@@ -1203,17 +1202,7 @@
                     const potY = canvas.height - potHeight;
                     ctx.save(); ctx.beginPath(); ctx.rect(0, potY, canvas.width, potHeight); ctx.clip(); ctx.filter = 'blur(4px)'; ctx.drawImage(canvas, 0, 0); ctx.restore(); ctx.filter = 'none';
                 }
-                if(editSettings.logo) {
-                    const logo = new Image();
-                    logo.crossOrigin = "Anonymous";
-                    logo.src = "GNC LOGO.png"; 
-                    logo.onload = function() {
-                        const logoW = 550; const logoH = 550 * (logo.height / logo.width);
-                        const logoX = 40; const logoY = canvas.height - logoH - 40;
-                        ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10; ctx.globalAlpha = 0.9; 
-                        ctx.drawImage(logo, logoX, logoY, logoW, logoH); ctx.shadowBlur = 0;
-                    }
-                }
+                // REMOVED LOGO LOGIC
             }
         }
 
