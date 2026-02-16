@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 006</title>
+    <title>Greenleaf Pro TURBO 007</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -93,14 +93,20 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
+        /* EXCEL STYLE FILTERS ROW */
+        .filter-row-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        /* Hide Scrollbar */
+        .filter-row-container::-webkit-scrollbar { display: none; }
+        .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
+        
         /* MULTI-SELECT DROPDOWN STYLES */
-        .ms-container { position: relative; margin-bottom: 8px; }
-        .ms-btn { width: 100%; background: white; border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
-        .ms-options { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 4px; }
+        .ms-container { position: relative; }
+        .ms-btn { background: white; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; }
+        .ms-options { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; }
         .ms-options.show { display: block; }
-        .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+        .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; color: #1f2937; white-space: normal; }
         .ms-option:hover { background: #f9fafb; }
-        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); }
+        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
         .ms-option.selected { background-color: #f0fdf4; }
 
         /* EDITOR MODAL STYLES */
@@ -166,7 +172,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 006
+                TURBO 007
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -196,7 +202,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 006 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 007 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -273,35 +279,31 @@
             </div>
 
             <div id="view-drive" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-blue-600 uppercase">Drive Mode Filters</h2>
-                    <button onclick="resetDriveFilters()" class="text-xs font-bold text-gray-400">RESET ALL</button>
-                </div>
+                <h2 class="text-sm font-bold text-blue-600 uppercase mb-2">Drive Mode</h2>
                 
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <div class="ms-container">
-                        <button class="ms-btn" onclick="toggleMs('ms-group')"><span id="lbl-group">Plant Group</span> <i class="ph-bold ph-caret-down"></i></button>
+                <div class="filter-row-container">
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-group" class="ms-options"></div>
                     </div>
-                    <div class="ms-container">
-                        <button class="ms-btn" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-season" class="ms-options"></div>
                     </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <div class="ms-container">
-                        <button class="ms-btn" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot Code</span> <i class="ph-bold ph-caret-down"></i></button>
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
                         <div id="ms-lot" class="ms-options"></div>
                     </div>
                     
-                    <div class="flex gap-1">
-                        <select id="lts-operator" class="border rounded px-1 text-xs bg-white font-bold text-gray-600 w-1/3" onchange="renderDriveView()">
+                    <div class="flex items-center gap-1 filter-item bg-white border border-gray-300 rounded-md p-1 h-[34px]">
+                        <select id="lts-operator" class="text-xs bg-transparent font-bold text-gray-600 outline-none" onchange="renderDriveView()">
                             <option value="gt">></option>
                             <option value="lt"><</option>
                         </select>
-                        <input type="number" id="lts-value" class="border rounded px-2 w-2/3 text-xs" placeholder="s_LTS Value" onkeyup="renderDriveView()">
+                        <input type="number" id="lts-value" class="w-12 text-xs outline-none" placeholder="LTS" onkeyup="renderDriveView()">
                     </div>
+
+                    <button onclick="resetDriveFilters()" class="filter-item text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded border border-red-100">RESET</button>
                 </div>
 
                 <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleSearchDebounced(this.value, 'drive')">
@@ -1342,7 +1344,7 @@
             const values = Array.from(checks).map(c => c.value);
             driveFilterState[type] = values;
             const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
-            const defMap = { groups: 'Plant Group', seasons: 'Season', lots: 'Lot Code' };
+            const defMap = { groups: 'Group', seasons: 'Season', lots: 'Lot' };
             const count = values.length;
             document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
             renderDriveView();
@@ -1357,7 +1359,7 @@
         function resetDriveFilters() {
             driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
             document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
-            document.getElementById('lbl-group').innerText = 'Plant Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot Code';
+            document.getElementById('lbl-group').innerText = 'Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot';
             document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = '';
             driveSearchTerm = ''; driveViewLevel = 0; renderDriveView();
         }
@@ -1707,7 +1709,9 @@
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
             let dlHtml = `<datalist id="dl-notes">`; validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; }); dlHtml += `</datalist>`;
             const pHolder = validNotes.length > 0 ? "Tap to select from list or type..." : "Type description here..."; const cont = document.getElementById('input-container');
-            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
+            
+            // ADDED ONINPUT TO FORCE UPPERCASE HERE
+            cont.innerHTML = `<div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}"></div><div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label><input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase()">${dlHtml}</div><div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}"></div><div><label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label><textarea id="in-note" class="input-field h-24" placeholder="Any other notes...">${activeItem.SAVED_NOTE||''}</textarea></div>`;
         }
 
         function showReadonlyMode(canEditText, hasData) {
