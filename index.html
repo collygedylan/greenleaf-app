@@ -110,6 +110,20 @@
 
     <div id="toast-notification"></div>
 
+    <div id="view-change-password" class="fixed top-0 left-0 w-full h-full bg-[#007a4d] z-[9999] hidden flex-col items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl text-center">
+            <i class="ph-bold ph-lock-key text-4xl text-yellow-500 mb-4"></i>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Security Update</h2>
+            <p class="text-sm text-gray-500 mb-6">Please update your password to continue.</p>
+            
+            <input type="password" id="new-pass-1" class="input-field mb-3 text-center" placeholder="New Password">
+            <input type="password" id="new-pass-2" class="input-field mb-6 text-center" placeholder="Confirm Password">
+            
+            <button onclick="submitNewPassword()" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-lg">UPDATE PASSWORD</button>
+            <div id="pwd-error" class="text-red-500 text-xs font-bold mt-4 hidden">Passwords do not match</div>
+        </div>
+    </div>
+
     <div id="view-login">
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
@@ -137,7 +151,7 @@
                 <h3 class="text-sm font-bold text-gray-700 mb-3">Sales Representative</h3>
                 <input type="email" id="rep-email" class="input-field mb-2" placeholder="Email Address">
                 <input type="password" id="rep-pass" class="input-field mb-3" placeholder="Password">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyRepLogin()">LOGIN</button>
+                <button id="btn-rep-login" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyRepLogin()">LOGIN</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
 
@@ -379,14 +393,99 @@
         function showRepLogin() { safeClass('login-buttons', 'add', 'hidden'); safeClass('rep-login-container', 'remove', 'hidden'); }
         function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; safeClass('login-buttons', 'add', 'hidden'); safeClass('pin-container', 'remove', 'hidden'); document.getElementById('pin-code').focus(); }
         function verifyPin() { if (document.getElementById('pin-code').value === '1234') { safeClass('pin-container', 'add', 'hidden'); safeClass('loading-spinner', 'remove', 'hidden'); fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
+        
+        // --- NEW SERVER-SIDE LOGIN ---
         function verifyRepLogin() {
             const email = document.getElementById('rep-email').value.trim();
             const pass = document.getElementById('rep-pass').value.trim();
-            if (pass !== 'Greenleaf25') { showToast("Error", "Incorrect Password", true); return; }
-            const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
-            if (rep) { currentUser = rep.name; isAdmin = false; taskViewTargetUser = currentUser; safeClass('rep-login-container', 'add', 'hidden'); safeClass('loading-spinner', 'remove', 'hidden'); fetchData(false, 'inventory'); } 
-            else { showToast("Error", "Email not found in Directory", true); }
+            
+            if (!email || !pass) { showToast("Error", "Please fill in all fields", true); return; }
+            
+            const btn = document.getElementById('btn-rep-login');
+            btn.innerText = "VERIFYING...";
+            btn.disabled = true;
+
+            const payload = { type: 'login', email: email, pass: pass };
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "LOGIN";
+                btn.disabled = false;
+                
+                if (data.status === 'success') {
+                    // Check if password reset is required
+                    if (data.forceReset) {
+                        document.getElementById('view-change-password').style.display = 'flex';
+                        // Store email for the update call
+                        localStorage.setItem('temp_reset_email', email);
+                    } else {
+                        // Success! Log them in
+                        const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
+                        currentUser = rep ? rep.name : "Sales Rep";
+                        isAdmin = false;
+                        taskViewTargetUser = currentUser;
+                        
+                        safeClass('rep-login-container', 'add', 'hidden');
+                        safeClass('loading-spinner', 'remove', 'hidden');
+                        fetchData(false, 'inventory');
+                    }
+                } else {
+                    showToast("Error", data.message, true);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.innerText = "LOGIN";
+                btn.disabled = false;
+                showToast("Error", "Network Error", true);
+            });
         }
+
+        // --- NEW PASSWORD CHANGE LOGIC ---
+        function submitNewPassword() {
+            const p1 = document.getElementById('new-pass-1').value;
+            const p2 = document.getElementById('new-pass-2').value;
+            const email = localStorage.getItem('temp_reset_email');
+            
+            if (p1 !== p2) {
+                document.getElementById('pwd-error').innerText = "Passwords do not match";
+                document.getElementById('pwd-error').classList.remove('hidden');
+                return;
+            }
+            if (p1.length < 6) {
+                document.getElementById('pwd-error').innerText = "Password must be at least 6 characters";
+                document.getElementById('pwd-error').classList.remove('hidden');
+                return;
+            }
+            
+            document.getElementById('pwd-error').classList.add('hidden');
+            showToast("Updating...", "Securing your account...");
+            
+            const payload = { type: 'change_password', email: email, newPass: p1 };
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast("Success", "Password Updated! Please Login.");
+                    document.getElementById('view-change-password').style.display = 'none';
+                    // Clear fields
+                    document.getElementById('rep-pass').value = "";
+                    document.getElementById('new-pass-1').value = "";
+                    document.getElementById('new-pass-2').value = "";
+                } else {
+                    showToast("Error", data.message, true);
+                }
+            });
+        }
+
         function resetLogin() { safeClass('pin-container', 'add', 'hidden'); safeClass('rep-login-container', 'add', 'hidden'); safeClass('login-buttons', 'remove', 'hidden'); safeClass('loading-spinner', 'add', 'hidden'); }
 
         async function fetchData(isSilent = false, forceView = null) {
@@ -774,16 +873,6 @@
             };
             closeRequestModal(); toggleBatch(); showToast("Submitting...", "Sending request to managers...");
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') showToast("Success", "Request Created!"); });
-        }
-
-        // --- NEW: REP LOGIN ---
-        function showRepLogin() { document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('rep-login-container').classList.remove('hidden'); }
-        function verifyRepLogin() {
-            const email = document.getElementById('rep-email').value.trim(); const pass = document.getElementById('rep-pass').value.trim();
-            if (pass !== 'Greenleaf25') { showToast("Error", "Incorrect Password", true); return; }
-            const rep = STATIC_DIRECTORY.find(r => r.email.toLowerCase() === email.toLowerCase());
-            if (rep) { currentUser = rep.name; isAdmin = false; taskViewTargetUser = currentUser; document.getElementById('rep-login-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(false, 'inventory'); } 
-            else { showToast("Error", "Email not found in Directory", true); }
         }
 
         // --- NEW: CARD HTML WITH COLORS ---
