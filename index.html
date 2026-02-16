@@ -360,6 +360,7 @@
                     <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
                     <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
                     <div id="ttab-location" class="task-tab" onclick="setTaskTab('location')">Location</div>
+                    <div id="ttab-flyer" class="task-tab" onclick="setTaskTab('flyer')">Flyer</div>
                 </div>
                 <div id="task-content"></div>
             </div>
@@ -1655,6 +1656,17 @@
 
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
 
+            // NEW: FLYER LOGIC (Flat List)
+            if(currentTab === 'flyer') {
+                crumb.innerText = `${displayUser} / Flyer`;
+                if(myItems.length === 0) { 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No flyer items found.</div>`; 
+                    return; 
+                }
+                container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                return;
+            }
+
             if(currentTab === 'season' || currentTab === 'location') {
                 if(taskViewLevel === 0) {
                     crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
@@ -1683,7 +1695,20 @@
         
         function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
         function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
-        function setTaskTab(t) { currentTab = t; document.getElementById('ttab-season').classList.toggle('active', t === 'season'); document.getElementById('ttab-location').classList.toggle('active', t === 'location'); document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); taskViewLevel = 0; renderTasks(); }
+        
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
+            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
+            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
+            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
+            // NEW: Highlight Flyer Tab
+            document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
+
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+        
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
