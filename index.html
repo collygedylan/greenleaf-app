@@ -315,7 +315,7 @@
                     <button onclick="resetDriveFilters()" class="filter-item text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded border border-red-100">RESET</button>
                 </div>
 
-                <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleSearchDebounced(this.value, 'drive')">
+                <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleDriveSearch(this.value)">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
@@ -628,8 +628,8 @@
         // --- EMAIL CONFIGURATION (UPDATED) ---
         const USER_EMAILS = {
             "Dylan": "dylan_collyge@greenleafnursery.com",
-            "Kayla": "kayla_knepp@greenleafnursery.com",  // <-- Updated
-            "Morgan": "morgan_anderson@greenleafnursery.com", // <-- Updated
+            "Kayla": "kayla_knepp@greenleafnursery.com",  // Updated
+            "Morgan": "morgan_anderson@greenleafnursery.com", // Updated
             "J.D.": "jd_lauger@greenleafnursery.com",
             "Admin": "dylan_collyge@greenleafnursery.com" 
         };
@@ -703,7 +703,7 @@
 
         window.lastLocalUpdate = 0;
 
-        // DRIVE MODE STATE & FILTERS
+        // DRIVE MODE STATE & FILTERS (REFACTORED)
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
@@ -1461,7 +1461,12 @@
             document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = '';
             driveSearchTerm = ''; driveViewLevel = 0; renderDriveView();
         }
-        function handleDriveSearch(term) { driveSearchTerm = term.toLowerCase(); renderDriveView(); }
+        
+        function handleDriveSearch(term) { 
+            driveSearchTerm = term.toLowerCase(); 
+            renderDriveView(); 
+        }
+
         function getFilteredDriveItems() {
             const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val);
             return fullInventory.filter(i => {
@@ -1473,23 +1478,67 @@
                 return true;
             });
         }
-        function renderDriveNames() { renderDriveView(); } 
-        function renderDriveView() {
-            const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems();
-            
-            filteredItems.sort((a, b) => {
-                 const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
-                 const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
-                 if (pA !== pB) return pA - pB;
-                 return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
-            });
+        
+        function renderDriveNames() { 
+            driveViewLevel = 0; 
+            selectedDriveName = null; 
+            selectedDriveSize = null; 
+            renderDriveView(); 
+        } 
 
-            document.onclick = function(e) { if(!e.target.closest('.ms-container')) { document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); } }
-            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+        function renderDriveView() {
+            const container = document.getElementById('drive-content'); 
+            const crumb = document.getElementById('drive-crumb'); 
+            const filteredItems = getFilteredDriveItems();
             
+            if (filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
+                crumb.innerText = "No Results"; 
+                return; 
+            }
+            
+            // 2. LEVEL 0: LIST COMMON NAMES
             if(driveViewLevel === 0) {
-                crumb.innerText = `Filtered Items (${filteredItems.length})`; 
-                container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
+                crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                
+                container.innerHTML = names.map(n => {
+                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
+                                <span class="font-bold text-lg">${n}</span>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            // 3. LEVEL 1: LIST SIZES for Selected Name
+            else if (driveViewLevel === 1) {
+                crumb.innerText = selectedDriveName;
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + 
+                sizes.map(s => {
+                    const count = namedItems.filter(i => i.CONTSIZE === s).length;
+                    return `<div class="drill-item" onclick="selectDriveSize('${s}')">
+                                <span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            // 4. LEVEL 2: LIST ROWS (CARDS)
+            else if (driveViewLevel === 2) {
+                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
+                
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
+                
+                finalItems.sort((a, b) => {
+                     const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
+                     const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
+                     if (pA !== pB) return pA - pB;
+                     return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + 
+                finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
             }
         }
         
