@@ -620,17 +620,58 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        // *** CRITICAL UPDATE: YOUR SCRIPT URL IS PRE-FILLED HERE ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
-        // --- UPDATED ADMIN LIST ---
         const ADMINS = ["Dylan", "J.D.", "Kayla"];
         const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
+
+        // --- EMAIL CONFIGURATION ---
+        const USER_EMAILS = {
+            "Dylan": "dylan_collyge@greenleafnursery.com",
+            "Kayla": "Kayla_Goforth@greenleafnursery.com", 
+            "Morgan": "Morgan_Lowe@greenleafnursery.com",   
+            "J.D.": "jd_lauger@greenleafnursery.com",
+            "Admin": "dylan_collyge@greenleafnursery.com" 
+        };
+
+        // Generic function to send email via backend
+        function sendEmailNotification(toUser, subject, htmlContent) {
+            const email = USER_EMAILS[toUser] || USER_EMAILS["Admin"];
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "send_email",
+                    to: email,
+                    subject: subject,
+                    htmlBody: htmlContent
+                })
+            }).catch(err => console.error("Email failed slightly:", err)); 
+        }
+
+        // Helper to make the email look nice
+        function generateHtmlForItems(items, title) {
+            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
+                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
+            
+            items.forEach(item => {
+                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555; font-size: 12px;">
+                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
+                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
+                                Item: ${item.ITEMCODE}
+                            </span>`;
+                if(item.SAVED_NOTE) html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
 
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
-        let salesNoteMap = {}; // Stores { CommonName: [notes...] }
+        let salesNoteMap = {}; 
         let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
@@ -660,8 +701,7 @@
         let autoSyncTimer;
         let debounceTimer; 
 
-        // *** FIX: PROTECTION VARIABLE ***
-        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
+        window.lastLocalUpdate = 0;
 
         // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
@@ -878,7 +918,6 @@
             autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- DATA FETCHING (WITH FIX) ---
         async function fetchData(isSilent = false) {
             try {
                 if(!isSilent) { 
@@ -898,7 +937,7 @@
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
-                    salesNoteMap = cloudJson.salesMap || {}; // NEW SALES MAP
+                    salesNoteMap = cloudJson.salesMap || {}; 
                     
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
 
@@ -938,8 +977,6 @@
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             renderReviewItems();
-                        } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
-                            // Don't auto-render SOC to avoid clearing active drill down state unless necessary
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1005,7 +1042,6 @@
             .catch(err => showToast("Network Error", "Still offline.", true));
         }
 
-        // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             window.lastLocalUpdate = new Date().getTime();
@@ -1034,8 +1070,7 @@
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc;
             
-            // --- NEW: Reset Approval Status on Edit ---
-            activeItem.SO_STATUS = "PENDING"; // Whenever field edits, it resets to Pending
+            activeItem.SO_STATUS = "PENDING"; 
             
             activeItem.GROWER_EVAL = growerEval;
             activeItem.GROWER_SHEAR = growerShear;
@@ -1058,7 +1093,7 @@
                 pick: pick, 
                 note: note, 
                 salesDesc: salesDesc,
-                soStatus: "PENDING", // Send new status
+                soStatus: "PENDING", 
                 growerEval: growerEval,
                 growerShear: growerShear,
                 growerWater: growerWater,
@@ -1112,6 +1147,14 @@
             activeItem.TASK_TAB = "review"; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
+            // --- EMAIL LOGIC ---
+            const emailRecipient = "Admin"; 
+            const completionTitle = `Task Completed by ${currentUser}`;
+            const emailBody = generateHtmlForItems([activeItem], completionTitle);
+            
+            sendEmailNotification(emailRecipient, `Task Completed: ${activeItem.COMMONNAME}`, emailBody);
+            // -----------------------
+
             const payload = { 
                 type: "update", 
                 id: activeItem.UNIQUE_ID, 
@@ -1140,7 +1183,6 @@
             .catch(err => logFailedSave(payload));
         }
 
-        // --- NEW: PHOTO EDITOR LOGIC ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 currentFile = input.files[0];
@@ -1202,7 +1244,6 @@
                     const potY = canvas.height - potHeight;
                     ctx.save(); ctx.beginPath(); ctx.rect(0, potY, canvas.width, potHeight); ctx.clip(); ctx.filter = 'blur(4px)'; ctx.drawImage(canvas, 0, 0); ctx.restore(); ctx.filter = 'none';
                 }
-                // REMOVED LOGO LOGIC
             }
         }
 
@@ -1239,7 +1280,6 @@
             .catch(err => showToast("Network Error", "Could not upload photo.", true));
         }
 
-        // --- DIRECTORY LOGIC ---
         function renderDirectoryView() {
             const container = document.getElementById('directory-content');
             const term = document.getElementById('directory-search').value.toLowerCase();
@@ -1253,7 +1293,6 @@
             }).join('');
         }
 
-        // --- SOC LOGIC ---
         function switchSocTab(tab) {
             currentSocTab = tab;
             document.getElementById('st-reps').classList.toggle('active', tab === 'reps');
@@ -1276,7 +1315,7 @@
                     if(dirEntry && queryParam !== dirEntry.id) {
                          fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id)).then(res2 => res2.json()).then(data2 => {
                              if(data2.status === 'success') { socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { document.getElementById('soc-status').innerText = "Not found"; }
-                         });
+                          });
                     } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
                 }
             }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; });
@@ -1286,20 +1325,17 @@
             const container = document.getElementById('soc-content'); 
             const term = document.getElementById('soc-search').value.toLowerCase();
             
-            // GLOBAL SEARCH (If typing)
             if (term && socData.length > 0) { 
                 const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.COMMONNAME||"").toLowerCase().includes(term)); 
                 container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
             }
 
-            // DOCKS TAB
             if (currentSocTab === 'docks') {
                 let html = '<div class="grid grid-cols-2 gap-2">';
                 for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
                 html += '</div>'; container.innerHTML = html; return;
             }
 
-            // ITEM LOOKUP TAB
             if (currentSocTab === 'item') {
                 if(socData.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; return; }
 
@@ -1312,10 +1348,8 @@
                     container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
                     sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (socViewLevel === 2) {
-                    // NEW: Sort by Priority (1 -> Null)
                     let finalItems = socData.filter(i => i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
                     
-                    // Match against Inventory to get Priority and Photos
                     finalItems = finalItems.map(socItem => {
                         const invMatch = fullInventory.find(inv => inv.ITEMCODE === socItem.ITEMCODE);
                         socItem._PRIORITY = invMatch ? (parseFloat(invMatch.PRIORITY) || 9999) : 9999;
@@ -1325,7 +1359,6 @@
                         return socItem;
                     });
 
-                    // Sort: Priority 1 first, others descending
                     finalItems.sort((a, b) => {
                          const pA = (a._PRIORITY > 0) ? a._PRIORITY : 999999;
                          const pB = (b._PRIORITY > 0) ? b._PRIORITY : 999999;
@@ -1372,7 +1405,6 @@
                 return;
             }
 
-            // SALES REPS TAB (Default Drill Down)
             if(socViewLevel === 0) { 
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
@@ -1388,11 +1420,9 @@
         
         function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
         
-        // NEW SOC DRILL FUNCTIONS
         function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = 1; renderSocView(); }
         function selectSocSize(s) { selectedSocSize = s; socViewLevel = 2; renderSocView(); }
 
-        // --- NEW: DRIVE MODE FILTERS & LOGIC ---
         function initDriveFilters() {
             const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
             const grpDiv = document.getElementById('ms-group');
@@ -1447,7 +1477,6 @@
         function renderDriveView() {
             const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems();
             
-            // SORT BY PRIORITY IN DRIVE MODE TOO
             filteredItems.sort((a, b) => {
                  const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
                  const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
@@ -1458,8 +1487,6 @@
             document.onclick = function(e) { if(!e.target.closest('.ms-container')) { document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); } }
             if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
             
-            // Changed Drive Mode to just list items directly as per previous logic, but now sorted
-            // Or does user want drill down? The prompt implied list filtering. Keeping list.
             if(driveViewLevel === 0) {
                 crumb.innerText = `Filtered Items (${filteredItems.length})`; 
                 container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
@@ -1471,7 +1498,6 @@
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
         function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
 
-        // --- PRODUCTION MODE LOGIC ---
         function toggleProductionSeason(season, el) {
             if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else {
                 if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = [];
@@ -1507,7 +1533,6 @@
         function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
         function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
 
-        // --- INVENTORY MODE LOGIC ---
         function toggleInventorySeason(season, el) {
             if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else {
                 if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = [];
@@ -1543,13 +1568,11 @@
         function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
         function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
 
-        // --- TASKS LOGIC ---
         function renderTasks() {
             const container = document.getElementById('task-content'); 
             const crumb = document.getElementById('task-crumb');
             document.getElementById('task-tabs-container').classList.remove('hidden');
             
-            // SHOW/HIDE FLYER SUB TABS
             if(currentTab === 'flyer') { document.getElementById('flyer-sub-tabs').classList.remove('hidden'); } else { document.getElementById('flyer-sub-tabs').classList.add('hidden'); }
 
             let myItems = []; 
@@ -1569,7 +1592,6 @@
                     const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
                     const ss = parseFloat(i.SEASONSUPPLY) || 0; 
                     const isLowStock = ss > 0 && ptr < (ss * 0.10);
-                    // 10-Day Rule: Only show if OLDER than 10 days OR Low Stock
                     if (daysOld < 10 && !isLowStock) return false; 
                 }
                 return true;
@@ -1601,17 +1623,14 @@
 
             const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
 
-            // NEW: FLYER LOGIC (Folders)
             if(currentTab === 'flyer') {
                 const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
                 
-                // LEVEL 0: SHOW PROJECT FOLDERS
                 if(taskViewLevel === 0) {
                     crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
                     
                     if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; return; }
 
-                    // Group by Project Name (stored in REQUEST_ASSIGNED_TO)
                     const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
                     
                     container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + 
@@ -1626,16 +1645,12 @@
                                 </div>`;
                     }).join('');
                 }
-                // LEVEL 1: SHOW ITEMS INSIDE PROJECT
                 else if (taskViewLevel === 1) {
                     crumb.innerText = `Flyer / ${selectedFlyerProject}`;
                     const projectItems = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
                     
-                    // GET PROJECT NOTE FROM FIRST ITEM
                     let projNote = "";
                     if(projectItems.length > 0 && projectItems[0].SAVED_NOTE) {
-                        // Assuming the last added note is the project note, or just take the whole note
-                        // Simplified: Taking the last part after " | " if split
                         let parts = projectItems[0].SAVED_NOTE.split(" | ");
                         projNote = parts[parts.length - 1]; 
                     }
@@ -1728,7 +1743,6 @@
         function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
         function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
 
-        // --- VIEWER LOGIC ---
         function renderViewerNames() {
             const term = document.getElementById('viewer-search').value.toLowerCase();
             if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; }
@@ -1737,7 +1751,6 @@
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
-        // --- REVIEW LOGIC ---
         function renderReviewItems() {
             const container = document.getElementById('review-content'); const crumb = document.getElementById('review-crumb'); const failContainer = document.getElementById('failed-saves-container');
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
@@ -1752,13 +1765,11 @@
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
-        // --- SALES OFFICE LOGIC (Updated) ---
         function renderSalesOffice() {
             const container = document.getElementById('salesoffice-content'); 
             const searchInput = document.getElementById('salesoffice-search'); 
             const term = searchInput ? searchInput.value.toLowerCase() : '';
             
-            // Only show items that have a Sales Note
             const salesItems = fullInventory.filter(i => { 
                 if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
                 if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
@@ -1790,13 +1801,9 @@
             if (itemIdx === -1) return;
             
             const item = fullInventory[itemIdx];
-            
-            // 1. Update Status
             item.SO_STATUS = "APPROVED";
-            // 2. Reset Timestamp to NOW so 10-day timer starts fresh for field users
             item.TIMESTAMP = new Date().toISOString(); 
             
-            // 3. Render and Save
             renderSalesOffice();
             showToast("Approved", "10-day timer started for field team.");
             
@@ -1804,7 +1811,6 @@
                 type: "update", 
                 id: item.UNIQUE_ID, 
                 soStatus: "APPROVED",
-                // We send the other fields to ensure nothing gets overwritten blank
                 match: item.SAVED_MATCH||"", 
                 spec: item.SAVED_SPEC||"", 
                 pick: item.SAVED_PICK||"", 
@@ -1821,7 +1827,6 @@
             }).catch(err => logFailedSave(payload));
         }
 
-        // --- APP NAVIGATION ---
         function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
         
         function applyAssignments() { 
@@ -1865,27 +1870,21 @@
             if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
         }
 
-        // --- SMART FILL & EDIT MODE UPDATE ---
-
         function handleSmartFill(el) {
-            // 1. Live Save (Fixes the "Data Missing" bug)
             if(el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
             if(el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
             if(el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
             if(el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
             if(el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
             
-            // 2. Smart Replacement Logic
             const specVal = document.getElementById('in-spec').value;
             const salesEl = document.getElementById('in-sales-desc');
             let salesVal = salesEl.value;
 
-            // If we have a Spec and the Sales Description contains the magic word "SPEC"
             if (specVal && salesVal.toUpperCase().includes("SPEC")) {
-                // Replace "SPEC" with the actual value (case insensitive)
                 const newVal = salesVal.replace(/SPEC/gi, specVal);
                 salesEl.value = newVal;
-                activeItem.SAVED_SALES_DESC = newVal; // Save to memory immediately
+                activeItem.SAVED_SALES_DESC = newVal; 
                 showToast("Smart Fill", "Replaced 'SPEC' with " + specVal);
             }
         }
@@ -1898,12 +1897,10 @@
             
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
             
-            // Generate Dropdown Options
             const cName = String(activeItem.COMMONNAME || "").toUpperCase();
             const noteOptions = salesNoteMap[cName] || [];
             
             let dlHtml = `<datalist id="dl-notes">`; 
-            // Add a "Smart Template" option automatically
             dlHtml += `<option value="Nice Full Plants / SPEC">`; 
             dlHtml += `<option value="Consistent Grade / SPEC">`; 
             
@@ -1915,7 +1912,6 @@
             const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap for templates or type 'SPEC'..." : "Type 'SPEC' to pull from column above..."; 
             const cont = document.getElementById('input-container');
             
-            // UPDATED HTML: Added onchange/oninput events for Smart Fill and Live Saving
             cont.innerHTML = `
             <div>
                 <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
@@ -1996,10 +1992,8 @@
         function openAssignModal() { 
             if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } 
             
-            // SHOW FLYER OPTIONS IF AUTHORIZED
             if (FLYER_AUTH.includes(currentUser)) {
                 document.getElementById('auth-flyer-options').classList.remove('hidden');
-                // Auto-fill existing projects into datalist
                 const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p);
                 document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join('');
             } else {
@@ -2009,23 +2003,14 @@
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
 
-        function getBatchHtml() {
-            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
-            selectedIdx.forEach(idx => {
-                let item = fullInventory[idx];
-                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br><span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
-                let details = []; if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`); if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`); if(details.length > 0) html += details.join(' | ') + '<br>';
-                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`; if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`; if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
-                if(item.SAVED_PHOTO_LINK) { html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`; const urls = item.SAVED_PHOTO_LINK.split(','); const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : []; urls.forEach((url, i) => { const name = names[i] || `View Photo ${i+1}`; html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; }); html += `</div>`; } html += `</div>`;
-            }); return html + "</div>";
-        }
         function getBatchText() {
             let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text;
         }
         function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
-        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
-        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
+        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
+        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
         function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
+        
         function handleCardClick(idx, source) { if(isBatch) { const cb = document.getElementById('cb-' + idx); if(cb) { cb.checked = !cb.checked; updateSelected(); } return; } openDetail(idx, source); }
 
         function createRowHtml(item, idx, source) {
@@ -2044,10 +2029,8 @@
             if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
             if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
 
-            // NEW: HOLD/STOP LOGIC
-            // Checks HOLDSTOPCODE. Blank=Green, H=Yellow, S=Red
             let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
-            let cardClass = "!bg-green-50 !border-green-300"; // Default (Green for blank/null)
+            let cardClass = "!bg-green-50 !border-green-300"; 
             let indicator = "";
 
             if (holdCode === "S") {
@@ -2091,7 +2074,6 @@
         function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
         
         function batchAssign() {
-            // READ INPUTS
             const d = document.getElementById('chk-dylan').checked; 
             const k = document.getElementById('chk-kayla').checked; 
             const m = document.getElementById('chk-morgan').checked; 
@@ -2099,12 +2081,10 @@
             const noteText = document.getElementById('assign-note').value;
             const flyerProjectName = document.getElementById('flyer-project-name').value;
             
-            // CHECK FLYER SELECTION
             let flyerSelection = null;
             const flyerRadios = document.getElementsByName('flyer_assign');
             for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; }
 
-            // BUILD TEAM STRING
             let selected = []; 
             if(d) selected.push("Dylan"); 
             if(k) selected.push("Kayla"); 
@@ -2120,23 +2100,19 @@
                 return; 
             } 
             
-            // IF FLYER SELECTED, TARGET IS PROJECT NAME. ELSE TARGET IS PERSON.
             let target = flyerSelection ? flyerProjectName : selected.join(" & ");
 
             const updates = selectedIdx.map(idx => { 
                 const item = fullInventory[idx]; 
                 
-                // Base Updates
                 item.REQUEST_ASSIGNED_TO = target; 
                 
-                // DETERMINE TAB
                 if (flyerSelection) {
-                    item.TASK_TAB = flyerSelection; // e.g., 'flyer_crop'
+                    item.TASK_TAB = flyerSelection; 
                 } else {
                     item.TASK_TAB = "requests"; 
                 }
 
-                // APPEND NOTES
                 if(isCalReq) { 
                     let oldNote = item.SAVED_PICK || ""; 
                     if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } 
@@ -2144,7 +2120,6 @@
                 
                 if(noteText) {
                     let oldGen = item.SAVED_NOTE || "";
-                    // Avoid duplicate notes
                     if(!oldGen.includes(noteText)) {
                         item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
                     }
@@ -2163,11 +2138,26 @@
                 }; 
             });
 
+            // --- EMAIL LOGIC ---
+            let emailTo = "Admin";
+            if (d) emailTo = "Dylan";
+            else if (k) emailTo = "Kayla";
+            else if (m) emailTo = "Morgan";
+            
+            const assignTitle = flyerSelection 
+                ? `New Flyer Project: ${flyerProjectName}` 
+                : `New Tasks Assigned by ${currentUser}`;
+
+            const itemsForEmail = selectedIdx.map(idx => fullInventory[idx]);
+            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle);
+
+            sendEmailNotification(emailTo, assignTitle, emailBody);
+            // ------------------
+
             document.getElementById('assign-modal').style.display = 'none'; 
             toggleBatch(); 
-            showToast("Saving", "Batch assigning items...");
+            showToast("Saving", "Assigned & Email Sent...");
             
-            // CLEAR MODAL INPUTS
             document.getElementById('assign-note').value = "";
             document.getElementById('flyer-project-name').value = "";
             for(let radio of flyerRadios) radio.checked = false;
@@ -2180,20 +2170,22 @@
             .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
 
-        // --- NEW: COMPLETE PROJECT LOGIC ---
         function markProjectComplete(projName) {
             if(!confirm(`Are you sure you want to complete and archive project: "${projName}"?`)) return;
             
-            // Find all items in this project
             const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_"));
             
             if(projItems.length === 0) return;
 
+            // --- EMAIL LOGIC ---
+            const completionTitle = `Project Completed: ${projName}`;
+            const emailBody = generateHtmlForItems(projItems, completionTitle);
+            sendEmailNotification("Dylan", completionTitle, emailBody);
+            // ------------------
+
             const updates = projItems.map(item => {
-                // Reset local data
                 item.REQUEST_ASSIGNED_TO = "";
-                item.TASK_TAB = "review"; // Or keep current tab? Usually 'review' or reset to standard flow. Let's send to 'review' so it disappears from flyer tab.
-                
+                item.TASK_TAB = "review"; 
                 return {
                     id: item.UNIQUE_ID,
                     requestAssignedTo: "",
@@ -2202,7 +2194,6 @@
                 };
             });
 
-            // Update UI Immediately
             resetTaskView();
             showToast("Completing...", `Archiving ${projName}...`);
 
