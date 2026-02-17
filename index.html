@@ -705,6 +705,7 @@
         let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
+        let socLookupIndex = []; // NEW: Stores the merged SOC data
         let activeItem = null; 
         let currentUser = null; 
         let isAdmin = false; 
@@ -717,7 +718,7 @@
         let selectedTaskLoc = null; 
         
         // MANAGER DASHBOARD VARIABLES
-        let activeReviewFolder = null; // 'notes', 'pending', 'completed'
+        let activeReviewFolder = null; 
         let reviewViewLevel = 0; 
         let selectedReviewName = null; 
         let selectedReviewSize = null;
@@ -961,6 +962,7 @@
                     document.getElementById('loading-spinner').classList.remove('hidden'); 
                 }
                 
+                // 1. Fetch Inventory
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const textCheck = await cloudRes.clone().text();
                 
@@ -976,6 +978,16 @@
                     salesNoteMap = cloudJson.salesMap || {}; 
                     
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+
+                    // 2. FETCH SOC LOOKUP (Lazy load if silent, immediate if login)
+                    if (socLookupIndex.length === 0) {
+                         if(!isSilent) document.getElementById('loading-text').innerText = "Merging SOC Data..."; 
+                         try {
+                             const socRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getSocLookupMap");
+                             const socJson = await socRes.json();
+                             if(socJson.status === 'success') { socLookupIndex = socJson.data; }
+                         } catch(e) { console.log("SOC Fetch warning"); }
+                    }
 
                     if(!isSilent) { 
                         applyAssignments(); 
@@ -1012,7 +1024,7 @@
                         } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
-                            renderManagerDashboard(); // UPDATED
+                            renderManagerDashboard(); 
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1655,6 +1667,47 @@
 
         // --- NEW MANAGER DASHBOARD LOGIC (Folders) ---
         
+        // --- 1. BUILD VIRTUAL FOLDER LIST ---
+        // This merges Inventory Items with SOC data to create one entry per customer order
+        function buildMergedFolderItems(filterType) {
+            let baseItems = [];
+            if (filterType === 'pending') {
+                baseItems = fullInventory.filter(i => i.TASK_TAB === 'requests' || (i.TASK_TAB || "").startsWith("flyer_"));
+            } else if (filterType === 'completed') {
+                baseItems = fullInventory.filter(i => i.TASK_TAB === 'completed');
+            } else {
+                return [];
+            }
+
+            let mergedList = [];
+            
+            baseItems.forEach(invItem => {
+                // Find all matches in SOC Index
+                // SOC Index = [{c: "ITEMCODE", r: "REP", n: "CUST", q: 10}]
+                const socMatches = socLookupIndex.filter(s => s.c === invItem.ITEMCODE);
+                
+                if (socMatches.length > 0) {
+                    // Create a virtual item for EACH SOC match
+                    socMatches.forEach(match => {
+                        let virtualItem = {...invItem}; // Clone
+                        virtualItem._VIRTUAL_REP = match.r;
+                        virtualItem._VIRTUAL_CUST = match.n;
+                        mergedList.push(virtualItem);
+                    });
+                } else {
+                    // No SOC match? Put it in "Unmatched"
+                    let virtualItem = {...invItem};
+                    virtualItem._VIRTUAL_REP = "Unmatched";
+                    virtualItem._VIRTUAL_CUST = "No Active Order";
+                    mergedList.push(virtualItem);
+                }
+            });
+            
+            // FILTER: Remove Field Reps from the Sales Rep list
+            const fieldReps = ["DYLAN", "KAYLA", "MORGAN", "DYLAN COLLYGE", "KAYLA KNEPP", "MORGAN ANDERSON"];
+            return mergedList.filter(item => !fieldReps.includes((item._VIRTUAL_REP || "").toUpperCase()));
+        }
+
         function renderManagerDashboard() {
             document.getElementById('review-dashboard').classList.remove('hidden');
             document.getElementById('review-list-container').classList.add('hidden');
@@ -1668,21 +1721,16 @@
             document.getElementById('review-list-container').classList.remove('hidden');
             
             reviewViewLevel = 0;
-            const titles = {
-                'notes': 'Sales Notes Review',
-                'pending': 'Pending Requests',
-                'completed': 'Completed Requests'
-            };
+            const titles = { 'notes': 'Sales Notes Review', 'pending': 'Pending Requests', 'completed': 'Completed Requests' };
             document.getElementById('review-folder-title').innerText = titles[folderType];
             
             renderReviewItems();
         }
 
         function closeReviewFolder() {
-            // Drill Up logic
             if (reviewViewLevel > 0) {
-                if (reviewViewLevel === 2) { reviewViewLevel = 1; }
-                else if (reviewViewLevel === 1) { reviewViewLevel = 0; }
+                if (reviewViewLevel === 2) reviewViewLevel = 1;
+                else if (reviewViewLevel === 1) reviewViewLevel = 0;
                 renderReviewItems();
                 return;
             }
@@ -1693,108 +1741,159 @@
             const container = document.getElementById('review-content'); 
             const crumb = document.getElementById('review-crumb'); 
             const term = document.getElementById('review-search').value.toLowerCase(); 
-            
-            // 1. FILTER ITEMS BASED ON ACTIVE FOLDER
-            let folderItems = [];
+
+            // SALES NOTES (Simple List - No Merge needed)
             if (activeReviewFolder === 'notes') {
-                folderItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            } else if (activeReviewFolder === 'pending') {
-                folderItems = fullInventory.filter(i => i.TASK_TAB === 'requests' || (i.TASK_TAB || "").startsWith("flyer_"));
-            } else if (activeReviewFolder === 'completed') {
-                folderItems = fullInventory.filter(i => i.TASK_TAB === 'completed');
-            }
-
-            // 2. SEARCH OVERRIDE
-            if(term) { 
-                const matched = folderItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.CUSTOMERNAME||"").toLowerCase().includes(term)); 
-                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
-                return; 
-            }
-
-            if(folderItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; crumb.innerText = ""; return; }
-
-            // 3. FOLDER SPECIFIC DRILL DOWNS
-            
-            // --- SALES NOTES REVIEW (Standard Name -> Size -> Item) ---
-            if (activeReviewFolder === 'notes') {
+                const folderItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+                if(term) { 
+                    const matched = folderItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term)); 
+                    container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); return; 
+                }
+                
                 if(reviewViewLevel === 0) { 
                     crumb.innerText = "All Names"; 
                     const names = [...new Set(folderItems.map(i => i.COMMONNAME))].sort(); 
                     container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
-                }
-                else if(reviewViewLevel === 1) { 
+                } else if(reviewViewLevel === 1) { 
                     crumb.innerText = selectedReviewName; 
                     const namedItems = folderItems.filter(i => i.COMMONNAME === selectedReviewName); 
                     const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
                     container.innerHTML = sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
-                }
-                else if(reviewViewLevel === 2) { 
+                } else { 
                     crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
                     const finalItems = folderItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
                     container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
                 }
-            } 
-            
-            // --- PENDING / COMPLETED REQUESTS (Rep -> Customer -> Items) ---
-            else {
-                // LEVEL 0: LIST SALES REPS
-                if(reviewViewLevel === 0) {
-                    crumb.innerText = "Select Sales Rep";
-                    
-                    // Group by SALESREP
-                    // Fallback to "No Rep" if missing in source file
-                    const reps = [...new Set(folderItems.map(i => i.SALESREP || "No Rep"))].sort();
-                    
-                    // Filter out "Dylan", "Kayla", "Morgan" if they appear accidentally as Sales Reps (per instruction)
-                    const cleanReps = reps.filter(r => !["DYLAN","KAYLA","MORGAN","DYLAN COLLYGE","KAYLA KNEPP","MORGAN ANDERSON"].includes(r.toUpperCase()));
+                return;
+            }
 
-                    container.innerHTML = cleanReps.map(r => {
-                        const count = folderItems.filter(i => (i.SALESREP || "No Rep") === r).length;
-                        return `<div class="drill-item" onclick="selectPendingRep('${r.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-user-circle text-blue-500 text-2xl"></i>
-                                        <span class="font-bold text-lg">${r} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                                    </div>
-                                    <i class="ph-bold ph-caret-right"></i>
-                                </div>`;
-                    }).join('');
+            // PENDING & COMPLETED (Merged SOC Data)
+            // 1. Build the Virtual List
+            let virtualItems = buildMergedFolderItems(activeReviewFolder);
+            
+            if(term) {
+                virtualItems = virtualItems.filter(i => 
+                    (i.COMMONNAME||"").toLowerCase().includes(term) || 
+                    (i.ITEMCODE||"").toLowerCase().includes(term) ||
+                    (i._VIRTUAL_REP||"").toLowerCase().includes(term) ||
+                    (i._VIRTUAL_CUST||"").toLowerCase().includes(term)
+                );
+                // Deduplicate by Unique ID for search results
+                const uniqueResults = [];
+                const map = new Map();
+                for (const item of virtualItems) {
+                    if(!map.has(item.UNIQUE_ID)){
+                        map.set(item.UNIQUE_ID, true);
+                        uniqueResults.push(item);
+                    }
                 }
-                // LEVEL 1: LIST CUSTOMERS (for selected Rep)
-                else if (reviewViewLevel === 1) {
-                    crumb.innerText = `${selectedPendingRep} / Customers`;
-                    
-                    const repItems = folderItems.filter(i => (i.SALESREP || "No Rep") === selectedPendingRep);
-                    const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "No Customer"))].sort();
-                    
-                    container.innerHTML = customers.map(c => {
-                        const count = repItems.filter(i => (i.CUSTOMERNAME || "No Customer") === c).length;
-                         return `<div class="drill-item" onclick="selectPendingCust('${c.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-buildings text-green-600 text-2xl"></i>
-                                        <span class="font-bold text-sm truncate w-64">${c} <span class="text-gray-400 text-xs font-normal">(${count})</span></span>
-                                    </div>
-                                    <i class="ph-bold ph-caret-right"></i>
-                                </div>`;
-                    }).join('');
-                }
-                // LEVEL 2: SHOW ITEMS
-                else if (reviewViewLevel === 2) {
-                     crumb.innerText = `${selectedPendingRep} / ${selectedPendingCust}`;
-                     const finalItems = folderItems.filter(i => (i.SALESREP || "No Rep") === selectedPendingRep && (i.CUSTOMERNAME || "No Customer") === selectedPendingCust);
-                     
-                     // Sort by Priority (Low to High)
-                     finalItems.sort((a,b) => (parseFloat(a.PRIORITY)||9999) - (parseFloat(b.PRIORITY)||9999));
-                     
-                     container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
-                }
+                container.innerHTML = uniqueResults.map(item => createRowHtml(item, fullInventory.findIndex(x=>x.UNIQUE_ID===item.UNIQUE_ID), 'review')).join('');
+                return;
+            }
+
+            if (virtualItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; return; }
+
+            // LEVEL 0: SALES REPS
+            if (reviewViewLevel === 0) {
+                crumb.innerText = "Select Sales Rep";
+                const reps = [...new Set(virtualItems.map(i => i._VIRTUAL_REP))].sort();
+                
+                container.innerHTML = reps.map(r => {
+                    const count = virtualItems.filter(i => i._VIRTUAL_REP === r).length; 
+                    return `<div class="drill-item" onclick="selectPendingRep('${r.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-user-circle text-blue-500 text-2xl"></i>
+                                    <span class="font-bold text-lg">${r} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                </div>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            // LEVEL 1: CUSTOMERS
+            else if (reviewViewLevel === 1) {
+                crumb.innerText = selectedPendingRep;
+                const repItems = virtualItems.filter(i => i._VIRTUAL_REP === selectedPendingRep);
+                const customers = [...new Set(repItems.map(i => i._VIRTUAL_CUST))].sort();
+                
+                container.innerHTML = customers.map(c => {
+                    const count = repItems.filter(i => i._VIRTUAL_CUST === c).length;
+                    return `<div class="drill-item" onclick="selectPendingCust('${c.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-buildings text-green-600 text-2xl"></i>
+                                    <span class="font-bold text-sm truncate w-64">${c} <span class="text-gray-400 text-xs font-normal">(${count})</span></span>
+                                </div>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            // LEVEL 2: ITEMS
+            else if (reviewViewLevel === 2) {
+                crumb.innerText = `${selectedPendingRep} / ${selectedPendingCust}`;
+                const finalItems = virtualItems.filter(i => i._VIRTUAL_REP === selectedPendingRep && i._VIRTUAL_CUST === selectedPendingCust);
+                
+                // Map back to original index to ensure clicks work
+                container.innerHTML = finalItems.map(vItem => {
+                    const originalIdx = fullInventory.findIndex(x => x.UNIQUE_ID === vItem.UNIQUE_ID);
+                    return createRowHtml(vItem, originalIdx, 'review');
+                }).join('');
             }
         }
 
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
-        
         function selectPendingRep(r) { selectedPendingRep = r; reviewViewLevel = 1; renderReviewItems(); }
         function selectPendingCust(c) { selectedPendingCust = c; reviewViewLevel = 2; renderReviewItems(); }
+
+        function handleCardClick(idx, source) { if(isBatch) { const cb = document.getElementById('cb-' + idx); if(cb) { cb.checked = !cb.checked; updateSelected(); } return; } openDetail(idx, source); }
+        function updateSelected() { selectedIdx = []; document.querySelectorAll('.select-check').forEach(cb => { if (cb.checked) { selectedIdx.push(parseInt(cb.value)); } }); if (selectedIdx.length > 0) { document.getElementById('action-bar').classList.add('visible'); } else { document.getElementById('action-bar').classList.remove('visible'); } }
+        function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
+        function cancelLongPress() { clearTimeout(longPressTimer); }
+        function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
+        
+        function batchAssign() {
+            const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked; const isCalReq = document.getElementById('chk-cal-request').checked; const noteText = document.getElementById('assign-note').value; const flyerProjectName = document.getElementById('flyer-project-name').value;
+            let flyerSelection = null; const flyerRadios = document.getElementsByName('flyer_assign'); for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; }
+            let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan");
+            if(flyerSelection && !flyerProjectName) { showToast("Warning", "Please enter a Project Name.", true); return; }
+            if(!flyerSelection && selected.length === 0) { showToast("Warning", "Select a person or a flyer category.", true); return; } 
+            let target = flyerSelection ? flyerProjectName : selected.join(" & ");
+            const updates = selectedIdx.map(idx => { const item = fullInventory[idx]; item.REQUEST_ASSIGNED_TO = target; if (flyerSelection) { item.TASK_TAB = flyerSelection; } else { item.TASK_TAB = "requests"; } if(isCalReq) { let oldNote = item.SAVED_PICK || ""; if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } } if(noteText) { let oldGen = item.SAVED_NOTE || ""; if(!oldGen.includes(noteText)) { item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText; } } return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser }; });
+            let emailTo = "Admin"; if (d) emailTo = "Dylan"; else if (k) emailTo = "Kayla"; else if (m) emailTo = "Morgan";
+            const assignTitle = flyerSelection ? `New Flyer Project: ${flyerProjectName}` : `New Tasks Assigned by ${currentUser}`;
+            const itemsForEmail = selectedIdx.map(idx => fullInventory[idx]); const emailBody = generateHtmlForItems(itemsForEmail, assignTitle); sendEmailNotification(emailTo, assignTitle, emailBody);
+            document.getElementById('assign-modal').style.display = 'none'; toggleBatch(); showToast("Saving", "Assigned & Email Sent..."); document.getElementById('assign-note').value = ""; document.getElementById('flyer-project-name').value = ""; for(let radio of flyerRadios) radio.checked = false;
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); });
+        }
+
+        function markProjectComplete(projName) { if(!confirm(`Archive project: "${projName}"?`)) return; const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_")); if(projItems.length === 0) return; const completionTitle = `Project Completed: ${projName}`; const emailBody = generateHtmlForItems(projItems, completionTitle); sendEmailNotification("Dylan", completionTitle, emailBody); const updates = projItems.map(item => { item.REQUEST_ASSIGNED_TO = ""; item.TASK_TAB = "review"; return { id: item.UNIQUE_ID, requestAssignedTo: "", taskTab: "review", user: currentUser }; }); resetTaskView(); showToast("Completing...", `Archiving ${projName}...`); fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Project archived."); fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); }); }
+
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
+                let thumbUrl = firstLink;
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
+                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
+            }
+            let badges = '';
+            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
+            let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
+            let cardClass = "!bg-green-50 !border-green-300"; 
+            let indicator = "";
+            if (holdCode === "S") { cardClass = "!bg-red-50 !border-red-300"; indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`; } 
+            else if (holdCode === "H") { cardClass = "!bg-yellow-50 !border-yellow-300"; indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`; }
+            return `<div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}<div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">${thumbHtml}<div class="flex-grow min-w-0"><div class="flex justify-between items-start"><div class="font-bold text-[#007a4d] truncate text-base flex items-center">${item.LOCATIONCODE || 'No Loc'} ${indicator}</div><div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div></div><div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div><div class="text-xs text-gray-500 truncate">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong></div><div class="text-xs text-gray-500 truncate mb-1">Tag Color: <strong>${item.FIELDTAGCOLOR || '-'}</strong> | Lot: ${item.LOTCODE || '-'}</div><div class="flex flex-wrap">${badges}</div></div></div></div>`;
+        }
+        
+        function getBatchText() { let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text; }
+        function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
+        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
+        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
+        function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
 
     </script>
 </body>
