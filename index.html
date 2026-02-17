@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 013</title>
+    <title>Greenleaf Pro TURBO 014</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -23,8 +23,6 @@
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
-        
-        /* IPAD & MOBILE SAFE AREA FIX */
         .pt-safe { padding-top: max(10px, env(safe-area-inset-top)); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -56,7 +54,6 @@
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
         .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
         
-        /* FLYER SUB TABS */
         .flyer-sub-tabs { display: flex; padding: 8px; gap: 8px; background: #fff; overflow-x: auto; border-bottom: 1px solid #f3f4f6; }
         .flyer-pill { white-space: nowrap; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; flex: 1; text-align: center; }
         .flyer-pill.active { background: #007a4d; color: white; border-color: #007a4d; }
@@ -99,13 +96,10 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
-        /* EXCEL STYLE FILTERS ROW */
         .filter-row-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        /* Hide Scrollbar */
         .filter-row-container::-webkit-scrollbar { display: none; }
         .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* MULTI-SELECT DROPDOWN STYLES */
         .ms-container { position: relative; }
         .ms-btn { background: white; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; }
         .ms-options { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; }
@@ -115,7 +109,6 @@
         .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
         .ms-option.selected { background-color: #f0fdf4; }
 
-        /* EDITOR MODAL STYLES */
         #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
         .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
         .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -128,7 +121,6 @@
         .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
         .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
 
-        /* PULL TO REFRESH */
         #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
         #ptr-spinner.loading i { animation: spin 1s linear infinite; }
@@ -137,14 +129,20 @@
         
         .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         
-        /* DATA BADGES */
         .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
 
-        /* PRODUCTION STYLES */
         .text-production { color: #d97706; }
+        
+        /* FOLDER CARD STYLE */
+        .folder-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
+        .folder-card:active { transform: scale(0.98); background: #f9fafb; }
+        .folder-icon { font-size: 28px; color: #007a4d; margin-right: 15px; }
+        .folder-text { flex-grow: 1; }
+        .folder-title { font-weight: bold; font-size: 16px; color: #111827; }
+        .folder-sub { font-size: 11px; color: #6b7280; font-weight: 600; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -177,7 +175,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 013
+                TURBO 014
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +205,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 014 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -407,13 +405,45 @@
             </div>
             
             <div id="view-review" class="hidden">
-                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
+                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
                 <div id="failed-saves-container"></div>
-                <input type="text" id="review-search" class="input-field mb-4" placeholder="Search Review Items..." onkeyup="renderReviewItems()">
-                <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
-                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
-                <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
-                <div id="review-content"></div>
+                
+                <div id="review-dashboard" class="mb-4">
+                    <div class="folder-card" onclick="openReviewFolder('notes')">
+                        <i class="ph-fill ph-notebook folder-icon text-yellow-600"></i>
+                        <div class="folder-text">
+                            <div class="folder-title">Sales Notes Review</div>
+                            <div class="folder-sub">Items with Priority but no Winner</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>
+                    
+                    <div class="folder-card" onclick="openReviewFolder('pending')">
+                        <i class="ph-fill ph-clock-countdown folder-icon text-blue-600"></i>
+                        <div class="folder-text">
+                            <div class="folder-title">Pending Requests</div>
+                            <div class="folder-sub">Active tasks assigned to team</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>
+                    
+                    <div class="folder-card" onclick="openReviewFolder('completed')">
+                        <i class="ph-fill ph-check-square-offset folder-icon text-green-600"></i>
+                        <div class="folder-text">
+                            <div class="folder-title">Completed Requests</div>
+                            <div class="folder-sub">Finished items archive</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div id="review-list-container" class="hidden">
+                    <div class="back-btn" onclick="closeReviewFolder()"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</div>
+                    <div class="text-xs font-bold text-gray-400 uppercase mb-2" id="review-folder-title"></div>
+                    <input type="text" id="review-search" class="input-field mb-4" placeholder="Search Items..." onkeyup="renderReviewItems()">
+                    <span id="review-crumb" class="text-xs font-bold text-[#007a4d]"></span>
+                    <div id="review-content"></div>
+                </div>
             </div>
 
             <div id="view-viewer" class="hidden">
@@ -685,9 +715,14 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
+        
+        // MANAGER DASHBOARD VARIABLES
+        let activeReviewFolder = null; // 'notes', 'pending', 'completed'
         let reviewViewLevel = 0; 
         let selectedReviewName = null; 
-        let selectedReviewSize = null; 
+        let selectedReviewSize = null;
+        let selectedPendingUser = null;
+        
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null;
@@ -976,7 +1011,7 @@
                         } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
-                            renderReviewItems();
+                            renderManagerDashboard(); // UPDATED
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1144,7 +1179,7 @@
             activeItem.SAVED_NOTE = note; 
             activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = ""; 
-            activeItem.TASK_TAB = "review"; 
+            activeItem.TASK_TAB = "completed"; // CHANGED TO COMPLETED FOLDER
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
             // --- EMAIL LOGIC ---
@@ -1159,7 +1194,7 @@
                 type: "update", 
                 id: activeItem.UNIQUE_ID, 
                 requestAssignedTo: "", 
-                taskTab: "review", 
+                taskTab: "completed", 
                 match: match, 
                 spec: spec, 
                 pick: pick, 
@@ -1386,7 +1421,7 @@
                         }
 
                         return `
-                        <div class="inv-card flex flex-col gap-2">
+                        <div class="inv-card flex-col gap-2">
                             <div class="flex items-start">
                                 ${thumbHtml}
                                 <div class="flex-grow">
@@ -1800,19 +1835,121 @@
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
-        function renderReviewItems() {
-            const container = document.getElementById('review-content'); const crumb = document.getElementById('review-crumb'); const failContainer = document.getElementById('failed-saves-container');
-            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-            if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
-            const term = document.getElementById('review-search').value.toLowerCase(); const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            if(term) { const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); return; }
-            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
-            if(reviewViewLevel === 0) { crumb.innerText = "All Names"; const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-            else if(reviewViewLevel === 1) { crumb.innerText = selectedReviewName; const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; }
-            else if(reviewViewLevel === 2) { crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; }
+        // --- NEW MANAGER DASHBOARD LOGIC ---
+        
+        function renderManagerDashboard() {
+            document.getElementById('review-dashboard').classList.remove('hidden');
+            document.getElementById('review-list-container').classList.add('hidden');
+            document.getElementById('review-search').value = ""; // Clear Search
+            activeReviewFolder = null;
         }
+
+        function openReviewFolder(folderType) {
+            activeReviewFolder = folderType;
+            document.getElementById('review-dashboard').classList.add('hidden');
+            document.getElementById('review-list-container').classList.remove('hidden');
+            
+            reviewViewLevel = 0;
+            const titles = {
+                'notes': 'Sales Notes Review',
+                'pending': 'Pending Requests',
+                'completed': 'Completed Requests'
+            };
+            document.getElementById('review-folder-title').innerText = titles[folderType];
+            
+            renderReviewItems();
+        }
+
+        function closeReviewFolder() {
+            // If deeper in drill down, go back up one level first
+            if (reviewViewLevel > 0) {
+                if (reviewViewLevel === 2) { reviewViewLevel = 1; }
+                else if (reviewViewLevel === 1) { reviewViewLevel = 0; }
+                renderReviewItems();
+                return;
+            }
+            // If at root of folder, go back to dashboard
+            renderManagerDashboard();
+        }
+
+        function renderReviewItems() {
+            const container = document.getElementById('review-content'); 
+            const crumb = document.getElementById('review-crumb'); 
+            const term = document.getElementById('review-search').value.toLowerCase(); 
+            
+            // 1. FILTER ITEMS BASED ON ACTIVE FOLDER
+            let folderItems = [];
+            if (activeReviewFolder === 'notes') {
+                folderItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            } else if (activeReviewFolder === 'pending') {
+                folderItems = fullInventory.filter(i => i.TASK_TAB === 'requests' || (i.TASK_TAB || "").startsWith("flyer_"));
+            } else if (activeReviewFolder === 'completed') {
+                folderItems = fullInventory.filter(i => i.TASK_TAB === 'completed');
+            }
+
+            // 2. SEARCH OVERRIDE
+            if(term) { 
+                const matched = folderItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.REQUEST_ASSIGNED_TO||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                return; 
+            }
+
+            if(folderItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; crumb.innerText = ""; return; }
+
+            // 3. FOLDER SPECIFIC DRILL DOWNS
+            
+            // --- SALES NOTES REVIEW (Standard Name -> Size -> Item) ---
+            if (activeReviewFolder === 'notes') {
+                if(reviewViewLevel === 0) { 
+                    crumb.innerText = "All Names"; 
+                    const names = [...new Set(folderItems.map(i => i.COMMONNAME))].sort(); 
+                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                }
+                else if(reviewViewLevel === 1) { 
+                    crumb.innerText = selectedReviewName; 
+                    const namedItems = folderItems.filter(i => i.COMMONNAME === selectedReviewName); 
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
+                    container.innerHTML = sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                }
+                else if(reviewViewLevel === 2) { 
+                    crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
+                    const finalItems = folderItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
+                    container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                }
+            } 
+            
+            // --- PENDING / COMPLETED REQUESTS (Rep -> Items) ---
+            // Group by "Assigned To" (which mimics the Rep until we have SOC data)
+            else {
+                if(reviewViewLevel === 0) {
+                    crumb.innerText = "Select Sales Rep";
+                    // Group by REQUEST_ASSIGNED_TO
+                    const reps = [...new Set(folderItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
+                    
+                    container.innerHTML = reps.map(r => {
+                        const count = folderItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === r).length;
+                        return `<div class="drill-item" onclick="selectPendingUser('${r.replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-3">
+                                        <i class="ph-fill ph-user-circle text-blue-500 text-2xl"></i>
+                                        <span class="font-bold text-lg">${r} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                    </div>
+                                    <i class="ph-bold ph-caret-right"></i>
+                                </div>`;
+                    }).join('');
+                }
+                else if (reviewViewLevel === 1) {
+                    crumb.innerText = selectedPendingUser;
+                    const userItems = folderItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedPendingUser);
+                    
+                    // Show items directly (or we could add Customer Drill Down if we had that data)
+                    container.innerHTML = userItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
+                }
+            }
+        }
+
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
+        function selectPendingUser(u) { selectedPendingUser = u; reviewViewLevel = 1; renderReviewItems(); }
 
         function renderSalesOffice() {
             const container = document.getElementById('salesoffice-content'); 
@@ -1888,7 +2025,7 @@
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
             if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
-            if(v === 'viewer') renderViewerNames(); if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
+            if(v === 'viewer') renderViewerNames(); if(v === 'review') { renderManagerDashboard(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
         function switchDetailTab(tab) { 
