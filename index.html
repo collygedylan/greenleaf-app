@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 018</title>
+    <title>Greenleaf Pro TURBO 013</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 018
+                TURBO 013
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 018 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -630,7 +630,7 @@
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
-        let salesNoteMap = {}; 
+        let salesNoteMap = {}; // Stores { CommonName: [notes...] }
         let allCommonNames = []; 
         let socReps = []; 
         let socData = []; 
@@ -659,17 +659,23 @@
         let longPressTimer; 
         let autoSyncTimer;
         let debounceTimer; 
-        
-        // SYNC TRACKING (FAST SAVE)
-        let pendingUploads = 0;
-        window.lastLocalUpdate = 0; 
+
+        // *** FIX: PROTECTION VARIABLE ***
+        window.lastLocalUpdate = 0; // Tracks the last time you saved locally
 
         // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
         let driveSearchTerm = '';
-        let driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
+        
+        let driveFilterState = {
+            groups: [],
+            seasons: [],
+            lots: [],
+            ltsOp: 'gt',
+            ltsVal: ''
+        };
 
         // INVENTORY MODE STATE
         let inventoryViewLevel = 0;
@@ -687,47 +693,26 @@
 
         // PHOTO EDITOR STATE
         let currentFile = null;
-        // LOGO SET TO FALSE
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
 
-        // --- WAKE LOCK & SYNC INDICATOR ---
-        let wakeLock = null;
-
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator && !wakeLock) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('Screen Wake Lock active');
-                }
-            } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
-            }
-        }
-
-        function releaseWakeLock() {
-            if (wakeLock) {
-                wakeLock.release();
-                wakeLock = null;
-                console.log('Screen Wake Lock released');
-            }
-        }
-
-        function updateSyncBadge() {
-            const badge = document.getElementById('auto-sync-badge');
-            if(pendingUploads > 0) {
-                badge.className = "w-3 h-3 rounded-full bg-blue-500 animate-spin border-2 border-white";
-                badge.style.display = 'inline-block';
-                requestWakeLock();
-            } else {
-                badge.className = "w-2 h-2 rounded-full bg-green-300 animate-pulse";
-                releaseWakeLock();
-            }
-        }
-
-        // --- PWA INSTALLATION ---
+        // --- PWA INSTALLATION LOGIC ---
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
-        async function installPWA() { if(deferredPrompt){ deferredPrompt.prompt(); const {outcome} = await deferredPrompt.userChoice; if(outcome === 'accepted') { document.getElementById('install-btn').style.display='none'; } deferredPrompt=null; } }
+        window.addEventListener('beforeinstallprompt', (e) => { 
+            e.preventDefault(); 
+            deferredPrompt = e; 
+            document.getElementById('install-btn').style.display = 'flex'; 
+        });
+
+        async function installPWA() { 
+            if(deferredPrompt){ 
+                deferredPrompt.prompt(); 
+                const {outcome} = await deferredPrompt.userChoice; 
+                if(outcome === 'accepted') {
+                    document.getElementById('install-btn').style.display='none'; 
+                }
+                deferredPrompt=null; 
+            } 
+        }
 
         // --- STATIC DIRECTORY ---
         const STATIC_DIRECTORY = [
@@ -757,7 +742,14 @@
 
         let currentSocTab = 'reps';
 
-        function getLocPrefix(loc) { if (!loc) return "No Loc"; let parts = loc.split('.'); if (parts.length >= 3) { return parts[0] + '.' + parts[1]; } return loc; }
+        function getLocPrefix(loc) {
+            if (!loc) return "No Loc";
+            let parts = loc.split('.');
+            if (parts.length >= 3) {
+                return parts[0] + '.' + parts[1]; 
+            }
+            return loc;
+        }
 
         function handleSearchDebounced(val, type) {
             clearTimeout(debounceTimer);
@@ -769,9 +761,22 @@
                     if (currentSocTab === 'item') {
                          if(val.length > 2) {
                              document.getElementById('soc-status').innerText = "Searching Global Database...";
-                             fetch(GOOGLE_SCRIPT_URL + "?action=searchSoc&term=" + encodeURIComponent(val)).then(res => res.json()).then(data => { if(data.status === 'success') { socData = data.data; socViewLevel = 0; renderSocView(); document.getElementById('soc-status').innerText = data.data.length + " matches found."; } else { document.getElementById('soc-status').innerText = "Search failed."; } });
+                             fetch(GOOGLE_SCRIPT_URL + "?action=searchSoc&term=" + encodeURIComponent(val))
+                             .then(res => res.json())
+                             .then(data => {
+                                 if(data.status === 'success') {
+                                     socData = data.data;
+                                     socViewLevel = 0; 
+                                     renderSocView();
+                                     document.getElementById('soc-status').innerText = data.data.length + " matches found.";
+                                 } else {
+                                     document.getElementById('soc-status').innerText = "Search failed.";
+                                 }
+                             });
                          }
-                    } else { renderSocView(); }
+                    } else {
+                         renderSocView(); 
+                    }
                 }
             }, 500); 
         }
@@ -779,184 +784,363 @@
         function showToast(title, message, isAlert = false) {
             const toast = document.getElementById('toast-notification');
             toast.style.background = isAlert ? '#ef4444' : '#16a34a';
-            toast.innerHTML = `<div class="bg-white ${isAlert ? 'text-red-500' : 'text-green-600'} rounded-full p-2 flex items-center justify-center"><i class="ph-fill ${isAlert ? 'ph-warning-circle' : 'ph-check-circle'} text-xl"></i></div><div><div class="font-bold text-sm">${title}</div><div class="text-xs opacity-90">${message}</div></div>`;
+            toast.innerHTML = `
+                <div class="bg-white ${isAlert ? 'text-red-500' : 'text-green-600'} rounded-full p-2 flex items-center justify-center">
+                    <i class="ph-fill ${isAlert ? 'ph-warning-circle' : 'ph-check-circle'} text-xl"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-sm">${title}</div>
+                    <div class="text-xs opacity-90">${message}</div>
+                </div>
+            `;
             toast.classList.add('show'); 
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        function toggleMenu() { document.getElementById('side-drawer').classList.toggle('open'); document.getElementById('drawer-overlay').classList.toggle('open'); }
+        function toggleMenu() {
+            document.getElementById('side-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
+        }
 
-        // Pull to Refresh
         let ptrStartY = 0, ptrCurrentY = 0, ptrDragging = false;
         const scrollArea = document.getElementById('main-scroll-area'); 
         const spinner = document.getElementById('ptr-spinner');
-        scrollArea.addEventListener('touchstart', (e) => { if (scrollArea.scrollTop === 0) { ptrStartY = e.touches[0].clientY; ptrDragging = true; } }, { passive: true });
-        scrollArea.addEventListener('touchmove', (e) => { if (!ptrDragging) return; const y = e.touches[0].clientY; const diff = y - ptrStartY; if (diff > 0 && scrollArea.scrollTop === 0) { ptrCurrentY = diff; const move = Math.min(diff * 0.5, 80); spinner.style.top = (move - 40) + 'px'; spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`; } else { ptrDragging = false; } }, { passive: true });
-        scrollArea.addEventListener('touchend', () => { if (!ptrDragging) return; ptrDragging = false; if (ptrCurrentY > 60) { spinner.style.top = '20px'; spinner.classList.add('loading'); manualSync().then(() => { spinner.classList.remove('loading'); spinner.style.top = '-40px'; }); } else { spinner.style.top = '-40px'; } ptrCurrentY = 0; });
+        
+        scrollArea.addEventListener('touchstart', (e) => { 
+            if (scrollArea.scrollTop === 0) { 
+                ptrStartY = e.touches[0].clientY; 
+                ptrDragging = true; 
+            } 
+        }, { passive: true });
+        
+        scrollArea.addEventListener('touchmove', (e) => {
+            if (!ptrDragging) return; 
+            const y = e.touches[0].clientY; 
+            const diff = y - ptrStartY;
+            if (diff > 0 && scrollArea.scrollTop === 0) { 
+                ptrCurrentY = diff; 
+                const move = Math.min(diff * 0.5, 80); 
+                spinner.style.top = (move - 40) + 'px'; 
+                spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`; 
+            } else { 
+                ptrDragging = false; 
+            }
+        }, { passive: true });
+        
+        scrollArea.addEventListener('touchend', () => {
+            if (!ptrDragging) return; 
+            ptrDragging = false;
+            if (ptrCurrentY > 60) { 
+                spinner.style.top = '20px'; 
+                spinner.classList.add('loading'); 
+                manualSync().then(() => { 
+                    spinner.classList.remove('loading'); 
+                    spinner.style.top = '-40px'; 
+                }); 
+            } else { 
+                spinner.style.top = '-40px'; 
+            } 
+            ptrCurrentY = 0;
+        });
 
-        function selectUser(u) { currentUser = u; isAdmin = ADMINS.includes(u); taskViewTargetUser = u; document.getElementById('login-buttons').classList.add('hidden'); document.getElementById('pin-container').classList.remove('hidden'); document.getElementById('pin-code').style.display = 'block'; document.getElementById('pin-code').focus(); }
-        function verifyPin() { if (document.getElementById('pin-code').value === '1234') { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('loading-spinner').classList.remove('hidden'); fetchData(); } else { showToast("Error", "Incorrect PIN", true); } }
-        function resetLogin() { document.getElementById('pin-container').classList.add('hidden'); document.getElementById('login-buttons').classList.remove('hidden'); document.getElementById('loading-spinner').classList.add('hidden'); }
-        async function manualSync() { await fetchData(); } 
-        function startAutoSync() { if(autoSyncTimer) clearInterval(autoSyncTimer); autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); }
+        function selectUser(u) { 
+            currentUser = u; 
+            isAdmin = ADMINS.includes(u); 
+            taskViewTargetUser = u; 
+            document.getElementById('login-buttons').classList.add('hidden'); 
+            document.getElementById('pin-container').classList.remove('hidden'); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
+        }
+        
+        function verifyPin() { 
+            if (document.getElementById('pin-code').value === '1234') { 
+                document.getElementById('pin-container').classList.add('hidden'); 
+                document.getElementById('loading-spinner').classList.remove('hidden'); 
+                fetchData(); 
+            } else { 
+                showToast("Error", "Incorrect PIN", true); 
+            } 
+        }
+        
+        function resetLogin() { 
+            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-buttons').classList.remove('hidden'); 
+            document.getElementById('loading-spinner').classList.add('hidden'); 
+        }
+        
+        async function manualSync() { 
+            await fetchData(); 
+        } 
 
+        function startAutoSync() { 
+            if(autoSyncTimer) clearInterval(autoSyncTimer); 
+            autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
+        }
+
+        // --- DATA FETCHING (WITH FIX) ---
         async function fetchData(isSilent = false) {
             try {
-                if(!isSilent) { document.getElementById('loading-text').innerText = "Syncing Cloud Data..."; document.getElementById('loading-spinner').classList.remove('hidden'); }
+                if(!isSilent) { 
+                    document.getElementById('loading-text').innerText = "Syncing Cloud Data..."; 
+                    document.getElementById('loading-spinner').classList.remove('hidden'); 
+                }
+                
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const textCheck = await cloudRes.clone().text();
-                if (textCheck.includes("<html") || textCheck.includes("<!DOCTYPE")) { throw new Error("Permissions Error: Ensure script is deployed to 'Anyone'."); }
+                
+                if (textCheck.includes("<html") || textCheck.includes("<!DOCTYPE")) {
+                    throw new Error("Permissions Error: Ensure script is deployed to 'Anyone'.");
+                }
+                
                 const cloudJson = await cloudRes.json();
+                
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
-                    salesNoteMap = cloudJson.salesMap || {}; 
+                    salesNoteMap = cloudJson.salesMap || {}; // NEW SALES MAP
+                    
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-                    if(!isSilent) { applyAssignments(); initDriveFilters(); launchApp(); startAutoSync(); restoreSession(); } 
-                    else {
+
+                    if(!isSilent) { 
+                        applyAssignments(); 
+                        initDriveFilters(); 
+                        launchApp(); 
+                        startAutoSync(); 
+                        restoreSession();
+                    } else {
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const now = new Date().getTime(); const lastUpdate = window.lastLocalUpdate || 0;
-                            if ((now - lastUpdate) < 60000) { console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s."); } else { const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID); if(freshItem) { activeItem = freshItem; if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { renderOverviewData(); } } }
-                        } else {
-                            if(!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks(); 
-                            if(!document.getElementById('view-salesoffice').classList.contains('hidden')) renderSalesOffice();
-                            if(!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView(); 
-                            if(!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
-                            if(!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
+                            const now = new Date().getTime();
+                            const lastUpdate = window.lastLocalUpdate || 0;
+                            const timeSinceUpdate = now - lastUpdate;
+
+                            if (timeSinceUpdate < 60000) {
+                                console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
+                            } else {
+                                const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                                if(freshItem) { 
+                                     activeItem = freshItem; 
+                                     if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                          renderOverviewData(); 
+                                     } 
+                                }
+                            }
+                        } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
+                            renderTasks(); 
+                            checkForRequests(); 
+                        } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
+                            renderSalesOffice();
+                        } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
+                            renderDriveView(); 
+                        } else if(!document.getElementById('view-inventory').classList.contains('hidden')) { 
+                            renderInventoryView(); 
+                        } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
+                            renderDirectoryView(); 
+                        } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
+                            renderReviewItems();
+                        } else if(!document.getElementById('view-soc').classList.contains('hidden')) {
+                            // Don't auto-render SOC to avoid clearing active drill down state unless necessary
+                        } else if(!document.getElementById('view-production').classList.contains('hidden')) {
+                            renderProductionView();
                         }
-                        checkForRequests();
                     }
-                } else { throw new Error(cloudJson.message || "Failed to load data."); }
-            } catch (e) { console.error("Fetch Data Error:", e); if(!isSilent) { document.getElementById('loading-text').innerText = "Load Failed: " + e.message; setTimeout(resetLogin, 4000); } }
+                } else { 
+                    throw new Error(cloudJson.message || "Failed to load data."); 
+                }
+            } catch (e) { 
+                console.error("Fetch Data Error:", e); 
+                if(!isSilent) { 
+                    document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
+                    setTimeout(resetLogin, 4000); 
+                } 
+            }
         }
 
-        function restoreSession() { const savedView = localStorage.getItem('gl_last_view'); const savedId = localStorage.getItem('gl_active_item'); if (savedId) { const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId); if (itemIndex > -1) { openDetail(itemIndex, savedView || 'drive'); } } }
-        function checkForRequests() { const myRequests = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(currentUser) && i.TASK_TAB === 'requests'); if(myRequests.length > 0) { showToast("New Requests!", "Managers have assigned you urgent items.", true); } }
-        function logFailedSave(payload) { let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]'); failed = failed.filter(f => f.id !== payload.id); failed.push(payload); localStorage.setItem('greenleaf_failed_saves', JSON.stringify(failed)); }
-        function retryFailedSaves() { let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]'); if(failed.length === 0) return; showToast("Syncing...", "Attempting to send offline updates."); fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: failed }) }).then(res => res.json()).then(data => { if(data.status === 'success') { localStorage.removeItem('greenleaf_failed_saves'); showToast("Success", "Offline data synced."); fetchData(true); } else { showToast("Sync Failed", data.message, true); } }).catch(err => showToast("Network Error", "Still offline.", true)); }
+        function restoreSession() {
+            const savedView = localStorage.getItem('gl_last_view');
+            const savedId = localStorage.getItem('gl_active_item');
+            
+            if (savedId) {
+                const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId);
+                if (itemIndex > -1) {
+                    openDetail(itemIndex, savedView || 'drive');
+                }
+            }
+        }
 
-        // --- OPTIMIZED SAVE DATA (INSTANT ROW REMOVAL) ---
+        function checkForRequests() {
+            const myRequests = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(currentUser) && i.TASK_TAB === 'requests');
+            if(myRequests.length > 0) {
+                showToast("New Requests!", "Managers have assigned you urgent items.", true);
+            }
+        }
+
+        function logFailedSave(payload) {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            failed = failed.filter(f => f.id !== payload.id); 
+            failed.push(payload);
+            localStorage.setItem('greenleaf_failed_saves', JSON.stringify(failed));
+        }
+
+        function retryFailedSaves() {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if(failed.length === 0) return;
+            
+            showToast("Syncing...", "Attempting to send offline updates.");
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "batch_update", updates: failed }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    localStorage.removeItem('greenleaf_failed_saves'); 
+                    showToast("Success", "Offline data synced."); 
+                    fetchData(true);
+                } else { 
+                    showToast("Sync Failed", data.message, true); 
+                }
+            })
+            .catch(err => showToast("Network Error", "Still offline.", true));
+        }
+
+        // --- TURBO SAVE DATA (OPTIMISTIC UPDATE) ---
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             window.lastLocalUpdate = new Date().getTime();
 
-            const matchEl = document.getElementById('in-match'); if(matchEl) activeItem.SAVED_MATCH = matchEl.value;
-            const specEl = document.getElementById('in-spec'); if(specEl) activeItem.SAVED_SPEC = specEl.value;
-            const pickEl = document.getElementById('in-pick'); if(pickEl) activeItem.SAVED_PICK = pickEl.value;
-            const noteEl = document.getElementById('in-note'); if(noteEl) activeItem.SAVED_NOTE = noteEl.value;
-            const salesDescEl = document.getElementById('in-sales-desc'); if(salesDescEl) activeItem.SAVED_SALES_DESC = salesDescEl.value;
-            
-            const gEval = document.getElementById('in-grower-eval'); if(gEval) activeItem.GROWER_EVAL = gEval.value;
-            const gShear = document.getElementById('in-grower-shear'); if(gShear) activeItem.GROWER_SHEAR = gShear.value;
-            const gWater = document.getElementById('in-grower-water'); if(gWater) activeItem.GROWER_WATER = gWater.value;
-            const gRoot = document.getElementById('in-grower-root'); if(gRoot) activeItem.GROWER_ROOT = gRoot.value;
-            const gNote = document.getElementById('in-grower-note'); if(gNote) activeItem.GROWER_NOTE = gNote.value;
+            const matchEl = document.getElementById('in-match'); 
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick'); 
+            const noteEl = document.getElementById('in-note'); 
+            const salesDescEl = document.getElementById('in-sales-desc');
 
-            activeItem.SO_STATUS = "PENDING"; 
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
+
+            const growerEval = document.getElementById('in-grower-eval') ? document.getElementById('in-grower-eval').value : (activeItem.GROWER_EVAL || "");
+            const growerShear = document.getElementById('in-grower-shear') ? document.getElementById('in-grower-shear').value : (activeItem.GROWER_SHEAR || "");
+            const growerWater = document.getElementById('in-grower-water') ? document.getElementById('in-grower-water').value : (activeItem.GROWER_WATER || "");
+            const growerRoot = document.getElementById('in-grower-root') ? document.getElementById('in-grower-root').value : (activeItem.GROWER_ROOT || "");
+            const growerNote = document.getElementById('in-grower-note') ? document.getElementById('in-grower-note').value : (activeItem.GROWER_NOTE || "");
+
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            
+            // --- NEW: Reset Approval Status on Edit ---
+            activeItem.SO_STATUS = "PENDING"; // Whenever field edits, it resets to Pending
+            
+            activeItem.GROWER_EVAL = growerEval;
+            activeItem.GROWER_SHEAR = growerShear;
+            activeItem.GROWER_WATER = growerWater;
+            activeItem.GROWER_ROOT = growerRoot;
+            activeItem.GROWER_NOTE = growerNote;
+
             activeItem.TIMESTAMP = new Date().toISOString();
 
             const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-            if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; }
-
-            if(!silent) { 
-                goBackFromDetail(); 
-                showToast("Saved", "Updating cloud in background...", false); 
-            } else { 
-                renderOverviewData(); 
-            }
-
-            let photoLinkToSend = activeItem.SAVED_PHOTO_LINK || "";
-            if(photoLinkToSend.includes("blob:")) {
-                photoLinkToSend = photoLinkToSend.split(',').filter(l => !l.startsWith('blob:')).join(',');
+            if(masterIdx > -1) {
+                fullInventory[masterIdx] = activeItem;
             }
 
             const payload = { 
                 type: "update", 
                 id: activeItem.UNIQUE_ID, 
-                match: activeItem.SAVED_MATCH, 
-                spec: activeItem.SAVED_SPEC, 
-                pick: activeItem.SAVED_PICK, 
-                note: activeItem.SAVED_NOTE, 
-                salesDesc: activeItem.SAVED_SALES_DESC,
-                soStatus: "PENDING",
-                growerEval: activeItem.GROWER_EVAL,
-                growerShear: activeItem.GROWER_SHEAR,
-                growerWater: activeItem.GROWER_WATER,
-                growerRoot: activeItem.GROWER_ROOT,
-                growerNote: activeItem.GROWER_NOTE,
-                photoLink: photoLinkToSend, 
+                match: match, 
+                spec: spec, 
+                pick: pick, 
+                note: note, 
+                salesDesc: salesDesc,
+                soStatus: "PENDING", // Send new status
+                growerEval: growerEval,
+                growerShear: growerShear,
+                growerWater: growerWater,
+                growerRoot: growerRoot,
+                growerNote: growerNote,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser 
             };
             
-            pendingUploads++; updateSyncBadge();
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+            if(!silent) { 
+                goBackFromDetail(); 
+                showToast("Saved", "Sent to Sales Office.", false); 
+            } else { 
+                renderOverviewData(); 
+            }
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
             .then(res => res.json())
             .then(data => { 
-                pendingUploads--; updateSyncBadge();
                 if(data.status !== 'success') logFailedSave(payload); 
             })
-            .catch(err => { 
-                pendingUploads--; updateSyncBadge();
-                logFailedSave(payload); 
-            });
+            .catch(err => logFailedSave(payload));
         }
 
-        // --- OPTIMIZED PHOTO UPLOAD (FASTER & SMALLER) ---
-        function finalizeUpload() {
-            const canvas = document.getElementById('photo-canvas');
-            canvas.toBlob(blob => {
-                const localUrl = URL.createObjectURL(blob);
-                let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
-                let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                const currentCount = links.length;
-                const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
-                const dateStr = new Date().toISOString().split('T')[0];
-                const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
-                links.push(localUrl); 
-                names.push(filename);
-                activeItem.SAVED_PHOTO_LINK = links.join(',');
-                activeItem.SAVED_PHOTO_NAME = names.join(',');
-                const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; }
+        function markRequestComplete() {
+            if(!activeItem) return;
+            window.lastLocalUpdate = new Date().getTime();
+            
+            const matchEl = document.getElementById('in-match'); 
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick'); 
+            const noteEl = document.getElementById('in-note'); 
+            const salesDescEl = document.getElementById('in-sales-desc');
 
-                closePhotoEditor();
-                renderOverviewData();
-                showToast("Attached", "Uploading in background...", false);
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
 
-                pendingUploads++; updateSyncBadge();
-                
-                // SPEED TWEAK: 0.6 quality = 70% smaller file = Instant Upload
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-                const base64Data = dataUrl.split(',')[1];
+            activeItem.SAVED_MATCH = match; 
+            activeItem.SAVED_SPEC = spec; 
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note; 
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            activeItem.REQUEST_ASSIGNED_TO = ""; 
+            activeItem.TASK_TAB = "review"; 
+            activeItem.TIMESTAMP = new Date().toISOString(); 
 
-                fetch(GOOGLE_SCRIPT_URL, { 
-                    method: "POST", 
-                    body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
-                })
-                .then(res => res.json())
-                .then(data => {
-                    pendingUploads--; updateSyncBadge();
-                    if(data.status === 'success') {
-                        let currentLinks = activeItem.SAVED_PHOTO_LINK.split(',');
-                        const swapIdx = currentLinks.indexOf(localUrl);
-                        if(swapIdx > -1) {
-                            currentLinks[swapIdx] = data.url;
-                            activeItem.SAVED_PHOTO_LINK = currentLinks.join(',');
-                            saveData(true); 
-                        }
-                    } else {
-                        showToast("Upload Error", "Photo failed to sync.", true);
-                    }
-                })
-                .catch(err => {
-                    pendingUploads--; updateSyncBadge();
-                    showToast("Network Error", "Photo failed to upload.", true);
-                });
-            }, 'image/jpeg', 0.6);
+            const payload = { 
+                type: "update", 
+                id: activeItem.UNIQUE_ID, 
+                requestAssignedTo: "", 
+                taskTab: "review", 
+                match: match, 
+                spec: spec, 
+                pick: pick, 
+                note: note, 
+                salesDesc: salesDesc, 
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
+                user: currentUser 
+            };
+            
+            goBackFromDetail();
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status !== 'success') logFailedSave(payload); 
+            })
+            .catch(err => logFailedSave(payload));
         }
 
-        // --- NEW: PHOTO EDITOR LOGIC (No Logo, Auto Open) ---
+        // --- NEW: PHOTO EDITOR LOGIC ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 currentFile = input.files[0];
@@ -965,6 +1149,8 @@
                 if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
                 if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
                 if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+                if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
+                if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
                 openPhotoEditor();
             }
         }
@@ -1004,7 +1190,7 @@
             const img = new Image();
             img.src = preview.src;
             img.onload = function() {
-                const MAX_WIDTH = 800; // Smaller = Faster Upload
+                const MAX_WIDTH = 1024;
                 const scale = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scale;
@@ -1016,67 +1202,691 @@
                     const potY = canvas.height - potHeight;
                     ctx.save(); ctx.beginPath(); ctx.rect(0, potY, canvas.width, potHeight); ctx.clip(); ctx.filter = 'blur(4px)'; ctx.drawImage(canvas, 0, 0); ctx.restore(); ctx.filter = 'none';
                 }
+                // REMOVED LOGO LOGIC
             }
         }
 
-        function markRequestComplete() {
-            if(!activeItem) return;
+        function finalizeUpload() {
+            const canvas = document.getElementById('photo-canvas');
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const base64Data = dataUrl.split(',')[1];
+            const currentCount = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',').length : 0;
+            const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
+            closePhotoEditor();
             window.lastLocalUpdate = new Date().getTime();
-            
-            const matchEl = document.getElementById('in-match'); if(matchEl) activeItem.SAVED_MATCH = matchEl.value;
-            const specEl = document.getElementById('in-spec'); if(specEl) activeItem.SAVED_SPEC = specEl.value;
-            const pickEl = document.getElementById('in-pick'); if(pickEl) activeItem.SAVED_PICK = pickEl.value;
-            const noteEl = document.getElementById('in-note'); if(noteEl) activeItem.SAVED_NOTE = noteEl.value;
-            const salesDescEl = document.getElementById('in-sales-desc'); if(salesDescEl) activeItem.SAVED_SALES_DESC = salesDescEl.value;
-
-            activeItem.REQUEST_ASSIGNED_TO = ""; 
-            activeItem.TASK_TAB = "review"; 
-            activeItem.TIMESTAMP = new Date().toISOString(); 
-
-            const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-            if(masterIdx > -1) fullInventory[masterIdx] = activeItem;
-            
-            goBackFromDetail(); 
-
-            const payload = { 
-                type: "update", 
-                id: activeItem.UNIQUE_ID, 
-                requestAssignedTo: "", 
-                taskTab: "review", 
-                match: activeItem.SAVED_MATCH, 
-                spec: activeItem.SAVED_SPEC, 
-                pick: activeItem.SAVED_PICK, 
-                note: activeItem.SAVED_NOTE, 
-                salesDesc: activeItem.SAVED_SALES_DESC, 
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
-                photoName: activeItem.SAVED_PHOTO_NAME || "", 
-                user: currentUser 
-            };
-            
-            pendingUploads++; updateSyncBadge();
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+            showToast("Uploading...", "Pro photo processing...", false);
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
+            })
             .then(res => res.json())
-            .then(data => { pendingUploads--; updateSyncBadge(); if(data.status !== 'success') logFailedSave(payload); })
-            .catch(err => { pendingUploads--; updateSyncBadge(); logFailedSave(payload); });
+            .then(data => {
+                if(data.status === 'success') { 
+                    let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; 
+                    let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                    links.push(data.url); names.push(filename); 
+                    activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                    if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; activeItem = fullInventory[masterIdx]; }
+                    renderOverviewData(); 
+                    const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser, growerEval: activeItem.GROWER_EVAL || "", growerNote: activeItem.GROWER_NOTE || "" };
+                    fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
+                    showToast("Success", "Photo saved & Text preserved."); 
+                } else { showToast("Upload Error", data.message, true); }
+            })
+            .catch(err => showToast("Network Error", "Could not upload photo.", true));
         }
 
-        // --- SMART FILL UPDATE (DOUBLE SPACE TRIGGER) ---
+        // --- DIRECTORY LOGIC ---
+        function renderDirectoryView() {
+            const container = document.getElementById('directory-content');
+            const term = document.getElementById('directory-search').value.toLowerCase();
+            let displayList = STATIC_DIRECTORY;
+            if(term) { displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); }
+            container.innerHTML = displayList.map(rep => {
+                let btns = '';
+                if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
+                if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
+                return `<div class="rep-card"><div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><div><div class="rep-name">${rep.name}</div><div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div></div><i class="ph-bold ph-caret-right text-gray-300 mt-1"></i></div>${btns ? `<div class="contact-row">${btns}</div>` : ''}<div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div></div>`;
+            }).join('');
+        }
+
+        // --- SOC LOGIC ---
+        function switchSocTab(tab) {
+            currentSocTab = tab;
+            document.getElementById('st-reps').classList.toggle('active', tab === 'reps');
+            document.getElementById('st-item').classList.toggle('active', tab === 'item');
+            document.getElementById('st-docks').classList.toggle('active', tab === 'docks');
+            socViewLevel = 0;
+            renderSocView();
+        }
+
+        function fetchRepData(repIdentifier) {
+            if(!document.getElementById('view-directory').classList.contains('hidden')) { switchView('soc'); }
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
+            const queryParam = dirEntry ? dirEntry.name : repIdentifier;
+            document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = ""; } 
+                else { 
+                    if(dirEntry && queryParam !== dirEntry.id) {
+                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id)).then(res2 => res2.json()).then(data2 => {
+                             if(data2.status === 'success') { socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { document.getElementById('soc-status').innerText = "Not found"; }
+                         });
+                    } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
+                }
+            }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; });
+        }
+
+        function renderSocView() {
+            const container = document.getElementById('soc-content'); 
+            const term = document.getElementById('soc-search').value.toLowerCase();
+            
+            // GLOBAL SEARCH (If typing)
+            if (term && socData.length > 0) { 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.COMMONNAME||"").toLowerCase().includes(term)); 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
+            }
+
+            // DOCKS TAB
+            if (currentSocTab === 'docks') {
+                let html = '<div class="grid grid-cols-2 gap-2">';
+                for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
+                html += '</div>'; container.innerHTML = html; return;
+            }
+
+            // ITEM LOOKUP TAB
+            if (currentSocTab === 'item') {
+                if(socData.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; return; }
+
+                if (socViewLevel === 0) {
+                    const names = [...new Set(socData.map(i => i.COMMONNAME || "Unknown"))].sort();
+                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectSocCommonName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 1) {
+                    const namedItems = socData.filter(i => i.COMMONNAME === selectedSocCommon);
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
+                    sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 2) {
+                    // NEW: Sort by Priority (1 -> Null)
+                    let finalItems = socData.filter(i => i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
+                    
+                    // Match against Inventory to get Priority and Photos
+                    finalItems = finalItems.map(socItem => {
+                        const invMatch = fullInventory.find(inv => inv.ITEMCODE === socItem.ITEMCODE);
+                        socItem._PRIORITY = invMatch ? (parseFloat(invMatch.PRIORITY) || 9999) : 9999;
+                        socItem._PHOTO = invMatch ? invMatch.SAVED_PHOTO_LINK : "";
+                        socItem._NOTE = invMatch ? invMatch.SAVED_NOTE : "";
+                        socItem._ACTION = invMatch ? invMatch.SAVED_PICK : "";
+                        return socItem;
+                    });
+
+                    // Sort: Priority 1 first, others descending
+                    finalItems.sort((a, b) => {
+                         const pA = (a._PRIORITY > 0) ? a._PRIORITY : 999999;
+                         const pB = (b._PRIORITY > 0) ? b._PRIORITY : 999999;
+                         return pA - pB;
+                    });
+
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
+                    finalItems.map(i => {
+                        let thumbHtml = '';
+                        if (i._PHOTO) {
+                            const firstLink = i._PHOTO.split(',')[0];
+                            let thumbUrl = firstLink;
+                            const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                            if (idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
+                            thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-2 bg-gray-200">`;
+                        }
+
+                        let noteHtml = '';
+                        if (i._NOTE) noteHtml += `<div class="text-[10px] text-gray-500 italic mt-1 border-t pt-1"><i class="ph-bold ph-note"></i> ${i._NOTE}</div>`;
+                        if (i._ACTION) noteHtml += `<div class="text-[10px] text-blue-600 font-bold mt-1"><i class="ph-bold ph-check-square"></i> ${i._ACTION}</div>`;
+                        
+                        let priBadge = "";
+                        if(i._PRIORITY > 0 && i._PRIORITY < 9999) {
+                            priBadge = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-1 rounded ml-1">PRI: ${i._PRIORITY}</span>`;
+                        }
+
+                        return `
+                        <div class="inv-card flex flex-col gap-2">
+                            <div class="flex items-start">
+                                ${thumbHtml}
+                                <div class="flex-grow">
+                                    <div class="flex justify-between">
+                                        <div class="font-bold text-gray-800 text-sm truncate w-40">${i.CUSTOMERNAME || 'Unknown'}</div>
+                                        <div class="font-bold text-black bg-gray-100 px-2 rounded text-xs flex items-center">Qty: ${i.QTYORDERED || i.QTY || 0}</div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Rep: <strong>${i.SALESREP || '-'}</strong> | Order: ${i.ORDERNO || '-'} ${priBadge}</div>
+                                    <div class="text-xs text-gray-400">Ship: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
+                                </div>
+                            </div>
+                            ${noteHtml}
+                        </div>`;
+                    }).join('');
+                }
+                return;
+            }
+
+            // SALES REPS TAB (Default Drill Down)
+            if(socViewLevel === 0) { 
+                let html = '';
+                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
+                container.innerHTML = html;
+            } else if(socViewLevel === 1) { 
+                const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+            } else if(socViewLevel === 2) { 
+                const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
+            }
+        }
+        
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        
+        // NEW SOC DRILL FUNCTIONS
+        function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = 1; renderSocView(); }
+        function selectSocSize(s) { selectedSocSize = s; socViewLevel = 2; renderSocView(); }
+
+        // --- NEW: DRIVE MODE FILTERS & LOGIC ---
+        function initDriveFilters() {
+            const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            const grpDiv = document.getElementById('ms-group');
+            grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
+            const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            const seaDiv = document.getElementById('ms-season');
+            seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
+            const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
+            const lotDiv = document.getElementById('ms-lot');
+            lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
+        }
+
+        function toggleMs(id) { const el = document.getElementById(id); ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); }); el.classList.toggle('show'); }
+        function updateDriveFilterState(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const checks = div.querySelectorAll('input[type="checkbox"]:checked');
+            const values = Array.from(checks).map(c => c.value);
+            driveFilterState[type] = values;
+            const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
+            const defMap = { groups: 'Group', seasons: 'Season', lots: 'Lot' };
+            const count = values.length;
+            document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
+            renderDriveView();
+        }
+        function toggleAllDrive(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const allChecks = div.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(allChecks).every(c => c.checked);
+            allChecks.forEach(c => c.checked = !allChecked);
+            updateDriveFilterState(type);
+        }
+        function resetDriveFilters() {
+            driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
+            document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
+            document.getElementById('lbl-group').innerText = 'Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot';
+            document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = '';
+            driveSearchTerm = ''; driveViewLevel = 0; renderDriveView();
+        }
+        function handleDriveSearch(term) { driveSearchTerm = term.toLowerCase(); renderDriveView(); }
+        function getFilteredDriveItems() {
+            const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val);
+            return fullInventory.filter(i => {
+                if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false;
+                if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false;
+                if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false;
+                if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; }
+                if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        function renderDriveNames() { renderDriveView(); } 
+        function renderDriveView() {
+            const container = document.getElementById('drive-content'); const crumb = document.getElementById('drive-crumb'); const filteredItems = getFilteredDriveItems();
+            
+            // SORT BY PRIORITY IN DRIVE MODE TOO
+            filteredItems.sort((a, b) => {
+                 const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
+                 const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
+                 if (pA !== pB) return pA - pB;
+                 return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
+            });
+
+            document.onclick = function(e) { if(!e.target.closest('.ms-container')) { document.querySelectorAll('.ms-options').forEach(o => o.classList.remove('show')); } }
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+            
+            // Changed Drive Mode to just list items directly as per previous logic, but now sorted
+            // Or does user want drill down? The prompt implied list filtering. Keeping list.
+            if(driveViewLevel === 0) {
+                crumb.innerText = `Filtered Items (${filteredItems.length})`; 
+                container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
+            }
+        }
+        
+        function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
+        function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
+        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
+
+        // --- PRODUCTION MODE LOGIC ---
+        function toggleProductionSeason(season, el) {
+            if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else {
+                if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = [];
+                if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); }
+                if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL'];
+            }
+            document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
+            renderProductionView();
+        }
+        function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
+        function getFilteredProductionItems() {
+            return fullInventory.filter(i => {
+                if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
+                if(productionSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        function renderProductionView() {
+            const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb');
+            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
+            const filteredItems = getFilteredProductionItems();
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+            if(productionViewLevel === 0) {
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (productionViewLevel === 1) {
+                crumb.innerText = selectedProductionName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else {
+                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
+            }
+        }
+        function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
+        function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
+        function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
+        function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
+
+        // --- INVENTORY MODE LOGIC ---
+        function toggleInventorySeason(season, el) {
+            if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else {
+                if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = [];
+                if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); }
+                if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
+            }
+            document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
+            renderInventoryView();
+        }
+        function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
+        function getFilteredInventoryItems() {
+            return fullInventory.filter(i => {
+                if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
+                if(inventorySearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        function renderInventoryView() {
+            const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb');
+            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
+            const filteredItems = getFilteredInventoryItems();
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+            if(inventoryViewLevel === 0) {
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (inventoryViewLevel === 1) {
+                crumb.innerText = selectedInventoryName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else {
+                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
+            }
+        }
+        function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
+        function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
+        function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
+        function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
+
+        // --- TASKS LOGIC ---
+        function renderTasks() {
+            const container = document.getElementById('task-content'); 
+            const crumb = document.getElementById('task-crumb');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
+            
+            // SHOW/HIDE FLYER SUB TABS
+            if(currentTab === 'flyer') { document.getElementById('flyer-sub-tabs').classList.remove('hidden'); } else { document.getElementById('flyer-sub-tabs').classList.add('hidden'); }
+
+            let myItems = []; 
+            const now = new Date().getTime();
+            
+            const taskFilter = (i) => {
+                if (taskViewTargetUser === 'ASSIST') {
+                    const assignee = (i.ASSIGNEDTO || "");
+                    if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false;
+                } else {
+                    if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                }
+                if (i.TASK_TAB !== currentTab) return false;
+                if (i.TIMESTAMP) {
+                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
+                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
+                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    // 10-Day Rule: Only show if OLDER than 10 days OR Low Stock
+                    if (daysOld < 10 && !isLowStock) return false; 
+                }
+                return true;
+            };
+            
+            if(currentTab === 'requests') {
+                 if (taskViewTargetUser === 'ASSIST') {
+                       myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
+                       crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                  } else {
+                       myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                  }
+            } else if (currentTab === 'flyer') {
+                myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
+            } else { 
+                myItems = fullInventory.filter(taskFilter); 
+            }
+
+            const term = document.getElementById('task-search').value.toLowerCase();
+            if (term) { 
+                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+
+            if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
+            if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
+
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
+
+            // NEW: FLYER LOGIC (Folders)
+            if(currentTab === 'flyer') {
+                const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
+                
+                // LEVEL 0: SHOW PROJECT FOLDERS
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
+                    
+                    if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; return; }
+
+                    // Group by Project Name (stored in REQUEST_ASSIGNED_TO)
+                    const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
+                    
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + 
+                    projects.map(p => {
+                        const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
+                        return `<div class="drill-item" onclick="openFlyerProject('${p.replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-3">
+                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                        <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                    </div>
+                                    <i class="ph-bold ph-caret-right"></i>
+                                </div>`;
+                    }).join('');
+                }
+                // LEVEL 1: SHOW ITEMS INSIDE PROJECT
+                else if (taskViewLevel === 1) {
+                    crumb.innerText = `Flyer / ${selectedFlyerProject}`;
+                    const projectItems = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
+                    
+                    // GET PROJECT NOTE FROM FIRST ITEM
+                    let projNote = "";
+                    if(projectItems.length > 0 && projectItems[0].SAVED_NOTE) {
+                        // Assuming the last added note is the project note, or just take the whole note
+                        // Simplified: Taking the last part after " | " if split
+                        let parts = projectItems[0].SAVED_NOTE.split(" | ");
+                        projNote = parts[parts.length - 1]; 
+                    }
+
+                    let instructionBanner = "";
+                    if(projNote) {
+                        instructionBanner = `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-2 mx-2 rounded shadow-sm">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="ph-fill ph-info text-yellow-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700 font-bold uppercase">Project Instructions</p>
+                                    <p class="text-sm text-yellow-800 mt-1">${projNote}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+
+                    let completeBtn = '';
+                    if(ADMINS.includes(currentUser)) {
+                        completeBtn = `<div class="p-4 bg-white border-b border-gray-100">
+                            <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
+                            </button>
+                            <p class="text-[10px] text-center text-gray-400 mt-2">Removes items from this folder.</p>
+                        </div>`;
+                    }
+
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Projects</div>` + 
+                                          instructionBanner +
+                                          completeBtn + 
+                                          projectItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
+                return;
+            }
+
+            if(currentTab === 'season' || currentTab === 'location') {
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                    if(blocks.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => {
+                        const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
+                        return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                } else if (taskViewLevel === 1) {
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
+                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
+                        const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                } else {
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
+                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
+            }
+        }
+        
+        function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
+        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
+        
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
+            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
+            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
+            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
+            document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+
+        function setFlyerSubTab(sub) {
+            currentFlyerTab = sub;
+            document.getElementById('fst-crop').classList.toggle('active', sub === 'flyer_crop');
+            document.getElementById('fst-endcap').classList.toggle('active', sub === 'flyer_endcap');
+            document.getElementById('fst-spot').classList.toggle('active', sub === 'flyer_spot');
+            taskViewLevel = 0;
+            renderTasks();
+        }
+        
+        function openFlyerProject(projName) { selectedFlyerProject = projName; taskViewLevel = 1; renderTasks(); }
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+
+        // --- VIEWER LOGIC ---
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; }
+            document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+
+        // --- REVIEW LOGIC ---
+        function renderReviewItems() {
+            const container = document.getElementById('review-content'); const crumb = document.getElementById('review-crumb'); const failContainer = document.getElementById('failed-saves-container');
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
+            const term = document.getElementById('review-search').value.toLowerCase(); const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            if(term) { const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); return; }
+            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
+            if(reviewViewLevel === 0) { crumb.innerText = "All Names"; const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+            else if(reviewViewLevel === 1) { crumb.innerText = selectedReviewName; const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; }
+            else if(reviewViewLevel === 2) { crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; }
+        }
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
+
+        // --- SALES OFFICE LOGIC (Updated) ---
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); 
+            const searchInput = document.getElementById('salesoffice-search'); 
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            // Only show items that have a Sales Note
+            const salesItems = fullInventory.filter(i => { 
+                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
+                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
+                return true; 
+            });
+            
+            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
+            
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            
+            container.innerHTML = salesItems.map(item => {
+                const isApproved = item.SO_STATUS === 'APPROVED';
+                const statusColor = isApproved ? 'bg-green-100 border-green-300' : 'bg-white border-gray-200';
+                const btnHtml = isApproved 
+                    ? `<div class="mt-2 text-xs font-bold text-green-700 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Approved</div>`
+                    : `<button onclick="approveSalesItem('${item.UNIQUE_ID}')" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded shadow text-xs flex items-center justify-center gap-2"><i class="ph-bold ph-check"></i> APPROVE & PUBLISH</button>`;
+
+                return `<div class="inv-card mb-3 !p-4 border ${statusColor}">
+                            <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                            <div class="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-800 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
+                            ${btnHtml}
+                        </div>`;
+            }).join('');
+        }
+
+        function approveSalesItem(id) {
+            const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
+            if (itemIdx === -1) return;
+            
+            const item = fullInventory[itemIdx];
+            
+            // 1. Update Status
+            item.SO_STATUS = "APPROVED";
+            // 2. Reset Timestamp to NOW so 10-day timer starts fresh for field users
+            item.TIMESTAMP = new Date().toISOString(); 
+            
+            // 3. Render and Save
+            renderSalesOffice();
+            showToast("Approved", "10-day timer started for field team.");
+            
+            const payload = { 
+                type: "update", 
+                id: item.UNIQUE_ID, 
+                soStatus: "APPROVED",
+                // We send the other fields to ensure nothing gets overwritten blank
+                match: item.SAVED_MATCH||"", 
+                spec: item.SAVED_SPEC||"", 
+                pick: item.SAVED_PICK||"", 
+                note: item.SAVED_NOTE||"", 
+                salesDesc: item.SAVED_SALES_DESC||"",
+                photoLink: item.SAVED_PHOTO_LINK||"",
+                photoName: item.SAVED_PHOTO_NAME||"",
+                user: currentUser
+            };
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            }).catch(err => logFailedSave(payload));
+        }
+
+        // --- APP NAVIGATION ---
+        function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
+        
+        function applyAssignments() { 
+            let i = 0; fullInventory.forEach(item => { if(!item.ASSIGNEDTO) { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } } }); 
+        }
+        
+        function switchView(v) { 
+            localStorage.setItem('gl_last_view', v);
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(id => { document.getElementById(id).classList.add('hidden'); }); 
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+            if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
+            if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
+            if(v === 'viewer') renderViewerNames(); if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
+        }
+        
+        function switchDetailTab(tab) { 
+            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
+            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
+        }
+        
+        function goBackFromDetail() { localStorage.removeItem('gl_active_item'); document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); if(lastView === 'tasks') renderTasks(); if(lastView === 'drive') renderDriveNames(); if(lastView === 'inventory') renderInventoryView(); if(lastView === 'production') renderProductionView(); }
+
+        function openDetail(idx, originView) {
+            lastView = originView; currentOriginView = originView; activeItem = fullInventory[idx]; localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
+            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
+            document.getElementById('view-detail').classList.remove('hidden'); 
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+            document.getElementById('expand-section').classList.remove('expanded'); document.getElementById('expand-content').innerHTML = ''; 
+            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
+            const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
+            if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
+            renderOverviewData(); renderActionsTab(); switchDetailTab('overview');
+        }
+
+        function toggleExpand() { const section = document.getElementById('expand-section'); if (!section.classList.contains('expanded')) { renderAllFields(); } section.classList.toggle('expanded'); }
+
+        function renderActionsTab() {
+            const btnComplete = document.getElementById('request-complete-container'); const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP); const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
+            let canEditText = false; if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { canEditText = true; }
+            if (isMyRequest) { btnComplete.classList.remove('hidden'); } else { btnComplete.classList.add('hidden'); }
+            if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
+        }
+
+        // --- SMART FILL & EDIT MODE UPDATE ---
+
         function handleSmartFill(el) {
+            // 1. Live Save (Fixes the "Data Missing" bug)
             if(el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
             if(el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
             if(el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
             if(el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
             if(el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
             
-            if (el.id === 'in-sales-desc') {
-                const val = el.value;
-                if (val.endsWith("  ")) {
-                    const specVal = document.getElementById('in-spec').value || "SPEC";
-                    const newVal = val.slice(0, -2) + " / " + specVal + " / ";
-                    el.value = newVal;
-                    activeItem.SAVED_SALES_DESC = newVal;
-                    el.focus();
-                }
+            // 2. Smart Replacement Logic
+            const specVal = document.getElementById('in-spec').value;
+            const salesEl = document.getElementById('in-sales-desc');
+            let salesVal = salesEl.value;
+
+            // If we have a Spec and the Sales Description contains the magic word "SPEC"
+            if (specVal && salesVal.toUpperCase().includes("SPEC")) {
+                // Replace "SPEC" with the actual value (case insensitive)
+                const newVal = salesVal.replace(/SPEC/gi, specVal);
+                salesEl.value = newVal;
+                activeItem.SAVED_SALES_DESC = newVal; // Save to memory immediately
+                showToast("Smart Fill", "Replaced 'SPEC' with " + specVal);
             }
         }
 
@@ -1087,19 +1897,25 @@
             document.getElementById('readonly-lock-banner').classList.add('hidden');
             
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
+            
+            // Generate Dropdown Options
             const cName = String(activeItem.COMMONNAME || "").toUpperCase();
             const noteOptions = salesNoteMap[cName] || [];
             
             let dlHtml = `<datalist id="dl-notes">`; 
-            dlHtml += `<option value="Nice Full Plants">`; 
-            dlHtml += `<option value="Consistent Grade">`; 
+            // Add a "Smart Template" option automatically
+            dlHtml += `<option value="Nice Full Plants / SPEC">`; 
+            dlHtml += `<option value="Consistent Grade / SPEC">`; 
+            
             noteOptions.forEach(n => { dlHtml += `<option value="${n}">`; }); 
             const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
             validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
             dlHtml += `</datalist>`;
             
+            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap for templates or type 'SPEC'..." : "Type 'SPEC' to pull from column above..."; 
             const cont = document.getElementById('input-container');
             
+            // UPDATED HTML: Added onchange/oninput events for Smart Fill and Live Saving
             cont.innerHTML = `
             <div>
                 <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
@@ -1111,9 +1927,9 @@
             </div>
             <div>
                 <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
-                <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="Double-tap SPACE to insert Spec..." value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase(); handleSmartFill(this)">
+                <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase(); handleSmartFill(this)" onchange="handleSmartFill(this)">
                 ${dlHtml}
-                <div class="text-[9px] text-green-600 font-bold text-right mt-[-8px] mb-2">Tip: Double-space to auto-fill " / Spec / "</div>
+                <div class="text-[9px] text-green-600 font-bold text-right mt-[-8px] mb-2">Tip: Type "SPEC" to auto-fill size</div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
@@ -1154,12 +1970,8 @@
             if(activeItem.SAVED_PHOTO_LINK) {
                 photoDiv.classList.remove('hidden'); const urls = activeItem.SAVED_PHOTO_LINK.split(','); const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; let phHtml = "";
                 urls.forEach((url, i) => {
-                    const dispName = names[i] || `Photo ${i+1}`; 
-                    let thumbUrl = url; 
-                    if(!url.startsWith("blob:")) {
-                        const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                        if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
-                    }
+                    const dispName = names[i] || `Photo ${i+1}`; let thumbUrl = url; const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
                     let deleteBtn = ""; if(isAdmin) { deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`; }
                     phHtml += `<div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50"><a href="${url}" target="_blank" class="flex-grow flex items-center gap-3"><img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy"><div class="flex-grow min-w-0"><div class="text-xs font-bold text-blue-600 truncate">${dispName}</div><div class="text-[10px] text-gray-400">Tap to view full size</div></div><i class="ph-bold ph-arrow-square-out text-gray-300"></i></a>${deleteBtn}</div>`;
                 });
@@ -1180,9 +1992,36 @@
         }
 
         function updateSelected() { selectedIdx = []; document.querySelectorAll('.select-check').forEach(cb => { if (cb.checked) { selectedIdx.push(parseInt(cb.value)); } }); if (selectedIdx.length > 0) { document.getElementById('action-bar').classList.add('visible'); } else { document.getElementById('action-bar').classList.remove('visible'); } }
-        function openAssignModal() { if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } if (FLYER_AUTH.includes(currentUser)) { document.getElementById('auth-flyer-options').classList.remove('hidden'); const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p); document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join(''); } else { document.getElementById('auth-flyer-options').classList.add('hidden'); } document.getElementById('assign-modal').style.display = 'flex'; }
-        function getBatchHtml() { let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>"; selectedIdx.forEach(idx => { let item = fullInventory[idx]; html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br><span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`; let details = []; if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`); if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`); if(details.length > 0) html += details.join(' | ') + '<br>'; if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`; if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`; if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`; if(item.SAVED_PHOTO_LINK) { html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`; const urls = item.SAVED_PHOTO_LINK.split(','); const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : []; urls.forEach((url, i) => { const name = names[i] || `View Photo ${i+1}`; html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; }); html += `</div>`; } html += `</div>`; }); return html + "</div>"; }
-        function getBatchText() { let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text; }
+        
+        function openAssignModal() { 
+            if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } 
+            
+            // SHOW FLYER OPTIONS IF AUTHORIZED
+            if (FLYER_AUTH.includes(currentUser)) {
+                document.getElementById('auth-flyer-options').classList.remove('hidden');
+                // Auto-fill existing projects into datalist
+                const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p);
+                document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join('');
+            } else {
+                document.getElementById('auth-flyer-options').classList.add('hidden');
+            }
+            
+            document.getElementById('assign-modal').style.display = 'flex'; 
+        }
+
+        function getBatchHtml() {
+            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br><span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                let details = []; if(item.SAVED_MATCH) details.push(`Match: <strong>${item.SAVED_MATCH}%</strong>`); if(item.SAVED_SPEC) details.push(`Spec: <strong>${item.SAVED_SPEC}</strong>`); if(details.length > 0) html += details.join(' | ') + '<br>';
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`; if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`; if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                if(item.SAVED_PHOTO_LINK) { html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`; const urls = item.SAVED_PHOTO_LINK.split(','); const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : []; urls.forEach((url, i) => { const name = names[i] || `View Photo ${i+1}`; html += `• <a href="${url.trim()}" target="_blank" style="color: #007a4d; font-weight: bold; text-decoration: underline;">${name}</a><br>`; }); html += `</div>`; } html += `</div>`;
+            }); return html + "</div>";
+        }
+        function getBatchText() {
+            let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text;
+        }
         function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
         function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
         function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const html = getBatchHtml(); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
@@ -1194,11 +2033,8 @@
             if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
                 let thumbUrl = firstLink;
-                // Check if blob (local preview) or drive link
-                if(!firstLink.startsWith("blob:")) {
-                    const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
-                }
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
                 thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
             }
             
@@ -1208,81 +2044,180 @@
             if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
             if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
 
+            // NEW: HOLD/STOP LOGIC
+            // Checks HOLDSTOPCODE. Blank=Green, H=Yellow, S=Red
             let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
-            let cardClass = "!bg-green-50 !border-green-300"; 
+            let cardClass = "!bg-green-50 !border-green-300"; // Default (Green for blank/null)
             let indicator = "";
-            if (holdCode === "S") { cardClass = "!bg-red-50 !border-red-300"; indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`; } 
-            else if (holdCode === "H") { cardClass = "!bg-yellow-50 !border-yellow-300"; indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`; }
 
-            return `<div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}<div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">${thumbHtml}<div class="flex-grow min-w-0"><div class="flex justify-between items-start"><div class="font-bold text-[#007a4d] truncate text-base flex items-center">${item.LOCATIONCODE || 'No Loc'}${indicator}</div><div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div></div><div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div><div class="text-xs text-gray-500 truncate">Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong></div><div class="text-xs text-gray-500 truncate mb-1">Tag Color: <strong>${item.FIELDTAGCOLOR || '-'}</strong> | Lot: ${item.LOTCODE || '-'}</div><div class="flex flex-wrap">${badges}</div></div></div></div>`;
+            if (holdCode === "S") {
+                cardClass = "!bg-red-50 !border-red-300";
+                indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`;
+            } else if (holdCode === "H") {
+                cardClass = "!bg-yellow-50 !border-yellow-300";
+                indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`;
+            }
+
+            return `
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
+                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-start">
+                            <div class="font-bold text-[#007a4d] truncate text-base flex items-center">
+                                ${item.LOCATIONCODE || 'No Loc'}
+                                ${indicator}
+                            </div>
+                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
+                        </div>
+                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
+                        
+                        <div class="text-xs text-gray-500 truncate">
+                            Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong>
+                        </div>
+                        <div class="text-xs text-gray-500 truncate mb-1">
+                            Tag Color: <strong>${item.FIELDTAGCOLOR || '-'}</strong> | Lot: ${item.LOTCODE || '-'}
+                        </div>
+
+                        <div class="flex flex-wrap">${badges}</div>
+                    </div>
+                </div>
+            </div>`;
         }
         
         function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
         function cancelLongPress() { clearTimeout(longPressTimer); }
         function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
-        function batchAssign() { const d = document.getElementById('chk-dylan').checked; const k = document.getElementById('chk-kayla').checked; const m = document.getElementById('chk-morgan').checked; const isCalReq = document.getElementById('chk-cal-request').checked; const noteText = document.getElementById('assign-note').value; const flyerProjectName = document.getElementById('flyer-project-name').value; let flyerSelection = null; const flyerRadios = document.getElementsByName('flyer_assign'); for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; } let selected = []; if(d) selected.push("Dylan"); if(k) selected.push("Kayla"); if(m) selected.push("Morgan"); if(flyerSelection && !flyerProjectName) { showToast("Warning", "Please enter a Project Name.", true); return; } if(!flyerSelection && selected.length === 0) { showToast("Warning", "Select a person or a flyer category.", true); return; } let target = flyerSelection ? flyerProjectName : selected.join(" & "); const updates = selectedIdx.map(idx => { const item = fullInventory[idx]; item.REQUEST_ASSIGNED_TO = target; if (flyerSelection) { item.TASK_TAB = flyerSelection; } else { item.TASK_TAB = "requests"; } if(isCalReq) { let oldNote = item.SAVED_PICK || ""; if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } } if(noteText) { let oldGen = item.SAVED_NOTE || ""; if(!oldGen.includes(noteText)) { item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText; } } return { id: item.UNIQUE_ID, requestAssignedTo: item.REQUEST_ASSIGNED_TO, taskTab: item.TASK_TAB, match: item.SAVED_MATCH, spec: item.SAVED_SPEC, pick: item.SAVED_PICK, note: item.SAVED_NOTE, salesDesc: item.SAVED_SALES_DESC, user: currentUser }; }); document.getElementById('assign-modal').style.display = 'none'; toggleBatch(); showToast("Saving", "Batch assigning items..."); document.getElementById('assign-note').value = ""; document.getElementById('flyer-project-name').value = ""; for(let radio of flyerRadios) radio.checked = false; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); }); }
-        function markProjectComplete(projName) { if(!confirm(`Are you sure you want to complete and archive project: "${projName}"?`)) return; const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_")); if(projItems.length === 0) return; const updates = projItems.map(item => { item.REQUEST_ASSIGNED_TO = ""; item.TASK_TAB = "review"; return { id: item.UNIQUE_ID, requestAssignedTo: "", taskTab: "review", user: currentUser }; }); resetTaskView(); showToast("Completing...", `Archiving ${projName}...`); fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Project archived."); fetchData(true); } else { showToast("Error", data.message, true); } }).catch(err => { showToast("Network Error", "Saved offline.", true); }); }
-        function approveSalesItem(id) { const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id); if (itemIdx === -1) return; const item = fullInventory[itemIdx]; item.SO_STATUS = "APPROVED"; item.TIMESTAMP = new Date().toISOString(); renderSalesOffice(); showToast("Approved", "10-day timer started for field team."); const payload = { type: "update", id: item.UNIQUE_ID, soStatus: "APPROVED", match: item.SAVED_MATCH||"", spec: item.SAVED_SPEC||"", pick: item.SAVED_PICK||"", note: item.SAVED_NOTE||"", salesDesc: item.SAVED_SALES_DESC||"", photoLink: item.SAVED_PHOTO_LINK||"", photoName: item.SAVED_PHOTO_NAME||"", user: currentUser }; fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload)); }
-    
-        // --- RESTORED DRILL DOWN LOGIC FOR DRIVE MODE ---
-        function renderDriveView() {
-            const container = document.getElementById('drive-content'); 
-            const crumb = document.getElementById('drive-crumb'); 
-            const filteredItems = getFilteredDriveItems();
+        
+        function batchAssign() {
+            // READ INPUTS
+            const d = document.getElementById('chk-dylan').checked; 
+            const k = document.getElementById('chk-kayla').checked; 
+            const m = document.getElementById('chk-morgan').checked; 
+            const isCalReq = document.getElementById('chk-cal-request').checked;
+            const noteText = document.getElementById('assign-note').value;
+            const flyerProjectName = document.getElementById('flyer-project-name').value;
             
-            if (filteredItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
-                crumb.innerText = "No Results"; 
-                return; 
-            }
-            
-            // LEVEL 0: COMMON NAMES
-            if(driveViewLevel === 0) {
-                crumb.innerText = `All Items (${filteredItems.length})`; 
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
-                container.innerHTML = names.map(n => {
-                    const count = filteredItems.filter(i => i.COMMONNAME === n).length;
-                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
-                                <span class="font-bold text-lg">${n} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                                <i class="ph-bold ph-caret-right"></i>
-                            </div>`;
-                }).join('');
-            } 
-            // LEVEL 1: SIZES
-            else if (driveViewLevel === 1) {
-                crumb.innerText = selectedDriveName; 
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName); 
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
-                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + 
-                sizes.map(s => {
-                    const count = namedItems.filter(i => i.CONTSIZE === s).length;
-                    return `<div class="drill-item" onclick="selectDriveSize('${s}')">
-                                <span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                                <i class="ph-bold ph-caret-right"></i>
-                            </div>`;
-                }).join('');
-            } 
-            // LEVEL 2: ITEMS (LOCATIONS)
-            else {
-                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize); 
-                
-                // Sort by Location
-                finalItems.sort((a, b) => {
-                     return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
-                });
+            // CHECK FLYER SELECTION
+            let flyerSelection = null;
+            const flyerRadios = document.getElementsByName('flyer_assign');
+            for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; }
 
-                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + 
-                finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
+            // BUILD TEAM STRING
+            let selected = []; 
+            if(d) selected.push("Dylan"); 
+            if(k) selected.push("Kayla"); 
+            if(m) selected.push("Morgan");
+            
+            if(flyerSelection && !flyerProjectName) {
+                showToast("Warning", "Please enter a Project Name.", true);
+                return;
             }
+
+            if(!flyerSelection && selected.length === 0) { 
+                showToast("Warning", "Select a person or a flyer category.", true); 
+                return; 
+            } 
+            
+            // IF FLYER SELECTED, TARGET IS PROJECT NAME. ELSE TARGET IS PERSON.
+            let target = flyerSelection ? flyerProjectName : selected.join(" & ");
+
+            const updates = selectedIdx.map(idx => { 
+                const item = fullInventory[idx]; 
+                
+                // Base Updates
+                item.REQUEST_ASSIGNED_TO = target; 
+                
+                // DETERMINE TAB
+                if (flyerSelection) {
+                    item.TASK_TAB = flyerSelection; // e.g., 'flyer_crop'
+                } else {
+                    item.TASK_TAB = "requests"; 
+                }
+
+                // APPEND NOTES
+                if(isCalReq) { 
+                    let oldNote = item.SAVED_PICK || ""; 
+                    if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } 
+                }
+                
+                if(noteText) {
+                    let oldGen = item.SAVED_NOTE || "";
+                    // Avoid duplicate notes
+                    if(!oldGen.includes(noteText)) {
+                        item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
+                    }
+                }
+
+                return { 
+                    id: item.UNIQUE_ID, 
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
+                    taskTab: item.TASK_TAB, 
+                    match: item.SAVED_MATCH, 
+                    spec: item.SAVED_SPEC, 
+                    pick: item.SAVED_PICK, 
+                    note: item.SAVED_NOTE, 
+                    salesDesc: item.SAVED_SALES_DESC, 
+                    user: currentUser 
+                }; 
+            });
+
+            document.getElementById('assign-modal').style.display = 'none'; 
+            toggleBatch(); 
+            showToast("Saving", "Batch assigning items...");
+            
+            // CLEAR MODAL INPUTS
+            document.getElementById('assign-note').value = "";
+            document.getElementById('flyer-project-name').value = "";
+            for(let radio of flyerRadios) radio.checked = false;
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') { fetchData(true); } else { showToast("Error", data.message, true); } 
+            })
+            .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
 
-        // --- Helper functions for Drill Down ---
-        function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
-        function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
-        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
-        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
+        // --- NEW: COMPLETE PROJECT LOGIC ---
+        function markProjectComplete(projName) {
+            if(!confirm(`Are you sure you want to complete and archive project: "${projName}"?`)) return;
+            
+            // Find all items in this project
+            const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_"));
+            
+            if(projItems.length === 0) return;
 
+            const updates = projItems.map(item => {
+                // Reset local data
+                item.REQUEST_ASSIGNED_TO = "";
+                item.TASK_TAB = "review"; // Or keep current tab? Usually 'review' or reset to standard flow. Let's send to 'review' so it disappears from flyer tab.
+                
+                return {
+                    id: item.UNIQUE_ID,
+                    requestAssignedTo: "",
+                    taskTab: "review",
+                    user: currentUser
+                };
+            });
+
+            // Update UI Immediately
+            resetTaskView();
+            showToast("Completing...", `Archiving ${projName}...`);
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status === 'success') { 
+                    showToast("Success", "Project archived."); 
+                    fetchData(true); 
+                } else { 
+                    showToast("Error", data.message, true); 
+                } 
+            })
+            .catch(err => { showToast("Network Error", "Saved offline.", true); });
+        }
     </script>
 </body>
 </html>
