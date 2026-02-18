@@ -1014,7 +1014,7 @@
                              if(freshItem) { 
                                   activeItem = freshItem; 
                                   if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                       renderOverviewData(); 
+                                      renderOverviewData(); 
                                   } 
                              }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
@@ -1738,12 +1738,12 @@
                     projects.map(p => {
                         const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
                         return `<div class="drill-item" onclick="openFlyerProject('${p.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                                        <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                                    </div>
-                                    <i class="ph-bold ph-caret-right"></i>
-                                </div>`;
+                                        <div class="flex items-center gap-3">
+                                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                            <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                        </div>
+                                        <i class="ph-bold ph-caret-right"></i>
+                                    </div>`;
                     }).join('');
                 }
                 else if (taskViewLevel === 1) {
@@ -2474,6 +2474,117 @@
             })
             .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
+
+        function createRowHtml(item, idx, viewType) {
+            let thumb = ""; 
+            if(item.SAVED_PHOTO_LINK) { 
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); 
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } 
+                thumb = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-2 bg-gray-200">`; 
+            }
+            
+            // Highlight logic
+            let rowClass = "inv-card flex items-start gap-2 relative";
+            if (isBatch) { rowClass += " batch-mode"; }
+            if (selectedIdx.includes(idx)) { rowClass += " selecting"; }
+            
+            let statusBadge = "";
+            if (item.TASK_TAB === "season") statusBadge = `<span class="data-badge badge-match">SEASON</span>`;
+            if (item.TASK_TAB === "location") statusBadge = `<span class="data-badge badge-spec">LOCATION</span>`;
+            if (item.TASK_TAB === "Item Review" || item.TASK_TAB === "review") statusBadge = `<span class="data-badge text-white bg-red-500">REVIEW</span>`;
+            
+            // Check for flags
+            let flags = "";
+            if(item.SAVED_MATCH) flags += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) flags += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) flags += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+            
+            // Location
+            let locDisplay = item.LOCATIONCODE ? `<span class="font-bold text-gray-800 bg-gray-100 px-1 rounded">${item.LOCATIONCODE}</span>` : `<span class="text-gray-400 italic">No Loc</span>`;
+            
+            // Click Handler
+            let clickAction = isBatch ? `toggleSelect(${idx})` : `openDetail(${idx}, '${viewType}')`;
+            if (isBatch) { 
+                // In batch mode, clicking anywhere toggles selection
+            }
+
+            return `
+            <div class="${rowClass}" onclick="${clickAction}" id="row-${idx}">
+                <input type="checkbox" class="select-check" value="${idx}" onclick="event.stopPropagation(); toggleSelect(${idx})">
+                ${thumb}
+                <div class="flex-grow min-w-0">
+                    <div class="flex justify-between items-start">
+                        <div class="font-bold text-[#007a4d] truncate pr-2 text-sm">${item.COMMONNAME}</div>
+                        <div class="font-bold text-black text-sm">${item.PTRAVAILABLE}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 font-bold mb-1">${item.CONTSIZE} <span class="mx-1 text-gray-300">|</span> ${locDisplay}</div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        ${statusBadge}
+                        ${flags}
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1 truncate">${item.ITEMCODE}</div>
+                </div>
+                <i class="ph-bold ph-caret-right text-gray-300 self-center"></i>
+            </div>`;
+        }
+
+        function toggleBatch() {
+            isBatch = !isBatch;
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
+            if (!isBatch) { selectedIdx = []; document.querySelectorAll('.select-check').forEach(c => c.checked = false); updateSelected(); }
+            
+            // Re-render current view to show checkboxes
+            if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+            if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+            if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+            if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+        }
+
+        function toggleSelect(idx) {
+            if (!isBatch && !document.getElementById('row-'+idx).classList.contains('batch-mode')) { openDetail(idx, currentOriginView || 'drive'); return; }
+            
+            const cb = document.querySelector(`#row-${idx} .select-check`);
+            if (cb) {
+                cb.checked = !cb.checked;
+                updateSelected();
+                const card = document.getElementById('row-' + idx);
+                if (cb.checked) card.classList.add('selecting'); else card.classList.remove('selecting');
+            }
+        }
+
+        function batchText() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let msg = "Greenleaf Update:\n";
+            items.forEach(item => {
+                msg += `${item.COMMONNAME} (${item.CONTSIZE}): Qty ${item.PTRAVAILABLE} @ ${item.LOCATIONCODE || 'No Loc'}\n`;
+            });
+            window.location.href = `sms:&body=${encodeURIComponent(msg)}`;
+        }
+
+        function batchEmail() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let body = "Here is the inventory update:\n\n";
+            items.forEach(item => {
+                body += `${item.COMMONNAME} - ${item.CONTSIZE}\nQty: ${item.PTRAVAILABLE} | Loc: ${item.LOCATIONCODE || 'N/A'}\n\n`;
+            });
+            window.location.href = `mailto:?subject=Inventory Update&body=${encodeURIComponent(body)}`;
+        }
+
+        function copyBatchData() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let text = items.map(i => `${i.COMMONNAME}\t${i.CONTSIZE}\t${i.PTRAVAILABLE}\t${i.LOCATIONCODE}`).join('\n');
+            navigator.clipboard.writeText(text).then(() => showToast("Copied", "Data copied to clipboard"));
+            toggleBatch();
+        }
+
+        // --- INIT ---
+        // Auto-login check (simulated)
+        // If deployed, user stays logged in until reload.
     </script>
 </body>
 </html>
