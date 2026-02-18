@@ -882,12 +882,12 @@
                              .then(res => res.json())
                              .then(data => {
                                  if(data.status === 'success') {
-                                    socData = data.data;
-                                    socViewLevel = 0; 
-                                    renderSocView();
-                                    document.getElementById('soc-status').innerText = data.data.length + " matches found.";
+                                     socData = data.data;
+                                     socViewLevel = 0; 
+                                     renderSocView();
+                                     document.getElementById('soc-status').innerText = data.data.length + " matches found.";
                                  } else {
-                                    document.getElementById('soc-status').innerText = "Search failed.";
+                                     document.getElementById('soc-status').innerText = "Search failed.";
                                  }
                              });
                           }
@@ -2622,14 +2622,24 @@
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
+            // --- HOLD/STOP LOGIC ---
+            const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
+            let statusClass = 'status-green'; // Default (Null/Blank)
+            
+            if (hsCode === 'H') {
+                statusClass = 'status-yellow';
+            } else if (hsCode === 'S') {
+                statusClass = 'status-red';
+            }
+            // -----------------------
+
             let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
             let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
 
-            // Allow checkboxes for everyone (removed isAdmin check on the input)
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
                 <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
-                <div class="inv-card flex-grow flex items-center ${isSelecting}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
+                <div class="inv-card flex-grow flex items-center ${isSelecting} ${statusClass}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
                     ${thumbHtml}
                     <div class="flex-grow min-w-0">
                         <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
