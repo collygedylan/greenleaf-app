@@ -1097,6 +1097,13 @@
             
             if(pendingRequestItems.length === 0) return;
 
+            // *** FIX START: PAUSE AUTO-SYNC ***
+            // We tell the app: "Don't pull from the cloud for 20 seconds"
+            // This prevents the app from overwriting your local data while Google saves.
+            syncPauseUntil = new Date().getTime() + 20000; 
+            window.lastLocalUpdate = new Date().getTime();
+            // *** FIX END ***
+
             showToast("Sending...", `Submitting ${pendingRequestItems.length} items...`);
 
             // Prepare batch items for backend
