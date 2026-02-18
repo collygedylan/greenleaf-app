@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNCPRO 02</title>
+    <title>GNC-PRO</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -53,9 +53,17 @@
             contain-intrinsic-size: 80px; 
         }
         
-        .status-green { border-left-color: #22c55e; }
-        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; }
-        .status-red { border-left-color: #ef4444; background-color: #fef2f2; }
+        /* --- DYNAMIC COLOR CLASSES --- */
+        .status-green { border-left-color: #22c55e; } /* PRIORITY + AVAIL */
+        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } /* PRIORITY + HOLD */
+        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } /* STOP (S) */
+        
+        .status-blue { border-left-color: #3b82f6; background-color: #eff6ff; } /* U1 */
+        .status-purple { border-left-color: #a855f7; background-color: #f3e8ff; } /* U2 */
+        .status-orange { border-left-color: #f97316; background-color: #fff7ed; } /* U3 */
+        .status-black { border-left-color: #1f2937; background-color: #f9fafb; } /* X */
+        
+        .status-default { border-left-color: #e5e7eb; } /* No Priority */
 
         /* BATCH MODE STYLES */
         .batch-mode .select-check { display: block !important; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
@@ -189,7 +197,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNCPRO 02
+                GNC-PRO
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -219,7 +227,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNCPRO 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -2637,16 +2645,39 @@
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
-            // --- HOLD/STOP LOGIC ---
+            // --- COLOR HIERARCHY LOGIC ---
             const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
-            let statusClass = 'status-green'; // Default (Null/Blank)
+            const lotCode = (item.LOTCODE || '').trim().toUpperCase();
+            const hasPriority = parseFloat(item.PRIORITY) > 0;
             
-            if (hsCode === 'H') {
-                statusClass = 'status-yellow';
-            } else if (hsCode === 'S') {
+            let statusClass = 'status-default'; 
+
+            // 1. RED - STOP (S) - Highest Priority
+            if (hsCode === 'S') {
                 statusClass = 'status-red';
+            } 
+            // 2. YELLOW - HOLD (H) - Only if has Priority
+            else if (hsCode === 'H' && hasPriority) {
+                statusClass = 'status-yellow';
             }
-            // -----------------------
+            // 3. LOT COLORS
+            else if (lotCode === 'U1') {
+                statusClass = 'status-blue';
+            }
+            else if (lotCode === 'U2') {
+                statusClass = 'status-purple';
+            }
+            else if (lotCode === 'U3') {
+                statusClass = 'status-orange';
+            }
+            else if (lotCode === 'X') {
+                statusClass = 'status-black';
+            }
+            // 4. GREEN - Blank/Null HS + Priority
+            else if (!hsCode && hasPriority) {
+                statusClass = 'status-green';
+            }
+            // -----------------------------
 
             let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
             let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
