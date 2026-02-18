@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 016</title>
+    <title>Greenleaf Pro TURBO 017</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 016
+                TURBO 017
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 016 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 017 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -734,6 +734,7 @@
 
         // MANAGER REVIEW STATE (Updated to Folders)
         let currentReviewFolder = null; 
+        let selectedPendingRep = null; // New for Rep Folder drill-down
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -761,7 +762,7 @@
             } 
         }
 
-        // --- STATIC DIRECTORY ---
+        // --- STATIC DIRECTORY (UPDATED WITH CORRECT NAMES & IDs) ---
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
             { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
@@ -1850,6 +1851,7 @@
 
         function openReviewFolder(folderType) {
             currentReviewFolder = folderType;
+            selectedPendingRep = null; // Reset Rep Selection
             document.getElementById('review-root-folders').classList.add('hidden');
             document.getElementById('review-folder-view').classList.remove('hidden');
             
@@ -1864,8 +1866,13 @@
         }
 
         function resetReviewFolders() {
-            currentReviewFolder = null;
-            renderManagerFolders();
+            if(selectedPendingRep && currentReviewFolder === 'pending') {
+                selectedPendingRep = null;
+                renderReviewContent();
+            } else {
+                currentReviewFolder = null;
+                renderManagerFolders();
+            }
         }
 
         function renderReviewContent() {
@@ -1881,8 +1888,32 @@
             }
 
             let filteredItems = [];
+            
             if(currentReviewFolder === 'pending') {
-                filteredItems = fullInventory.filter(i => i.TASK_TAB === 'requests');
+                if(!selectedPendingRep) {
+                    // *** RENDER REP FOLDERS (Pending Request Root) ***
+                    document.getElementById('review-folder-title').innerText = "Pending Requests (Select Rep)";
+                    container.innerHTML = STATIC_DIRECTORY.map(rep => {
+                        // Count items for this rep
+                        const count = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === rep.name) || (i.REQUEST_ASSIGNED_TO || "").includes(rep.name))).length;
+                        return `<div class="drill-item" onclick="selectPendingRep('${rep.name.replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-3">
+                                        <i class="ph-fill ph-folder text-green-600 text-2xl"></i>
+                                        <div>
+                                            <div class="font-bold text-lg">${rep.name}</div>
+                                            <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-gray-400 font-bold text-sm">(${count})</span>
+                                    <i class="ph-bold ph-caret-right ml-2"></i>
+                                </div>`;
+                    }).join('');
+                    return; // Stop here, showing folders
+                } else {
+                    // *** RENDER ITEMS FOR SELECTED REP ***
+                    document.getElementById('review-folder-title').innerText = `Pending: ${selectedPendingRep}`;
+                    filteredItems = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === selectedPendingRep) || (i.REQUEST_ASSIGNED_TO || "").includes(selectedPendingRep)));
+                }
             } else if(currentReviewFolder === 'completed') {
                 filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review');
             } else if(currentReviewFolder === 'item_review') {
@@ -1918,6 +1949,12 @@
                 const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
                 container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
             }
+        }
+        
+        function selectPendingRep(repName) {
+            selectedPendingRep = repName;
+            reviewViewLevel = 0;
+            renderReviewContent();
         }
         
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewContent(); }
