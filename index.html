@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO</title>
+    <title>GNC-PRO 01</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -165,6 +165,9 @@
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
         .text-production { color: #d97706; }
+
+        /* Request Form Styles */
+        #request-form-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; flex-direction: column; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -193,11 +196,58 @@
         </div>
     </div>
 
+    <div id="request-form-modal" class="pt-safe">
+        <div class="bg-[#007a4d] text-white p-4 flex justify-between items-center shadow-md">
+            <div class="font-bold text-lg">New Request</div>
+            <button onclick="closeRequestForm()" class="text-white font-bold">Cancel</button>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto">
+            <div class="input-stack">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Sales Rep</label>
+                    <select id="req-rep" class="input-field bg-white">
+                        <option value="">-- Select Rep --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Customer Name</label>
+                    <input type="text" id="req-cust" class="input-field" placeholder="e.g. Lowe's">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Item Name</label>
+                    <input type="text" id="req-item" class="input-field" placeholder="e.g. Green Velvet Boxwood">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Container Size</label>
+                    <input type="text" id="req-size" class="input-field" placeholder="e.g. 3G">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Request Qty</label>
+                        <input type="number" id="req-qty" class="input-field" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Ship Date</label>
+                        <input type="date" id="req-date" class="input-field">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
+                    <input type="text" id="req-use" class="input-field" placeholder="e.g. Landscape Job / Retail Ad">
+                </div>
+            </div>
+            
+            <button onclick="submitRequest()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-6 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-paper-plane-right text-xl"></i> SUBMIT REQUEST
+            </button>
+        </div>
+    </div>
+
     <div id="view-login">
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO
+                GNC-PRO 01
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -227,7 +277,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO 01 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -242,6 +292,7 @@
         <div id="side-drawer">
             <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
+            <div class="drawer-item" onclick="openRequestForm(); toggleMenu();"><i class="ph-bold ph-plus-circle text-green-600"></i> New Request</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
             <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
@@ -274,6 +325,16 @@
                         <button onclick="window.open('https://weather.com/weather/hourbyhour/l/35.7615,-94.9663', '_blank')" class="bg-blue-50 text-blue-700 font-bold py-2 rounded-lg border border-blue-100 text-xs flex justify-center items-center gap-1"><i class="ph-bold ph-clock"></i> Hourly</button>
                         <button onclick="window.open('https://weather.com/weather/radar/interactive/l/35.7615,-94.9663', '_blank')" class="bg-indigo-50 text-indigo-700 font-bold py-2 rounded-lg border border-indigo-100 text-xs flex justify-center items-center gap-1"><i class="ph-bold ph-radar"></i> Live Radar</button>
                     </div>
+                </div>
+
+                <div onclick="openRequestForm()" class="bg-white p-4 rounded-xl mb-4 shadow border border-gray-200 flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                            <i class="ph-bold ph-plus text-xl"></i>
+                        </div>
+                        <div class="font-bold text-gray-800">Create New Request</div>
+                    </div>
+                    <i class="ph-bold ph-caret-right text-gray-300"></i>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -876,6 +937,138 @@
             return loc;
         }
 
+        // --- NEW REQUEST SYSTEM LOGIC ---
+
+        function openRequestForm() {
+            // Populate Reps
+            const repSelect = document.getElementById('req-rep');
+            repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
+            STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.name;
+                opt.text = r.name;
+                repSelect.appendChild(opt);
+            });
+            
+            // Clear fields
+            document.getElementById('req-cust').value = "";
+            document.getElementById('req-item').value = "";
+            document.getElementById('req-size').value = "";
+            document.getElementById('req-qty').value = "";
+            document.getElementById('req-date').value = "";
+            document.getElementById('req-use').value = "";
+
+            document.getElementById('request-form-modal').style.display = 'flex';
+        }
+
+        function closeRequestForm() {
+            document.getElementById('request-form-modal').style.display = 'none';
+        }
+
+        function submitRequest() {
+            const rep = document.getElementById('req-rep').value;
+            const cust = document.getElementById('req-cust').value.toUpperCase().trim();
+            const item = document.getElementById('req-item').value.trim();
+            const size = document.getElementById('req-size').value.trim();
+            const qty = document.getElementById('req-qty').value;
+            const date = document.getElementById('req-date').value;
+            const use = document.getElementById('req-use').value;
+
+            if(!rep || !cust || !item) {
+                showToast("Error", "Rep, Customer, and Item are required.", true);
+                return;
+            }
+
+            // GENERATE UNIQUE ID: RepName-Customer-Date-7Digits
+            const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
+            const random = Math.floor(1000000 + Math.random() * 9000000);
+            const reqId = `${rep}-${cust}-${today}-${random}`;
+
+            // Create New Item Object (Virtual Item)
+            const newItem = {
+                UNIQUE_ID: reqId,
+                COMMONNAME: item,
+                CONTSIZE: size,
+                CUSTOMERNAME: cust,
+                SALESREP: rep,
+                QTY: qty,
+                SHIPDATE: date,
+                REQ_USE: use,
+                TASK_TAB: 'requests', // Goes to Pending Folder
+                REQUEST_ASSIGNED_TO: 'Manager Review', // Needs assignment
+                TIMESTAMP: new Date().toISOString()
+            };
+
+            // Add to local array
+            fullInventory.unshift(newItem);
+
+            // Send to Backend
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "create_request",
+                    item: newItem,
+                    user: currentUser
+                })
+            }).then(res => res.json())
+              .then(data => {
+                  if(data.status === 'success') {
+                      showToast("Success", "Request Created!");
+                      closeRequestForm();
+                      switchView('review'); // Go to Manager Review to see it
+                  } else {
+                      showToast("Error", "Could not save request.", true);
+                  }
+              });
+        }
+
+        function approveAndSendToRep(item) {
+            if(!confirm("Approve this request and email the Sales Rep?")) return;
+
+            const repEntry = STATIC_DIRECTORY.find(d => d.name === item.SALESREP);
+            const repEmail = repEntry ? repEntry.email : "dylan_collyge@greenleafnursery.com"; // Fallback to Dylan
+
+            const subject = `Request Approved: ${item.COMMONNAME} for ${item.CUSTOMERNAME}`;
+            const body = `
+                <h3>Request Approved</h3>
+                <p><strong>Customer:</strong> ${item.CUSTOMERNAME}</p>
+                <p><strong>Item:</strong> ${item.COMMONNAME} (${item.CONTSIZE})</p>
+                <p><strong>Qty Requested:</strong> ${item.QTY || '-'}</p>
+                <hr>
+                <p><strong>Field Notes:</strong> ${item.SAVED_NOTE || 'None'}</p>
+                <p><strong>Photos:</strong><br>${(item.SAVED_PHOTO_LINK || '').split(',').join('<br>')}</p>
+            `;
+
+            // Since sendEmailNotification uses a map, let's call the API directly for custom email
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "send_email",
+                    to: repEmail,
+                    subject: subject,
+                    htmlBody: body
+                })
+            });
+
+            // Update Status to Closed/Done
+            const payload = {
+                type: "update",
+                id: item.UNIQUE_ID,
+                taskTab: "archive_request", // Move out of active views
+                user: currentUser
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+            
+            // Remove locally
+            fullInventory = fullInventory.filter(i => i.UNIQUE_ID !== item.UNIQUE_ID);
+            renderReviewContent();
+            showToast("Sent", "Rep emailed and request closed.");
+        }
+
+        // --- SEARCH & RENDER LOGIC ---
+
         function handleSearchDebounced(val, type) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
@@ -1435,7 +1628,6 @@
                     container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
                     sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (socViewLevel === 2) {
-                    // SHOW ITEM DETAIL DASHBOARD (Aggregated view for "Item Lookup")
                     renderSocItemDetail(selectedSocCommon, selectedSocSize);
                 }
                 return;
@@ -1450,19 +1642,16 @@
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             } else if(socViewLevel === 2) { 
-                // Show Common Names for this Customer
                 const custItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
                 const commons = [...new Set(custItems.map(i => i.COMMONNAME))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>` + 
                 commons.map(c => `<div class="drill-item" onclick="selectSocCommonName('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (socViewLevel === 3) {
-                // Show Sizes for this Common Name (Customer Scope)
                 const namedItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
                 sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
             } else if (socViewLevel === 4) {
-                // Show Actual Order Cards
                 const finalItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=3; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
                 finalItems.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join(''); 
@@ -1472,9 +1661,7 @@
         function renderSocItemDetail(common, size) {
             const container = document.getElementById('soc-content');
             
-            // 1. Get Matching Inventory Data (for photos/notes)
             const invMatches = fullInventory.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
-            // Sort by priority to get the "best" data first
             invMatches.sort((a, b) => {
                  const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
                  const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
@@ -1482,11 +1669,8 @@
             });
             
             const bestInv = invMatches.length > 0 ? invMatches[0] : null;
-            
-            // 2. Get All Orders for this item
             const orders = socData.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
             
-            // Build Header (Inventory Info)
             let headerHtml = `<div class="bg-white p-4 rounded-lg shadow mb-4 border border-gray-200">
                 <div class="font-bold text-xl text-[#007a4d] mb-2">${common}</div>
                 <div class="text-sm font-bold text-gray-600 mb-2">${size}</div>`;
@@ -1509,12 +1693,10 @@
                 headerHtml += `<div class="text-xs text-red-500 italic mb-2">No matching inventory data found in Drive.</div>`;
             }
             
-            // Email Button
             headerHtml += `<button onclick='emailAllRepsForItem(${JSON.stringify(bestInv || {COMMONNAME: common, CONTSIZE: size})}, ${JSON.stringify(orders)})' class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 mb-2"><i class="ph-bold ph-envelope"></i> EMAIL ALL REPS</button>`;
             
             headerHtml += `</div>`;
             
-            // Build Order List
             let listHtml = `<div class="font-bold text-gray-500 text-xs uppercase mb-2">Customer Orders (${orders.length})</div>`;
             listHtml += orders.map(o => `
                 <div class="inv-card">
@@ -1530,26 +1712,21 @@
         }
         
         function emailAllRepsForItem(invItem, orders) {
-            // 1. Find Unique Reps
             const uniqueReps = [...new Set(orders.map(o => o.SALESREP))];
             
-            // 2. Find Emails
             let emails = [];
             uniqueReps.forEach(repName => {
                 const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName);
                 if(dirEntry && dirEntry.email) emails.push(dirEntry.email);
             });
             
-            // Fallback: If no emails found or not in directory, maybe alert or just use admin
             if(emails.length === 0) {
                 alert("No emails found for these reps in directory.");
                 return;
             }
             
-            // 3. Construct Subject
             const subject = `${invItem.COMMONNAME} - ${invItem.CONTSIZE}`;
             
-            // 4. Construct Body
             let body = `Team,\n\nHere is the current data for:\n${invItem.COMMONNAME} (${invItem.CONTSIZE})\n\n`;
             body += `Location: ${invItem.LOCATIONCODE || 'N/A'}\n`;
             body += `Qty Available: ${invItem.PTRAVAILABLE || '0'}\n`;
@@ -1561,8 +1738,6 @@
             
             body += `Total Orders on this list: ${orders.length}\n`;
             
-            // 5. Open Mail Client
-            // Join emails with comma
             const mailtoLink = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
         }
@@ -2068,19 +2243,9 @@
                     return;
                 }
 
-                if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; return; }
+                if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; return; }
 
-                if(reviewViewLevel === 0) { 
-                    const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
-                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
-                } else if(reviewViewLevel === 1) { 
-                    const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); 
-                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
-                    container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
-                } else if(reviewViewLevel === 2) { 
-                    const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
-                    container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
-                }
+                container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
                 return;
             }
 
@@ -2091,23 +2256,14 @@
                 document.getElementById('review-folder-title').innerText = currentReviewFolder === 'pending' ? "Pending Requests" : "Completed Requests";
                 document.getElementById('review-back-label').innerText = "Back to Folders";
                 
-                container.innerHTML = STATIC_DIRECTORY.map(rep => {
-                    const count = fullInventory.filter(i => {
-                        if(i.TASK_TAB !== folderTaskTab) return false;
-                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                        const repName = rep.name;
-                        const normalized = normalizeRepName(assignedTo);
-                        // Check SalesRep Column OR Assigned To
-                        return (i.SALESREP === rep.name) || assignedTo.includes(repName) || normalized.includes(repName);
-                    }).length;
-                    
-                    return `<div class="drill-item" onclick="selectReviewRep('${rep.name.replace(/'/g, "\\'")}')">
+                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
+                
+                container.innerHTML = activeReps.sort().map(repName => {
+                    const count = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === repName).length;
+                    return `<div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
                                 <div class="flex items-center gap-3">
                                     <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
-                                    <div>
-                                        <div class="font-bold text-lg">${rep.name}</div>
-                                        <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
-                                    </div>
+                                    <span class="font-bold text-lg">${repName}</span>
                                 </div>
                                 <span class="text-gray-400 font-bold text-sm">(${count})</span>
                                 <i class="ph-bold ph-caret-right ml-2"></i>
@@ -2121,30 +2277,17 @@
                 document.getElementById('review-folder-title').innerText = currentReviewRep;
                 document.getElementById('review-back-label').innerText = "Back to Reps";
                 
-                // Filter items for this rep
-                const repItems = fullInventory.filter(i => {
-                    if(i.TASK_TAB !== folderTaskTab) return false;
-                    const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                    const repName = currentReviewRep;
-                    const normalized = normalizeRepName(assignedTo);
-                    return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
-                });
-
-                // Get Unique Customers
-                let customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned"))].sort();
-                
-                // FORCE: Always show a "General / Unassigned" folder if the list is empty or doesn't have it
-                if(customers.length === 0) customers = ["General / Unassigned"];
-                else if(!customers.includes("General / Unassigned")) customers.unshift("General / Unassigned");
+                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
+                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "General"))].sort();
 
                 container.innerHTML = customers.map(cust => {
-                    const custCount = repItems.filter(i => (i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned") === cust).length;
+                    const count = repItems.filter(i => (i.CUSTOMERNAME || "General") === cust).length;
                     return `<div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
                                 <div class="flex items-center gap-3">
                                     <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
                                     <span class="font-bold text-sm">${cust}</span>
                                 </div>
-                                <span class="text-gray-400 font-bold text-xs">(${custCount})</span>
+                                <span class="text-gray-400 font-bold text-xs">(${count})</span>
                                 <i class="ph-bold ph-caret-right ml-2"></i>
                             </div>`;
                 }).join('');
@@ -2155,29 +2298,23 @@
             document.getElementById('review-folder-title').innerText = currentReviewCustomer;
             document.getElementById('review-back-label').innerText = "Back to Customers";
             
-            let finalItems = fullInventory.filter(i => {
-                if(i.TASK_TAB !== folderTaskTab) return false;
-                
-                // Rep Check
-                const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                const repName = currentReviewRep;
-                const normalized = normalizeRepName(assignedTo);
-                const isRepMatch = (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
-                if(!isRepMatch) return false;
+            let finalItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep && (i.CUSTOMERNAME || "General") === currentReviewCustomer);
 
-                // Customer Check
-                const itemCust = i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned";
-                return itemCust === currentReviewCustomer;
-            });
-
-            if(term) { 
-                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-            }
+            if(term) finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
 
             if(finalItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found for this customer.</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
             } else {
-                container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
+                let html = "";
+                finalItems.forEach(item => {
+                    let approveBtn = "";
+                    if(folderTaskTab === 'review') { // Completed
+                        approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
+                    }
+                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                    html += `<div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">${cardHtml}<div class="px-2 pb-2">${approveBtn}</div></div>`;
+                });
+                container.innerHTML = html;
             }
         }
         
@@ -2743,6 +2880,13 @@
             let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
             let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
 
+            // Add Request Data display if it's a request
+            let requestInfo = "";
+            if(item.UNIQUE_ID.includes("-")) { // Simple check for generated ID
+                 if(item.QTY) requestInfo += `<span class="bg-blue-100 text-blue-800 text-[10px] px-1 rounded mr-1">Req: ${item.QTY}</span>`;
+                 if(item.SHIPDATE) requestInfo += `<span class="bg-gray-100 text-gray-800 text-[10px] px-1 rounded">Ship: ${item.SHIPDATE}</span>`;
+            }
+
             return `
             <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
                 <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
@@ -2752,6 +2896,7 @@
                         <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
                         <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
                         <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
+                        <div class="mt-1">${requestInfo}</div>
                     </div>
                 </div>
             </div>`;
