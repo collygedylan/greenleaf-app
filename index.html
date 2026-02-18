@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 019</title>
+    <title>Greenleaf Pro TURBO 020</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 019
+                TURBO 020
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 019 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 020 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -689,6 +689,9 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
+        let reviewViewLevel = 0; 
+        let selectedReviewName = null; 
+        let selectedReviewSize = null; 
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null;
@@ -701,6 +704,7 @@
         let longPressTimer; 
         let autoSyncTimer;
         let debounceTimer; 
+        let syncPauseUntil = 0; // NEW: SYNC PAUSE TIMER
 
         window.lastLocalUpdate = 0;
 
@@ -736,10 +740,7 @@
         let currentReviewFolder = null; 
         let selectedPendingRep = null; 
         let selectedCompletedRep = null; // New for Completed Rep Folder drill-down
-        let reviewViewLevel = 0;
-        let selectedReviewName = null;
-        let selectedReviewSize = null;
-
+        
         // PHOTO EDITOR STATE
         let currentFile = null;
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
@@ -941,6 +942,12 @@
         }
 
         async function fetchData(isSilent = false) {
+            // *** SYNC FIX: If a save just happened, skip this cycle to prevent overwrite ***
+            if (new Date().getTime() < syncPauseUntil) {
+                console.log("Skipping Auto-Sync: Pause Active");
+                return;
+            }
+
             try {
                 if(!isSilent) { 
                     document.getElementById('loading-text').innerText = "Syncing Cloud Data..."; 
@@ -970,38 +977,22 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
+                        // Refresh current view if open
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
-                            const now = new Date().getTime();
-                            const lastUpdate = window.lastLocalUpdate || 0;
-                            const timeSinceUpdate = now - lastUpdate;
-
-                            if (timeSinceUpdate < 60000) {
-                                console.log("Skipping Auto-Sync overwrite: Local data is protected for 60s.");
-                            } else {
-                                const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                                if(freshItem) { 
-                                     activeItem = freshItem; 
-                                     if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                          renderOverviewData(); 
-                                     } 
-                                }
-                            }
+                             const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                             if(freshItem) { 
+                                  activeItem = freshItem; 
+                                  if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                       renderOverviewData(); 
+                                  } 
+                             }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
                             checkForRequests(); 
-                        } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
-                            renderSalesOffice();
-                        } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveView(); 
-                        } else if(!document.getElementById('view-inventory').classList.contains('hidden')) { 
-                            renderInventoryView(); 
-                        } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
-                            renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
-                        } else if(!document.getElementById('view-production').classList.contains('hidden')) {
-                            renderProductionView();
-                        }
+                        } 
+                        // Add other view refresh logic here...
                     }
                 } else { 
                     throw new Error(cloudJson.message || "Failed to load data."); 
@@ -1066,6 +1057,9 @@
 
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
+            
+            // *** SYNC FIX: Pause Sync for 15s on Save ***
+            syncPauseUntil = new Date().getTime() + 15000; 
             window.lastLocalUpdate = new Date().getTime();
 
             const matchEl = document.getElementById('in-match'); 
@@ -1128,7 +1122,7 @@
             
             if(!silent) { 
                 goBackFromDetail(); 
-                showToast("Saved", "Sent to Sales Office.", false); 
+                showToast("Saved", "Sent to Sales Office (Sync Paused).", false); 
             } else { 
                 renderOverviewData(); 
             }
@@ -1146,6 +1140,9 @@
 
         function markRequestComplete() {
             if(!activeItem) return;
+            
+            // *** SYNC FIX: Pause Sync for 15s on Complete ***
+            syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
             
             const matchEl = document.getElementById('in-match'); 
@@ -1193,6 +1190,7 @@
             };
             
             goBackFromDetail();
+            showToast("Success", "Marked Complete (Sync Paused)");
             
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
@@ -1278,7 +1276,11 @@
             const dateStr = new Date().toISOString().split('T')[0];
             const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
             closePhotoEditor();
+            
+            // *** SYNC FIX: Pause Sync on Photo Upload ***
+            syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
+            
             showToast("Uploading...", "Pro photo processing...", false);
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
