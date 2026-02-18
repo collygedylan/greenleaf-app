@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 013</title>
+    <title>Greenleaf Pro TURBO 014</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 013
+                TURBO 014
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 013 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 014 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -407,13 +407,30 @@
             </div>
             
             <div id="view-review" class="hidden">
-                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Items for Review</h2>
-                <div id="failed-saves-container"></div>
-                <input type="text" id="review-search" class="input-field mb-4" placeholder="Search Review Items..." onkeyup="renderReviewItems()">
-                <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
-                <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
-                <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
-                <div id="review-content"></div>
+                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
+                
+                <div class="task-tabs mb-4">
+                    <div id="rtab-pending" class="task-tab active" onclick="switchReviewTab('pending')">Review List</div>
+                    <div id="rtab-nowinner" class="task-tab" onclick="switchReviewTab('nowinner')">No Winner</div>
+                </div>
+                
+                <div id="review-tab-pending">
+                    <div id="failed-saves-container"></div>
+                    <input type="text" id="review-search" class="input-field mb-4" placeholder="Search Review Items..." onkeyup="renderReviewItems()">
+                    <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
+                    <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
+                    <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
+                    <div id="review-content"></div>
+                </div>
+                
+                <div id="review-tab-nowinner" class="hidden">
+                     <div class="bg-orange-50 p-2 rounded mb-4 text-xs text-orange-800 border border-orange-200">
+                        <strong>Criteria:</strong> Priority Exists (< 9999) but Quantity Available is 0.
+                    </div>
+                    <input type="text" id="review-nowinner-search" class="input-field mb-4" placeholder="Search No Winner..." onkeyup="renderReviewItems()">
+                    <span id="review-nowinner-crumb" class="text-xs font-bold text-gray-400"></span>
+                    <div id="review-nowinner-content"></div>
+                </div>
             </div>
 
             <div id="view-viewer" class="hidden">
@@ -731,6 +748,9 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
+        // MANAGER REVIEW STATE (Updated)
+        let currentReviewTab = 'pending'; // 'pending' or 'nowinner'
+
         // PHOTO EDITOR STATE
         let currentFile = null;
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
@@ -813,7 +833,7 @@
                                      document.getElementById('soc-status').innerText = "Search failed.";
                                  }
                              });
-                         }
+                          }
                     } else {
                          renderSocView(); 
                     }
@@ -1725,7 +1745,7 @@
                             <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
                                 <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
                             </button>
-                            <p class="text-[10px] text-center text-gray-400 mt-2">Removes items from this folder.</p>
+                            <p class="text-xs text-center text-gray-400 mt-2">Removes items from this folder.</p>
                         </div>`;
                     }
 
@@ -1800,17 +1820,77 @@
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
-        function renderReviewItems() {
-            const container = document.getElementById('review-content'); const crumb = document.getElementById('review-crumb'); const failContainer = document.getElementById('failed-saves-container');
-            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-            if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
-            const term = document.getElementById('review-search').value.toLowerCase(); const reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            if(term) { const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); return; }
-            if(reviewItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items need review.</div>`; crumb.innerText = ""; return; }
-            if(reviewViewLevel === 0) { crumb.innerText = "All Names"; const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-            else if(reviewViewLevel === 1) { crumb.innerText = selectedReviewName; const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; }
-            else if(reviewViewLevel === 2) { crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; }
+        function switchReviewTab(tab) {
+            currentReviewTab = tab;
+            document.getElementById('rtab-pending').classList.toggle('active', tab === 'pending');
+            document.getElementById('rtab-nowinner').classList.toggle('active', tab === 'nowinner');
+            
+            document.getElementById('review-tab-pending').classList.toggle('hidden', tab !== 'pending');
+            document.getElementById('review-tab-nowinner').classList.toggle('hidden', tab !== 'nowinner');
+            
+            reviewViewLevel = 0;
+            renderReviewItems();
         }
+
+        function renderReviewItems() {
+            // Determine which container and filter logic to use
+            const isPending = currentReviewTab === 'pending';
+            const container = document.getElementById(isPending ? 'review-content' : 'review-nowinner-content');
+            const crumb = document.getElementById(isPending ? 'review-crumb' : 'review-nowinner-crumb');
+            const searchId = isPending ? 'review-search' : 'review-nowinner-search';
+            
+            // Pending Tab Specifics
+            if(isPending) {
+                const failContainer = document.getElementById('failed-saves-container');
+                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+                if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
+            }
+
+            const term = document.getElementById(searchId).value.toLowerCase();
+            
+            // FILTER LOGIC
+            let reviewItems = [];
+            if(isPending) {
+                reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            } else {
+                // No Winner Logic: Priority Set (< 9999) but Qty <= 0
+                reviewItems = fullInventory.filter(i => {
+                    const pri = parseFloat(i.PRIORITY);
+                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                    return (pri > 0 && pri < 9999) && (qty <= 0);
+                });
+            }
+
+            if(term) { 
+                const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                return; 
+            }
+
+            if(reviewItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
+                crumb.innerText = ""; 
+                return; 
+            }
+
+            if(reviewViewLevel === 0) { 
+                crumb.innerText = "All Names"; 
+                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); 
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+            }
+            else if(reviewViewLevel === 1) { 
+                crumb.innerText = selectedReviewName; 
+                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); 
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
+            }
+            else if(reviewViewLevel === 2) { 
+                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
+                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
+            }
+        }
+        
         function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
         function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
 
@@ -1888,7 +1968,7 @@
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
             if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
-            if(v === 'viewer') renderViewerNames(); if(v === 'review') { reviewViewLevel = 0; renderReviewItems(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
+            if(v === 'viewer') renderViewerNames(); if(v === 'review') { switchReviewTab('pending'); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
         function switchDetailTab(tab) { 
