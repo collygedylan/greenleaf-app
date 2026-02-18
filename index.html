@@ -94,7 +94,7 @@
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
         .expanded .expand-content { display: block; }
-        
+        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
         .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         
@@ -672,7 +672,7 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
         
-        const ADMINS = ["Dylan", "J.D.", "Kayla"];
+        const ADMINS = ["Dylan", "J.D.", "Kayla", "Morgan"];
         const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
 
         // --- EMAIL CONFIGURATION (UPDATED) ---
@@ -882,12 +882,12 @@
                              .then(res => res.json())
                              .then(data => {
                                  if(data.status === 'success') {
-                                     socData = data.data;
-                                     socViewLevel = 0; 
-                                     renderSocView();
-                                     document.getElementById('soc-status').innerText = data.data.length + " matches found.";
+                                    socData = data.data;
+                                    socViewLevel = 0; 
+                                    renderSocView();
+                                    document.getElementById('soc-status').innerText = data.data.length + " matches found.";
                                  } else {
-                                     document.getElementById('soc-status').innerText = "Search failed.";
+                                    document.getElementById('soc-status').innerText = "Search failed.";
                                  }
                              });
                           }
@@ -1035,14 +1035,18 @@
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                              const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                              if(freshItem) { 
-                                  activeItem = freshItem; 
-                                  if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                      renderOverviewData(); 
-                                  } 
+                                 activeItem = freshItem; 
+                                 if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
+                                     renderOverviewData(); 
+                                 } 
                              }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
                             checkForRequests(); 
+                        } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
+                            renderSalesOffice();
+                        } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
+                            renderDriveNames();
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
                         } 
@@ -1723,12 +1727,12 @@
             
             if(currentTab === 'requests') {
                  if (taskViewTargetUser === 'ASSIST') {
-                       myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
-                       crumb.innerText = `Kayla & Morgan / Urgent Requests`;
-                  } else {
-                       myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                       crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
-                  }
+                        myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
+                        crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                 } else {
+                        myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                        crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                 }
             } else if (currentTab === 'flyer') {
                 myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
             } else { 
@@ -1873,7 +1877,7 @@
             document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
         }
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
-        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
         function renderManagerFolders() {
             document.getElementById('review-root-folders').classList.remove('hidden');
@@ -2306,13 +2310,13 @@
             </div>`;
         }
 
-        function showReadonlyMode(canEditText, hasData) {
+        function showReadonlyMode(canEditThisView, hasData) {
             document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            if (canEditText) { document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-save').classList.add('hidden'); } else { document.getElementById('btn-save').classList.add('hidden'); }
+            if (canEditThisView) { document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-save').classList.add('hidden'); } else { document.getElementById('btn-save').classList.add('hidden'); }
             if(hasData) { document.getElementById('readonly-lock-banner').classList.remove('hidden'); } else { document.getElementById('readonly-lock-banner').classList.add('hidden'); }
             const cont = document.getElementById('input-container');
             cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>`;
-            if (canEditText) { document.getElementById('btn-edit-container').classList.remove('hidden'); } else { document.getElementById('btn-edit-container').classList.add('hidden'); }
+            if (canEditThisView) { document.getElementById('btn-edit-container').classList.remove('hidden'); } else { document.getElementById('btn-edit-container').classList.add('hidden'); }
         }
 
         function renderAllFields() {
@@ -2356,16 +2360,45 @@
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Photo permanently deleted."); setTimeout(() => { fetchData(true); startAutoSync(); }, 2500); } else { showToast("Error", "Could not delete: " + data.message, true); startAutoSync(); } }).catch(err => { showToast("Network Error", "Saved deletion offline.", true); logFailedSave(payload); startAutoSync(); });
         }
 
+        // --- BATCH SELECTION LOGIC ---
         function updateSelected() { 
-            selectedIdx = []; 
-            document.querySelectorAll('.select-check').forEach(cb => { 
-                if (cb.checked) { selectedIdx.push(parseInt(cb.value)); } 
-            }); 
+            // In the NEW system, updateSelected only updates the ACTION BAR visibility. 
+            // It does NOT clear the array.
             if (selectedIdx.length > 0) { 
                 document.getElementById('action-bar').classList.add('visible'); 
             } else { 
                 document.getElementById('action-bar').classList.remove('visible'); 
             } 
+        }
+
+        function handleCardClick(idx, source) {
+            if(isBatch) {
+                toggleSelect(idx); // Use new toggle logic
+                return;
+            }
+            openDetail(idx, source);
+        }
+
+        function toggleSelect(idx) {
+            // New logic: Manipulate array directly
+            const indexInArray = selectedIdx.indexOf(idx);
+            if (indexInArray > -1) {
+                selectedIdx.splice(indexInArray, 1); // Remove
+            } else {
+                selectedIdx.push(idx); // Add
+            }
+
+            // Update UI immediately for this row
+            const row = document.getElementById('row-' + idx);
+            const cb = document.getElementById('cb-' + idx);
+            if(row && cb) {
+                const isSelected = selectedIdx.includes(idx);
+                cb.checked = isSelected;
+                if(isSelected) row.classList.add('selecting');
+                else row.classList.remove('selecting');
+            }
+            
+            updateSelected(); // Update bar visibility
         }
         
         function openAssignModal() { 
@@ -2382,14 +2415,130 @@
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
 
-        function toggleFlyerOptions(show) {
-            if(show) {
-                document.getElementById('flyer-options-box').classList.remove('hidden');
-            } else {
-                document.getElementById('flyer-options-box').classList.add('hidden');
+        // --- BATCH TEXT & EMAIL GENERATORS ---
+        function getBatchHtml() {
+            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                html += `<div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                
+                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
+                if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
+                if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => { 
+                        const name = names[i] || `Photo ${i+1}`; 
+                        // HTML Link: Clickable Name
+                        html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
+
+        function getBatchText() {
+            let text = "";
+            selectedIdx.forEach(idx => {
+                let item = fullInventory[idx];
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                
+                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
+                if(item.SAVED_SALES_DESC) text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
+                if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
+                
+                if(item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`; 
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    urls.forEach((url, i) => { 
+                        const name = names[i] || `Photo ${i+1}`; 
+                        // SMS Link: Name + Raw URL
+                        text += `• ${name} (${url})\n`; 
+                    });
+                }
+                text += `\n`;
+            });
+            return text;
+        }
+
+        function batchText() { 
+            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
+        }
+        
+        function batchEmail() { 
+            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Ready to paste into your email app."); 
+                    setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); 
+                    isBatch = false; 
+                    toggleBatch();
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                });
+            } else { 
+                fallbackCopy(html); 
+                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
             }
         }
         
+        function copyBatchData() { 
+            if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; }
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Data copied to clipboard."); 
+                    isBatch = false; 
+                    toggleBatch(); 
+                }).catch(err => { fallbackCopy(html); });
+            } else { 
+                fallbackCopy(html); 
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div"); 
+            tempDiv.innerHTML = html; 
+            tempDiv.style.position = "fixed"; 
+            tempDiv.style.left = "-9999px"; 
+            document.body.appendChild(tempDiv);
+            
+            const range = document.createRange(); 
+            range.selectNodeContents(tempDiv); 
+            const sel = window.getSelection(); 
+            sel.removeAllRanges(); 
+            sel.addRange(range); 
+            document.execCommand('copy'); 
+            document.body.removeChild(tempDiv);
+            
+            showToast("Copied!", "Data copied (Legacy Mode)."); 
+            isBatch = false; 
+            toggleBatch();
+        }
+
         function batchAssign() {
             const assignType = document.querySelector('input[name="assign_type"]:checked').value;
             const noteText = document.getElementById('assign-note').value;
@@ -2410,7 +2559,6 @@
             
             let assignStr = selected.join(" & ");
             let emailTo = selected.length === 1 ? selected[0] : "Admin";
-
             let taskTab = assignType; 
             let projectName = "";
 
@@ -2464,158 +2612,62 @@
             .catch(err => { showToast("Network Error", "Saved offline.", true); });
         }
 
-        function markProjectComplete(projName) {
-            if(!confirm(`Are you sure you want to complete and archive project: "${projName}"?`)) return;
-            const projItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "") === projName && (i.TASK_TAB||"").startsWith("flyer_"));
-            if(projItems.length === 0) return;
-            const completionTitle = `Project Completed: ${projName}`;
-            const emailBody = generateHtmlForItems(projItems, completionTitle);
-            sendEmailNotification("Dylan", completionTitle, emailBody);
-            const updates = projItems.map(item => {
-                item.REQUEST_ASSIGNED_TO = "";
-                item.TASK_TAB = "review"; 
-                return { id: item.UNIQUE_ID, requestAssignedTo: "", taskTab: "review", user: currentUser };
-            });
-            resetTaskView();
-            showToast("Completing...", `Archiving ${projName}...`);
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
-            .then(res => res.json())
-            .then(data => { if(data.status === 'success') { showToast("Success", "Project archived."); fetchData(true); } else { showToast("Error", data.message, true); } })
-            .catch(err => { showToast("Network Error", "Saved offline.", true); });
-        }
-
-        function createRowHtml(item, idx, viewType) {
-            let thumb = ""; 
-            if(item.SAVED_PHOTO_LINK) { 
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
                 const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
                 let thumbUrl = firstLink; 
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); 
-                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } 
-                thumb = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-2 bg-gray-200">`; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; } 
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
-            
-            // CARD COLOR LOGIC
-            let statusClass = "status-green"; // default
-            if ((item.HOLDSTOPCODE || "").trim() === "H") statusClass = "status-yellow";
-            if ((item.HOLDSTOPCODE || "").trim() === "S") statusClass = "status-red";
 
-            let rowClass = `inv-card flex items-start gap-2 relative ${statusClass}`;
-            if (isBatch) { rowClass += " batch-mode"; }
-            if (selectedIdx.includes(idx)) { rowClass += " selecting"; }
-            
-            let statusBadge = "";
-            if (item.TASK_TAB === "season") statusBadge = `<span class="data-badge badge-match">SEASON</span>`;
-            if (item.TASK_TAB === "location") statusBadge = `<span class="data-badge badge-spec">LOCATION</span>`;
-            if (item.TASK_TAB === "Item Review" || item.TASK_TAB === "review") statusBadge = `<span class="data-badge text-white bg-red-500">REVIEW</span>`;
-            
-            let flags = "";
-            if(item.SAVED_MATCH) flags += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
-            if(item.SAVED_SPEC) flags += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
-            if(item.SAVED_NOTE) flags += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
-            
-            let locDisplay = item.LOCATIONCODE ? `<span class="font-bold text-gray-800 bg-gray-100 px-1 rounded">${item.LOCATIONCODE}</span>` : `<span class="text-gray-400 italic">No Loc</span>`;
-            let lotDisplay = item.LOTCODE ? `<span class="text-xs text-gray-500">Lot: ${item.LOTCODE}</span>` : "";
-            let sLtsDisplay = (item.SLTS || item.S_LTS) ? `<span class="text-xs text-blue-600 font-bold">LTS: ${item.SLTS || item.S_LTS}</span>` : "";
-            let priorityDisplay = item.PRIORITY ? `<span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-1 rounded">PRI: ${item.PRIORITY}</span>` : "";
-            
-            let clickAction = isBatch ? `toggleSelect(${idx})` : `openDetail(${idx}, '${viewType}')`;
+            let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
+            let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
 
+            // Allow checkboxes for everyone (removed isAdmin check on the input)
             return `
-            <div class="${rowClass}" onclick="${clickAction}" id="row-${idx}">
-                <input type="checkbox" class="select-check" value="${idx}" onclick="event.stopPropagation(); toggleSelect(${idx})" ${selectedIdx.includes(idx) ? 'checked' : ''}>
-                ${thumb}
-                <div class="flex-grow min-w-0">
-                    <div class="flex justify-between items-start">
-                        <div class="font-bold text-[#007a4d] truncate pr-2 text-sm">${item.COMMONNAME}</div>
-                        <div class="font-bold text-black text-sm">${item.PTRAVAILABLE}</div>
-                    </div>
-                    <div class="text-xs text-gray-500 font-bold mb-1">${item.CONTSIZE} <span class="mx-1 text-gray-300">|</span> ${locDisplay}</div>
-                    
-                    <div class="flex flex-wrap gap-2 items-center text-xs text-gray-600 mb-1">
-                        ${lotDisplay}
-                        ${sLtsDisplay}
-                        ${priorityDisplay}
-                    </div>
-
-                    ${item.SALESNOTE ? `<div class="text-[10px] text-gray-500 italic bg-gray-50 p-1 rounded border border-gray-100 mb-1">"${item.SALESNOTE}"</div>` : ''}
-
-                    <div class="flex flex-wrap gap-1 mt-1">
-                        ${statusBadge}
-                        ${flags}
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
+                <div class="inv-card flex-grow flex items-center ${isSelecting}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
                     </div>
                 </div>
-                <i class="ph-bold ph-caret-right text-gray-300 self-center"></i>
             </div>`;
         }
-
-        function toggleBatch() {
-            isBatch = !isBatch;
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
-            if (!isBatch) { 
+        
+        function startLongPress() { 
+            // Allow everyone to batch select
+            longPressTimer = setTimeout(() => { 
+                if(!isBatch) toggleBatch(); 
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+        
+        function toggleBatch() { 
+            isBatch = !isBatch; 
+            document.body.classList.toggle('batch-mode', isBatch); 
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
+            
+            if(!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
                 selectedIdx = []; 
-                document.querySelectorAll('.select-check').forEach(c => c.checked = false); 
-                updateSelected(); 
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
+            } else {
+                // When entering batch mode, redraw current view to expose checkboxes
+                 if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveNames();
+                 if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+                 if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+                 if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
             }
-            
-            // Re-render current view to show checkboxes
-            if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
-            if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
-            if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
-            if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
-        }
-
-        function toggleSelect(idx) {
-            // FIX: If NOT batch mode, do normal open
-            if (!isBatch) { 
-                openDetail(idx, currentOriginView || 'drive'); 
-                return; 
-            }
-            
-            // IF BATCH MODE, toggle checkbox
-            const cb = document.querySelector(`#row-${idx} .select-check`);
-            if (cb) {
-                cb.checked = !cb.checked;
-                // Add/Remove from array
-                if (cb.checked) {
-                    if (!selectedIdx.includes(idx)) selectedIdx.push(idx);
-                } else {
-                    selectedIdx = selectedIdx.filter(id => id !== idx);
-                }
-                
-                // Visual update
-                const card = document.getElementById('row-' + idx);
-                if (cb.checked) card.classList.add('selecting'); else card.classList.remove('selecting');
-                
-                updateSelected();
-            }
-        }
-
-        function batchText() {
-            if (selectedIdx.length === 0) return;
-            const items = selectedIdx.map(i => fullInventory[i]);
-            let msg = "Greenleaf Update:\n";
-            items.forEach(item => {
-                msg += `${item.COMMONNAME} (${item.CONTSIZE}): Qty ${item.PTRAVAILABLE} @ ${item.LOCATIONCODE || 'No Loc'}\n`;
-            });
-            window.location.href = `sms:&body=${encodeURIComponent(msg)}`;
-        }
-
-        function batchEmail() {
-            if (selectedIdx.length === 0) return;
-            const items = selectedIdx.map(i => fullInventory[i]);
-            let body = "Here is the inventory update:\n\n";
-            items.forEach(item => {
-                body += `${item.COMMONNAME} - ${item.CONTSIZE}\nQty: ${item.PTRAVAILABLE} | Loc: ${item.LOCATIONCODE || 'N/A'}\n\n`;
-            });
-            window.location.href = `mailto:?subject=Inventory Update&body=${encodeURIComponent(body)}`;
-        }
-
-        function copyBatchData() {
-            if (selectedIdx.length === 0) return;
-            const items = selectedIdx.map(i => fullInventory[i]);
-            let text = items.map(i => `${i.COMMONNAME}\t${i.CONTSIZE}\t${i.PTRAVAILABLE}\t${i.LOCATIONCODE}`).join('\n');
-            navigator.clipboard.writeText(text).then(() => showToast("Copied", "Data copied to clipboard"));
-            toggleBatch();
         }
     </script>
 </body>
