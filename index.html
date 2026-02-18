@@ -347,7 +347,7 @@
                     <div class="season-chip" onclick="toggleProductionSeason('Z', this)">Z</div>
                 </div>
 
-                <input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleSearchDebounced(this.value, 'production')">
+                <input type="text" id="production-search" class="input-field mb-4" placeholder="Search Production..." onkeyup="handleProductionSearch(this.value)">
                 <div id="production-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="production-content"></div>
             </div>
@@ -367,7 +367,7 @@
                     <div class="season-chip" onclick="toggleInventorySeason('Z', this)">Z</div>
                 </div>
 
-                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleSearchDebounced(this.value, 'inventory')">
+                <input type="text" id="inventory-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="handleInventorySearch(this.value)">
                 <div id="inventory-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="inventory-content"></div>
             </div>
@@ -1046,7 +1046,7 @@
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
-                            renderDriveNames();
+                            renderDriveView(); // Changed from renderDriveNames to maintain state
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
                         } 
@@ -1543,6 +1543,9 @@
         
         function handleDriveSearch(term) { 
             driveSearchTerm = term.toLowerCase(); 
+            if(driveSearchTerm.length > 0) {
+                driveViewLevel = 0;
+            }
             renderDriveView(); 
         }
 
@@ -1635,7 +1638,13 @@
             document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderProductionView();
         }
-        function handleProductionSearch(term) { productionSearchTerm = term.toLowerCase(); renderProductionView(); }
+        function handleProductionSearch(term) { 
+            productionSearchTerm = term.toLowerCase(); 
+            if(productionSearchTerm.length > 0) {
+                productionViewLevel = 0;
+            }
+            renderProductionView(); 
+        }
         function getFilteredProductionItems() {
             return fullInventory.filter(i => {
                 if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
@@ -1670,7 +1679,13 @@
             document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderInventoryView();
         }
-        function handleInventorySearch(term) { inventorySearchTerm = term.toLowerCase(); renderInventoryView(); }
+        function handleInventorySearch(term) { 
+            inventorySearchTerm = term.toLowerCase(); 
+            if(inventorySearchTerm.length > 0) {
+                inventoryViewLevel = 0;
+            }
+            renderInventoryView(); 
+        }
         function getFilteredInventoryItems() {
             return fullInventory.filter(i => {
                 if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
@@ -2668,15 +2683,25 @@
             document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
             
             if(!isBatch) { 
+                // Exiting Batch Mode: Clear everything
                 document.getElementById('action-bar').classList.remove('visible'); 
                 selectedIdx = []; 
                 document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
+                document.querySelectorAll('.inv-card').forEach(card => card.classList.remove('selecting'));
             } else {
-                // When entering batch mode, redraw current view to expose checkboxes
-                 if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveNames();
-                 if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
-                 if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
-                 if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+                // Entering Batch Mode: Just refresh the CURRENT view to show checkboxes
+                // Do NOT call renderDriveNames() etc, as that resets the view to the top
+                if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+                if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+                if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+                if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+                if (!document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
+                if (!document.getElementById('view-review').classList.contains('hidden')) renderReviewContent();
+                if (!document.getElementById('view-salesoffice').classList.contains('hidden')) renderSalesOffice();
+                if (!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
+                
+                // If we already have selections (from a previous search), show the bar
+                updateSelected();
             }
         }
     </script>
