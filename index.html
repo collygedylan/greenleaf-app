@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 017</title>
+    <title>Greenleaf Pro TURBO 018</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 017
+                TURBO 018
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 017 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 018 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -734,7 +734,8 @@
 
         // MANAGER REVIEW STATE (Updated to Folders)
         let currentReviewFolder = null; 
-        let selectedPendingRep = null; // New for Rep Folder drill-down
+        let selectedPendingRep = null; 
+        let selectedCompletedRep = null; // New for Completed Rep Folder drill-down
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -1851,7 +1852,8 @@
 
         function openReviewFolder(folderType) {
             currentReviewFolder = folderType;
-            selectedPendingRep = null; // Reset Rep Selection
+            selectedPendingRep = null; 
+            selectedCompletedRep = null; // Reset
             document.getElementById('review-root-folders').classList.add('hidden');
             document.getElementById('review-folder-view').classList.remove('hidden');
             
@@ -1869,10 +1871,15 @@
             if(selectedPendingRep && currentReviewFolder === 'pending') {
                 selectedPendingRep = null;
                 renderReviewContent();
-            } else {
-                currentReviewFolder = null;
-                renderManagerFolders();
+                return;
             }
+            if(selectedCompletedRep && currentReviewFolder === 'completed') {
+                selectedCompletedRep = null;
+                renderReviewContent();
+                return;
+            }
+            currentReviewFolder = null;
+            renderManagerFolders();
         }
 
         function renderReviewContent() {
@@ -1880,6 +1887,7 @@
             const term = document.getElementById('review-search').value.toLowerCase();
             const failContainer = document.getElementById('failed-saves-container');
             
+            // Only show offline warnings if in "completed" folder view
             if(currentReviewFolder === 'completed') {
                 let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
                 if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
@@ -1889,16 +1897,16 @@
 
             let filteredItems = [];
             
+            // --- PENDING FOLDER LOGIC ---
             if(currentReviewFolder === 'pending') {
                 if(!selectedPendingRep) {
                     // *** RENDER REP FOLDERS (Pending Request Root) ***
                     document.getElementById('review-folder-title').innerText = "Pending Requests (Select Rep)";
                     container.innerHTML = STATIC_DIRECTORY.map(rep => {
-                        // Count items for this rep
                         const count = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === rep.name) || (i.REQUEST_ASSIGNED_TO || "").includes(rep.name))).length;
                         return `<div class="drill-item" onclick="selectPendingRep('${rep.name.replace(/'/g, "\\'")}')">
                                     <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-green-600 text-2xl"></i>
+                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
                                         <div>
                                             <div class="font-bold text-lg">${rep.name}</div>
                                             <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
@@ -1908,15 +1916,42 @@
                                     <i class="ph-bold ph-caret-right ml-2"></i>
                                 </div>`;
                     }).join('');
-                    return; // Stop here, showing folders
+                    return; 
                 } else {
-                    // *** RENDER ITEMS FOR SELECTED REP ***
+                    // *** RENDER ITEMS FOR SELECTED PENDING REP ***
                     document.getElementById('review-folder-title').innerText = `Pending: ${selectedPendingRep}`;
                     filteredItems = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === selectedPendingRep) || (i.REQUEST_ASSIGNED_TO || "").includes(selectedPendingRep)));
                 }
-            } else if(currentReviewFolder === 'completed') {
-                filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            } else if(currentReviewFolder === 'item_review') {
+            } 
+            // --- COMPLETED FOLDER LOGIC (NEW) ---
+            else if(currentReviewFolder === 'completed') {
+                if(!selectedCompletedRep) {
+                    // *** RENDER REP FOLDERS (Completed Request Root) ***
+                    document.getElementById('review-folder-title').innerText = "Completed Requests (Select Rep)";
+                    container.innerHTML = STATIC_DIRECTORY.map(rep => {
+                        // Count completed items for this rep
+                        const count = fullInventory.filter(i => i.TASK_TAB === 'review' && ((i.SALESREP === rep.name) || (i.REQUEST_ASSIGNED_TO || "").includes(rep.name))).length;
+                        return `<div class="drill-item" onclick="selectCompletedRep('${rep.name.replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-3">
+                                        <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                                        <div>
+                                            <div class="font-bold text-lg">${rep.name}</div>
+                                            <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-gray-400 font-bold text-sm">(${count})</span>
+                                    <i class="ph-bold ph-caret-right ml-2"></i>
+                                </div>`;
+                    }).join('');
+                    return;
+                } else {
+                    // *** RENDER ITEMS FOR SELECTED COMPLETED REP ***
+                    document.getElementById('review-folder-title').innerText = `Completed: ${selectedCompletedRep}`;
+                    filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review' && ((i.SALESREP === selectedCompletedRep) || (i.REQUEST_ASSIGNED_TO || "").includes(selectedCompletedRep)));
+                }
+            } 
+            // --- ITEM REVIEW (NO WINNER) LOGIC ---
+            else if(currentReviewFolder === 'item_review') {
                 filteredItems = fullInventory.filter(i => {
                     const pri = parseFloat(i.PRIORITY);
                     const qty = parseFloat(i.PTRAVAILABLE) || 0;
@@ -1953,6 +1988,12 @@
         
         function selectPendingRep(repName) {
             selectedPendingRep = repName;
+            reviewViewLevel = 0;
+            renderReviewContent();
+        }
+
+        function selectCompletedRep(repName) {
+            selectedCompletedRep = repName;
             reviewViewLevel = 0;
             renderReviewContent();
         }
