@@ -1435,63 +1435,13 @@
                     container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
                     sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
                 } else if (socViewLevel === 2) {
-                    let finalItems = socData.filter(i => i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
-                    
-                    finalItems = finalItems.map(socItem => {
-                        const invMatch = fullInventory.find(inv => inv.ITEMCODE === socItem.ITEMCODE);
-                        socItem._PRIORITY = invMatch ? (parseFloat(invMatch.PRIORITY) || 9999) : 9999;
-                        socItem._PHOTO = invMatch ? invMatch.SAVED_PHOTO_LINK : "";
-                        socItem._NOTE = invMatch ? invMatch.SAVED_NOTE : "";
-                        socItem._ACTION = invMatch ? invMatch.SAVED_PICK : "";
-                        return socItem;
-                    });
-
-                    finalItems.sort((a, b) => {
-                         const pA = (a._PRIORITY > 0) ? a._PRIORITY : 999999;
-                         const pB = (b._PRIORITY > 0) ? b._PRIORITY : 999999;
-                         return pA - pB;
-                    });
-
-                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
-                    finalItems.map(i => {
-                        let thumbHtml = '';
-                        if (i._PHOTO) {
-                            const firstLink = i._PHOTO.split(',')[0];
-                            let thumbUrl = firstLink;
-                            const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                            if (idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
-                            thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-2 bg-gray-200">`;
-                        }
-
-                        let noteHtml = '';
-                        if (i._NOTE) noteHtml += `<div class="text-[10px] text-gray-500 italic mt-1 border-t pt-1"><i class="ph-bold ph-note"></i> ${i._NOTE}</div>`;
-                        if (i._ACTION) noteHtml += `<div class="text-[10px] text-blue-600 font-bold mt-1"><i class="ph-bold ph-check-square"></i> ${i._ACTION}</div>`;
-                        
-                        let priBadge = "";
-                        if(i._PRIORITY > 0 && i._PRIORITY < 9999) {
-                            priBadge = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-1 rounded ml-1">PRI: ${i._PRIORITY}</span>`;
-                        }
-
-                        return `
-                        <div class="inv-card flex flex-col gap-2">
-                            <div class="flex items-start">
-                                ${thumbHtml}
-                                <div class="flex-grow">
-                                    <div class="flex justify-between">
-                                        <div class="font-bold text-gray-800 text-sm truncate w-40">${i.CUSTOMERNAME || 'Unknown'}</div>
-                                        <div class="font-bold text-black bg-gray-100 px-2 rounded text-xs flex items-center">Qty: ${i.QTYORDERED || i.QTY || 0}</div>
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1">Rep: <strong>${i.SALESREP || '-'}</strong> | Order: ${i.ORDERNO || '-'} ${priBadge}</div>
-                                    <div class="text-xs text-gray-400">Ship: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
-                                </div>
-                            </div>
-                            ${noteHtml}
-                        </div>`;
-                    }).join('');
+                    // SHOW ITEM DETAIL DASHBOARD (Aggregated view for "Item Lookup")
+                    renderSocItemDetail(selectedSocCommon, selectedSocSize);
                 }
                 return;
             }
 
+            // HIERARCHY VIEW (Rep -> Customer -> Common -> Size -> Cards)
             if(socViewLevel === 0) { 
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
@@ -1500,15 +1450,126 @@
                 const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
                 container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
             } else if(socViewLevel === 2) { 
-                const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust); 
-                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>${items.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs text-gray-500">${i.COMMONNAME || ''}</div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join('')}`; 
+                // Show Common Names for this Customer
+                const custItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                const commons = [...new Set(custItems.map(i => i.COMMONNAME))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>` + 
+                commons.map(c => `<div class="drill-item" onclick="selectSocCommonName('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (socViewLevel === 3) {
+                // Show Sizes for this Common Name (Customer Scope)
+                const namedItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
+                sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (socViewLevel === 4) {
+                // Show Actual Order Cards
+                const finalItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=3; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
+                finalItems.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join(''); 
             }
         }
         
-        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        function renderSocItemDetail(common, size) {
+            const container = document.getElementById('soc-content');
+            
+            // 1. Get Matching Inventory Data (for photos/notes)
+            const invMatches = fullInventory.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
+            // Sort by priority to get the "best" data first
+            invMatches.sort((a, b) => {
+                 const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
+                 const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
+                 return pA - pB;
+            });
+            
+            const bestInv = invMatches.length > 0 ? invMatches[0] : null;
+            
+            // 2. Get All Orders for this item
+            const orders = socData.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
+            
+            // Build Header (Inventory Info)
+            let headerHtml = `<div class="bg-white p-4 rounded-lg shadow mb-4 border border-gray-200">
+                <div class="font-bold text-xl text-[#007a4d] mb-2">${common}</div>
+                <div class="text-sm font-bold text-gray-600 mb-2">${size}</div>`;
+                
+            if(bestInv) {
+                headerHtml += `<div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div class="bg-gray-50 p-2 rounded"><strong>Loc:</strong> ${bestInv.LOCATIONCODE || '-'}</div>
+                    <div class="bg-gray-50 p-2 rounded"><strong>Avail:</strong> ${bestInv.PTRAVAILABLE || '0'}</div>
+                </div>`;
+                if(bestInv.SAVED_NOTE) headerHtml += `<div class="text-xs italic text-gray-500 mb-2">Note: ${bestInv.SAVED_NOTE}</div>`;
+                
+                if(bestInv.SAVED_PHOTO_LINK) {
+                    const firstLink = bestInv.SAVED_PHOTO_LINK.split(',')[0];
+                    let thumbUrl = firstLink;
+                    const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
+                    headerHtml += `<img src="${thumbUrl}" class="w-full h-48 object-cover rounded mb-2">`;
+                }
+            } else {
+                headerHtml += `<div class="text-xs text-red-500 italic mb-2">No matching inventory data found in Drive.</div>`;
+            }
+            
+            // Email Button
+            headerHtml += `<button onclick='emailAllRepsForItem(${JSON.stringify(bestInv || {COMMONNAME: common, CONTSIZE: size})}, ${JSON.stringify(orders)})' class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 mb-2"><i class="ph-bold ph-envelope"></i> EMAIL ALL REPS</button>`;
+            
+            headerHtml += `</div>`;
+            
+            // Build Order List
+            let listHtml = `<div class="font-bold text-gray-500 text-xs uppercase mb-2">Customer Orders (${orders.length})</div>`;
+            listHtml += orders.map(o => `
+                <div class="inv-card">
+                    <div class="flex justify-between">
+                        <div class="font-bold text-gray-800 text-sm truncate w-2/3">${o.CUSTOMERNAME}</div>
+                        <div class="font-bold text-black">${o.QTYORDERED || o.QTY || 0}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Rep: <strong>${o.SALESREP}</strong> | Order: ${o.ORDERNO}</div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + headerHtml + listHtml;
+        }
         
-        function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = 1; renderSocView(); }
-        function selectSocSize(s) { selectedSocSize = s; socViewLevel = 2; renderSocView(); }
+        function emailAllRepsForItem(invItem, orders) {
+            // 1. Find Unique Reps
+            const uniqueReps = [...new Set(orders.map(o => o.SALESREP))];
+            
+            // 2. Find Emails
+            let emails = [];
+            uniqueReps.forEach(repName => {
+                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName);
+                if(dirEntry && dirEntry.email) emails.push(dirEntry.email);
+            });
+            
+            // Fallback: If no emails found or not in directory, maybe alert or just use admin
+            if(emails.length === 0) {
+                alert("No emails found for these reps in directory.");
+                return;
+            }
+            
+            // 3. Construct Subject
+            const subject = `${invItem.COMMONNAME} - ${invItem.CONTSIZE}`;
+            
+            // 4. Construct Body
+            let body = `Team,\n\nHere is the current data for:\n${invItem.COMMONNAME} (${invItem.CONTSIZE})\n\n`;
+            body += `Location: ${invItem.LOCATIONCODE || 'N/A'}\n`;
+            body += `Qty Available: ${invItem.PTRAVAILABLE || '0'}\n`;
+            body += `Notes: ${invItem.SAVED_NOTE || 'None'}\n\n`;
+            
+            if(invItem.SAVED_PHOTO_LINK) {
+                body += `Photos:\n${invItem.SAVED_PHOTO_LINK.replace(/,/g, '\n')}\n\n`;
+            }
+            
+            body += `Total Orders on this list: ${orders.length}\n`;
+            
+            // 5. Open Mail Client
+            // Join emails with comma
+            const mailtoLink = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+        }
+        
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = (currentSocTab === 'reps') ? 3 : 1; renderSocView(); }
+        function selectSocSize(s) { selectedSocSize = s; socViewLevel = (currentSocTab === 'reps') ? 4 : 2; renderSocView(); }
 
         function initDriveFilters() {
             const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
