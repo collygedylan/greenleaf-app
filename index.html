@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INV PRO 0001</title>
+    <title>GNCPRO 02</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -40,12 +40,10 @@
         
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
         
-        /* BATCH MODE STYLES */
-        .inv-card.selecting { background-color: #f0fdf4; border-color: #15803d; transform: scale(0.98); }
-        .select-check { display: none; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
-        
-        /* Force display block when parent has batch-mode class */
-        .batch-mode .select-check { display: block !important; }
+        /* BATCH MODE STYLES - IMPORTANT */
+        .batch-mode .select-check { display: block !important; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
+        .select-check { display: none; } /* Hidden by default */
+        .inv-card.selecting { background-color: #f0fdf4 !important; border-color: #15803d !important; transform: scale(0.98); }
         
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
         
@@ -2539,7 +2537,7 @@
         }
 
         function toggleSelect(idx) {
-            if (!isBatch && !document.getElementById('row-'+idx).classList.contains('batch-mode')) { openDetail(idx, currentOriginView || 'drive'); return; }
+            if (!isBatch) { openDetail(idx, currentOriginView || 'drive'); return; }
             
             const cb = document.querySelector(`#row-${idx} .select-check`);
             if (cb) {
