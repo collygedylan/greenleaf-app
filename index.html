@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 018</title>
+    <title>Greenleaf Pro TURBO 019</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 018
+                TURBO 019
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 018 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 019 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -790,6 +790,19 @@
         ];
 
         let currentSocTab = 'reps';
+
+        // HELPER TO NORMALIZE NAMES (Handles "LastName, FirstName" vs "FirstName LastName")
+        function normalizeRepName(name) {
+            if (!name) return "";
+            name = name.trim();
+            if (name.includes(",")) {
+                let parts = name.split(",");
+                if (parts.length === 2) {
+                    return parts[1].trim() + " " + parts[0].trim(); // Converts "Smith, John" to "John Smith"
+                }
+            }
+            return name;
+        }
 
         function getLocPrefix(loc) {
             if (!loc) return "No Loc";
@@ -1903,10 +1916,18 @@
                     // *** RENDER REP FOLDERS (Pending Request Root) ***
                     document.getElementById('review-folder-title').innerText = "Pending Requests (Select Rep)";
                     container.innerHTML = STATIC_DIRECTORY.map(rep => {
-                        const count = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === rep.name) || (i.REQUEST_ASSIGNED_TO || "").includes(rep.name))).length;
+                        const count = fullInventory.filter(i => {
+                            if(i.TASK_TAB !== 'requests') return false;
+                            const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                            const repName = rep.name;
+                            const normalized = normalizeRepName(assignedTo);
+                            // Check exact match, partial match, or reversed name match
+                            return assignedTo.includes(repName) || normalized.includes(repName) || (i.SALESREP === rep.name);
+                        }).length;
+                        
                         return `<div class="drill-item" onclick="selectPendingRep('${rep.name.replace(/'/g, "\\'")}')">
                                     <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                        <i class="ph-fill ph-folder text-green-600 text-2xl"></i>
                                         <div>
                                             <div class="font-bold text-lg">${rep.name}</div>
                                             <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
@@ -1920,7 +1941,13 @@
                 } else {
                     // *** RENDER ITEMS FOR SELECTED PENDING REP ***
                     document.getElementById('review-folder-title').innerText = `Pending: ${selectedPendingRep}`;
-                    filteredItems = fullInventory.filter(i => i.TASK_TAB === 'requests' && ((i.SALESREP === selectedPendingRep) || (i.REQUEST_ASSIGNED_TO || "").includes(selectedPendingRep)));
+                    filteredItems = fullInventory.filter(i => {
+                        if(i.TASK_TAB !== 'requests') return false;
+                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                        const repName = selectedPendingRep;
+                        const normalized = normalizeRepName(assignedTo);
+                        return assignedTo.includes(repName) || normalized.includes(repName) || (i.SALESREP === repName);
+                    });
                 }
             } 
             // --- COMPLETED FOLDER LOGIC (NEW) ---
@@ -1930,7 +1957,14 @@
                     document.getElementById('review-folder-title').innerText = "Completed Requests (Select Rep)";
                     container.innerHTML = STATIC_DIRECTORY.map(rep => {
                         // Count completed items for this rep
-                        const count = fullInventory.filter(i => i.TASK_TAB === 'review' && ((i.SALESREP === rep.name) || (i.REQUEST_ASSIGNED_TO || "").includes(rep.name))).length;
+                        const count = fullInventory.filter(i => {
+                            if(i.TASK_TAB !== 'review') return false;
+                            const assignedTo = i.REQUEST_ASSIGNED_TO || ""; // Note: completed items might have cleared assignment, checking SALESREP or historic
+                            const repName = rep.name;
+                            // Check SALESREP field if assignment is cleared, or if historical data persists
+                            return (i.SALESREP === repName) || (assignedTo && assignedTo.includes(repName));
+                        }).length;
+
                         return `<div class="drill-item" onclick="selectCompletedRep('${rep.name.replace(/'/g, "\\'")}')">
                                     <div class="flex items-center gap-3">
                                         <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
@@ -1947,7 +1981,12 @@
                 } else {
                     // *** RENDER ITEMS FOR SELECTED COMPLETED REP ***
                     document.getElementById('review-folder-title').innerText = `Completed: ${selectedCompletedRep}`;
-                    filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review' && ((i.SALESREP === selectedCompletedRep) || (i.REQUEST_ASSIGNED_TO || "").includes(selectedCompletedRep)));
+                    filteredItems = fullInventory.filter(i => {
+                        if(i.TASK_TAB !== 'review') return false;
+                        const repName = selectedCompletedRep;
+                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                        return (i.SALESREP === repName) || (assignedTo && assignedTo.includes(repName));
+                    });
                 }
             } 
             // --- ITEM REVIEW (NO WINNER) LOGIC ---
