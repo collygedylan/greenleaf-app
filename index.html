@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INV PRO 0001</title>
+    <title>GNCPRO 02</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -41,7 +41,7 @@
         /* CARD STYLES */
         .inv-card { 
             border: 1px solid #e5e7eb; 
-            border-left-width: 6px; /* Thick left border for status color */
+            border-left-width: 6px; 
             border-radius: 8px; 
             padding: 12px; 
             margin-bottom: 8px; 
@@ -53,10 +53,11 @@
             contain-intrinsic-size: 80px; 
         }
         
-        .status-green { border-left-color: #22c55e; } /* Green */
-        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } /* Yellow/Hold */
-        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } /* Red/Stop */
+        .status-green { border-left-color: #22c55e; }
+        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; }
+        .status-red { border-left-color: #ef4444; background-color: #fef2f2; }
 
+        /* BATCH MODE STYLES */
         .batch-mode .select-check { display: block !important; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
         .select-check { display: none; } 
         .inv-card.selecting { background-color: #f0fdf4 !important; border-color: #15803d !important; transform: scale(0.98); }
@@ -188,7 +189,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                INV PRO 0001
+                GNCPRO 02
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -218,7 +219,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        INV PRO 0001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNCPRO 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -2409,6 +2410,7 @@
             
             let assignStr = selected.join(" & ");
             let emailTo = selected.length === 1 ? selected[0] : "Admin";
+
             let taskTab = assignType; 
             let projectName = "";
 
@@ -2427,9 +2429,11 @@
                 if(noteText) {
                     newItemNote = newItemNote ? newItemNote + " | Directions: " + noteText : "Directions: " + noteText;
                 }
+
                 item.REQUEST_ASSIGNED_TO = assignStr; 
                 item.TASK_TAB = taskTab; 
                 item.SAVED_NOTE = newItemNote;
+
                 return { 
                     id: item.UNIQUE_ID, 
                     requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
