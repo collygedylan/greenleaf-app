@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 021</title>
+    <title>Greenleaf Pro TURBO 022</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 021
+                TURBO 022
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 021 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 022 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -412,7 +412,7 @@
                 <div id="review-root-folders"></div>
                 
                 <div id="review-folder-view" class="hidden">
-                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> Back to Folders</div>
+                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
                     <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800"></h3>
                     <div id="failed-saves-container"></div>
                     <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewContent()">
@@ -463,6 +463,7 @@
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
                         <div class="overview-card full-width"><div class="overview-label">Source File</div><div id="ov-source" class="overview-val">--</div></div>
+                        <div class="overview-card full-width"><div class="overview-label">Customer</div><div id="ov-customer" class="overview-val text-blue-600 font-bold">--</div></div>
                     </div>
                     <div id="expand-section" class="mt-6">
                         <div class="expand-trigger" onclick="toggleExpand()">
@@ -730,7 +731,7 @@
         let longPressTimer; 
         let autoSyncTimer;
         let debounceTimer; 
-        let syncPauseUntil = 0; // NEW: SYNC PAUSE TIMER
+        let syncPauseUntil = 0; 
 
         window.lastLocalUpdate = 0;
 
@@ -762,10 +763,10 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
-        // MANAGER REVIEW STATE (Updated to Folders)
-        let currentReviewFolder = null; 
-        let selectedPendingRep = null; 
-        let selectedCompletedRep = null; 
+        // MANAGER REVIEW STATE (Updated to Deep Folders)
+        let currentReviewFolder = null; // 'pending', 'completed', 'item_review'
+        let currentReviewRep = null; // Filter for Rep Level
+        let currentReviewCustomer = null; // Filter for Customer Level
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -793,7 +794,7 @@
             } 
         }
 
-        // --- STATIC DIRECTORY (UPDATED WITH CORRECT NAMES & IDs) ---
+        // --- STATIC DIRECTORY ---
         const STATIC_DIRECTORY = [
             { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
             { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
@@ -825,6 +826,7 @@
         function normalizeRepName(name) {
             if (!name) return "";
             name = name.trim();
+            // Check for "Last, First" format
             if (name.includes(",")) {
                 let parts = name.split(",");
                 if (parts.length === 2) {
@@ -1021,7 +1023,6 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
                         } 
-                        // Add other view refresh logic here...
                     }
                 } else { 
                     throw new Error(cloudJson.message || "Failed to load data."); 
@@ -1087,7 +1088,6 @@
         function saveData(silent = false) {
             if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
             
-            // *** SYNC FIX: Pause Sync for 15s on Save ***
             syncPauseUntil = new Date().getTime() + 15000; 
             window.lastLocalUpdate = new Date().getTime();
 
@@ -1170,7 +1170,6 @@
         function markRequestComplete() {
             if(!activeItem) return;
             
-            // *** SYNC FIX: Pause Sync for 15s on Complete ***
             syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
             
@@ -1896,8 +1895,8 @@
 
         function openReviewFolder(folderType) {
             currentReviewFolder = folderType;
-            selectedPendingRep = null; 
-            selectedCompletedRep = null; 
+            currentReviewRep = null;
+            currentReviewCustomer = null;
             document.getElementById('review-root-folders').classList.add('hidden');
             document.getElementById('review-folder-view').classList.remove('hidden');
             
@@ -1907,21 +1906,25 @@
             if(folderType === 'item_review') title = "Item Review (No Winner)";
             
             document.getElementById('review-folder-title').innerText = title;
+            document.getElementById('review-back-label').innerText = "Back to Folders";
             reviewViewLevel = 0;
             renderReviewContent();
         }
 
         function resetReviewFolders() {
-            if(selectedPendingRep && currentReviewFolder === 'pending') {
-                selectedPendingRep = null;
+            if(currentReviewCustomer) {
+                // Back to Rep's Customer List
+                currentReviewCustomer = null;
                 renderReviewContent();
                 return;
             }
-            if(selectedCompletedRep && currentReviewFolder === 'completed') {
-                selectedCompletedRep = null;
+            if(currentReviewRep) {
+                // Back to Rep List
+                currentReviewRep = null;
                 renderReviewContent();
                 return;
             }
+            // Back to Main Manager Menu
             currentReviewFolder = null;
             renderManagerFolders();
         }
@@ -1931,7 +1934,6 @@
             const term = document.getElementById('review-search').value.toLowerCase();
             const failContainer = document.getElementById('failed-saves-container');
             
-            // Only show offline warnings if in "completed" folder view
             if(currentReviewFolder === 'completed') {
                 let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
                 if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
@@ -1939,134 +1941,139 @@
                 failContainer.innerHTML = '';
             }
 
-            let filteredItems = [];
+            let folderTaskTab = (currentReviewFolder === 'pending') ? 'requests' : 'review';
             
-            // --- PENDING FOLDER LOGIC ---
-            if(currentReviewFolder === 'pending') {
-                if(!selectedPendingRep) {
-                    // *** RENDER REP FOLDERS (Pending Request Root) ***
-                    document.getElementById('review-folder-title').innerText = "Pending Requests (Select Rep)";
-                    container.innerHTML = STATIC_DIRECTORY.map(rep => {
-                        const count = fullInventory.filter(i => {
-                            if(i.TASK_TAB !== 'requests') return false;
-                            const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                            const repName = rep.name;
-                            const normalized = normalizeRepName(assignedTo);
-                            // Check exact match, partial match, or reversed name match
-                            return assignedTo.includes(repName) || normalized.includes(repName) || (i.SALESREP === rep.name);
-                        }).length;
-                        
-                        return `<div class="drill-item" onclick="selectPendingRep('${rep.name.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-green-600 text-2xl"></i>
-                                        <div>
-                                            <div class="font-bold text-lg">${rep.name}</div>
-                                            <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-gray-400 font-bold text-sm">(${count})</span>
-                                    <i class="ph-bold ph-caret-right ml-2"></i>
-                                </div>`;
-                    }).join('');
-                    return; 
-                } else {
-                    // *** RENDER ITEMS FOR SELECTED PENDING REP ***
-                    document.getElementById('review-folder-title').innerText = `Pending: ${selectedPendingRep}`;
-                    filteredItems = fullInventory.filter(i => {
-                        if(i.TASK_TAB !== 'requests') return false;
-                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                        const repName = selectedPendingRep;
-                        const normalized = normalizeRepName(assignedTo);
-                        return assignedTo.includes(repName) || normalized.includes(repName) || (i.SALESREP === repName);
-                    });
-                }
-            } 
-            // --- COMPLETED FOLDER LOGIC (NEW) ---
-            else if(currentReviewFolder === 'completed') {
-                if(!selectedCompletedRep) {
-                    // *** RENDER REP FOLDERS (Completed Request Root) ***
-                    document.getElementById('review-folder-title').innerText = "Completed Requests (Select Rep)";
-                    container.innerHTML = STATIC_DIRECTORY.map(rep => {
-                        // Count completed items for this rep
-                        const count = fullInventory.filter(i => {
-                            if(i.TASK_TAB !== 'review') return false;
-                            const assignedTo = i.REQUEST_ASSIGNED_TO || ""; 
-                            const repName = rep.name;
-                            const normalized = normalizeRepName(assignedTo);
-                            // Check exact match, partial match, or reversed name match
-                            return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
-                        }).length;
-
-                        return `<div class="drill-item" onclick="selectCompletedRep('${rep.name.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
-                                        <div>
-                                            <div class="font-bold text-lg">${rep.name}</div>
-                                            <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-gray-400 font-bold text-sm">(${count})</span>
-                                    <i class="ph-bold ph-caret-right ml-2"></i>
-                                </div>`;
-                    }).join('');
-                    return;
-                } else {
-                    // *** RENDER ITEMS FOR SELECTED COMPLETED REP ***
-                    document.getElementById('review-folder-title').innerText = `Completed: ${selectedCompletedRep}`;
-                    filteredItems = fullInventory.filter(i => {
-                        if(i.TASK_TAB !== 'review') return false;
-                        const repName = selectedCompletedRep;
-                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                        const normalized = normalizeRepName(assignedTo);
-                        return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
-                    });
-                }
-            } 
-            // --- ITEM REVIEW (NO WINNER) LOGIC ---
-            else if(currentReviewFolder === 'item_review') {
-                filteredItems = fullInventory.filter(i => {
+            // --- NO WINNER FOLDER (Simple List) ---
+            if(currentReviewFolder === 'item_review') {
+                let filteredItems = fullInventory.filter(i => {
                     const pri = parseFloat(i.PRIORITY);
                     const qty = parseFloat(i.PTRAVAILABLE) || 0;
                     return (pri > 0 && pri < 9999) && (qty <= 0);
                 });
+                
+                if(term) { 
+                    filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                    return;
+                }
+
+                if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; return; }
+
+                if(reviewViewLevel === 0) { 
+                    const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
+                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
+                } else if(reviewViewLevel === 1) { 
+                    const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); 
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
+                    container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
+                } else if(reviewViewLevel === 2) { 
+                    const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
+                    container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
+                }
+                return;
             }
+
+            // --- PENDING & COMPLETED FOLDERS (Rep -> Customer -> Items) ---
+            
+            // LEVEL 1: LIST SALES REPS
+            if(!currentReviewRep) {
+                document.getElementById('review-folder-title').innerText = currentReviewFolder === 'pending' ? "Pending Requests" : "Completed Requests";
+                document.getElementById('review-back-label').innerText = "Back to Folders";
+                
+                container.innerHTML = STATIC_DIRECTORY.map(rep => {
+                    const count = fullInventory.filter(i => {
+                        if(i.TASK_TAB !== folderTaskTab) return false;
+                        const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                        const repName = rep.name;
+                        const normalized = normalizeRepName(assignedTo);
+                        // Check SalesRep Column OR Assigned To
+                        return (i.SALESREP === rep.name) || assignedTo.includes(repName) || normalized.includes(repName);
+                    }).length;
+                    
+                    return `<div class="drill-item" onclick="selectReviewRep('${rep.name.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
+                                    <div>
+                                        <div class="font-bold text-lg">${rep.name}</div>
+                                        <div class="text-xs text-gray-400 font-bold">${rep.id}</div>
+                                    </div>
+                                </div>
+                                <span class="text-gray-400 font-bold text-sm">(${count})</span>
+                                <i class="ph-bold ph-caret-right ml-2"></i>
+                            </div>`;
+                }).join('');
+                return;
+            }
+
+            // LEVEL 2: LIST CUSTOMERS FOR SELECTED REP
+            if(!currentReviewCustomer) {
+                document.getElementById('review-folder-title').innerText = currentReviewRep;
+                document.getElementById('review-back-label').innerText = "Back to Reps";
+                
+                // Filter items for this rep
+                const repItems = fullInventory.filter(i => {
+                    if(i.TASK_TAB !== folderTaskTab) return false;
+                    const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                    const repName = currentReviewRep;
+                    const normalized = normalizeRepName(assignedTo);
+                    return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
+                });
+
+                // Get Unique Customers
+                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer"))].sort();
+                
+                if(customers.length === 0) {
+                     container.innerHTML = `<div class="p-8 text-center text-gray-400">No customers found for this rep.</div>`;
+                     return;
+                }
+
+                container.innerHTML = customers.map(cust => {
+                    const custCount = repItems.filter(i => (i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer") === cust).length;
+                    return `<div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                    <span class="font-bold text-sm">${cust}</span>
+                                </div>
+                                <span class="text-gray-400 font-bold text-xs">(${custCount})</span>
+                                <i class="ph-bold ph-caret-right ml-2"></i>
+                            </div>`;
+                }).join('');
+                return;
+            }
+
+            // LEVEL 3: SHOW ITEMS FOR CUSTOMER
+            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
+            document.getElementById('review-back-label').innerText = "Back to Customers";
+            
+            let finalItems = fullInventory.filter(i => {
+                if(i.TASK_TAB !== folderTaskTab) return false;
+                
+                // Rep Check
+                const assignedTo = i.REQUEST_ASSIGNED_TO || "";
+                const repName = currentReviewRep;
+                const normalized = normalizeRepName(assignedTo);
+                const isRepMatch = (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
+                if(!isRepMatch) return false;
+
+                // Customer Check
+                const itemCust = i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer";
+                return itemCust === currentReviewCustomer;
+            });
 
             if(term) { 
-                const matched = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
-                return; 
+                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
             }
 
-            if(filteredItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; 
-                return; 
-            }
-
-            // Using the same Name/Size drill-down logic
-            if(reviewViewLevel === 0) { 
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
-                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
-            }
-            else if(reviewViewLevel === 1) { 
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); 
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
-            }
-            else if(reviewViewLevel === 2) { 
-                const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
-            }
+            container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
         }
         
-        function selectPendingRep(repName) {
-            selectedPendingRep = repName;
-            reviewViewLevel = 0;
+        function selectReviewRep(repName) {
+            currentReviewRep = repName;
             renderReviewContent();
         }
 
-        function selectCompletedRep(repName) {
-            selectedCompletedRep = repName;
-            reviewViewLevel = 0;
+        function selectReviewCustomer(custName) {
+            currentReviewCustomer = custName;
             renderReviewContent();
         }
         
@@ -2162,6 +2169,10 @@
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
             document.getElementById('view-detail').classList.remove('hidden'); 
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+            
+            // SHOW CUSTOMER NAME IN DETAIL VIEW
+            document.getElementById('ov-customer').innerText = activeItem.CUSTOMERNAME || activeItem.CONSIGNEENAME || "Unknown Customer";
+
             document.getElementById('expand-section').classList.remove('expanded'); document.getElementById('expand-content').innerHTML = ''; 
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
             const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
