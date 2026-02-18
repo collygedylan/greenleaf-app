@@ -166,8 +166,29 @@
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
         .text-production { color: #d97706; }
 
-        /* Request Form Styles */
+        /* Request Form Styles & List Item */
         #request-form-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; flex-direction: column; }
+        
+        .req-list-item {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .req-list-details {
+            font-size: 12px;
+            color: #166534;
+            line-height: 1.4;
+        }
+        .req-remove-btn {
+            color: #ef4444;
+            padding: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -202,44 +223,65 @@
             <button onclick="closeRequestForm()" class="text-white font-bold">Cancel</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
-            <div class="input-stack">
-                <div>
+            
+            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm mb-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">1. Request Header</h3>
+                <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Sales Rep</label>
-                    <select id="req-rep" class="input-field bg-white">
-                        <option value="">-- Select Rep --</option>
-                    </select>
+                    <select id="req-rep" class="input-field bg-white mb-0"></select>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Customer Name</label>
-                    <input type="text" id="req-cust" class="input-field" placeholder="e.g. Lowe's">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Item Name</label>
-                    <input type="text" id="req-item" class="input-field" placeholder="e.g. Green Velvet Boxwood">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Container Size</label>
-                    <input type="text" id="req-size" class="input-field" placeholder="e.g. 3G">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Request Qty</label>
-                        <input type="number" id="req-qty" class="input-field" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Ship Date</label>
-                        <input type="date" id="req-date" class="input-field">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
-                    <input type="text" id="req-use" class="input-field" placeholder="e.g. Landscape Job / Retail Ad">
+                    <input type="text" id="req-cust" class="input-field mb-0" placeholder="e.g. Lowe's">
                 </div>
             </div>
-            
-            <button onclick="submitRequest()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-6 flex items-center justify-center gap-2">
-                <i class="ph-bold ph-paper-plane-right text-xl"></i> SUBMIT REQUEST
-            </button>
+
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">2. Item Details</h3>
+                
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Item Name</label>
+                    <input type="text" id="req-item" class="input-field mb-0" placeholder="e.g. Green Velvet Boxwood">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Container Size</label>
+                        <input type="text" id="req-size" class="input-field mb-0" placeholder="e.g. 3G">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Request Qty</label>
+                        <input type="number" id="req-qty" class="input-field mb-0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
+                    <input type="text" id="req-use" class="input-field mb-0" placeholder="e.g. Landscape Job">
+                </div>
+
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Ship Date</label>
+                    <input type="date" id="req-date" class="input-field mb-0">
+                </div>
+
+                <button onclick="addItemToRequestList()" class="w-full bg-white border-2 border-[#007a4d] text-[#007a4d] font-bold py-3 rounded-lg mt-2 flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-plus-circle"></i> ADD ITEM TO LIST
+                </button>
+            </div>
+
+            <div id="req-preview-container" class="hidden mb-20">
+                <div class="flex justify-between items-end mb-2">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Items to Submit</h3>
+                    <span id="req-count-badge" class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="req-list-content"></div>
+                
+                <button onclick="submitRequestBatch()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-paper-plane-right text-xl"></i> SUBMIT ALL REQUESTS
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -937,7 +979,9 @@
             return loc;
         }
 
-        // --- NEW REQUEST SYSTEM LOGIC ---
+        // --- UPDATED REQUEST SYSTEM LOGIC ---
+
+        let pendingRequestItems = []; // Global array to hold items before submitting
 
         function openRequestForm() {
             // Populate Reps
@@ -950,76 +994,166 @@
                 repSelect.appendChild(opt);
             });
             
-            // Clear fields
+            // Clear Header Fields
             document.getElementById('req-cust').value = "";
-            document.getElementById('req-item').value = "";
-            document.getElementById('req-size').value = "";
-            document.getElementById('req-qty').value = "";
-            document.getElementById('req-date').value = "";
-            document.getElementById('req-use').value = "";
+            
+            // Reset List
+            pendingRequestItems = [];
+            renderRequestList();
+            
+            // Clear Inputs
+            clearRequestInputs();
 
             document.getElementById('request-form-modal').style.display = 'flex';
         }
-
+        
         function closeRequestForm() {
             document.getElementById('request-form-modal').style.display = 'none';
         }
 
-        function submitRequest() {
+        function clearRequestInputs() {
+            document.getElementById('req-item').value = "";
+            document.getElementById('req-size').value = "";
+            document.getElementById('req-qty').value = "";
+            document.getElementById('req-use').value = "";
+            // Note: We leave Date populated as it's usually the same for the whole batch
+        }
+
+        function addItemToRequestList() {
+            // 1. Get Header Data (Validation)
             const rep = document.getElementById('req-rep').value;
             const cust = document.getElementById('req-cust').value.toUpperCase().trim();
+
+            if(!rep || !cust) {
+                showToast("Error", "Select Rep and Customer first.", true);
+                return;
+            }
+
+            // 2. Get Item Data
             const item = document.getElementById('req-item').value.trim();
             const size = document.getElementById('req-size').value.trim();
             const qty = document.getElementById('req-qty').value;
             const date = document.getElementById('req-date').value;
             const use = document.getElementById('req-use').value;
 
-            if(!rep || !cust || !item) {
-                showToast("Error", "Rep, Customer, and Item are required.", true);
+            if(!item) {
+                showToast("Error", "Item Name is required.", true);
                 return;
             }
 
-            // GENERATE UNIQUE ID: RepName-Customer-Date-7Digits
-            const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
-            const random = Math.floor(1000000 + Math.random() * 9000000);
-            const reqId = `${rep}-${cust}-${today}-${random}`;
-
-            // Create New Item Object (Virtual Item)
-            const newItem = {
-                UNIQUE_ID: reqId,
-                COMMONNAME: item,
-                CONTSIZE: size,
-                CUSTOMERNAME: cust,
-                SALESREP: rep,
-                QTY: qty,
-                SHIPDATE: date,
-                REQ_USE: use,
-                TASK_TAB: 'requests', // Goes to Pending Folder
-                REQUEST_ASSIGNED_TO: 'Manager Review', // Needs assignment
-                TIMESTAMP: new Date().toISOString()
+            // 3. Create Temp Object
+            const tempObj = {
+                item: item,
+                size: size,
+                qty: qty,
+                date: date,
+                use: use
             };
 
-            // Add to local array
-            fullInventory.unshift(newItem);
+            // 4. Add to Array & Render
+            pendingRequestItems.push(tempObj);
+            renderRequestList();
+            clearRequestInputs(); // Ready for next item
+            
+            // Focus back on item input for speed
+            document.getElementById('req-item').focus();
+        }
 
-            // Send to Backend
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    type: "create_request",
-                    item: newItem,
-                    user: currentUser
-                })
-            }).then(res => res.json())
-              .then(data => {
-                  if(data.status === 'success') {
-                      showToast("Success", "Request Created!");
-                      closeRequestForm();
-                      switchView('review'); // Go to Manager Review to see it
-                  } else {
-                      showToast("Error", "Could not save request.", true);
-                  }
-              });
+        function renderRequestList() {
+            const container = document.getElementById('req-list-content');
+            const wrapper = document.getElementById('req-preview-container');
+            const badge = document.getElementById('req-count-badge');
+            
+            if(pendingRequestItems.length === 0) {
+                wrapper.classList.add('hidden');
+                return;
+            }
+            
+            wrapper.classList.remove('hidden');
+            badge.innerText = pendingRequestItems.length;
+
+            container.innerHTML = pendingRequestItems.map((obj, index) => `
+                <div class="req-list-item">
+                    <div class="req-list-details">
+                        <div class="font-bold text-sm">${obj.item}</div>
+                        <div>Size: ${obj.size || '-'} | Qty: ${obj.qty || '-'}</div>
+                        <div class="text-xs opacity-75">${obj.use || ''}</div>
+                    </div>
+                    <div class="req-remove-btn" onclick="removeItemFromRequest(${index})">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeItemFromRequest(index) {
+            pendingRequestItems.splice(index, 1);
+            renderRequestList();
+        }
+
+        function submitRequestBatch() {
+            const rep = document.getElementById('req-rep').value;
+            const cust = document.getElementById('req-cust').value.toUpperCase().trim();
+            
+            if(pendingRequestItems.length === 0) return;
+
+            showToast("Sending...", `Submitting ${pendingRequestItems.length} items...`);
+
+            // Prepare batch items for backend
+            const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+            
+            // We loop and create specific objects for the inventory array
+            const newInventoryItems = pendingRequestItems.map(obj => {
+                const random = Math.floor(1000000 + Math.random() * 9000000);
+                // Ensure ID is unique
+                const reqId = `${rep}-${cust}-${todayStr}-${random}`; 
+
+                return {
+                    UNIQUE_ID: reqId,
+                    COMMONNAME: obj.item,
+                    CONTSIZE: obj.size,
+                    CUSTOMERNAME: cust,
+                    SALESREP: rep,
+                    QTY: obj.qty,
+                    SHIPDATE: obj.date,
+                    REQ_USE: obj.use,
+                    TASK_TAB: 'requests', // THIS PUTS IT IN PENDING FOLDER
+                    REQUEST_ASSIGNED_TO: 'Manager Review', 
+                    TIMESTAMP: new Date().toISOString()
+                };
+            });
+
+            // 1. Add to local state immediately (so they see it)
+            newInventoryItems.forEach(item => fullInventory.unshift(item));
+
+            // 2. Send to Google Sheet (using existing endpoint logic)
+            // We loop fetch calls to keep compatibility with existing backend
+            let processed = 0;
+            newInventoryItems.forEach(item => {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        type: "create_request",
+                        item: item,
+                        user: currentUser
+                    })
+                }).then(() => {
+                    processed++;
+                    if(processed === newInventoryItems.length) {
+                        showToast("Success", "All items requested!");
+                    }
+                });
+            });
+
+            // Clean up UI
+            closeRequestForm();
+            
+            // Switch to Manager Review view to verify
+            switchView('review');
+            // Force open Pending folder
+            setTimeout(() => {
+                openReviewFolder('pending');
+            }, 300);
         }
 
         function approveAndSendToRep(item) {
@@ -2308,8 +2442,8 @@
                 let html = "";
                 finalItems.forEach(item => {
                     let approveBtn = "";
-                    if(folderTaskTab === 'review') { // Completed
-                        approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
+                    if(folderTaskTab === 'requests') { // Changed from 'review' to show only on Pending
+                         approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
                     }
                     let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
                     html += `<div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">${cardHtml}<div class="px-2 pb-2">${approveBtn}</div></div>`;
@@ -2583,8 +2717,6 @@
 
         // --- BATCH SELECTION LOGIC ---
         function updateSelected() { 
-            // In the NEW system, updateSelected only updates the ACTION BAR visibility. 
-            // It does NOT clear the array.
             if (selectedIdx.length > 0) { 
                 document.getElementById('action-bar').classList.add('visible'); 
             } else { 
@@ -2594,22 +2726,20 @@
 
         function handleCardClick(idx, source) {
             if(isBatch) {
-                toggleSelect(idx); // Use new toggle logic
+                toggleSelect(idx); 
                 return;
             }
             openDetail(idx, source);
         }
 
         function toggleSelect(idx) {
-            // New logic: Manipulate array directly
             const indexInArray = selectedIdx.indexOf(idx);
             if (indexInArray > -1) {
-                selectedIdx.splice(indexInArray, 1); // Remove
+                selectedIdx.splice(indexInArray, 1); 
             } else {
-                selectedIdx.push(idx); // Add
+                selectedIdx.push(idx); 
             }
 
-            // Update UI immediately for this row
             const row = document.getElementById('row-' + idx);
             const cb = document.getElementById('cb-' + idx);
             if(row && cb) {
@@ -2619,7 +2749,7 @@
                 else row.classList.remove('selecting');
             }
             
-            updateSelected(); // Update bar visibility
+            updateSelected(); 
         }
         
         function openAssignModal() { 
@@ -2927,7 +3057,6 @@
                 document.querySelectorAll('.inv-card').forEach(card => card.classList.remove('selecting'));
             } else {
                 // Entering Batch Mode: Just refresh the CURRENT view to show checkboxes
-                // Do NOT call renderDriveNames() etc, as that resets the view to the top
                 if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
                 if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
                 if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
@@ -2937,7 +3066,6 @@
                 if (!document.getElementById('view-salesoffice').classList.contains('hidden')) renderSalesOffice();
                 if (!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
                 
-                // If we already have selections (from a previous search), show the bar
                 updateSelected();
             }
         }
