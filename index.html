@@ -10,9 +10,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Greenleaf">
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <link rel="icon" type="image/png" href="GNC LOGO.png">
     <link rel="apple-touch-icon" href="GNC LOGO.png">
     
@@ -22,8 +19,7 @@
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
-        .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
-        .pt-safe { padding-top: max(10px, env(safe-area-inset-top)); }
+        .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
@@ -962,6 +958,7 @@
         }
 
         async function fetchData(isSilent = false) {
+            // *** SYNC FIX: If a save just happened, skip this cycle to prevent overwrite ***
             if (new Date().getTime() < syncPauseUntil) {
                 console.log("Skipping Auto-Sync: Pause Active");
                 return;
@@ -996,6 +993,7 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
+                        // Refresh current view if open
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                              const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                              if(freshItem) { 
@@ -1292,6 +1290,7 @@
             const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
             closePhotoEditor();
             
+            // *** SYNC FIX: Pause Sync on Photo Upload ***
             syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
             
@@ -2006,15 +2005,14 @@
                 });
 
                 // Get Unique Customers
-                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer"))].sort();
+                let customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned"))].sort();
                 
-                if(customers.length === 0) {
-                     container.innerHTML = `<div class="p-8 text-center text-gray-400">No customers found for this rep.</div>`;
-                     return;
-                }
+                // FORCE: Always show a "General / Unassigned" folder if the list is empty or doesn't have it
+                if(customers.length === 0) customers = ["General / Unassigned"];
+                else if(!customers.includes("General / Unassigned")) customers.unshift("General / Unassigned");
 
                 container.innerHTML = customers.map(cust => {
-                    const custCount = repItems.filter(i => (i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer") === cust).length;
+                    const custCount = repItems.filter(i => (i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned") === cust).length;
                     return `<div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
                                 <div class="flex items-center gap-3">
                                     <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
@@ -2042,7 +2040,7 @@
                 if(!isRepMatch) return false;
 
                 // Customer Check
-                const itemCust = i.CUSTOMERNAME || i.CONSIGNEENAME || "Unknown Customer";
+                const itemCust = i.CUSTOMERNAME || i.CONSIGNEENAME || "General / Unassigned";
                 return itemCust === currentReviewCustomer;
             });
 
@@ -2050,7 +2048,11 @@
                 finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
             }
 
-            container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
+            if(finalItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found for this customer.</div>`;
+            } else {
+                container.innerHTML = finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('');
+            }
         }
         
         function selectReviewRep(repName) {
