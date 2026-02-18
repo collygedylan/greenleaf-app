@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 020</title>
+    <title>Greenleaf Pro TURBO 021</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 020
+                TURBO 021
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 020 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 021 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -442,6 +442,18 @@
                         <h3 class="text-[10px] font-bold text-green-800 uppercase mb-3">Latest Field Updates</h3>
                         <div id="dynamic-user-grid" class="overview-grid"></div>
                     </div>
+
+                    <div id="directions-banner" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow-sm">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="ph-fill ph-info text-yellow-500 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700 font-bold uppercase">Manager Directions</p>
+                                <p id="directions-text" class="text-sm text-yellow-800 mt-1 font-medium">--</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="task-info-grid">
                         <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
@@ -570,53 +582,63 @@
 
     <div id="assign-modal">
         <div class="modal-card">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Assignment</h2>
-            
-            <div id="auth-flyer-options" class="hidden mb-6 border-b pb-6">
-                <h3 class="text-sm font-bold text-[#007a4d] uppercase mb-2">Marketing Flyer Project</h3>
-                <div class="bg-green-50 p-3 rounded border border-green-200 mb-3">
-                    <label class="text-[10px] font-bold text-green-800 uppercase">Project / Folder Name</label>
-                    <input type="text" id="flyer-project-name" list="dl-projects" class="w-full p-2 border rounded text-sm mt-1 bg-white" placeholder="e.g. Spring Promo 2024">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Assign Items</h2>
+                <div class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold" id="assign-count">0 Items</div>
+            </div>
+
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">1. Select Assignment Type</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="request" class="hidden" checked onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-clipboard-text text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Standard Request</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="flyer" class="hidden" onchange="toggleFlyerOptions(true)">
+                    <i class="ph-bold ph-image text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Flyer Project</span>
+                </label>
+            </div>
+
+            <div id="flyer-options-box" class="hidden mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Project Name</label>
+                    <input type="text" id="flyer-project-name" list="dl-projects" class="w-full p-2 border rounded text-sm bg-white" placeholder="e.g. Spring 2024">
                     <datalist id="dl-projects"></datalist>
                 </div>
                 <div class="space-y-2">
-                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
-                        <input type="radio" name="flyer_assign" value="flyer_crop" class="w-4 h-4 accent-[#007a4d]">
-                        <span class="text-sm font-bold">Crop Update</span>
-                    </label>
-                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
-                        <input type="radio" name="flyer_assign" value="flyer_endcap" class="w-4 h-4 accent-[#007a4d]">
-                        <span class="text-sm font-bold">End Cap</span>
-                    </label>
-                    <label class="flex items-center gap-2 p-2 border rounded bg-white">
-                        <input type="radio" name="flyer_assign" value="flyer_spot" class="w-4 h-4 accent-[#007a4d]">
-                        <span class="text-sm font-bold">Spotlight</span>
-                    </label>
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_crop" checked class="accent-[#007a4d]"> <span class="text-xs font-bold">Crop Update</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_endcap" class="accent-[#007a4d]"> <span class="text-xs font-bold">End Cap</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_spot" class="accent-[#007a4d]"> <span class="text-xs font-bold">Spotlight</span></label>
                 </div>
             </div>
 
-            <h3 class="text-sm font-bold text-gray-500 uppercase mb-2">Standard Request</h3>
-            
-            <div class="bg-gray-100 p-3 rounded mb-4">
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Note / Context</label>
-                <input type="text" id="assign-note" class="w-full p-2 border rounded text-sm mt-1" placeholder="Reason for assignment...">
-            </div>
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">2. Directions (Required)</h3>
+            <textarea id="assign-note" class="w-full p-3 border rounded-lg text-sm mb-4 h-20 bg-gray-50 focus:bg-white focus:border-[#007a4d] outline-none" placeholder="What needs to be done? e.g. Check for mites, get new photo..."></textarea>
 
-            <div class="mb-4 p-3 border rounded bg-gray-50">
-                <label class="flex items-center gap-2">
-                    <input type="checkbox" id="chk-cal-request" class="w-5 h-5 accent-red-600">
-                    <span class="font-bold text-red-600 text-sm">MARK AS CALIPER REQUEST</span>
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
+            <div class="space-y-2 mb-6">
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">D</div>
+                    <span class="font-bold text-sm">Dylan</span>
                 </label>
-            </div>
-            <div class="space-y-3 mb-6">
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Dylan</span></label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Kayla</span></label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50"><input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]"><span class="font-bold">Morgan</span></label>
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-xs">K</div>
+                    <span class="font-bold text-sm">Kayla</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs">M</div>
+                    <span class="font-bold text-sm">Morgan</span>
+                </label>
             </div>
             
             <div class="flex gap-3">
-                <button class="flex-1 py-3 text-gray-500 font-bold" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
-                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg" onclick="batchAssign()">DONE</button>
+                <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
+                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg shadow-md" onclick="batchAssign()">CONFIRM ASSIGN</button>
             </div>
         </div>
     </div>
@@ -632,8 +654,8 @@
         // --- EMAIL CONFIGURATION (UPDATED) ---
         const USER_EMAILS = {
             "Dylan": "dylan_collyge@greenleafnursery.com",
-            "Kayla": "kayla_knepp@greenleafnursery.com",  // Corrected
-            "Morgan": "morgan_anderson@greenleafnursery.com", // Corrected
+            "Kayla": "kayla_knepp@greenleafnursery.com", 
+            "Morgan": "morgan_anderson@greenleafnursery.com",
             "J.D.": "jd_lauger@greenleafnursery.com",
             "Admin": "dylan_collyge@greenleafnursery.com" 
         };
@@ -654,10 +676,17 @@
         }
 
         // Helper to make the email look nice
-        function generateHtmlForItems(items, title) {
+        function generateHtmlForItems(items, title, directions) {
             let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
                         <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
             
+            if(directions) {
+                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
+                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
+                         </div>`;
+            }
+
             items.forEach(item => {
                 html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
                             <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
@@ -689,9 +718,6 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
-        let reviewViewLevel = 0; 
-        let selectedReviewName = null; 
-        let selectedReviewSize = null; 
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null;
@@ -739,8 +765,11 @@
         // MANAGER REVIEW STATE (Updated to Folders)
         let currentReviewFolder = null; 
         let selectedPendingRep = null; 
-        let selectedCompletedRep = null; // New for Completed Rep Folder drill-down
-        
+        let selectedCompletedRep = null; 
+        let reviewViewLevel = 0;
+        let selectedReviewName = null;
+        let selectedReviewSize = null;
+
         // PHOTO EDITOR STATE
         let currentFile = null;
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
@@ -1868,7 +1897,7 @@
         function openReviewFolder(folderType) {
             currentReviewFolder = folderType;
             selectedPendingRep = null; 
-            selectedCompletedRep = null; // Reset
+            selectedCompletedRep = null; 
             document.getElementById('review-root-folders').classList.add('hidden');
             document.getElementById('review-folder-view').classList.remove('hidden');
             
@@ -1961,10 +1990,11 @@
                         // Count completed items for this rep
                         const count = fullInventory.filter(i => {
                             if(i.TASK_TAB !== 'review') return false;
-                            const assignedTo = i.REQUEST_ASSIGNED_TO || ""; // Note: completed items might have cleared assignment, checking SALESREP or historic
+                            const assignedTo = i.REQUEST_ASSIGNED_TO || ""; 
                             const repName = rep.name;
-                            // Check SALESREP field if assignment is cleared, or if historical data persists
-                            return (i.SALESREP === repName) || (assignedTo && assignedTo.includes(repName));
+                            const normalized = normalizeRepName(assignedTo);
+                            // Check exact match, partial match, or reversed name match
+                            return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
                         }).length;
 
                         return `<div class="drill-item" onclick="selectCompletedRep('${rep.name.replace(/'/g, "\\'")}')">
@@ -1987,7 +2017,8 @@
                         if(i.TASK_TAB !== 'review') return false;
                         const repName = selectedCompletedRep;
                         const assignedTo = i.REQUEST_ASSIGNED_TO || "";
-                        return (i.SALESREP === repName) || (assignedTo && assignedTo.includes(repName));
+                        const normalized = normalizeRepName(assignedTo);
+                        return (i.SALESREP === repName) || assignedTo.includes(repName) || normalized.includes(repName);
                     });
                 }
             } 
@@ -2135,6 +2166,22 @@
             if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
             const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
             if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
+            
+            // SHOW/HIDE DIRECTIONS BANNER
+            const banner = document.getElementById('directions-banner');
+            const txt = document.getElementById('directions-text');
+            if(activeItem.SAVED_NOTE && activeItem.SAVED_NOTE.includes("| Directions:")) {
+                 let parts = activeItem.SAVED_NOTE.split("| Directions:");
+                 if(parts.length > 1) {
+                     banner.classList.remove('hidden');
+                     txt.innerText = parts[1].trim();
+                 } else {
+                     banner.classList.add('hidden');
+                 }
+            } else {
+                 banner.classList.add('hidden');
+            }
+
             renderOverviewData(); renderActionsTab(); switchDetailTab('overview');
         }
 
@@ -2143,7 +2190,14 @@
         function renderActionsTab() {
             const btnComplete = document.getElementById('request-complete-container'); const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP); const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
             let canEditText = false; if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { canEditText = true; }
-            if (isMyRequest) { btnComplete.classList.remove('hidden'); } else { btnComplete.classList.add('hidden'); }
+            
+            // UPDATE: Everyone can see complete button if it is a request assigned to them
+            if (activeItem.TASK_TAB === 'requests' || (activeItem.TASK_TAB||"").startsWith("flyer_")) { 
+                btnComplete.classList.remove('hidden'); 
+            } else { 
+                btnComplete.classList.add('hidden'); 
+            }
+            
             if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
         }
 
@@ -2269,164 +2323,91 @@
         function openAssignModal() { 
             if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } 
             
-            if (FLYER_AUTH.includes(currentUser)) {
-                document.getElementById('auth-flyer-options').classList.remove('hidden');
-                const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p);
-                document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join('');
-            } else {
-                document.getElementById('auth-flyer-options').classList.add('hidden');
-            }
-            
+            // Reset modal state
+            document.getElementById('assign-count').innerText = selectedIdx.length + " Items";
+            document.getElementById('flyer-options-box').classList.add('hidden');
+            document.querySelector('input[name="assign_type"][value="request"]').checked = true;
+            document.getElementById('assign-note').value = "";
+            document.getElementById('chk-dylan').checked = false;
+            document.getElementById('chk-kayla').checked = false;
+            document.getElementById('chk-morgan').checked = false;
+
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
 
-        function getBatchText() {
-            let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text;
-        }
-        function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
-        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
-        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
-        function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
-        
-        function handleCardClick(idx, source) { if(isBatch) { const cb = document.getElementById('cb-' + idx); if(cb) { cb.checked = !cb.checked; updateSelected(); } return; } openDetail(idx, source); }
-
-        function createRowHtml(item, idx, source) {
-            let thumbHtml = '';
-            if(item.SAVED_PHOTO_LINK) {
-                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
-                let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
-                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
+        function toggleFlyerOptions(show) {
+            if(show) {
+                document.getElementById('flyer-options-box').classList.remove('hidden');
+            } else {
+                document.getElementById('flyer-options-box').classList.add('hidden');
             }
-            
-            let badges = '';
-            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
-            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
-            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
-            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
-
-            let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
-            let cardClass = "!bg-green-50 !border-green-300"; 
-            let indicator = "";
-
-            if (holdCode === "S") {
-                cardClass = "!bg-red-50 !border-red-300";
-                indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`;
-            } else if (holdCode === "H") {
-                cardClass = "!bg-yellow-50 !border-yellow-300";
-                indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`;
-            }
-
-            return `
-            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
-                ${isAdmin ? `<input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" onchange="updateSelected()">` : ''}
-                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')">
-                    ${thumbHtml}
-                    <div class="flex-grow min-w-0">
-                        <div class="flex justify-between items-start">
-                            <div class="font-bold text-[#007a4d] truncate text-base flex items-center">
-                                ${item.LOCATIONCODE || 'No Loc'}
-                                ${indicator}
-                            </div>
-                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
-                        </div>
-                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
-                        
-                        <div class="text-xs text-gray-500 truncate">
-                            Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong>
-                        </div>
-                        <div class="text-xs text-gray-500 truncate mb-1">
-                            Tag Color: <strong>${item.FIELDTAGCOLOR || '-'}</strong> | Lot: ${item.LOTCODE || '-'}
-                        </div>
-
-                        <div class="flex flex-wrap">${badges}</div>
-                    </div>
-                </div>
-            </div>`;
         }
-        
-        function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
-        function cancelLongPress() { clearTimeout(longPressTimer); }
-        function toggleBatch() { if(!isAdmin) return; isBatch = !isBatch; document.body.classList.toggle('batch-mode', isBatch); document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; if(!isBatch) { document.getElementById('action-bar').classList.remove('visible'); document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); selectedIdx = []; } }
         
         function batchAssign() {
+            const assignType = document.querySelector('input[name="assign_type"]:checked').value;
+            const noteText = document.getElementById('assign-note').value;
+            
             const d = document.getElementById('chk-dylan').checked; 
             const k = document.getElementById('chk-kayla').checked; 
             const m = document.getElementById('chk-morgan').checked; 
-            const isCalReq = document.getElementById('chk-cal-request').checked;
-            const noteText = document.getElementById('assign-note').value;
-            const flyerProjectName = document.getElementById('flyer-project-name').value;
             
-            let flyerSelection = null;
-            const flyerRadios = document.getElementsByName('flyer_assign');
-            for(let radio of flyerRadios) { if(radio.checked) flyerSelection = radio.value; }
-
             let selected = []; 
             if(d) selected.push("Dylan"); 
             if(k) selected.push("Kayla"); 
             if(m) selected.push("Morgan");
-            
-            if(flyerSelection && !flyerProjectName) {
-                showToast("Warning", "Please enter a Project Name.", true);
-                return;
-            }
 
-            if(!flyerSelection && selected.length === 0) { 
-                showToast("Warning", "Select a person or a flyer category.", true); 
+            if(selected.length === 0) { 
+                showToast("Warning", "Select at least one person.", true); 
                 return; 
-            } 
+            }
             
-            let target = flyerSelection ? flyerProjectName : selected.join(" & ");
+            // Build the assignment string (e.g., "Kayla & Morgan")
+            let assignStr = selected.join(" & ");
+            let emailTo = selected.length === 1 ? selected[0] : "Admin";
+
+            // If Flyer, override some logic
+            let taskTab = "requests";
+            let projectName = "";
+
+            if(assignType === 'flyer') {
+                const flyerCat = document.querySelector('input[name="flyer_cat"]:checked').value;
+                const projName = document.getElementById('flyer-project-name').value;
+                if(!projName) { showToast("Warning", "Project Name required for Flyer.", true); return; }
+                
+                taskTab = flyerCat;
+                assignStr = projName; // Flyer assignment uses project name as the group key
+                projectName = projName;
+            }
 
             const updates = selectedIdx.map(idx => { 
                 const item = fullInventory[idx]; 
                 
-                item.REQUEST_ASSIGNED_TO = target; 
-                
-                if (flyerSelection) {
-                    item.TASK_TAB = flyerSelection; 
-                } else {
-                    item.TASK_TAB = "requests"; 
+                let newItemNote = item.SAVED_NOTE || "";
+                if(noteText) {
+                    // Append directions to existing notes with a special marker so we can show the banner later
+                    newItemNote = newItemNote ? newItemNote + " | Directions: " + noteText : "Directions: " + noteText;
                 }
 
-                if(isCalReq) { 
-                    let oldNote = item.SAVED_PICK || ""; 
-                    if(!oldNote.includes("[CAL REQUEST]")) { item.SAVED_PICK = "[CAL REQUEST] " + oldNote; } 
-                }
-                
-                if(noteText) {
-                    let oldGen = item.SAVED_NOTE || "";
-                    if(!oldGen.includes(noteText)) {
-                        item.SAVED_NOTE = oldGen ? oldGen + " | " + noteText : noteText;
-                    }
-                }
+                item.REQUEST_ASSIGNED_TO = assignStr; 
+                item.TASK_TAB = taskTab; 
+                item.SAVED_NOTE = newItemNote;
 
                 return { 
                     id: item.UNIQUE_ID, 
                     requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
                     taskTab: item.TASK_TAB, 
-                    match: item.SAVED_MATCH, 
-                    spec: item.SAVED_SPEC, 
-                    pick: item.SAVED_PICK, 
                     note: item.SAVED_NOTE, 
-                    salesDesc: item.SAVED_SALES_DESC, 
                     user: currentUser 
                 }; 
             });
 
             // --- EMAIL LOGIC ---
-            let emailTo = "Admin";
-            if (d) emailTo = "Dylan";
-            else if (k) emailTo = "Kayla";
-            else if (m) emailTo = "Morgan";
-            
-            const assignTitle = flyerSelection 
-                ? `New Flyer Project: ${flyerProjectName}` 
+            const assignTitle = assignType === 'flyer' 
+                ? `New Flyer Project: ${projectName}` 
                 : `New Tasks Assigned by ${currentUser}`;
 
             const itemsForEmail = selectedIdx.map(idx => fullInventory[idx]);
-            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle);
+            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); // Pass directions to email
 
             sendEmailNotification(emailTo, assignTitle, emailBody);
             // ------------------
@@ -2434,10 +2415,6 @@
             document.getElementById('assign-modal').style.display = 'none'; 
             toggleBatch(); 
             showToast("Saving", "Assigned & Email Sent...");
-            
-            document.getElementById('assign-note').value = "";
-            document.getElementById('flyer-project-name').value = "";
-            for(let radio of flyerRadios) radio.checked = false;
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "batch_update", updates: updates }) })
             .then(res => res.json())
