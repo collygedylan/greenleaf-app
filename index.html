@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC Sales/Inv 02</title>
+    <title>INV PRO 0001</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -39,7 +39,13 @@
         .drill-item:active { background: #f3f4f6; }
         
         .inv-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 80px; }
-        .inv-card.selecting { transform: scale(0.98); background-color: #f0f9ff; border-color: #3b82f6; }
+        
+        /* BATCH MODE STYLES */
+        .inv-card.selecting { background-color: #f0fdf4; border-color: #15803d; transform: scale(0.98); }
+        .select-check { display: none; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
+        
+        /* Force display block when parent has batch-mode class */
+        .batch-mode .select-check { display: block !important; }
         
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
         
@@ -52,13 +58,6 @@
         .flyer-pill { white-space: nowrap; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; flex: 1; text-align: center; }
         .flyer-pill.active { background: #007a4d; color: white; border-color: #007a4d; }
 
-        /* MULTI SELECT STYLES */
-        .batch-row { display: flex; align-items: center; padding: 0 4px; }
-        .select-check { width: 0; height: 0; margin: 0; opacity: 0; transition: all 0.2s; }
-        
-        /* When parent has 'batch-mode', show checkbox */
-        .batch-mode .select-check { width: 24px; height: 24px; opacity: 1; margin-right: 12px; accent-color: var(--brand-green); }
-        
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
         .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
@@ -175,7 +174,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                Sales/Inv 02
+                INV PRO 0001
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -205,7 +204,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        Sales/Inv 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        INV PRO 0001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -2420,6 +2419,7 @@
                 }; 
             });
 
+            // --- EMAIL LOGIC ---
             const assignTitle = assignType === 'flyer' 
                 ? `New Flyer Project: ${projectName}` 
                 : `New Tasks Assigned by ${currentUser}`;
