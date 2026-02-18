@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC PRO 023</title>
+    <title>GNC Sales/Inv 02</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Greenleaf">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <link rel="icon" type="image/png" href="GNC LOGO.png">
     <link rel="apple-touch-icon" href="GNC LOGO.png">
     
@@ -22,9 +17,7 @@
     <style>
         :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
-        .nav-header { background: var(--brand-green); color: white; padding-top: env(safe-area-inset-top); }
-        
-        .pt-safe { padding-top: max(10px, env(safe-area-inset-top)); }
+        .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
@@ -59,12 +52,9 @@
         .flyer-pill { white-space: nowrap; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; flex: 1; text-align: center; }
         .flyer-pill.active { background: #007a4d; color: white; border-color: #007a4d; }
 
-        /* BATCH ROW & CHECKBOX */
-        .batch-row { display: flex; align-items: center; padding: 0 4px; transition: background 0.2s; }
-        .select-check { width: 0; height: 0; margin: 0; opacity: 0; transition: all 0.2s; } 
-        
-        /* When batch mode is ON */
-        .batch-mode .select-check { width: 24px; height: 24px; margin-right: 12px; opacity: 1; accent-color: var(--brand-green); }
+        .batch-row { display: flex; align-items: center; padding: 0 4px; }
+        .select-check { width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); transform: scale(0); transition: transform 0.2s; width: 0; margin: 0; }
+        .batch-mode .select-check { transform: scale(1); width: 24px; margin-right: 12px; }
         
         #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
         #action-bar.visible { transform: translateY(0); }
@@ -100,7 +90,6 @@
         #batch-indicator { display: none; background: #dc2626; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; animation: pulse 2s infinite; cursor: pointer; }
         #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
         
-        /* EXCEL STYLE FILTERS ROW */
         .filter-row-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; }
         .filter-row-container::-webkit-scrollbar { display: none; }
         .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
@@ -171,7 +160,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 023
+                Sales/Inv 02
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -201,7 +190,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 023 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        Sales/Inv 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -585,9 +574,19 @@
             <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">1. Select Assignment Type</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
-                    <input type="radio" name="assign_type" value="request" class="hidden" checked onchange="toggleFlyerOptions(false)">
+                    <input type="radio" name="assign_type" value="requests" class="hidden" checked onchange="toggleFlyerOptions(false)">
                     <i class="ph-bold ph-clipboard-text text-2xl text-gray-500"></i>
-                    <span class="text-xs font-bold">Standard Request</span>
+                    <span class="text-xs font-bold">Request</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="season" class="hidden" onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-sun text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Season</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="location" class="hidden" onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-map-pin text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Location</span>
                 </label>
                 <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
                     <input type="radio" name="assign_type" value="flyer" class="hidden" onchange="toggleFlyerOptions(true)">
@@ -637,6 +636,8 @@
             </div>
         </div>
     </div>
+
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
@@ -1006,7 +1007,7 @@
                              if(freshItem) { 
                                   activeItem = freshItem; 
                                   if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { 
-                                       renderOverviewData(); 
+                                      renderOverviewData(); 
                                   } 
                              }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
@@ -1015,7 +1016,6 @@
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
                             if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
                         } 
-                        // Add other view refresh logic here...
                     }
                 } else { 
                     throw new Error(cloudJson.message || "Failed to load data."); 
@@ -1731,12 +1731,12 @@
                     projects.map(p => {
                         const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
                         return `<div class="drill-item" onclick="openFlyerProject('${p.replace(/'/g, "\\'")}')">
-                                    <div class="flex items-center gap-3">
-                                        <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                                        <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                                    </div>
-                                    <i class="ph-bold ph-caret-right"></i>
-                                </div>`;
+                                        <div class="flex items-center gap-3">
+                                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                            <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                        </div>
+                                        <i class="ph-bold ph-caret-right"></i>
+                                    </div>`;
                     }).join('');
                 }
                 else if (taskViewLevel === 1) {
@@ -1927,7 +1927,6 @@
             const term = document.getElementById('review-search').value.toLowerCase();
             const failContainer = document.getElementById('failed-saves-container');
             
-            // Only show offline warnings if in "completed" folder view
             if(currentReviewFolder === 'completed') {
                 let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
                 if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
@@ -2331,149 +2330,24 @@
         function openAssignModal() { 
             if (selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } 
             
-            if (FLYER_AUTH.includes(currentUser)) {
-                document.getElementById('auth-flyer-options').classList.remove('hidden');
-                const existingProjs = [...new Set(fullInventory.filter(i => (i.TASK_TAB||"").startsWith("flyer_")).map(i => i.REQUEST_ASSIGNED_TO))].filter(p => p);
-                document.getElementById('dl-projects').innerHTML = existingProjs.map(p => `<option value="${p}">`).join('');
-            } else {
-                document.getElementById('auth-flyer-options').classList.add('hidden');
-            }
-            
+            // Reset modal state
+            document.getElementById('assign-count').innerText = selectedIdx.length + " Items";
+            document.getElementById('flyer-options-box').classList.add('hidden');
+            document.querySelector('input[name="assign_type"][value="requests"]').checked = true; // Default
+            document.getElementById('assign-note').value = "";
+            document.getElementById('chk-dylan').checked = false;
+            document.getElementById('chk-kayla').checked = false;
+            document.getElementById('chk-morgan').checked = false;
+
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
 
-        function getBatchText() {
-            let text = ""; selectedIdx.forEach(idx => { let item = fullInventory[idx]; text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0}\n`; let specLine = []; if(item.SAVED_MATCH) specLine.push(`Match: ${item.SAVED_MATCH}%`); if(item.SAVED_SPEC) specLine.push(`Spec: ${item.SAVED_SPEC}`); if(specLine.length > 0) text += specLine.join(' | ') + '\n'; if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`; if(item.SAVED_SALES_DESC) text += `Sales: ${item.SAVED_SALES_DESC}\n`; if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`; if(item.SAVED_PHOTO_LINK) { text += `Photos:\n`; const urls = item.SAVED_PHOTO_LINK.split(','); urls.forEach((url, i) => { text += `• ${url.trim()}\n`; }); } text += `\n`; }); return text;
-        }
-        function batchText() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); }
-        function batchEmail() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Ready to paste into your email app."); setTimeout(() => { window.location.href = `mailto:?subject=Greenleaf%20Report`; }, 1500); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; }); } else { fallbackCopy(html); window.location.href = `mailto:?subject=Greenleaf%20Report`; } }
-        function copyBatchData() { if(selectedIdx.length === 0) { showToast("Warning", "No items selected.", true); return; } const items = selectedIdx.map(idx => fullInventory[idx]); const html = generateHtmlForItems(items, "Greenleaf Inventory Report"); const text = getBatchText(); const blobHtml = new Blob([html], { type: "text/html" }); const blobText = new Blob([text], { type: "text/plain" }); if (navigator.clipboard && navigator.clipboard.write) { const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })]; navigator.clipboard.write(data).then(() => { showToast("Copied!", "Data copied to clipboard."); isBatch = false; toggleBatch(); }).catch(err => { fallbackCopy(html); }); } else { fallbackCopy(html); } }
-        function fallbackCopy(html) { const tempDiv = document.createElement("div"); tempDiv.innerHTML = html; tempDiv.style.position = "fixed"; tempDiv.style.left = "-9999px"; document.body.appendChild(tempDiv); const range = document.createRange(); range.selectNodeContents(tempDiv); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); document.execCommand('copy'); document.body.removeChild(tempDiv); showToast("Copied!", "Data copied (Legacy Mode)."); isBatch = false; toggleBatch(); }
-        
-        function handleCardClick(idx, source) { 
-            if(isBatch) { 
-                toggleSelect(idx); // Use existing toggleSelect logic for batch mode
+        function toggleFlyerOptions(show) {
+            if(show) {
+                document.getElementById('flyer-options-box').classList.remove('hidden');
             } else {
-                openDetail(idx, source); 
+                document.getElementById('flyer-options-box').classList.add('hidden');
             }
-        }
-
-        function createRowHtml(item, idx, source) {
-            let thumbHtml = '';
-            if(item.SAVED_PHOTO_LINK) {
-                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0];
-                let thumbUrl = firstLink;
-                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; }
-                thumbHtml = `<img src="${thumbUrl}" class="w-16 h-16 object-cover rounded-md mr-3 bg-gray-200 flex-shrink-0" style="min-width: 64px; min-height: 64px;">`;
-            }
-            
-            let badges = '';
-            if(item.SAVED_MATCH) badges += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
-            if(item.SAVED_SPEC) badges += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
-            if(item.SAVED_NOTE) badges += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
-            if(item.SAVED_PHOTO_LINK) badges += `<span class="data-badge" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd"><i class="ph-bold ph-camera"></i></span>`;
-
-            let holdCode = (item.HOLDSTOPCODE || "").toString().trim().toUpperCase();
-            let cardClass = "!bg-green-50 !border-green-300"; 
-            let indicator = "";
-
-            if (holdCode === "S") {
-                cardClass = "!bg-red-50 !border-red-300";
-                indicator = `<span class="text-[10px] font-bold text-red-600 border border-red-200 bg-white px-1 rounded ml-2">STOP (S)</span>`;
-            } else if (holdCode === "H") {
-                cardClass = "!bg-yellow-50 !border-yellow-300";
-                indicator = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-white px-1 rounded ml-2">HOLD (H)</span>`;
-            }
-
-            return `
-            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
-                <div class="inv-card flex-grow flex items-center ${cardClass}" onclick="handleCardClick(${idx}, '${source}')" id="row-${idx}">
-                     <div class="mr-3 flex-shrink-0 ${isBatch ? '' : 'hidden'}">
-                         <input type="checkbox" class="select-check" value="${idx}" onclick="event.stopPropagation(); toggleSelect(${idx})">
-                    </div>
-                    ${thumbHtml}
-                    <div class="flex-grow min-w-0">
-                        <div class="flex justify-between items-start">
-                            <div class="font-bold text-[#007a4d] truncate text-base flex items-center">
-                                ${item.LOCATIONCODE || 'No Loc'}
-                                ${indicator}
-                            </div>
-                            <div class="text-xs font-bold text-gray-400">Qty: <span class="text-black text-sm">${item.PTRAVAILABLE || 0}</span></div>
-                        </div>
-                        <div class="text-sm font-bold text-gray-800 truncate">${item.COMMONNAME}</div>
-                        
-                        <div class="text-xs text-gray-500 truncate">
-                            Size: ${item.CONTSIZE} | Supply: ${item.SEASONSUPPLY || 0} | PRI: <strong>${item.PRIORITY || '-'}</strong>
-                        </div>
-                        <div class="text-xs text-gray-500 truncate mb-1">
-                            Tag Color: <strong>${item.FIELDTAGCOLOR || '-'}</strong> | Lot: ${item.LOTCODE || '-'}
-                        </div>
-
-                        <div class="flex flex-wrap">${badges}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-        
-        function startLongPress() { if(!isAdmin) return; longPressTimer = setTimeout(() => { if(!isBatch) toggleBatch(); navigator.vibrate(100); }, 1500); }
-        function cancelLongPress() { clearTimeout(longPressTimer); }
-        
-        function toggleBatch() {
-            if(!isAdmin) return;
-            isBatch = !isBatch;
-            document.body.classList.toggle('batch-mode', isBatch);
-            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
-            if(!isBatch) { 
-                document.getElementById('action-bar').classList.remove('visible'); 
-                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
-                document.querySelectorAll('.inv-card').forEach(c => c.classList.remove('selecting'));
-                selectedIdx = []; 
-            } else {
-                // When entering batch mode, refresh the current view to show checkboxes
-                refreshCurrentView();
-            }
-        }
-        
-        function toggleSelect(idx) {
-            if (!isBatch) { 
-                // Fallback if somehow called outside batch mode, though handleCardClick manages this
-                openDetail(idx, currentOriginView || 'drive'); 
-                return; 
-            }
-            
-            const row = document.getElementById('row-' + idx);
-            const cb = row.querySelector('.select-check');
-            
-            if (cb) {
-                cb.checked = !cb.checked;
-                
-                if (cb.checked) {
-                    if (!selectedIdx.includes(idx)) selectedIdx.push(idx);
-                    row.classList.add('selecting');
-                } else {
-                    selectedIdx = selectedIdx.filter(id => id !== idx);
-                    row.classList.remove('selecting');
-                }
-                
-                if (selectedIdx.length > 0) {
-                    document.getElementById('action-bar').classList.add('visible');
-                } else {
-                    document.getElementById('action-bar').classList.remove('visible');
-                }
-            }
-        }
-
-        // Helper to refresh view when toggling batch mode to render checkboxes correctly
-        function refreshCurrentView() {
-            if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
-            else if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
-            else if (!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
-            else if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
-            else if (!document.getElementById('view-review').classList.contains('hidden')) {
-                 if(currentReviewFolder) renderReviewContent();
-            }
-            // Add other views as needed
         }
         
         function batchAssign() {
@@ -2494,12 +2368,10 @@
                 return; 
             }
             
-            // Build the assignment string (e.g., "Kayla & Morgan")
             let assignStr = selected.join(" & ");
             let emailTo = selected.length === 1 ? selected[0] : "Admin";
 
-            // If Flyer, override some logic
-            let taskTab = "requests";
+            let taskTab = assignType; // requests, season, location
             let projectName = "";
 
             if(assignType === 'flyer') {
@@ -2507,8 +2379,8 @@
                 const projName = document.getElementById('flyer-project-name').value;
                 if(!projName) { showToast("Warning", "Project Name required for Flyer.", true); return; }
                 
-                taskTab = flyerCat;
-                assignStr = projName; // Flyer assignment uses project name as the group key
+                taskTab = flyerCat; // flyer_crop, flyer_endcap, etc.
+                assignStr = projName; 
                 projectName = projName;
             }
 
@@ -2517,7 +2389,6 @@
                 
                 let newItemNote = item.SAVED_NOTE || "";
                 if(noteText) {
-                    // Append directions to existing notes with a special marker so we can show the banner later
                     newItemNote = newItemNote ? newItemNote + " | Directions: " + noteText : "Directions: " + noteText;
                 }
 
@@ -2534,16 +2405,14 @@
                 }; 
             });
 
-            // --- EMAIL LOGIC ---
             const assignTitle = assignType === 'flyer' 
                 ? `New Flyer Project: ${projectName}` 
                 : `New Tasks Assigned by ${currentUser}`;
 
             const itemsForEmail = selectedIdx.map(idx => fullInventory[idx]);
-            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); // Pass directions to email
+            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
 
             sendEmailNotification(emailTo, assignTitle, emailBody);
-            // ------------------
 
             document.getElementById('assign-modal').style.display = 'none'; 
             toggleBatch(); 
@@ -2564,11 +2433,9 @@
             
             if(projItems.length === 0) return;
 
-            // --- EMAIL LOGIC ---
             const completionTitle = `Project Completed: ${projName}`;
             const emailBody = generateHtmlForItems(projItems, completionTitle);
             sendEmailNotification("Dylan", completionTitle, emailBody);
-            // ------------------
 
             const updates = projItems.map(item => {
                 item.REQUEST_ASSIGNED_TO = "";
@@ -2595,6 +2462,105 @@
                 } 
             })
             .catch(err => { showToast("Network Error", "Saved offline.", true); });
+        }
+
+        function createRowHtml(item, idx, viewType) {
+            let thumb = ""; 
+            if(item.SAVED_PHOTO_LINK) { 
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/); 
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`; } 
+                thumb = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-2 bg-gray-200">`; 
+            }
+            
+            let rowClass = "inv-card flex items-start gap-2 relative";
+            if (isBatch) { rowClass += " batch-mode"; }
+            if (selectedIdx.includes(idx)) { rowClass += " selecting"; }
+            
+            let statusBadge = "";
+            if (item.TASK_TAB === "season") statusBadge = `<span class="data-badge badge-match">SEASON</span>`;
+            if (item.TASK_TAB === "location") statusBadge = `<span class="data-badge badge-spec">LOCATION</span>`;
+            if (item.TASK_TAB === "Item Review" || item.TASK_TAB === "review") statusBadge = `<span class="data-badge text-white bg-red-500">REVIEW</span>`;
+            
+            let flags = "";
+            if(item.SAVED_MATCH) flags += `<span class="data-badge badge-match">${item.SAVED_MATCH}%</span>`;
+            if(item.SAVED_SPEC) flags += `<span class="data-badge badge-spec">${item.SAVED_SPEC}</span>`;
+            if(item.SAVED_NOTE) flags += `<span class="data-badge badge-note"><i class="ph-bold ph-note"></i></span>`;
+            
+            let locDisplay = item.LOCATIONCODE ? `<span class="font-bold text-gray-800 bg-gray-100 px-1 rounded">${item.LOCATIONCODE}</span>` : `<span class="text-gray-400 italic">No Loc</span>`;
+            
+            let clickAction = isBatch ? `toggleSelect(${idx})` : `openDetail(${idx}, '${viewType}')`;
+
+            return `
+            <div class="${rowClass}" onclick="${clickAction}" id="row-${idx}">
+                <input type="checkbox" class="select-check" value="${idx}" onclick="event.stopPropagation(); toggleSelect(${idx})">
+                ${thumb}
+                <div class="flex-grow min-w-0">
+                    <div class="flex justify-between items-start">
+                        <div class="font-bold text-[#007a4d] truncate pr-2 text-sm">${item.COMMONNAME}</div>
+                        <div class="font-bold text-black text-sm">${item.PTRAVAILABLE}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 font-bold mb-1">${item.CONTSIZE} <span class="mx-1 text-gray-300">|</span> ${locDisplay}</div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        ${statusBadge}
+                        ${flags}
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1 truncate">${item.ITEMCODE}</div>
+                </div>
+                <i class="ph-bold ph-caret-right text-gray-300 self-center"></i>
+            </div>`;
+        }
+
+        function toggleBatch() {
+            isBatch = !isBatch;
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none';
+            if (!isBatch) { selectedIdx = []; document.querySelectorAll('.select-check').forEach(c => c.checked = false); updateSelected(); }
+            
+            if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+            if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+            if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+            if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+        }
+
+        function toggleSelect(idx) {
+            if (!isBatch && !document.getElementById('row-'+idx).classList.contains('batch-mode')) { openDetail(idx, currentOriginView || 'drive'); return; }
+            
+            const cb = document.querySelector(`#row-${idx} .select-check`);
+            if (cb) {
+                cb.checked = !cb.checked;
+                updateSelected();
+                const card = document.getElementById('row-' + idx);
+                if (cb.checked) card.classList.add('selecting'); else card.classList.remove('selecting');
+            }
+        }
+
+        function batchText() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let msg = "Greenleaf Update:\n";
+            items.forEach(item => {
+                msg += `${item.COMMONNAME} (${item.CONTSIZE}): Qty ${item.PTRAVAILABLE} @ ${item.LOCATIONCODE || 'No Loc'}\n`;
+            });
+            window.location.href = `sms:&body=${encodeURIComponent(msg)}`;
+        }
+
+        function batchEmail() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let body = "Here is the inventory update:\n\n";
+            items.forEach(item => {
+                body += `${item.COMMONNAME} - ${item.CONTSIZE}\nQty: ${item.PTRAVAILABLE} | Loc: ${item.LOCATIONCODE || 'N/A'}\n\n`;
+            });
+            window.location.href = `mailto:?subject=Inventory Update&body=${encodeURIComponent(body)}`;
+        }
+
+        function copyBatchData() {
+            if (selectedIdx.length === 0) return;
+            const items = selectedIdx.map(i => fullInventory[i]);
+            let text = items.map(i => `${i.COMMONNAME}\t${i.CONTSIZE}\t${i.PTRAVAILABLE}\t${i.LOCATIONCODE}`).join('\n');
+            navigator.clipboard.writeText(text).then(() => showToast("Copied", "Data copied to clipboard"));
+            toggleBatch();
         }
     </script>
 </body>
