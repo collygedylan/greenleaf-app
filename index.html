@@ -1097,10 +1097,8 @@
             
             if(pendingRequestItems.length === 0) return;
 
-            // *** FIX START: PAUSE AUTO-SYNC ***
-            // We tell the app: "Don't pull from the cloud for 20 seconds"
-            // This prevents the app from overwriting your local data while Google saves.
-            syncPauseUntil = new Date().getTime() + 20000; 
+            // *** FIX START: PAUSE AUTO-SYNC FOR 60 SECONDS ***
+            syncPauseUntil = new Date().getTime() + 60000; 
             window.lastLocalUpdate = new Date().getTime();
             // *** FIX END ***
 
@@ -1120,6 +1118,7 @@
                     COMMONNAME: obj.item,
                     CONTSIZE: obj.size,
                     CUSTOMERNAME: cust,
+                    CONSIGNEENAME: cust, // Saving to Consignee as well to handle grouping
                     SALESREP: rep,
                     QTY: obj.qty,
                     SHIPDATE: obj.date,
@@ -2419,10 +2418,24 @@
                 document.getElementById('review-back-label').innerText = "Back to Reps";
                 
                 const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
-                const customers = [...new Set(repItems.map(i => i.CUSTOMERNAME || "General"))].sort();
+                
+                // *** FIXED: Combine Customer and Consignee for Folder Name ***
+                const customers = [...new Set(repItems.map(i => {
+                    const c = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    if(co && co !== c) return `${c} / ${co}`;
+                    return c;
+                }))].sort();
 
                 container.innerHTML = customers.map(cust => {
-                    const count = repItems.filter(i => (i.CUSTOMERNAME || "General") === cust).length;
+                    // We need to count items that match this "combined" name logic
+                    const count = repItems.filter(i => {
+                        const c = i.CUSTOMERNAME || "General";
+                        const co = i.CONSIGNEENAME || "";
+                        const combined = (co && co !== c) ? `${c} / ${co}` : c;
+                        return combined === cust;
+                    }).length;
+
                     return `<div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
                                 <div class="flex items-center gap-3">
                                     <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
@@ -2439,7 +2452,17 @@
             document.getElementById('review-folder-title').innerText = currentReviewCustomer;
             document.getElementById('review-back-label').innerText = "Back to Customers";
             
-            let finalItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep && (i.CUSTOMERNAME || "General") === currentReviewCustomer);
+            // *** FIXED: Filter by combined name logic ***
+            let finalItems = fullInventory.filter(i => {
+                if (i.TASK_TAB !== folderTaskTab) return false;
+                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
+                
+                const c = i.CUSTOMERNAME || "General";
+                const co = i.CONSIGNEENAME || "";
+                const combined = (co && co !== c) ? `${c} / ${co}` : c;
+                
+                return combined === currentReviewCustomer;
+            });
 
             if(term) finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
 
