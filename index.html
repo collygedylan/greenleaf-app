@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Greenleaf Pro TURBO 014</title>
+    <title>Greenleaf Pro TURBO 016</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -177,7 +177,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                TURBO 014
+                TURBO 016
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -207,7 +207,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        TURBO 014 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        TURBO 016 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -265,7 +265,7 @@
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Mgr Review</span></div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
             </div>
 
@@ -409,27 +409,14 @@
             <div id="view-review" class="hidden">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
                 
-                <div class="task-tabs mb-4">
-                    <div id="rtab-pending" class="task-tab active" onclick="switchReviewTab('pending')">Review List</div>
-                    <div id="rtab-nowinner" class="task-tab" onclick="switchReviewTab('nowinner')">No Winner</div>
-                </div>
+                <div id="review-root-folders"></div>
                 
-                <div id="review-tab-pending">
+                <div id="review-folder-view" class="hidden">
+                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> Back to Folders</div>
+                    <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800"></h3>
                     <div id="failed-saves-container"></div>
-                    <input type="text" id="review-search" class="input-field mb-4" placeholder="Search Review Items..." onkeyup="renderReviewItems()">
-                    <div class="text-xs text-gray-400 mb-2 italic">Hold item to Batch Assign</div>
-                    <div class="bg-gray-100 p-2 rounded mb-2 text-xs text-gray-500 font-bold">Items with Priority but no Season Supply Winner.</div>
-                    <span id="review-crumb" class="text-xs font-bold text-gray-400"></span>
+                    <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewContent()">
                     <div id="review-content"></div>
-                </div>
-                
-                <div id="review-tab-nowinner" class="hidden">
-                     <div class="bg-orange-50 p-2 rounded mb-4 text-xs text-orange-800 border border-orange-200">
-                        <strong>Criteria:</strong> Priority Exists (< 9999) but Quantity Available is 0.
-                    </div>
-                    <input type="text" id="review-nowinner-search" class="input-field mb-4" placeholder="Search No Winner..." onkeyup="renderReviewItems()">
-                    <span id="review-nowinner-crumb" class="text-xs font-bold text-gray-400"></span>
-                    <div id="review-nowinner-content"></div>
                 </div>
             </div>
 
@@ -702,9 +689,6 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null; 
         let selectedTaskLoc = null; 
-        let reviewViewLevel = 0; 
-        let selectedReviewName = null; 
-        let selectedReviewSize = null; 
         let socViewLevel = 0; 
         let selectedSocRep = null; 
         let selectedSocCust = null;
@@ -748,8 +732,11 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
-        // MANAGER REVIEW STATE (Updated)
-        let currentReviewTab = 'pending'; // 'pending' or 'nowinner'
+        // MANAGER REVIEW STATE (Updated to Folders)
+        let currentReviewFolder = null; 
+        let reviewViewLevel = 0;
+        let selectedReviewName = null;
+        let selectedReviewSize = null;
 
         // PHOTO EDITOR STATE
         let currentFile = null;
@@ -996,7 +983,7 @@
                         } else if(!document.getElementById('view-directory').classList.contains('hidden')) { 
                             renderDirectoryView(); 
                         } else if(!document.getElementById('view-review').classList.contains('hidden')) { 
-                            renderReviewItems();
+                            if(currentReviewFolder) { renderReviewContent(); } else { renderManagerFolders(); }
                         } else if(!document.getElementById('view-production').classList.contains('hidden')) {
                             renderProductionView();
                         }
@@ -1820,41 +1807,86 @@
         function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
         function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\'")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
 
-        function switchReviewTab(tab) {
-            currentReviewTab = tab;
-            document.getElementById('rtab-pending').classList.toggle('active', tab === 'pending');
-            document.getElementById('rtab-nowinner').classList.toggle('active', tab === 'nowinner');
+        function renderManagerFolders() {
+            document.getElementById('review-root-folders').classList.remove('hidden');
+            document.getElementById('review-folder-view').classList.add('hidden');
             
-            document.getElementById('review-tab-pending').classList.toggle('hidden', tab !== 'pending');
-            document.getElementById('review-tab-nowinner').classList.toggle('hidden', tab !== 'nowinner');
-            
-            reviewViewLevel = 0;
-            renderReviewItems();
+            // Calculate Counts
+            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
+            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
+            const noWinnerCount = fullInventory.filter(i => {
+                const pri = parseFloat(i.PRIORITY);
+                const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                return (pri > 0 && pri < 9999) && (qty <= 0);
+            }).length;
+
+            const html = `
+                <div class="space-y-2">
+                    <div class="drill-item" onclick="openReviewFolder('pending')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('completed')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('item_review')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                </div>
+            `;
+            document.getElementById('review-root-folders').innerHTML = html;
         }
 
-        function renderReviewItems() {
-            // Determine which container and filter logic to use
-            const isPending = currentReviewTab === 'pending';
-            const container = document.getElementById(isPending ? 'review-content' : 'review-nowinner-content');
-            const crumb = document.getElementById(isPending ? 'review-crumb' : 'review-nowinner-crumb');
-            const searchId = isPending ? 'review-search' : 'review-nowinner-search';
+        function openReviewFolder(folderType) {
+            currentReviewFolder = folderType;
+            document.getElementById('review-root-folders').classList.add('hidden');
+            document.getElementById('review-folder-view').classList.remove('hidden');
             
-            // Pending Tab Specifics
-            if(isPending) {
-                const failContainer = document.getElementById('failed-saves-container');
+            let title = "Folder";
+            if(folderType === 'pending') title = "Pending Requests";
+            if(folderType === 'completed') title = "Completed Requests";
+            if(folderType === 'item_review') title = "Item Review (No Winner)";
+            
+            document.getElementById('review-folder-title').innerText = title;
+            reviewViewLevel = 0;
+            renderReviewContent();
+        }
+
+        function resetReviewFolders() {
+            currentReviewFolder = null;
+            renderManagerFolders();
+        }
+
+        function renderReviewContent() {
+            const container = document.getElementById('review-content');
+            const term = document.getElementById('review-search').value.toLowerCase();
+            const failContainer = document.getElementById('failed-saves-container');
+            
+            if(currentReviewFolder === 'completed') {
                 let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
                 if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
+            } else {
+                failContainer.innerHTML = '';
             }
 
-            const term = document.getElementById(searchId).value.toLowerCase();
-            
-            // FILTER LOGIC
-            let reviewItems = [];
-            if(isPending) {
-                reviewItems = fullInventory.filter(i => i.TASK_TAB === 'review');
-            } else {
-                // No Winner Logic: Priority Set (< 9999) but Qty <= 0
-                reviewItems = fullInventory.filter(i => {
+            let filteredItems = [];
+            if(currentReviewFolder === 'pending') {
+                filteredItems = fullInventory.filter(i => i.TASK_TAB === 'requests');
+            } else if(currentReviewFolder === 'completed') {
+                filteredItems = fullInventory.filter(i => i.TASK_TAB === 'review');
+            } else if(currentReviewFolder === 'item_review') {
+                filteredItems = fullInventory.filter(i => {
                     const pri = parseFloat(i.PRIORITY);
                     const qty = parseFloat(i.PTRAVAILABLE) || 0;
                     return (pri > 0 && pri < 9999) && (qty <= 0);
@@ -1862,37 +1894,34 @@
             }
 
             if(term) { 
-                const matched = reviewItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                const matched = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
                 container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
                 return; 
             }
 
-            if(reviewItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
-                crumb.innerText = ""; 
+            if(filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">Folder is empty.</div>`; 
                 return; 
             }
 
+            // Using the same Name/Size drill-down logic
             if(reviewViewLevel === 0) { 
-                crumb.innerText = "All Names"; 
-                const names = [...new Set(reviewItems.map(i => i.COMMONNAME))].sort(); 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
                 container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectReviewName('${n.replace(/'/g, "\\'")}')"><span class="font-bold">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); 
             }
             else if(reviewViewLevel === 1) { 
-                crumb.innerText = selectedReviewName; 
-                const namedItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName); 
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName); 
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE || "N/A"))].sort(); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>${sizes.map(s => `<div class="drill-item" onclick="selectReviewSize('${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`; 
             }
             else if(reviewViewLevel === 2) { 
-                crumb.innerText = `${selectedReviewName} / ${selectedReviewSize}`; 
-                const finalItems = reviewItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewItems()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
+                const finalItems = filteredItems.filter(i => i.COMMONNAME === selectedReviewName && (i.CONTSIZE || "N/A") === selectedReviewSize); 
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=1; renderReviewContent()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>${finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join('')}`; 
             }
         }
         
-        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewItems(); }
-        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewItems(); }
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewContent(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewContent(); }
 
         function renderSalesOffice() {
             const container = document.getElementById('salesoffice-content'); 
@@ -1968,7 +1997,7 @@
             document.getElementById('view-'+v).classList.remove('hidden'); 
             if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
             if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
-            if(v === 'viewer') renderViewerNames(); if(v === 'review') { switchReviewTab('pending'); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
+            if(v === 'viewer') renderViewerNames(); if(v === 'review') { renderManagerFolders(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
         function switchDetailTab(tab) { 
