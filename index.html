@@ -810,15 +810,13 @@
             "Admin": "dylan_collyge@greenleafnursery.com" 
         };
 
-        const MANAGERS_EMAILS = [USER_EMAILS["Dylan"], USER_EMAILS["J.D."]];
+        // ONLY Dylan is in this array now. J.D. is removed.
+        const MANAGERS_EMAILS = [USER_EMAILS["Dylan"]];
 
         function getRepEmail(repName) {
             const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
             return entry ? entry.email : null;
         }
-
-        // We removed sendEmailNotification() because emails are now bundled 
-        // directly into the server updates (No more traffic jams).
 
         function generateHtmlForItems(items, title, directions) {
             let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
@@ -2467,7 +2465,7 @@
                 }))].sort();
 
                 container.innerHTML = customers.map(cust => {
-                    // Count items that match this combined name logic
+                    // We need to count items that match this "combined" name logic
                     const count = repItems.filter(i => {
                         const c = i.CUSTOMERNAME || "General";
                         const co = i.CONSIGNEENAME || "";
@@ -2511,7 +2509,7 @@
                 let html = "";
                 finalItems.forEach(item => {
                     let approveBtn = "";
-                    if(folderTaskTab === 'requests') { 
+                    if(folderTaskTab === 'requests') { // Changed from 'review' to show only on Pending
                          approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
                     }
                     let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
