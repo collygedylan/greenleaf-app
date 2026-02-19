@@ -695,13 +695,10 @@
             </div>
             
             <div id="view-review" class="hidden">
-                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
-                
-                <div id="review-root-folders"></div>
-                
-                <div id="review-folder-view" class="hidden">
-                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
-                    <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800"></h3>
+                <h2 class="text-sm font-bold text-[#007a4d] uppercase mb-4">Manager Review</h2>
+                <div id="review-folder-view">
+                    <div class="back-btn hidden" id="review-back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
+                    <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800">Manager Review</h3>
                     <div id="failed-saves-container"></div>
                     <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewContent()">
                     <div id="review-content"></div>
@@ -939,7 +936,10 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlmvqfFpLll_qFdJOlsJYIlWzGRAKdWC0dQ4PSYrCX2irSDF5SMk5Eiv0_eh0I7SYR/exec"; 
         
         // This handles standard emails. J.D. removed per request.
-        const MANAGERS_EMAILS = ["dylan_collyge@greenleafnursery.com"];
+        const MANAGERS_EMAILS = [
+            "dylan_collyge@greenleafnursery.com",
+            "kayla_kneep@greenleafnursery.com"
+        ];
 
         // ==========================================
         // DYNAMIC LOGIN & USERS
@@ -1039,6 +1039,21 @@
             return entry ? entry.email : null;
         }
 
+        // --- NEW MISSING FUNCTION ADDED ---
+        function sendEmailNotification(toAddress, subject, htmlBody) {
+            const payload = {
+                type: "send_email",
+                to: toAddress,
+                subject: subject,
+                htmlBody: htmlBody
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }).catch(e => console.error("Email API Failed: ", e));
+        }
+
         function generateHtmlForItems(items, title, directions) {
             let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
                         <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
@@ -1129,6 +1144,7 @@
         let currentReviewFolder = null; 
         let currentReviewRep = null; 
         let currentReviewCustomer = null; 
+        let currentVirtualFolder = null;
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -1437,7 +1453,8 @@
             closeRequestForm();
             switchView('review');
             setTimeout(() => { 
-                openReviewFolder('pending'); 
+                // In new structure, review root is level 0.
+                resetReviewFolders();
             }, 300);
         }
 
@@ -1654,11 +1671,7 @@
                         } else if (!document.getElementById('view-drive').classList.contains('hidden')) { 
                             renderDriveView(); 
                         } else if (!document.getElementById('view-review').classList.contains('hidden')) { 
-                            if (currentReviewFolder) { 
-                                renderReviewContent(); 
-                            } else { 
-                                renderManagerFolders(); 
-                            }
+                            renderReviewContent(); 
                         } 
                     }
                 } else { 
@@ -1846,7 +1859,7 @@
                 recipients.push(repEmail);
             }
             
-            // Fixed undefined USER_EMAILS lookup here
+            // Fixed: Safely fallback to user email search if USER_EMAILS is missing
             const senderEmail = getRepEmail(currentUser);
             if (senderEmail) {
                 recipients.push(senderEmail);
@@ -3442,7 +3455,7 @@
         }
 
         // ==========================================
-        // DATA VIEWER & REVIEW
+        // DATA VIEWER & REVIEW (NEW FOLDER UX)
         // ==========================================
 
         function renderViewerNames() {
@@ -3507,275 +3520,254 @@
             document.getElementById('viewer-content').innerHTML = html; 
         }
 
+        // --- NEW MANAGER REVIEW (VIRTUAL FOLDERS) ---
+
         function renderManagerFolders() {
-            document.getElementById('review-root-folders').classList.remove('hidden');
-            document.getElementById('review-folder-view').classList.add('hidden');
-            
-            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
-            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
-            const noWinnerCount = fullInventory.filter(i => {
-                const pri = parseFloat(i.PRIORITY);
-                const qty = parseFloat(i.PTRAVAILABLE) || 0;
-                return (pri > 0 && pri < 9999) && (qty <= 0);
-            }).length;
-
-            const html = `
-                <div class="space-y-2">
-                    <div class="drill-item" onclick="openReviewFolder('pending')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openReviewFolder('completed')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openReviewFolder('item_review')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                </div>
-            `;
-            document.getElementById('review-root-folders').innerHTML = html;
-        }
-
-        function openReviewFolder(folderType) {
-            currentReviewFolder = folderType;
-            currentReviewRep = null;
-            currentReviewCustomer = null;
-            
-            document.getElementById('review-root-folders').classList.add('hidden');
-            document.getElementById('review-folder-view').classList.remove('hidden');
-            
-            let title = "Folder";
-            if (folderType === 'pending') title = "Pending Requests";
-            if (folderType === 'completed') title = "Completed Requests";
-            if (folderType === 'item_review') title = "Item Review (No Winner)";
-            
-            document.getElementById('review-folder-title').innerText = title;
-            document.getElementById('review-back-label').innerText = "Back to Folders";
             reviewViewLevel = 0;
             renderReviewContent();
         }
 
         function resetReviewFolders() {
-            if (currentReviewCustomer) {
+            if (reviewViewLevel === 3) {
+                reviewViewLevel = 2;
+                currentVirtualFolder = null;
+            } else if (reviewViewLevel === 2) {
+                reviewViewLevel = 1;
                 currentReviewCustomer = null;
-                renderReviewContent();
-                return;
-            }
-            if (currentReviewRep) {
+            } else if (reviewViewLevel === 1) {
+                reviewViewLevel = 0;
                 currentReviewRep = null;
-                renderReviewContent();
-                return;
             }
-            currentReviewFolder = null;
-            renderManagerFolders();
+            renderReviewContent();
         }
 
         function renderReviewContent() {
             const container = document.getElementById('review-content');
             const term = document.getElementById('review-search').value.toLowerCase();
             const failContainer = document.getElementById('failed-saves-container');
+            const backBtn = document.getElementById('review-back-btn');
             
-            if (currentReviewFolder === 'completed') {
-                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-                if (failed.length > 0) { 
-                    failContainer.innerHTML = `
-                    <div class="failed-sync-banner">
-                        <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
-                        <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
-                    </div>`; 
-                } else { 
-                    failContainer.innerHTML = ''; 
-                }
-            } else {
-                failContainer.innerHTML = '';
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if (failed.length > 0) { 
+                failContainer.innerHTML = `
+                <div class="failed-sync-banner">
+                    <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
+                    <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
+                </div>`; 
+            } else { 
+                failContainer.innerHTML = ''; 
             }
 
-            let folderTaskTab = 'review';
-            if (currentReviewFolder === 'pending') {
-                folderTaskTab = 'requests';
-            }
-            
-            // --- NO WINNER FOLDER (Simple List) ---
-            if (currentReviewFolder === 'item_review') {
-                let filteredItems = fullInventory.filter(i => {
-                    const pri = parseFloat(i.PRIORITY);
-                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
-                    return (pri > 0 && pri < 9999) && (qty <= 0);
-                });
+            // LEVEL 0: LIST REPS
+            if (reviewViewLevel === 0) {
+                backBtn.classList.add('hidden');
+                document.getElementById('review-folder-title').innerText = "Manager Review";
                 
-                if (term) { 
-                    filteredItems = filteredItems.filter(i => {
-                        const common = (i.COMMONNAME||"").toLowerCase();
-                        const code = (i.ITEMCODE||"").toLowerCase();
-                        return common.includes(term) || code.includes(term);
-                    }); 
-                }
+                let reps = [...new Set([
+                    ...STATIC_DIRECTORY.map(r => r.name),
+                    ...fullInventory.filter(i => i.TASK_TAB === 'requests' || i.TASK_TAB === 'review').map(i => i.SALESREP)
+                ])].filter(Boolean).sort();
 
-                if (filteredItems.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
-                    return; 
-                }
+                let html = `
+                    <div class="drill-item" onclick="openNoWinnerFolder()">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Item Review (No Winner)</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right ml-2"></i>
+                    </div>
+                `;
 
-                let html = "";
-                for (let i = 0; i < filteredItems.length; i++) {
-                    html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
-                }
-                container.innerHTML = html; 
-                return;
-            }
-
-            // --- PENDING & COMPLETED FOLDERS ---
-            
-            // LEVEL 1: LIST SALES REPS
-            if (!currentReviewRep) {
-                if (currentReviewFolder === 'pending') {
-                    document.getElementById('review-folder-title').innerText = "Pending Requests";
-                } else {
-                    document.getElementById('review-folder-title').innerText = "Completed Requests";
-                }
-                document.getElementById('review-back-label').innerText = "Back to Folders";
-                
-                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
-                activeReps.sort();
-                
-                let html = "";
-                for (let i = 0; i < activeReps.length; i++) {
-                    let repName = activeReps[i];
-                    const count = fullInventory.filter(item => item.TASK_TAB === folderTaskTab && (item.SALESREP || "Unknown") === repName).length;
+                reps.forEach(rep => {
+                    const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === rep).length;
+                    let badge = pendingCount > 0 ? `<span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">${pendingCount} Pending</span>` : '';
+                    
                     html += `
-                    <div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
+                    <div class="drill-item" onclick="selectReviewRep('${rep.replace(/'/g, "\\'")}')">
                         <div class="flex items-center gap-3">
                             <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
-                            <span class="font-bold text-lg">${repName}</span>
+                            <span class="font-bold text-lg">${rep} ${badge}</span>
                         </div>
-                        <span class="text-gray-400 font-bold text-sm">(${count})</span>
                         <i class="ph-bold ph-caret-right ml-2"></i>
                     </div>`;
-                }
+                });
                 container.innerHTML = html;
-                return;
-            }
-
-            // LEVEL 2: LIST CUSTOMERS FOR SELECTED REP
-            if (!currentReviewCustomer) {
+            } 
+            // LEVEL 1: LIST CUSTOMERS
+            else if (reviewViewLevel === 1) {
+                backBtn.classList.remove('hidden');
+                document.getElementById('review-back-label').innerText = "All Reps";
                 document.getElementById('review-folder-title').innerText = currentReviewRep;
-                document.getElementById('review-back-label').innerText = "Back to Reps";
                 
-                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
-                
-                const customers = [...new Set(repItems.map(i => {
-                    const c = i.CUSTOMERNAME || "General";
-                    const co = i.CONSIGNEENAME || "";
-                    if (co && co !== c) {
-                        return `${c} / ${co}`;
-                    }
-                    return c;
-                }))].sort();
+                let custs = [...new Set([
+                    ...socData.map(i => i.CUSTOMERNAME),
+                    ...fullInventory.filter(i => i.SALESREP === currentReviewRep).map(i => i.CUSTOMERNAME)
+                ])].filter(c => c && c !== "Unknown Customer").sort();
 
                 let html = "";
-                for (let i = 0; i < customers.length; i++) {
-                    let cust = customers[i];
-                    const count = repItems.filter(item => {
-                        const c = item.CUSTOMERNAME || "General";
-                        const co = item.CONSIGNEENAME || "";
-                        let combined = c;
-                        if (co && co !== c) {
-                            combined = `${c} / ${co}`;
-                        }
-                        return combined === cust;
-                    }).length;
-
+                if (custs.length === 0) html = "<div class='p-4 text-center text-gray-500'>No customers found.</div>";
+                
+                custs.forEach(c => {
+                    const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === c).length;
+                    let badge = pendingCount > 0 ? `<span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">${pendingCount}</span>` : '';
+                    
                     html += `
-                    <div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
+                    <div class="drill-item" onclick="selectReviewCustomer('${c.replace(/'/g, "\\'")}')">
                         <div class="flex items-center gap-3">
                             <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                            <span class="font-bold text-sm">${cust}</span>
+                            <span class="font-bold text-sm">${c} ${badge}</span>
                         </div>
-                        <span class="text-gray-400 font-bold text-xs">(${count})</span>
                         <i class="ph-bold ph-caret-right ml-2"></i>
                     </div>`;
-                }
+                });
                 container.innerHTML = html;
-                return;
             }
+            // LEVEL 2: 4 VIRTUAL FOLDERS
+            else if (reviewViewLevel === 2) {
+                backBtn.classList.remove('hidden');
+                document.getElementById('review-back-label').innerText = "Customers";
+                document.getElementById('review-folder-title').innerText = currentReviewCustomer;
 
-            // LEVEL 3: SHOW ITEMS FOR CUSTOMER
-            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
-            document.getElementById('review-back-label').innerText = "Back to Customers";
-            
-            let finalItems = fullInventory.filter(i => {
-                if (i.TASK_TAB !== folderTaskTab) return false;
-                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
+                const socCount = socData.filter(i => i.CUSTOMERNAME === currentReviewCustomer).length;
+                const pendCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer).length;
+                const compCount = fullInventory.filter(i => i.TASK_TAB === 'review' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer).length;
+
+                container.innerHTML = `
+                    <div class="drill-item" onclick="openVirtualFolder('soc')">
+                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-green-600 text-2xl"></i><span class="font-bold">1. SOC Data <span class="text-gray-400 text-xs font-normal">(${socCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openVirtualFolder('pending')">
+                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-red-500 text-2xl"></i><span class="font-bold">2. Pending Requests <span class="text-gray-400 text-xs font-normal">(${pendCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openVirtualFolder('completed')">
+                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-blue-500 text-2xl"></i><span class="font-bold">3. Completed Requests <span class="text-gray-400 text-xs font-normal">(${compCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openVirtualFolder('form')">
+                        <div class="flex items-center gap-3"><i class="ph-fill ph-plus-circle text-purple-600 text-2xl"></i><span class="font-bold">4. Request Form</span></div><i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `;
+            }
+            // LEVEL 3: DATA RENDERER
+            else if (reviewViewLevel === 3) {
+                backBtn.classList.remove('hidden');
+                document.getElementById('review-back-label').innerText = "Folders";
                 
-                const c = i.CUSTOMERNAME || "General";
-                const co = i.CONSIGNEENAME || "";
-                let combined = c;
-                if (co && co !== c) {
-                    combined = `${c} / ${co}`;
-                }
-                return combined === currentReviewCustomer;
-            });
-
-            if (term) {
-                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
-            }
-
-            if (finalItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
-            } else {
-                let html = "";
-                for (let i = 0; i < finalItems.length; i++) {
-                    let item = finalItems[i];
-                    let approveBtn = "";
-                    
-                    if (folderTaskTab === 'requests') { 
-                         approveBtn = `
-                         <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
-                             <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
-                         </button>`;
+                if (currentVirtualFolder === 'no_winner') {
+                    document.getElementById('review-folder-title').innerText = "Item Review (No Winner)";
+                    let filteredItems = fullInventory.filter(i => {
+                        const pri = parseFloat(i.PRIORITY);
+                        const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                        return (pri > 0 && pri < 9999) && (qty <= 0);
+                    });
+                    if (term) filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; return; }
+                    let html = "";
+                    for (let i = 0; i < filteredItems.length; i++) html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
+                    container.innerHTML = html; 
+                } 
+                else if (currentVirtualFolder === 'soc') {
+                    document.getElementById('review-folder-title').innerText = "1. SOC Data";
+                    let matched = socData.filter(i => i.CUSTOMERNAME === currentReviewCustomer);
+                    if (term) matched = matched.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    if (matched.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No SOC Data.</div>`; return; }
+                    let html = "";
+                    for (let m = 0; m < matched.length; m++) {
+                        let i = matched[m];
+                        html += `
+                        <div class="inv-card">
+                            <div class="font-bold text-[#007a4d]">${i.COMMONNAME || 'Unknown'} - ${i.CONTSIZE || ''}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">Code: ${i.ITEMCODE || '-'} | Rep: ${i.SALESREP || '-'}</div>
+                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                        </div>`;
                     }
-                    
-                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
-                    html += `
-                    <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
-                        ${cardHtml}
-                        <div class="px-2 pb-2">${approveBtn}</div>
-                    </div>`;
+                    container.innerHTML = html;
                 }
-                container.innerHTML = html;
+                else if (currentVirtualFolder === 'pending' || currentVirtualFolder === 'completed') {
+                    const taskTarget = currentVirtualFolder === 'pending' ? 'requests' : 'review';
+                    document.getElementById('review-folder-title').innerText = currentVirtualFolder === 'pending' ? "2. Pending Requests" : "3. Completed Requests";
+                    
+                    let finalItems = fullInventory.filter(i => i.TASK_TAB === taskTarget && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer);
+                    if (term) finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+                    
+                    if (finalItems.length === 0) {
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
+                    } else {
+                        let html = "";
+                        for (let i = 0; i < finalItems.length; i++) {
+                            let item = finalItems[i];
+                            let approveBtn = "";
+                            if (taskTarget === 'requests') { 
+                                 approveBtn = `
+                                 <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
+                                     <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
+                                 </button>`;
+                            }
+                            let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                            html += `
+                            <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
+                                ${cardHtml}
+                                <div class="px-2 pb-2">${approveBtn}</div>
+                            </div>`;
+                        }
+                        container.innerHTML = html;
+                    }
+                }
             }
         }
-        
+
+        function openNoWinnerFolder() {
+            currentVirtualFolder = 'no_winner';
+            reviewViewLevel = 3;
+            renderReviewContent();
+        }
+
         function selectReviewRep(repName) {
             currentReviewRep = repName;
-            renderReviewContent();
+            document.getElementById('review-content').innerHTML = '<div class="p-8 text-center flex flex-col items-center"><i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d]"></i><div class="mt-2 text-gray-500 font-bold">Loading Data...</div></div>';
+            
+            // Fetch SOC data for this rep if not already loaded so it shows up in Level 1 & 2
+            if (selectedSocRep !== repName || socData.length === 0) {
+                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
+                const queryParam = dirEntry ? dirEntry.name : repName;
+                
+                fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') { 
+                        socData = data.data; 
+                        selectedSocRep = queryParam;
+                    }
+                    reviewViewLevel = 1;
+                    renderReviewContent();
+                }).catch(e => {
+                    reviewViewLevel = 1; 
+                    renderReviewContent();
+                });
+            } else {
+                reviewViewLevel = 1;
+                renderReviewContent();
+            }
         }
 
         function selectReviewCustomer(custName) {
             currentReviewCustomer = custName;
+            reviewViewLevel = 2;
             renderReviewContent();
         }
-        
-        function selectReviewName(n) { 
-            selectedReviewName = n; 
-            reviewViewLevel = 1; 
-            renderReviewContent(); 
-        }
-        function selectReviewSize(s) { 
-            selectedReviewSize = s; 
-            reviewViewLevel = 2; 
-            renderReviewContent(); 
+
+        function openVirtualFolder(folder) {
+            if (folder === 'form') {
+                openRequestForm();
+                document.getElementById('req-rep').value = currentReviewRep;
+                handleRepChange();
+                setTimeout(() => {
+                    document.getElementById('req-cust').value = currentReviewCustomer;
+                }, 500);
+                return;
+            }
+            currentVirtualFolder = folder;
+            reviewViewLevel = 3;
+            renderReviewContent();
         }
 
         function renderSalesOffice() {
