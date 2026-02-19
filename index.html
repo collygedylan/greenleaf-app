@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO 01</title>
+    <title>GNC-PRO 02</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -261,6 +261,14 @@
                         <input type="number" id="req-qty" class="input-field mb-0" placeholder="0">
                     </div>
                 </div>
+                
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">On Reserve?</label>
+                    <select id="req-reserve" class="input-field bg-white mb-0">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
 
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
@@ -296,7 +304,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO 01
+                GNC-PRO 02
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -326,7 +334,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO 01 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -886,7 +894,6 @@
         let debounceTimer; 
         let syncPauseUntil = 0; 
         
-        // REPLACED STATIC_DIRECTORY WITH DYNAMIC FETCH
         let STATIC_DIRECTORY = []; 
 
         window.lastLocalUpdate = 0;
@@ -983,7 +990,6 @@
             // Populate Reps from DYNAMIC DIRECTORY
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
-            // Ensure directory is sorted
             STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
                 const opt = document.createElement('option');
                 opt.value = r.name;
@@ -1087,6 +1093,7 @@
             document.getElementById('req-size').innerHTML = '<option value="">-- Select Item First --</option>';
             document.getElementById('req-qty').value = "";
             document.getElementById('req-use').value = "";
+            document.getElementById('req-reserve').value = "No"; 
         }
 
         function addItemToRequestList() {
@@ -1102,7 +1109,13 @@
             const size = document.getElementById('req-size').value; // Value from select
             const qty = document.getElementById('req-qty').value;
             const date = document.getElementById('req-date').value;
-            const use = document.getElementById('req-use').value;
+            let use = document.getElementById('req-use').value;
+            
+            // Check Reserve Status
+            const isReserve = document.getElementById('req-reserve').value;
+            if(isReserve === "Yes") {
+                use = "[RESERVE] " + use;
+            }
 
             if(!item || !size) {
                 showToast("Error", "Item and Size are required.", true);
@@ -1161,15 +1174,15 @@
             
             if(pendingRequestItems.length === 0) return;
 
-            // Pause Sync
+            // *** FIX START: PAUSE AUTO-SYNC FOR 60 SECONDS ***
             syncPauseUntil = new Date().getTime() + 60000; 
             window.lastLocalUpdate = new Date().getTime();
+            // *** FIX END ***
 
             showToast("Sending...", `Submitting ${pendingRequestItems.length} items...`);
 
             const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
             
-            // Create items
             const newInventoryItems = pendingRequestItems.map(obj => {
                 const random = Math.floor(1000000 + Math.random() * 9000000);
                 const reqId = `${rep}-${cust}-${todayStr}-${random}`; 
