@@ -1845,8 +1845,11 @@
             if (repEmail) {
                 recipients.push(repEmail);
             }
-            if (USER_EMAILS[currentUser]) {
-                recipients.push(USER_EMAILS[currentUser]);
+            
+            // Fixed undefined USER_EMAILS lookup here
+            const senderEmail = getRepEmail(currentUser);
+            if (senderEmail) {
+                recipients.push(senderEmail);
             }
             
             recipients = [...new Set(recipients)]; 
@@ -4593,7 +4596,6 @@
             }
             
             let assignStr = selectedUsers.join(" & ");
-            let emailTo = selectedUsers.length === 1 ? selectedUsers[0] : "Admin";
             let taskTab = assignType; 
             let projectName = "";
 
@@ -4626,6 +4628,7 @@
                 item.REQUEST_ASSIGNED_TO = assignStr; 
                 item.TASK_TAB = taskTab; 
                 item.SAVED_NOTE = newItemNote;
+                item.TIMESTAMP = new Date().toISOString(); 
 
                 updates.push({ 
                     id: item.UNIQUE_ID, 
@@ -4648,7 +4651,27 @@
             
             const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
 
-            sendEmailNotification(emailTo, assignTitle, emailBody);
+            // --- FIXED EMAIL RECIPIENT LOGIC ---
+            let recipients = [...MANAGERS_EMAILS];
+            selectedUsers.forEach(uName => {
+                const email = getRepEmail(uName);
+                if (email) recipients.push(email);
+            });
+            
+            const senderEmail = getRepEmail(currentUser);
+            if (senderEmail) recipients.push(senderEmail);
+            
+            recipients = [...new Set(recipients)];
+
+            const payload = {
+                type: "batch_update", 
+                updates: updates,
+                emailData: recipients.length > 0 ? {
+                    to: recipients.join(','),
+                    subject: assignTitle,
+                    htmlBody: emailBody
+                } : null
+            };
 
             document.getElementById('assign-modal').style.display = 'none'; 
             toggleBatch(); 
@@ -4656,7 +4679,7 @@
 
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
-                body: JSON.stringify({ type: "batch_update", updates: updates }) 
+                body: JSON.stringify(payload) 
             })
             .then(res => res.json())
             .then(data => { 
