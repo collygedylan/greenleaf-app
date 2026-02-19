@@ -788,12 +788,12 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPz7mKllfZxgikbRMDUPNM0qP3J2jzYrADbDhY7OzjQM4-j4btQi89oFjWQ3h8leny/exec"; 
         
         const ADMINS = ["Dylan", "J.D.", "Kayla", "Morgan"];
         const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
 
-        // --- EMAIL CONFIGURATION (UPDATED) ---
+        // --- EMAIL CONFIGURATION ---
         const USER_EMAILS = {
             "Dylan": "dylan_collyge@greenleafnursery.com",
             "Kayla": "kayla_knepp@greenleafnursery.com", 
@@ -802,15 +802,27 @@
             "Admin": "dylan_collyge@greenleafnursery.com" 
         };
 
+        const MANAGERS_EMAILS = [USER_EMAILS["Dylan"], USER_EMAILS["J.D."]];
+
+        // Helper to find a Sales Rep's email from the Directory
+        function getRepEmail(repName) {
+            // Updated to check case-insensitive match
+            const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
+            return entry ? entry.email : null;
+        }
+
         // Generic function to send email via backend
-        function sendEmailNotification(toUser, subject, htmlContent) {
-            const email = USER_EMAILS[toUser] || USER_EMAILS["Admin"];
+        function sendEmailNotification(to, subject, htmlContent) {
+            // If 'to' is a key in USER_EMAILS, use that. Otherwise assume it's a direct email string.
+            const finalEmail = USER_EMAILS[to] || to;
             
+            console.log("Sending email to:", finalEmail);
+
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify({
                     type: "send_email",
-                    to: email,
+                    to: finalEmail,
                     subject: subject,
                     htmlBody: htmlContent
                 })
@@ -873,6 +885,9 @@
         let autoSyncTimer;
         let debounceTimer; 
         let syncPauseUntil = 0; 
+        
+        // REPLACED STATIC_DIRECTORY WITH DYNAMIC FETCH
+        let STATIC_DIRECTORY = []; 
 
         window.lastLocalUpdate = 0;
 
@@ -935,42 +950,17 @@
             } 
         }
 
-        // --- STATIC DIRECTORY ---
-        const STATIC_DIRECTORY = [
-            { name: "Abbey Burka", id: "S31", phone: "(919)449-5274", email: "abbey_burka@greenleafnursery.com" },
-            { name: "Annette Hancock", id: "S05", phone: "(317)339-1073", email: "Annette_Hancock@greenleafnursery.com" },
-            { name: "Anthony (Tony) Bono", id: "S20", phone: "(517)230-6999", email: "tony_bono@greenleafnursery.com" },
-            { name: "Ben Brown", id: "S21", phone: "(405)570-3984", email: "ben_brown@greenleafnursery.com" },
-            { name: "Ben Harveson", id: "S10", phone: "(817)320-6700", email: "ben_harveson@greenleafnursery.com" },
-            { name: "Ben Maschino", id: "S11", phone: "(812)592-7488", email: "Ben_Maschino@greenleafnursery.com" },
-            { name: "Brian Hatfield", id: "S19", phone: "(417)592-2555", email: "brian_hatfield@greenleafnursery.com" },
-            { name: "Casey Rufener", id: "S03", phone: "(608)513-6338", email: "casey_rufener@greenleafnursery.com" },
-            { name: "Chance Alldredge", id: "S07", phone: "(832)257-0463", email: "chance_alldredge@greenleafnursery.com" },
-            { name: "Chris Farrow", id: "S30", phone: "(443)790-2868", email: "Chris_Farrow@greenleafnursery.com" },
-            { name: "Chris Gaydos", id: "S23", phone: "(617)939-7746", email: "chris_gaydos@greenleafnursery.com" },
-            { name: "Ellen Deely", id: "S18", phone: "(609)668-3291", email: "ellen_deely@greenleafnursery.com" },
-            { name: "Jessica Robertson", id: "S09", phone: "(512)755-7400", email: "jessica_robertson@greenleafnursery.com" },
-            { name: "Josh Ringleb", id: "S27", phone: "(817)228-1243", email: "josh_ringleb@greenleafnursery.com" },
-            { name: "Kevin Effinger", id: "S25", phone: "(618)604-2616", email: "kevin_effinger@greenleafnursery.com" },
-            { name: "Nate Douglas", id: "S13", phone: "(720)800-6710", email: "nate_douglas@greenleafnursery.com" },
-            { name: "Rudy Martinez", id: "S17", phone: "(832)350-1395", email: "rudy_martinez@greenleafnursery.com" },
-            { name: "Toby Brown", id: "S26", phone: "(706)247-6737", email: "toby_brown@greenleafnursery.com" },
-            { name: "Tracey Tapscott", id: "S16", phone: "(561)420-9802", email: "tracey_tapscott@greenleafnursery.com" },
-            { name: "Traci Earle", id: "S15", phone: "(575)760-0010", email: "Traci_Earle@greenleafnursery.com" },
-            { name: "Troy Lee", id: "S12", phone: "(515)250-6566", email: "troy_lee@greenleafnursery.com" },
-            { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" }
-        ];
-
         let currentSocTab = 'reps';
 
-        // HELPER TO NORMALIZE NAMES
+        // HELPER TO NORMALIZE NAMES (Handles "LastName, FirstName" vs "FirstName LastName")
         function normalizeRepName(name) {
             if (!name) return "";
             name = name.trim();
+            // Check for "Last, First" format
             if (name.includes(",")) {
                 let parts = name.split(",");
                 if (parts.length === 2) {
-                    return parts[1].trim() + " " + parts[0].trim(); 
+                    return parts[1].trim() + " " + parts[0].trim(); // Converts "Smith, John" to "John Smith"
                 }
             }
             return name;
@@ -987,12 +977,13 @@
 
         // --- UPDATED REQUEST SYSTEM LOGIC ---
 
-        let pendingRequestItems = []; 
+        let pendingRequestItems = []; // Global array to hold items before submitting
 
         function openRequestForm() {
-            // Populate Reps
+            // Populate Reps from DYNAMIC DIRECTORY
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
+            // Ensure directory is sorted
             STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
                 const opt = document.createElement('option');
                 opt.value = r.name;
@@ -1166,30 +1157,29 @@
 
         function submitRequestBatch() {
             const rep = document.getElementById('req-rep').value;
-            const custInput = document.getElementById('req-cust').value.toUpperCase().trim();
+            const cust = document.getElementById('req-cust').value.toUpperCase().trim();
             
             if(pendingRequestItems.length === 0) return;
 
-            // *** FIX START: PAUSE AUTO-SYNC FOR 60 SECONDS ***
+            // Pause Sync
             syncPauseUntil = new Date().getTime() + 60000; 
             window.lastLocalUpdate = new Date().getTime();
-            // *** FIX END ***
 
             showToast("Sending...", `Submitting ${pendingRequestItems.length} items...`);
 
             const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
             
+            // Create items
             const newInventoryItems = pendingRequestItems.map(obj => {
                 const random = Math.floor(1000000 + Math.random() * 9000000);
-                const reqId = `${rep}-${custInput}-${todayStr}-${random}`; 
+                const reqId = `${rep}-${cust}-${todayStr}-${random}`; 
 
                 return {
                     UNIQUE_ID: reqId,
                     COMMONNAME: obj.item,
                     CONTSIZE: obj.size,
-                    // Store Customer string in both fields to ensure grouping logic works immediately
-                    CUSTOMERNAME: custInput,
-                    CONSIGNEENAME: custInput, 
+                    CUSTOMERNAME: cust,
+                    CONSIGNEENAME: cust, // Save to both for grouping
                     SALESREP: rep,
                     QTY: obj.qty,
                     SHIPDATE: obj.date,
@@ -1200,8 +1190,10 @@
                 };
             });
 
+            // Add to local
             newInventoryItems.forEach(item => fullInventory.unshift(item));
 
+            // Send to Google Sheet
             let processed = 0;
             newInventoryItems.forEach(item => {
                 fetch(GOOGLE_SCRIPT_URL, {
@@ -1219,19 +1211,33 @@
                 });
             });
 
-            closeRequestForm();
+            // --- STEP 1 EMAIL NOTIFICATION ---
+            // Recipients: Dylan, J.D., and the Sales Rep
+            let recipients = [...MANAGERS_EMAILS];
+            const repEmail = getRepEmail(rep);
+            if(repEmail) recipients.push(repEmail);
             
+            // Remove duplicates
+            recipients = [...new Set(recipients)];
+
+            const emailSubject = `New Request Received: ${cust} (${pendingRequestItems.length} items)`;
+            const emailBody = generateHtmlForItems(newInventoryItems, `Request Created by ${currentUser}`, `<strong>Customer:</strong> ${cust}<br><strong>Sales Rep:</strong> ${rep}`);
+            
+            if(recipients.length > 0) {
+                sendEmailNotification(recipients.join(','), emailSubject, emailBody);
+            }
+            // ----------------------------------
+
+            closeRequestForm();
             switchView('review');
-            setTimeout(() => {
-                openReviewFolder('pending');
-            }, 300);
+            setTimeout(() => { openReviewFolder('pending'); }, 300);
         }
 
         function approveAndSendToRep(item) {
             if(!confirm("Approve this request and email the Sales Rep?")) return;
 
             const repEntry = STATIC_DIRECTORY.find(d => d.name === item.SALESREP);
-            const repEmail = repEntry ? repEntry.email : "dylan_collyge@greenleafnursery.com"; 
+            const repEmail = repEntry ? repEntry.email : "dylan_collyge@greenleafnursery.com"; // Fallback to Dylan
 
             const subject = `Request Approved: ${item.COMMONNAME} for ${item.CUSTOMERNAME}`;
             const body = `
@@ -1244,6 +1250,8 @@
                 <p><strong>Photos:</strong><br>${(item.SAVED_PHOTO_LINK || '').split(',').join('<br>')}</p>
             `;
 
+            // Since sendEmailNotification uses a map, let's call the API directly for custom email
+            
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify({
@@ -1254,15 +1262,17 @@
                 })
             });
 
+            // Update Status to Closed/Done
             const payload = {
                 type: "update",
                 id: item.UNIQUE_ID,
-                taskTab: "archive_request", 
+                taskTab: "archive_request", // Move out of active views
                 user: currentUser
             };
 
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
             
+            // Remove locally
             fullInventory = fullInventory.filter(i => i.UNIQUE_ID !== item.UNIQUE_ID);
             renderReviewContent();
             showToast("Sent", "Rep emailed and request closed.");
@@ -1398,6 +1408,7 @@
         }
 
         async function fetchData(isSilent = false) {
+            // *** SYNC FIX: If a save just happened, skip this cycle to prevent overwrite ***
             if (new Date().getTime() < syncPauseUntil) {
                 console.log("Skipping Auto-Sync: Pause Active");
                 return;
@@ -1409,21 +1420,26 @@
                     document.getElementById('loading-spinner').classList.remove('hidden'); 
                 }
                 
+                // 1. Fetch Inventory Data
                 const cloudRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
-                const textCheck = await cloudRes.clone().text();
-                
-                if (textCheck.includes("<html") || textCheck.includes("<!DOCTYPE")) {
-                    throw new Error("Permissions Error: Ensure script is deployed to 'Anyone'.");
-                }
-                
                 const cloudJson = await cloudRes.json();
                 
+                // 2. Fetch Directory (NEW)
+                const dirRes = await fetch(GOOGLE_SCRIPT_URL + "?action=getDirectory");
+                const dirJson = await dirRes.json();
+
                 if(cloudJson.status === 'success') { 
                     fullInventory = cloudJson.data; 
                     noteTemplates = cloudJson.templates || []; 
                     salesNoteMap = cloudJson.salesMap || {}; 
                     
                     allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+                    
+                    // Update STATIC_DIRECTORY from cloud
+                    if (dirJson.status === 'success' && dirJson.data.length > 0) {
+                        STATIC_DIRECTORY = dirJson.data;
+                        console.log("Directory loaded from sheet");
+                    }
 
                     if(!isSilent) { 
                         applyAssignments(); 
@@ -1432,6 +1448,7 @@
                         startAutoSync(); 
                         restoreSession();
                     } else {
+                        // Refresh current view if open
                         if(!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                              const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                              if(freshItem) { 
@@ -1617,22 +1634,37 @@
             activeItem.SAVED_PICK = pick;
             activeItem.SAVED_NOTE = note; 
             activeItem.SAVED_SALES_DESC = salesDesc;
-            activeItem.REQUEST_ASSIGNED_TO = ""; 
+            
+            // Keep the assignment visible so we know who did it, but move tab
+            // activeItem.REQUEST_ASSIGNED_TO = ""; // Optional: keep name for record
+            
             activeItem.TASK_TAB = "review"; 
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
-            // --- EMAIL LOGIC ---
-            const emailRecipient = "Admin"; 
-            const completionTitle = `Task Completed by ${currentUser}`;
-            const emailBody = generateHtmlForItems([activeItem], completionTitle);
+            // --- STEP 3 EMAIL NOTIFICATION ---
+            // Recipients: Dylan, J.D., Sales Rep, and the Field Rep (Current User)
             
-            sendEmailNotification(emailRecipient, `Task Completed: ${activeItem.COMMONNAME}`, emailBody);
+            let recipients = [...MANAGERS_EMAILS]; // Dylan & J.D.
+            
+            // Add Sales Rep
+            const repEmail = getRepEmail(activeItem.SALESREP);
+            if(repEmail) recipients.push(repEmail);
+            
+            // Add Field Rep (Current User) if they have an email map
+            if(USER_EMAILS[currentUser]) recipients.push(USER_EMAILS[currentUser]);
+
+            recipients = [...new Set(recipients)]; // Remove duplicates
+
+            const completionTitle = `Request Filled: ${activeItem.COMMONNAME}`;
+            const emailBody = generateHtmlForItems([activeItem], completionTitle, `<strong>Filled By:</strong> ${currentUser}<br><strong>Status:</strong> Ready for Manager Review`);
+            
+            sendEmailNotification(recipients.join(','), completionTitle, emailBody);
             // -----------------------
 
             const payload = { 
                 type: "update", 
                 id: activeItem.UNIQUE_ID, 
-                requestAssignedTo: "", 
+                requestAssignedTo: activeItem.REQUEST_ASSIGNED_TO, 
                 taskTab: "review", 
                 match: match, 
                 spec: spec, 
@@ -1645,7 +1677,7 @@
             };
             
             goBackFromDetail();
-            showToast("Success", "Marked Complete (Sync Paused)");
+            showToast("Success", "Marked Complete & Emailed Team");
             
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
