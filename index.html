@@ -538,6 +538,27 @@
                     </div>
                 </div>
 
+                <div class="bg-white p-4 rounded-2xl mb-6 shadow-lg border border-gray-100">
+                    <h2 class="font-bold text-[#007a4d] flex items-center gap-2 mb-3 border-b pb-2"><i class="ph-bold ph-hard-drives text-xl"></i> System Status</h2>
+                    
+                    <div class="mb-3 flex justify-between items-center text-sm">
+                        <span class="font-bold text-gray-500">Active Engine:</span>
+                        <span class="font-bold text-[#007a4d]">FloraSync Harvester</span>
+                    </div>
+                    
+                    <div class="mb-3 flex justify-between items-center text-sm border-b pb-3 border-gray-50">
+                        <span class="font-bold text-gray-500">Last Harvest:</span>
+                        <span id="last-run-time" class="font-bold text-gray-800 text-[11px]">Loading...</span>
+                    </div>
+
+                    <div class="text-[10px] font-bold text-gray-400 uppercase mb-2 mt-2">Active Files Loaded</div>
+                    <ul id="file-list" class="space-y-2">
+                        <li class="bg-green-50 text-green-800 text-xs font-bold p-2 rounded flex items-center gap-2">
+                            <i class="ph-bold ph-spinner animate-spin"></i> Checking field data...
+                        </li>
+                    </ul>
+                </div>
+
                 <div onclick="openRequestForm()" class="bg-white p-4 rounded-xl mb-4 shadow border border-gray-200 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
@@ -1031,6 +1052,38 @@
         fetchAppUsers();
 
         // ==========================================
+        // SYSTEM STATUS FETCHER
+        // ==========================================
+        function fetchSystemStatus() {
+            fetch(GOOGLE_SCRIPT_URL + "?action=getSystemStatus")
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        document.getElementById('last-run-time').textContent = result.lastRun;
+                        
+                        const fileListEl = document.getElementById('file-list');
+                        fileListEl.innerHTML = ""; 
+                        
+                        if (result.files && result.files.length > 0) {
+                            result.files.forEach(file => {
+                                const li = document.createElement('li');
+                                li.className = 'bg-green-50 text-green-800 text-xs font-bold p-2 rounded flex items-center gap-2 border border-green-100';
+                                li.innerHTML = `<i class="ph-bold ph-file-csv text-lg"></i> <span class="truncate">${file}</span>`;
+                                fileListEl.appendChild(li);
+                            });
+                        } else {
+                            fileListEl.innerHTML = "<li class='bg-gray-50 text-gray-500 text-xs font-bold p-2 rounded'>No active files found.</li>";
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("System Status Fetch Error:", err);
+                    document.getElementById('last-run-time').textContent = "Offline / Connection Error";
+                });
+        }
+
+
+        // ==========================================
         // EMAIL & REQUEST HELPER LOGIC
         // ==========================================
         
@@ -1509,7 +1562,7 @@
                                      document.getElementById('soc-status').innerText = "Search failed.";
                                  }
                              });
-                          }
+                         }
                     } else {
                          renderSocView(); 
                     }
@@ -1637,6 +1690,7 @@
                         launchApp(); 
                         startAutoSync(); 
                         restoreSession();
+                        fetchSystemStatus(); 
                     } else {
                         if (!document.getElementById('view-detail').classList.contains('hidden') && activeItem) {
                              const freshItem = cloudJson.data.find(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
