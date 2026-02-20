@@ -45,20 +45,6 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
             max-width: 360px; text-align: center; 
         }
-        .user-btn { 
-            width: 100%; padding: 12px; margin-bottom: 10px; 
-            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
-            color: #374151; background: white; display: flex; 
-            align-items: center; gap: 10px; transition: all 0.2s; 
-        }
-        .user-btn:hover { 
-            border-color: var(--brand-gold); background-color: #fffbeb; 
-        }
-        .pin-input { 
-            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
-            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
-            margin-bottom: 20px; outline: none; display: none; 
-        }
         
         #toast-notification { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
@@ -464,8 +450,6 @@
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
-            
-            <div id="login-buttons" class="hidden"></div>
             
             <div id="login-container" class="hidden mt-4">
                 <input type="text" id="login-username" class="w-full p-3 font-bold border-2 border-gray-200 rounded-lg mb-3 outline-none focus:border-[#007a4d]" placeholder="Username">
@@ -1123,6 +1107,8 @@
             document.getElementById('confirm-password').value = "";
             targetLoginUser = null;
         }
+
+        fetchAppUsers();
 
         // ==========================================
         // SYSTEM STATUS FETCHER
