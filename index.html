@@ -468,9 +468,17 @@
             <div id="login-buttons" class="hidden"></div>
             
             <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
+                <input type="password" id="pin-code" class="pin-input tracking-widest" placeholder="ENTER PASSWORD">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
+            </div>
+
+            <div id="reset-password-container" class="hidden mt-4 w-full">
+                <div class="text-sm font-bold text-red-500 mb-3 bg-red-50 p-2 rounded border border-red-100">Action Required: Update Password</div>
+                <input type="password" id="new-password" class="w-full p-3 font-bold text-center tracking-widest border-2 border-gray-200 rounded-lg mb-3 outline-none focus:border-[#007a4d]" placeholder="New Password">
+                <input type="password" id="confirm-password" class="w-full p-3 font-bold text-center tracking-widest border-2 border-gray-200 rounded-lg mb-4 outline-none focus:border-[#007a4d]" placeholder="Confirm Password">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md" onclick="submitNewPassword()">SAVE & LOGIN</button>
+                <button class="text-gray-400 text-xs mt-3 underline w-full text-center" onclick="resetLogin()">Cancel</button>
             </div>
             
             <div id="loading-spinner" class="flex flex-col items-center">
@@ -956,17 +964,13 @@
         // CONFIGURATION
         // ==========================================
         
-        // ADD YOUR URL HERE
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlmvqfFpLll_qFdJOlsJYIlWzGRAKdWC0dQ4PSYrCX2irSDF5SMk5Eiv0_eh0I7SYR/exec"; 
-        
-        // This handles standard emails. J.D. removed per request.
         const MANAGERS_EMAILS = ["dylan_collyge@greenleafnursery.com"];
 
         // ==========================================
         // DYNAMIC LOGIN & USERS
         // ==========================================
         
-        // We initialize with a safe fallback in case the API fetch fails.
         let SYSTEM_USERS = [
             { name: "Dylan", initial: "D", role: "Admin", pin: "1234", color: "blue" },
             { name: "Kayla", initial: "K", role: "User", pin: "1234", color: "pink" },
@@ -976,7 +980,6 @@
 
         let targetLoginUser = null; 
 
-        // Call this the moment the page starts loading
         function fetchAppUsers() {
             fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
                 .then(res => res.json())
@@ -987,7 +990,6 @@
                     buildLoginButtons();
                 })
                 .catch(err => {
-                    console.error("Failed to load users, using fallback.", err);
                     buildLoginButtons();
                 });
         }
@@ -1027,6 +1029,15 @@
             const entered = document.getElementById('pin-code').value;
             
             if (entered === targetLoginUser.pin) { 
+                // Check if they need to reset their password
+                if (targetLoginUser.resetRequired) {
+                    document.getElementById('pin-container').classList.add('hidden');
+                    document.getElementById('reset-password-container').classList.remove('hidden');
+                    document.getElementById('new-password').focus();
+                    return;
+                }
+
+                // Standard Login Proceed
                 currentUser = targetLoginUser.name;
                 isAdmin = (targetLoginUser.role === "Admin");
                 
@@ -1036,19 +1047,72 @@
                 
                 fetchData(); 
             } else { 
-                showToast("Error", "Incorrect PIN", true); 
+                showToast("Error", "Incorrect Password", true); 
             } 
+        }
+
+        function submitNewPassword() {
+            const pass1 = document.getElementById('new-password').value;
+            const pass2 = document.getElementById('confirm-password').value;
+
+            if (!pass1 || pass1.length < 4) {
+                showToast("Error", "Password must be at least 4 characters", true);
+                return;
+            }
+            if (pass1 !== pass2) {
+                showToast("Error", "Passwords do not match", true);
+                return;
+            }
+
+            document.getElementById('reset-password-container').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Updating Credentials...";
+
+            // Send new password to Google Sheets
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "update_password",
+                    username: targetLoginUser.name,
+                    oldPassword: targetLoginUser.pin,
+                    newPassword: pass1
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update local object so they don't get trapped in a loop
+                    targetLoginUser.pin = pass1;
+                    targetLoginUser.resetRequired = false;
+                    
+                    currentUser = targetLoginUser.name;
+                    isAdmin = (targetLoginUser.role === "Admin");
+                    
+                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                    showToast("Success", "Password updated successfully!");
+                    fetchData(); // Boot up the app
+                } else {
+                    showToast("Error", data.message, true);
+                    resetLogin();
+                }
+            })
+            .catch(err => {
+                showToast("Network Error", "Could not update password.", true);
+                resetLogin();
+            });
         }
         
         function resetLogin() { 
             document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('reset-password-container').classList.add('hidden');
             document.getElementById('login-buttons').classList.remove('hidden'); 
             document.getElementById('loading-spinner').classList.add('hidden'); 
             document.getElementById('pin-code').value = "";
+            document.getElementById('new-password').value = "";
+            document.getElementById('confirm-password').value = "";
             targetLoginUser = null;
         }
 
-        // Run immediately
         fetchAppUsers();
 
         // ==========================================
@@ -1077,16 +1141,22 @@
                     }
                 })
                 .catch(err => {
-                    console.error("System Status Fetch Error:", err);
                     document.getElementById('last-run-time').textContent = "Offline / Connection Error";
                 });
         }
 
+        // ==========================================
+        // UI HELPERS (ACCORDION)
+        // ==========================================
+        function toggleAccordion(id) {
+            document.getElementById(id).classList.toggle('hidden');
+            const icon = document.getElementById(id + '-icon');
+            if (icon) {
+                icon.classList.toggle('ph-caret-down');
+                icon.classList.toggle('ph-caret-up');
+            }
+        }
 
-        // ==========================================
-        // EMAIL & REQUEST HELPER LOGIC
-        // ==========================================
-        
         function getRepEmail(repName) {
             const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
             return entry ? entry.email : null;
@@ -1182,9 +1252,9 @@
         let currentReviewFolder = null; 
         let currentReviewRep = null; 
         let currentReviewCustomer = null; 
-        let reviewViewLevel = 0;
-        let selectedReviewName = null;
+        let selectedReviewCommon = null;
         let selectedReviewSize = null;
+        let reviewViewLevel = 0;
 
         let currentFile = null;
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
@@ -1304,7 +1374,6 @@
             })
             .catch(err => {
                 loading.classList.add('hidden');
-                console.error("Failed to load customers", err);
             });
         }
 
@@ -1419,7 +1488,6 @@
             
             if (pendingRequestItems.length === 0) return;
 
-            // PAUSE SYNC FOR 60 SECONDS TO PREVENT VANISHING ITEMS
             syncPauseUntil = new Date().getTime() + 60000; 
             window.lastLocalUpdate = new Date().getTime();
 
@@ -1447,7 +1515,6 @@
                 };
             });
 
-            // Add to local immediately so user sees them
             for (let idx = 0; idx < newInventoryItems.length; idx++) {
                 fullInventory.unshift(newInventoryItems[idx]);
             }
@@ -1462,7 +1529,6 @@
             const emailSubject = `New Request Received: ${custInput} (${pendingRequestItems.length} items)`;
             const emailBody = generateHtmlForItems(newInventoryItems, `Request Created by ${currentUser}`, `<strong>Customer:</strong> ${custInput}<br><strong>Sales Rep:</strong> ${rep}`);
             
-            // SEND 1 SINGLE BATCH REQUEST TO GOOGLE TO PREVENT TRAFFIC JAM
             const payload = {
                 type: "create_requests_batch",
                 items: newInventoryItems,
@@ -1657,7 +1723,6 @@
 
         async function fetchData(isSilent = false) {
             if (new Date().getTime() < syncPauseUntil) {
-                console.log("Skipping Auto-Sync: Pause Active");
                 return;
             }
 
@@ -1719,7 +1784,6 @@
                     throw new Error(cloudJson.message || "Failed to load data."); 
                 }
             } catch (e) { 
-                console.error("Fetch Data Error:", e); 
                 if (!isSilent) { 
                     document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
                     setTimeout(resetLogin, 4000); 
@@ -1900,7 +1964,6 @@
                 recipients.push(repEmail);
             }
             
-            // Fixed undefined USER_EMAILS lookup here
             const senderEmail = getRepEmail(currentUser);
             if (senderEmail) {
                 recipients.push(senderEmail);
@@ -1950,1549 +2013,486 @@
         }
 
         // ==========================================
-        // PHOTO UPLOAD & EDITOR
+        // DATA VIEWER & REVIEW (INCLUDES GNC MASTER)
         // ==========================================
 
-        function handlePhotoUpload(input) {
-            if (input.files && input.files[0]) {
-                currentFile = input.files[0];
-                
-                if (document.getElementById('in-match')) {
-                    activeItem.SAVED_MATCH = document.getElementById('in-match').value;
-                }
-                if (document.getElementById('in-spec')) {
-                    activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
-                }
-                if (document.getElementById('in-pick')) {
-                    activeItem.SAVED_PICK = document.getElementById('in-pick').value;
-                }
-                if (document.getElementById('in-note')) {
-                    activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-                }
-                if (document.getElementById('in-sales-desc')) {
-                    activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
-                }
-                if (document.getElementById('in-grower-eval')) {
-                    activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
-                }
-                if (document.getElementById('in-grower-note')) {
-                    activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
-                }
-                
-                openPhotoEditor();
-            }
-        }
+        function renderManagerFolders() {
+            document.getElementById('review-root-folders').classList.remove('hidden');
+            document.getElementById('review-folder-view').classList.add('hidden');
+            
+            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
+            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
+            const noWinnerCount = fullInventory.filter(i => {
+                const pri = parseFloat(i.PRIORITY);
+                const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                return (pri > 0 && pri < 9999) && (qty <= 0);
+            }).length;
 
-        function openPhotoEditor() {
-            const modal = document.getElementById('view-photo-editor');
-            const preview = document.getElementById('editor-preview');
-            modal.style.display = 'flex';
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                processCanvasPreview(); 
-            };
-            reader.readAsDataURL(currentFile);
-        }
-
-        function closePhotoEditor() {
-            document.getElementById('view-photo-editor').style.display = 'none';
-            document.getElementById('photo-canvas').classList.add('hidden');
-            document.getElementById('editor-preview').classList.remove('hidden');
-            currentFile = null;
-        }
-
-        function toggleEdit(type) {
-            const btn = document.getElementById('btn-' + type);
-            editSettings[type] = !editSettings[type];
-            
-            if (editSettings[type]) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-            processCanvasPreview();
-        }
-
-        function processCanvasPreview() {
-            const preview = document.getElementById('editor-preview');
-            const canvas = document.getElementById('photo-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            preview.classList.add('hidden');
-            canvas.classList.remove('hidden');
-            
-            const img = new Image();
-            img.src = preview.src;
-            img.onload = function() {
-                const MAX_WIDTH = 1024;
-                const scale = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scale;
-                
-                if (editSettings.pro) { 
-                    ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)'; 
-                } else { 
-                    ctx.filter = 'none'; 
-                }
-                
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none'; 
-                
-                if (editSettings.dirt) {
-                    const potHeight = canvas.height * 0.25;
-                    const potY = canvas.height - potHeight;
-                    ctx.save(); 
-                    ctx.beginPath(); 
-                    ctx.rect(0, potY, canvas.width, potHeight); 
-                    ctx.clip(); 
-                    ctx.filter = 'blur(4px)'; 
-                    ctx.drawImage(canvas, 0, 0); 
-                    ctx.restore(); 
-                    ctx.filter = 'none';
-                }
-            };
-        }
-
-        function finalizeUpload() {
-            const canvas = document.getElementById('photo-canvas');
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            const base64Data = dataUrl.split(',')[1];
-            
-            let currentCount = 0;
-            if (activeItem.SAVED_PHOTO_LINK) {
-                currentCount = activeItem.SAVED_PHOTO_LINK.split(',').length;
-            }
-            
-            const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
-            const dateStr = new Date().toISOString().split('T')[0];
-            const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
-            
-            closePhotoEditor();
-            
-            syncPauseUntil = new Date().getTime() + 15000;
-            window.lastLocalUpdate = new Date().getTime();
-            
-            showToast("Uploading...", "Pro photo processing...", false);
-            
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ 
-                    type: "image", 
-                    image: base64Data, 
-                    mimeType: "image/jpeg", 
-                    filename: filename 
-                }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') { 
-                    let links = [];
-                    if (activeItem.SAVED_PHOTO_LINK) {
-                        links = activeItem.SAVED_PHOTO_LINK.split(',');
-                    }
-                    
-                    let names = [];
-                    if (activeItem.SAVED_PHOTO_NAME) {
-                        names = activeItem.SAVED_PHOTO_NAME.split(',');
-                    }
-                     
-                    links.push(data.url); 
-                    names.push(filename); 
-                    
-                    activeItem.SAVED_PHOTO_LINK = links.join(','); 
-                    activeItem.SAVED_PHOTO_NAME = names.join(',');
-                    
-                    const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
-                    if (masterIdx > -1) { 
-                        fullInventory[masterIdx] = activeItem; 
-                        activeItem = fullInventory[masterIdx]; 
-                    }
-                    
-                    renderOverviewData(); 
-                    
-                    const payload = { 
-                        type: "update", 
-                        id: activeItem.UNIQUE_ID, 
-                        match: activeItem.SAVED_MATCH || "", 
-                        spec: activeItem.SAVED_SPEC || "", 
-                        pick: activeItem.SAVED_PICK || "", 
-                        note: activeItem.SAVED_NOTE || "", 
-                        salesDesc: activeItem.SAVED_SALES_DESC || "", 
-                        photoLink: activeItem.SAVED_PHOTO_LINK, 
-                        photoName: activeItem.SAVED_PHOTO_NAME, 
-                        user: currentUser, 
-                        growerEval: activeItem.GROWER_EVAL || "", 
-                        growerNote: activeItem.GROWER_NOTE || "" 
-                    };
-                    
-                    fetch(GOOGLE_SCRIPT_URL, { 
-                        method: "POST", 
-                        body: JSON.stringify(payload) 
-                    }).catch(err => {
-                        logFailedSave(payload);
-                    });
-                    
-                    showToast("Success", "Photo saved & Text preserved."); 
-                } else { 
-                    showToast("Upload Error", data.message, true); 
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Could not upload photo.", true);
-            });
-        }
-
-        function deletePhoto(index) {
-            if (!confirm("Are you sure you want to delete this photo?")) return;
-            
-            if (autoSyncTimer) clearInterval(autoSyncTimer);
-            
-            let links = [];
-            if (activeItem.SAVED_PHOTO_LINK) {
-                links = activeItem.SAVED_PHOTO_LINK.split(',');
-            }
-            
-            let names = [];
-            if (activeItem.SAVED_PHOTO_NAME) {
-                names = activeItem.SAVED_PHOTO_NAME.split(',');
-            }
-            
-            links.splice(index, 1); 
-            if (index < names.length) {
-                names.splice(index, 1);
-            }
-            
-            activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(','); 
-            activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
-            
-            renderOverviewData(); 
-            showToast("Deleting...", "Removing photo from cloud...");
-            
-            const payload = { 
-                type: "update", 
-                id: activeItem.UNIQUE_ID, 
-                match: activeItem.SAVED_MATCH || "", 
-                spec: activeItem.SAVED_SPEC || "", 
-                pick: activeItem.SAVED_PICK || "", 
-                note: activeItem.SAVED_NOTE || "", 
-                salesDesc: activeItem.SAVED_SALES_DESC || "", 
-                photoLink: activeItem.SAVED_PHOTO_LINK, 
-                photoName: activeItem.SAVED_PHOTO_NAME, 
-                user: currentUser 
-            };
-            
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            }).then(res => res.json()).then(data => { 
-                if (data.status === 'success') { 
-                    showToast("Success", "Photo permanently deleted."); 
-                    setTimeout(() => { 
-                        fetchData(true); 
-                        startAutoSync(); 
-                    }, 2500); 
-                } else { 
-                    showToast("Error", "Could not delete: " + data.message, true); 
-                    startAutoSync(); 
-                } 
-            }).catch(err => { 
-                showToast("Network Error", "Saved deletion offline.", true); 
-                logFailedSave(payload); 
-                startAutoSync(); 
-            });
-        }
-
-        // ==========================================
-        // DIRECTORY & SOC VIEWS
-        // ==========================================
-
-        function renderDirectoryView() {
-            const container = document.getElementById('directory-content');
-            const term = document.getElementById('directory-search').value.toLowerCase();
-            let displayList = STATIC_DIRECTORY;
-            
-            if (term) { 
-                displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); 
-            }
-            
-            let html = "";
-            for (let i = 0; i < displayList.length; i++) {
-                let rep = displayList[i];
-                let btns = '';
-                if (rep.phone) {
-                    btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
-                }
-                if (rep.email) {
-                    btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
-                }
-                
-                html += `
-                <div class="rep-card">
-                    <div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
-                        <div>
-                            <div class="rep-name">${rep.name}</div>
-                            <div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div>
+            const html = `
+                <div class="space-y-2">
+                    <div class="drill-item" onclick="openReviewFolder('pending')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
                         </div>
-                        <i class="ph-bold ph-caret-right text-gray-300 mt-1"></i>
-                    </div>`;
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('completed')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('item_review')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
                     
-                if (btns) {
-                    html += `<div class="contact-row">${btns}</div>`;
+                    <div class="drill-item bg-green-50 border-green-200 mt-4" onclick="openReviewFolder('gnc_master')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-database text-[#007a4d] text-2xl"></i>
+                            <span class="font-bold text-lg text-[#007a4d]">GNC MASTER (Rep Orders)</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-[#007a4d]"></i>
+                    </div>
+                </div>
+            `;
+            document.getElementById('review-root-folders').innerHTML = html;
+        }
+
+        function openReviewFolder(folderType) {
+            currentReviewFolder = folderType;
+            currentReviewRep = null;
+            currentReviewCustomer = null;
+            selectedReviewCommon = null;
+            selectedReviewSize = null;
+            
+            document.getElementById('review-root-folders').classList.add('hidden');
+            document.getElementById('review-folder-view').classList.remove('hidden');
+            
+            let title = "Folder";
+            if (folderType === 'pending') title = "Pending Requests";
+            if (folderType === 'completed') title = "Completed Requests";
+            if (folderType === 'item_review') title = "Item Review (No Winner)";
+            if (folderType === 'gnc_master') title = "GNC MASTER - Rep Orders";
+            
+            document.getElementById('review-folder-title').innerText = title;
+            document.getElementById('review-back-label').innerText = "Back to Folders";
+            reviewViewLevel = 0;
+            document.getElementById('review-search').value = ""; 
+            renderReviewContent();
+        }
+
+        function resetReviewFolders() {
+            document.getElementById('review-search').value = "";
+            
+            if (currentReviewFolder === 'gnc_master') {
+                if (selectedReviewSize) {
+                    selectedReviewSize = null;
+                    renderReviewContent();
+                    return;
                 }
-                
-                html += `<div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div>
-                </div>`;
+                if (selectedReviewCommon) {
+                    selectedReviewCommon = null;
+                    renderReviewContent();
+                    return;
+                }
+                if (currentReviewCustomer) {
+                    currentReviewCustomer = null;
+                    renderReviewContent();
+                    return;
+                }
+                if (currentReviewRep) {
+                    currentReviewRep = null;
+                    socData = []; 
+                    renderReviewContent();
+                    return;
+                }
+            } else {
+                if (currentReviewCustomer) {
+                    currentReviewCustomer = null;
+                    renderReviewContent();
+                    return;
+                }
+                if (currentReviewRep) {
+                    currentReviewRep = null;
+                    renderReviewContent();
+                    return;
+                }
             }
-            container.innerHTML = html;
+            currentReviewFolder = null;
+            renderManagerFolders();
         }
 
-        function switchSocTab(tab) {
-            currentSocTab = tab;
+        function fetchRepDataForReview(repName) {
+            document.getElementById('review-content').innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8">
+                    <i class="ph-bold ph-spinner animate-spin text-4xl text-[#007a4d] mb-4"></i>
+                    <div class="text-gray-500 font-bold">Syncing ${repName}...</div>
+                </div>
+            `;
             
-            if (tab === 'reps') {
-                document.getElementById('st-reps').classList.add('active');
-            } else {
-                document.getElementById('st-reps').classList.remove('active');
-            }
-            
-            if (tab === 'item') {
-                document.getElementById('st-item').classList.add('active');
-            } else {
-                document.getElementById('st-item').classList.remove('active');
-            }
-            
-            if (tab === 'docks') {
-                document.getElementById('st-docks').classList.add('active');
-            } else {
-                document.getElementById('st-docks').classList.remove('active');
-            }
-            
-            socViewLevel = 0;
-            renderSocView();
-        }
-
-        function fetchRepData(repIdentifier) {
-            if (!document.getElementById('view-directory').classList.contains('hidden')) { 
-                switchView('soc'); 
-            }
-            
-            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
-            const queryParam = dirEntry ? dirEntry.name : repIdentifier;
-            
-            document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
-            
-            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') { 
                     socData = data.data; 
-                    socViewLevel = 1; 
-                    selectedSocRep = queryParam; 
-                    renderSocView(); 
-                    document.getElementById('soc-status').innerText = ""; 
+                    currentReviewRep = repName;
+                    renderReviewContent();
                 } else { 
-                    if (dirEntry && queryParam !== dirEntry.id) {
-                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id))
-                         .then(res2 => res2.json())
-                         .then(data2 => {
-                             if (data2.status === 'success') { 
-                                 socData = data2.data; 
-                                 socViewLevel = 1; 
-                                 selectedSocRep = dirEntry.id; 
-                                 renderSocView(); 
-                                 document.getElementById('soc-status').innerText = ""; 
-                             } else { 
-                                 document.getElementById('soc-status').innerText = "Not found"; 
-                             }
-                          });
-                    } else { 
-                        document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; 
-                    }
+                    showToast("Error", "Could not load data.", true);
+                    renderReviewContent();
                 }
-            }).catch(e => { 
-                document.getElementById('soc-status').innerText = "Connection Error"; 
+            })
+            .catch(err => {
+                showToast("Error", "Connection failed.", true);
+                renderReviewContent();
             });
         }
 
-        function renderSocView() {
-            const container = document.getElementById('soc-content'); 
-            const term = document.getElementById('soc-search').value.toLowerCase();
+        function selectReviewCommon(c) {
+            selectedReviewCommon = c;
+            document.getElementById('review-search').value = "";
+            renderReviewContent();
+        }
+
+        function selectReviewSizeMaster(s) {
+            selectedReviewSize = s;
+            document.getElementById('review-search').value = "";
+            renderReviewContent();
+        }
+
+        function renderReviewContent() {
+            const container = document.getElementById('review-content');
+            const term = document.getElementById('review-search').value.toLowerCase();
+            const failContainer = document.getElementById('failed-saves-container');
             
-            if (term && socData.length > 0) { 
-                const matched = socData.filter(i => {
-                    let c = (i.CUSTOMERNAME||"").toLowerCase();
-                    let code = (i.ITEMCODE||"").toLowerCase();
-                    let rep = (i.SALESREP||"").toLowerCase();
-                    let common = (i.COMMONNAME||"").toLowerCase();
+            if (currentReviewFolder === 'completed') {
+                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+                if (failed.length > 0) { 
+                    failContainer.innerHTML = `
+                    <div class="failed-sync-banner">
+                        <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
+                        <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
+                    </div>`; 
+                } else { 
+                    failContainer.innerHTML = ''; 
+                }
+            } else {
+                failContainer.innerHTML = '';
+            }
+
+            // --- GNC MASTER DRILL DOWN FLOW ---
+            if (currentReviewFolder === 'gnc_master') {
+                // LEVEL 1: REPS
+                if (!currentReviewRep) {
+                    document.getElementById('review-folder-title').innerText = "GNC MASTER - Rep Orders";
+                    document.getElementById('review-back-label').innerText = "Back to Folders";
                     
-                    return c.includes(term) || code.includes(term) || rep.includes(term) || common.includes(term);
-                }); 
+                    let sortedReps = STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name));
+                    
+                    if (term) {
+                        sortedReps = sortedReps.filter(r => r.name.toLowerCase().includes(term));
+                    }
+                    
+                    let html = "";
+                    for (let r = 0; r < sortedReps.length; r++) {
+                        let rep = sortedReps[r];
+                        html += `
+                        <div class="drill-item" onclick="fetchRepDataForReview('${rep.name.replace(/'/g, "\\'")}')">
+                            <div class="flex items-center gap-3">
+                                <i class="ph-fill ph-user text-[#007a4d] text-2xl"></i>
+                                <span class="font-bold text-lg">${rep.name}</span>
+                            </div>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                    return;
+                }
+
+                // LEVEL 2: CUSTOMERS
+                if (!currentReviewCustomer) {
+                    document.getElementById('review-folder-title').innerText = currentReviewRep;
+                    document.getElementById('review-back-label').innerText = "Back to Reps";
+                    
+                    let customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
+                    
+                    if (term) {
+                        customers = customers.filter(c => c.toLowerCase().includes(term));
+                    }
+                    
+                    let html = "";
+                    for (let c = 0; c < customers.length; c++) {
+                        html += `
+                        <div class="drill-item" onclick="selectReviewCustomer('${customers[c].replace(/'/g, "\\'")}')">
+                            <div class="flex items-center gap-3">
+                                <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                <span class="font-bold text-sm">${customers[c]}</span>
+                            </div>
+                            <i class="ph-bold ph-caret-right ml-2"></i>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                    return;
+                }
+
+                // LEVEL 3: COMMON NAMES
+                if (!selectedReviewCommon) {
+                    document.getElementById('review-folder-title').innerText = currentReviewCustomer;
+                    document.getElementById('review-back-label').innerText = "Back to Customers";
+                    
+                    const custItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === currentReviewCustomer);
+                    let commons = [...new Set(custItems.map(i => i.COMMONNAME))].sort();
+                    
+                    if (term) {
+                        commons = commons.filter(c => c.toLowerCase().includes(term));
+                    }
+                    
+                    let html = "";
+                    for (let c = 0; c < commons.length; c++) {
+                        html += `
+                        <div class="drill-item" onclick="selectReviewCommon('${commons[c].replace(/'/g, "\\'")}')">
+                            <span class="font-bold text-lg">${commons[c]}</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    }
+                    if (commons.length === 0) html = `<div class="p-8 text-center text-gray-400">No matches found.</div>`;
+                    container.innerHTML = html;
+                    return;
+                }
+
+                // LEVEL 4: SIZES
+                if (!selectedReviewSize) {
+                    document.getElementById('review-folder-title').innerText = selectedReviewCommon;
+                    document.getElementById('review-back-label').innerText = "Back to Plants";
+                    
+                    const namedItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === currentReviewCustomer && i.COMMONNAME === selectedReviewCommon);
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                    
+                    let html = "";
+                    for (let s = 0; s < sizes.length; s++) {
+                        const count = namedItems.filter(i => i.CONTSIZE === sizes[s]).length;
+                        html += `
+                        <div class="drill-item" onclick="selectReviewSizeMaster('${sizes[s]}')">
+                            <span class="font-bold text-lg">${sizes[s]} <span class="text-sm font-normal text-gray-400">(${count})</span></span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                    return;
+                }
+
+                // LEVEL 5: ACCORDION VIEW
+                document.getElementById('review-folder-title').innerText = `${selectedReviewCommon} - ${selectedReviewSize}`;
+                document.getElementById('review-back-label').innerText = "Back to Sizes";
+
+                const finalItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === currentReviewCustomer && i.COMMONNAME === selectedReviewCommon && i.CONTSIZE === selectedReviewSize);
                 
-                let html = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>`;
-                for (let m = 0; m < matched.length; m++) {
-                    let i = matched[m];
+                let html = "";
+                for (let f = 0; f < finalItems.length; f++) {
+                    let i = finalItems[f];
+                    let accId = `acc-${f}`;
                     html += `
-                    <div class="inv-card">
-                        <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                        <div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div>
-                        <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-3 overflow-hidden">
+                        <div class="p-4 flex justify-between items-center bg-gray-50 cursor-pointer border-b border-gray-100" onclick="toggleAccordion('${accId}')">
+                            <div class="font-bold text-[#007a4d] text-lg">${i.ITEMCODE || 'No Code'}</div>
+                            <div class="flex items-center gap-3">
+                                <div class="font-bold text-black bg-white px-2 py-1 rounded border border-gray-200 shadow-sm text-sm">Qty: ${i.QTYORDERED || i.QTY || 0}</div>
+                                <i id="${accId}-icon" class="ph-bold ph-caret-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div id="${accId}" class="hidden p-4 bg-white text-sm">
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Order No</span><span class="font-semibold text-gray-800">${i.ORDERNO || '-'}</span></div>
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Ship Date</span><span class="font-semibold text-gray-800">${i.SHIPDATE ? String(i.SHIPDATE).substring(0,10) : '-'}</span></div>
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Sales Rep</span><span class="font-semibold text-gray-800">${i.SALESREP || '-'}</span></div>
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Dock</span><span class="font-semibold text-gray-800">${i.DOCK || '-'}</span></div>
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Location</span><span class="font-semibold text-gray-800">${i.LOCATIONCODE || '-'}</span></div>
+                                <div><span class="text-[10px] text-gray-500 uppercase font-bold block">Lot Code</span><span class="font-semibold text-gray-800">${i.LOTCODE || '-'}</span></div>
+                            </div>
+                        </div>
                     </div>`;
                 }
                 container.innerHTML = html;
-                return; 
+                return;
             }
 
-            if (currentSocTab === 'docks') {
-                let html = '<div class="grid grid-cols-2 gap-2">';
-                for (let i = 1; i <= 56; i++) { 
-                    html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; 
+            let folderTaskTab = 'review';
+            if (currentReviewFolder === 'pending') {
+                folderTaskTab = 'requests';
+            }
+            
+            // --- NO WINNER FOLDER (Simple List) ---
+            if (currentReviewFolder === 'item_review') {
+                let filteredItems = fullInventory.filter(i => {
+                    const pri = parseFloat(i.PRIORITY);
+                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                    return (pri > 0 && pri < 9999) && (qty <= 0);
+                });
+                
+                if (term) { 
+                    filteredItems = filteredItems.filter(i => {
+                        const common = (i.COMMONNAME||"").toLowerCase();
+                        const code = (i.ITEMCODE||"").toLowerCase();
+                        return common.includes(term) || code.includes(term);
+                    }); 
                 }
-                html += '</div>'; 
+
+                if (filteredItems.length === 0) { 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
+                    return; 
+                }
+
+                let html = "";
+                for (let i = 0; i < filteredItems.length; i++) {
+                    html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
+                }
                 container.innerHTML = html; 
                 return;
             }
 
-            if (currentSocTab === 'item') {
-                if (socData.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; 
-                    return; 
+            // --- PENDING & COMPLETED FOLDERS ---
+            if (!currentReviewRep) {
+                if (currentReviewFolder === 'pending') {
+                    document.getElementById('review-folder-title').innerText = "Pending Requests";
+                } else {
+                    document.getElementById('review-folder-title').innerText = "Completed Requests";
                 }
-
-                if (socViewLevel === 0) {
-                    const names = [...new Set(socData.map(i => i.COMMONNAME || "Unknown"))].sort();
-                    let html = "";
-                    for (let n = 0; n < names.length; n++) {
-                        html += `
-                        <div class="drill-item" onclick="selectSocCommonName('${names[n].replace(/'/g, "\\'")}')">
-                            <span class="font-bold text-lg">${names[n]}</span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                } else if (socViewLevel === 1) {
-                    const namedItems = socData.filter(i => i.COMMONNAME === selectedSocCommon);
-                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                    
-                    let html = `
-                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Names
-                    </div>
-                    <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>`;
-                    
-                    for (let s = 0; s < sizes.length; s++) {
-                        html += `
-                        <div class="drill-item" onclick="selectSocSize('${sizes[s]}')">
-                            <span class="font-bold text-lg">${sizes[s]}</span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                } else if (socViewLevel === 2) {
-                    renderSocItemDetail(selectedSocCommon, selectedSocSize);
-                }
-                return;
-            }
-
-            // HIERARCHY VIEW (Rep -> Customer -> Common -> Size -> Cards)
-            if (socViewLevel === 0) { 
-                let html = '';
+                document.getElementById('review-back-label').innerText = "Back to Folders";
                 
-                let sortedReps = STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name));
-                for (let r = 0; r < sortedReps.length; r++) {
-                    let rep = sortedReps[r];
-                    let disp = `${rep.name} - ${rep.id}`; 
+                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
+                activeReps.sort();
+                
+                let html = "";
+                for (let i = 0; i < activeReps.length; i++) {
+                    let repName = activeReps[i];
+                    const count = fullInventory.filter(item => item.TASK_TAB === folderTaskTab && (item.SALESREP || "Unknown") === repName).length;
                     html += `
-                    <div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${disp}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`; 
-                }
-                container.innerHTML = html;
-            } else if (socViewLevel === 1) { 
-                const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
-                
-                let html = `
-                <div class="back-btn" onclick="socViewLevel=0; renderSocView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Sales Reps
-                </div>
-                <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>`;
-                
-                for (let c = 0; c < customers.length; c++) {
-                    html += `
-                    <div class="drill-item" onclick="selectSocCust('${customers[c].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-sm">${customers[c]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else if (socViewLevel === 2) { 
-                const custItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
-                const commons = [...new Set(custItems.map(i => i.COMMONNAME))].sort();
-                
-                let html = `
-                <div class="back-btn" onclick="socViewLevel=1; renderSocView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Customers
-                </div>
-                <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>`;
-                
-                for (let c = 0; c < commons.length; c++) {
-                    html += `
-                    <div class="drill-item" onclick="selectSocCommonName('${commons[c].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${commons[c]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else if (socViewLevel === 3) {
-                const namedItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
-                let html = `
-                <div class="back-btn" onclick="socViewLevel=2; renderSocView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Plants
-                </div>
-                <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>`;
-                
-                for (let s = 0; s < sizes.length; s++) {
-                    html += `
-                    <div class="drill-item" onclick="selectSocSize('${sizes[s]}')">
-                        <span class="font-bold text-lg">${sizes[s]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else if (socViewLevel === 4) {
-                const finalItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
-                
-                let html = `
-                <div class="back-btn" onclick="socViewLevel=3; renderSocView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
-                </div>
-                <div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>`;
-                
-                for (let f = 0; f < finalItems.length; f++) {
-                    let i = finalItems[f];
-                    html += `
-                    <div class="inv-card">
-                        <div class="flex justify-between">
-                            <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
-                            <div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div>
+                    <div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
+                            <span class="font-bold text-lg">${repName}</span>
                         </div>
-                        <div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div>
+                        <span class="text-gray-400 font-bold text-sm">(${count})</span>
+                        <i class="ph-bold ph-caret-right ml-2"></i>
                     </div>`;
                 }
                 container.innerHTML = html;
-            }
-        }
-        
-        function renderSocItemDetail(common, size) {
-            const container = document.getElementById('soc-content');
-            
-            const invMatches = fullInventory.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
-            invMatches.sort((a, b) => {
-                 const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
-                 const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
-                 return pA - pB;
-            });
-            
-            const bestInv = invMatches.length > 0 ? invMatches[0] : null;
-            const orders = socData.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
-            
-            let headerHtml = `
-            <div class="bg-white p-4 rounded-lg shadow mb-4 border border-gray-200">
-                <div class="font-bold text-xl text-[#007a4d] mb-2">${common}</div>
-                <div class="text-sm font-bold text-gray-600 mb-2">${size}</div>`;
-                
-            if (bestInv) {
-                headerHtml += `
-                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div class="bg-gray-50 p-2 rounded"><strong>Loc:</strong> ${bestInv.LOCATIONCODE || '-'}</div>
-                    <div class="bg-gray-50 p-2 rounded"><strong>Avail:</strong> ${bestInv.PTRAVAILABLE || '0'}</div>
-                </div>`;
-                
-                if (bestInv.SAVED_NOTE) {
-                    headerHtml += `<div class="text-xs italic text-gray-500 mb-2">Note: ${bestInv.SAVED_NOTE}</div>`;
-                }
-                
-                if (bestInv.SAVED_PHOTO_LINK) {
-                    const firstLink = bestInv.SAVED_PHOTO_LINK.split(',')[0];
-                    let thumbUrl = firstLink;
-                    const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    if (idMatch && idMatch[1]) { 
-                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
-                    }
-                    headerHtml += `<img src="${thumbUrl}" class="w-full h-48 object-cover rounded mb-2">`;
-                }
-            } else {
-                headerHtml += `<div class="text-xs text-red-500 italic mb-2">No matching inventory data found in Drive.</div>`;
-            }
-            
-            headerHtml += `<button onclick='emailAllRepsForItem(${JSON.stringify(bestInv || {COMMONNAME: common, CONTSIZE: size})}, ${JSON.stringify(orders)})' class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 mb-2"><i class="ph-bold ph-envelope"></i> EMAIL ALL REPS</button>`;
-            headerHtml += `</div>`;
-            
-            let listHtml = `<div class="font-bold text-gray-500 text-xs uppercase mb-2">Customer Orders (${orders.length})</div>`;
-            
-            for (let o = 0; o < orders.length; o++) {
-                let order = orders[o];
-                listHtml += `
-                <div class="inv-card">
-                    <div class="flex justify-between">
-                        <div class="font-bold text-gray-800 text-sm truncate w-2/3">${order.CUSTOMERNAME}</div>
-                        <div class="font-bold text-black">${order.QTYORDERED || order.QTY || 0}</div>
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">Rep: <strong>${order.SALESREP}</strong> | Order: ${order.ORDERNO}</div>
-                </div>`;
-            }
-            
-            container.innerHTML = `
-            <div class="back-btn" onclick="socViewLevel=1; renderSocView()">
-                <i class="ph-bold ph-arrow-left"></i> Back to Sizes
-            </div>` + headerHtml + listHtml;
-        }
-        
-        function emailAllRepsForItem(invItem, orders) {
-            const uniqueReps = [...new Set(orders.map(o => o.SALESREP))];
-            
-            let emails = [];
-            uniqueReps.forEach(repName => {
-                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName);
-                if (dirEntry && dirEntry.email) {
-                    emails.push(dirEntry.email);
-                }
-            });
-            
-            if (emails.length === 0) {
-                alert("No emails found for these reps in directory.");
-                return;
-            }
-            
-            const subject = `${invItem.COMMONNAME} - ${invItem.CONTSIZE}`;
-            
-            let body = `Team,\n\nHere is the current data for:\n${invItem.COMMONNAME} (${invItem.CONTSIZE})\n\n`;
-            body += `Location: ${invItem.LOCATIONCODE || 'N/A'}\n`;
-            body += `Qty Available: ${invItem.PTRAVAILABLE || '0'}\n`;
-            body += `Notes: ${invItem.SAVED_NOTE || 'None'}\n\n`;
-            
-            if (invItem.SAVED_PHOTO_LINK) {
-                body += `Photos:\n${invItem.SAVED_PHOTO_LINK.replace(/,/g, '\n')}\n\n`;
-            }
-            
-            body += `Total Orders on this list: ${orders.length}\n`;
-            
-            const mailtoLink = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoLink;
-        }
-        
-        function selectSocCust(c) { 
-            selectedSocCust = c; 
-            socViewLevel = 2; 
-            renderSocView(); 
-        }
-        function selectSocCommonName(n) { 
-            selectedSocCommon = n; 
-            if (currentSocTab === 'reps') {
-                socViewLevel = 3;
-            } else {
-                socViewLevel = 1;
-            }
-            renderSocView(); 
-        }
-        function selectSocSize(s) { 
-            selectedSocSize = s; 
-            if (currentSocTab === 'reps') {
-                socViewLevel = 4;
-            } else {
-                socViewLevel = 2;
-            }
-            renderSocView(); 
-        }
-
-        // ==========================================
-        // DRIVE MODE
-        // ==========================================
-
-        function initDriveFilters() {
-            const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
-            const grpDiv = document.getElementById('ms-group');
-            
-            let gHtml = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>`;
-            for (let i = 0; i < groups.length; i++) {
-                gHtml += `<label class="ms-option"><input type="checkbox" value="${groups[i]}" onchange="updateDriveFilterState('groups')"> ${groups[i]}</label>`;
-            }
-            grpDiv.innerHTML = gHtml;
-
-            const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
-            const seaDiv = document.getElementById('ms-season');
-            
-            let sHtml = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>`;
-            for (let i = 0; i < seasons.length; i++) {
-                sHtml += `<label class="ms-option"><input type="checkbox" value="${seasons[i]}" onchange="updateDriveFilterState('seasons')"> ${seasons[i]}</label>`;
-            }
-            seaDiv.innerHTML = sHtml;
-
-            const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
-            const lotDiv = document.getElementById('ms-lot');
-            
-            let lHtml = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>`;
-            for (let i = 0; i < lots.length; i++) {
-                lHtml += `<label class="ms-option"><input type="checkbox" value="${lots[i]}" onchange="updateDriveFilterState('lots')"> ${lots[i]}</label>`;
-            }
-            lotDiv.innerHTML = lHtml;
-        }
-
-        function toggleMs(id) { 
-            const el = document.getElementById(id); 
-            const ids = ['ms-group', 'ms-season', 'ms-lot'];
-            for (let i = 0; i < ids.length; i++) {
-                if (ids[i] !== id) {
-                    document.getElementById(ids[i]).classList.remove('show');
-                }
-            }
-            el.classList.toggle('show'); 
-        }
-
-        function updateDriveFilterState(type) {
-            let div;
-            if (type === 'groups') div = document.getElementById('ms-group');
-            if (type === 'seasons') div = document.getElementById('ms-season');
-            if (type === 'lots') div = document.getElementById('ms-lot');
-
-            const checks = div.querySelectorAll('input[type="checkbox"]:checked');
-            const values = Array.from(checks).map(c => c.value);
-            
-            driveFilterState[type] = values;
-            
-            const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
-            const defMap = { groups: 'Group', seasons: 'Season', lots: 'Lot' };
-            
-            const count = values.length;
-            
-            if (count > 0) {
-                document.getElementById(lblMap[type]).innerText = `${defMap[type]} (${count})`;
-            } else {
-                document.getElementById(lblMap[type]).innerText = defMap[type];
-            }
-            
-            renderDriveView();
-        }
-
-        function toggleAllDrive(type) {
-            let div;
-            if (type === 'groups') div = document.getElementById('ms-group');
-            if (type === 'seasons') div = document.getElementById('ms-season');
-            if (type === 'lots') div = document.getElementById('ms-lot');
-
-            const allChecks = div.querySelectorAll('input[type="checkbox"]');
-            const allChecked = Array.from(allChecks).every(c => c.checked);
-            
-            for (let i = 0; i < allChecks.length; i++) {
-                allChecks[i].checked = !allChecked;
-            }
-            
-            updateDriveFilterState(type);
-        }
-
-        function resetDriveFilters() {
-            driveFilterState = { 
-                groups: [], 
-                seasons: [], 
-                lots: [], 
-                ltsOp: 'gt', 
-                ltsVal: '' 
-            };
-            
-            const inputs = document.querySelectorAll('.ms-options input');
-            for (let i = 0; i < inputs.length; i++) {
-                inputs[i].checked = false;
-            }
-            
-            document.getElementById('lbl-group').innerText = 'Group'; 
-            document.getElementById('lbl-season').innerText = 'Season'; 
-            document.getElementById('lbl-lot').innerText = 'Lot';
-            document.getElementById('lts-value').value = ''; 
-            document.getElementById('lts-operator').value = 'gt'; 
-            document.getElementById('drive-search').value = '';
-            
-            driveSearchTerm = ''; 
-            driveViewLevel = 0; 
-            
-            renderDriveView();
-        }
-        
-        function handleDriveSearch(term) { 
-            driveSearchTerm = term.toLowerCase(); 
-            if (driveSearchTerm.length > 0) {
-                driveViewLevel = 0;
-            }
-            renderDriveView(); 
-        }
-
-        function getFilteredDriveItems() {
-            const op = document.getElementById('lts-operator').value; 
-            const val = parseFloat(document.getElementById('lts-value').value); 
-            const hasLtsFilter = !isNaN(val);
-            
-            return fullInventory.filter(i => {
-                if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) {
-                    return false;
-                }
-                if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) {
-                    return false;
-                }
-                if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) {
-                    return false;
-                }
-                
-                if (hasLtsFilter) { 
-                    const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); 
-                    if (op === 'gt' && !(itemVal > val)) {
-                        return false; 
-                    }
-                    if (op === 'lt' && !(itemVal < val)) {
-                        return false; 
-                    }
-                }
-                
-                if (driveSearchTerm) { 
-                    const common = (i.COMMONNAME || "").toLowerCase();
-                    const item = (i.ITEMCODE || "").toLowerCase();
-                    const loc = (i.LOCATIONCODE || "").toLowerCase();
-                    
-                    if (!common.includes(driveSearchTerm) && !item.includes(driveSearchTerm) && !loc.includes(driveSearchTerm)) {
-                        return false; 
-                    }
-                }
-                return true;
-            });
-        }
-        
-        function renderDriveNames() { 
-            driveViewLevel = 0; 
-            selectedDriveName = null; 
-            selectedDriveSize = null; 
-            renderDriveView(); 
-        } 
-
-        function renderDriveView() {
-            const container = document.getElementById('drive-content'); 
-            const crumb = document.getElementById('drive-crumb'); 
-            const filteredItems = getFilteredDriveItems();
-            
-            if (filteredItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
-                crumb.innerText = "No Results"; 
-                return; 
-            }
-            
-            // 2. LEVEL 0: LIST COMMON NAMES
-            if (driveViewLevel === 0) {
-                crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
-                
-                let html = "";
-                for (let i = 0; i < names.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectDriveName('${names[i].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${names[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            }
-            // 3. LEVEL 1: LIST SIZES
-            else if (driveViewLevel === 1) {
-                crumb.innerText = selectedDriveName;
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
-                let html = `
-                <div class="back-btn" onclick="resetDriveView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Names
-                </div>`;
-                
-                for (let i = 0; i < sizes.length; i++) {
-                    const count = namedItems.filter(item => item.CONTSIZE === sizes[i]).length;
-                    html += `
-                    <div class="drill-item" onclick="selectDriveSize('${sizes[i]}')">
-                        <span class="font-bold text-lg">${sizes[i]} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            }
-            // 4. LEVEL 2: CARDS
-            else if (driveViewLevel === 2) {
-                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
-                
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
-                
-                finalItems.sort((a, b) => {
-                     const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
-                     const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
-                     if (pA !== pB) return pA - pB;
-                     return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
-                });
-
-                let html = `
-                <div class="back-btn" onclick="backToDriveSizes()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
-                </div>`;
-                
-                for (let i = 0; i < finalItems.length; i++) {
-                    html += createRowHtml(finalItems[i], fullInventory.indexOf(finalItems[i]), 'drive');
-                }
-                
-                container.innerHTML = html;
-            }
-        }
-        
-        function selectDriveName(n) { 
-            selectedDriveName = n; 
-            driveViewLevel = 1; 
-            renderDriveView(); 
-        }
-        function selectDriveSize(s) { 
-            selectedDriveSize = s; 
-            driveViewLevel = 2; 
-            renderDriveView(); 
-        }
-        function backToDriveSizes() { 
-            driveViewLevel = 1; 
-            selectedDriveSize = null; 
-            renderDriveView(); 
-        }
-        function resetDriveView() { 
-            driveViewLevel = 0; 
-            selectedDriveName = null; 
-            selectedDriveSize = null; 
-            renderDriveView(); 
-        }
-
-        // ==========================================
-        // PRODUCTION MODE
-        // ==========================================
-
-        function toggleProductionSeason(season, el) {
-            if (season === 'ALL') { 
-                productionSelectedSeasons = ['ALL']; 
-            } else {
-                if (productionSelectedSeasons.includes('ALL')) {
-                    productionSelectedSeasons = [];
-                }
-                if (productionSelectedSeasons.includes(season)) { 
-                    productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); 
-                } else { 
-                    productionSelectedSeasons.push(season); 
-                }
-                if (productionSelectedSeasons.length === 0) {
-                    productionSelectedSeasons = ['ALL'];
-                }
-            }
-            
-            const chips = document.querySelectorAll('#prod-season-bar .season-chip');
-            for (let i = 0; i < chips.length; i++) {
-                const s = chips[i].innerText; 
-                if (productionSelectedSeasons.includes(s)) {
-                    chips[i].classList.add('active'); 
-                } else {
-                    chips[i].classList.remove('active'); 
-                }
-            }
-            renderProductionView();
-        }
-
-        function handleProductionSearch(term) { 
-            productionSearchTerm = term.toLowerCase(); 
-            if (productionSearchTerm.length > 0) {
-                productionViewLevel = 0;
-            }
-            renderProductionView(); 
-        }
-
-        function getFilteredProductionItems() {
-            return fullInventory.filter(i => {
-                if (!productionSelectedSeasons.includes('ALL')) { 
-                    if (!productionSelectedSeasons.includes(i.SEASONSUPPLY)) {
-                        return false; 
-                    }
-                }
-                
-                if (productionSearchTerm) { 
-                    const common = (i.COMMONNAME || "").toLowerCase();
-                    const code = (i.ITEMCODE || "").toLowerCase();
-                    const loc = (i.LOCATIONCODE || "").toLowerCase();
-                    if (!common.includes(productionSearchTerm) && !code.includes(productionSearchTerm) && !loc.includes(productionSearchTerm)) {
-                        return false; 
-                    }
-                }
-                return true;
-            });
-        }
-
-        function renderProductionView() {
-            const container = document.getElementById('production-content'); 
-            const crumb = document.getElementById('production-crumb');
-            
-            if (!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { 
-                crumb.innerText = `All Items (${allCommonNames.length})`; 
-                let html = "";
-                for (let i = 0; i < allCommonNames.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectProductionName('${allCommonNames[i].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${allCommonNames[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-                return; 
-            }
-            
-            const filteredItems = getFilteredProductionItems();
-            
-            if (filteredItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
-                crumb.innerText = "No Results"; 
-                return; 
-            }
-            
-            if (productionViewLevel === 0) {
-                crumb.innerText = `All Items (${filteredItems.length})`; 
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
-                
-                let html = "";
-                for (let i = 0; i < names.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectProductionName('${names[i].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${names[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else if (productionViewLevel === 1) {
-                crumb.innerText = selectedProductionName; 
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); 
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
-                
-                let html = `
-                <div class="back-btn" onclick="resetProductionView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Names
-                </div>`;
-                
-                for (let i = 0; i < sizes.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectProductionSize('${sizes[i]}')">
-                        <span class="font-bold text-lg">${sizes[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else {
-                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; 
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); 
-                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
-                
-                let html = `
-                <div class="back-btn" onclick="backToProductionSizes()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
-                </div>`;
-                
-                for (let i = 0; i < finalItems.length; i++) {
-                    html += createRowHtml(finalItems[i], fullInventory.indexOf(finalItems[i]), 'production');
-                }
-                container.innerHTML = html;
-            }
-        }
-
-        function selectProductionName(n) { 
-            selectedProductionName = n; 
-            productionViewLevel = 1; 
-            renderProductionView(); 
-        }
-        function selectProductionSize(s) { 
-            selectedProductionSize = s; 
-            productionViewLevel = 2; 
-            renderProductionView(); 
-        }
-        function backToProductionSizes() { 
-            productionViewLevel = 1; 
-            selectedProductionSize = null; 
-            renderProductionView(); 
-        }
-        function resetProductionView() { 
-            productionViewLevel = 0; 
-            selectedProductionName = null; 
-            selectedProductionSize = null; 
-            renderProductionView(); 
-        }
-
-        // ==========================================
-        // INVENTORY MODE
-        // ==========================================
-
-        function toggleInventorySeason(season, el) {
-            if (season === 'ALL') { 
-                inventorySelectedSeasons = ['ALL']; 
-            } else {
-                if (inventorySelectedSeasons.includes('ALL')) {
-                    inventorySelectedSeasons = [];
-                }
-                if (inventorySelectedSeasons.includes(season)) { 
-                    inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); 
-                } else { 
-                    inventorySelectedSeasons.push(season); 
-                }
-                if (inventorySelectedSeasons.length === 0) {
-                    inventorySelectedSeasons = ['ALL'];
-                }
-            }
-            
-            const chips = document.querySelectorAll('#inv-season-bar .season-chip');
-            for (let i = 0; i < chips.length; i++) {
-                const s = chips[i].innerText; 
-                if (inventorySelectedSeasons.includes(s)) {
-                    chips[i].classList.add('active'); 
-                } else {
-                    chips[i].classList.remove('active'); 
-                }
-            }
-            renderInventoryView();
-        }
-
-        function handleInventorySearch(term) { 
-            inventorySearchTerm = term.toLowerCase(); 
-            if (inventorySearchTerm.length > 0) {
-                inventoryViewLevel = 0;
-            }
-            renderInventoryView(); 
-        }
-
-        function getFilteredInventoryItems() {
-            return fullInventory.filter(i => {
-                if (!inventorySelectedSeasons.includes('ALL')) { 
-                    if (!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) {
-                        return false; 
-                    }
-                }
-                
-                if (inventorySearchTerm) { 
-                    const common = (i.COMMONNAME || "").toLowerCase();
-                    const code = (i.ITEMCODE || "").toLowerCase();
-                    const loc = (i.LOCATIONCODE || "").toLowerCase();
-                    if (!common.includes(inventorySearchTerm) && !code.includes(inventorySearchTerm) && !loc.includes(inventorySearchTerm)) {
-                        return false; 
-                    }
-                }
-                return true;
-            });
-        }
-
-        function renderInventoryView() {
-            const container = document.getElementById('inventory-content'); 
-            const crumb = document.getElementById('inventory-crumb');
-            
-            if (!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { 
-                crumb.innerText = `All Items (${allCommonNames.length})`; 
-                let html = "";
-                for (let i = 0; i < allCommonNames.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectInventoryName('${allCommonNames[i].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${allCommonNames[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-                return; 
-            }
-            
-            const filteredItems = getFilteredInventoryItems();
-            
-            if (filteredItems.length === 0) { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
-                crumb.innerText = "No Results"; 
-                return; 
-            }
-            
-            if (inventoryViewLevel === 0) {
-                crumb.innerText = `All Items (${filteredItems.length})`; 
-                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); 
-                
-                let html = "";
-                for (let i = 0; i < names.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectInventoryName('${names[i].replace(/'/g, "\\'")}')">
-                        <span class="font-bold text-lg">${names[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else if (inventoryViewLevel === 1) {
-                crumb.innerText = selectedInventoryName; 
-                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); 
-                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); 
-                
-                let html = `
-                <div class="back-btn" onclick="resetInventoryView()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Names
-                </div>`;
-                
-                for (let i = 0; i < sizes.length; i++) {
-                    html += `
-                    <div class="drill-item" onclick="selectInventorySize('${sizes[i]}')">
-                        <span class="font-bold text-lg">${sizes[i]}</span>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            } else {
-                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; 
-                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); 
-                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); 
-                
-                let html = `
-                <div class="back-btn" onclick="backToInventorySizes()">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
-                </div>`;
-                
-                for (let i = 0; i < finalItems.length; i++) {
-                    html += createRowHtml(finalItems[i], fullInventory.indexOf(finalItems[i]), 'inventory');
-                }
-                container.innerHTML = html;
-            }
-        }
-        function selectInventoryName(n) { 
-            selectedInventoryName = n; 
-            inventoryViewLevel = 1; 
-            renderInventoryView(); 
-        }
-        function selectInventorySize(s) { 
-            selectedInventorySize = s; 
-            inventoryViewLevel = 2; 
-            renderInventoryView(); 
-        }
-        function backToInventorySizes() { 
-            inventoryViewLevel = 1; 
-            selectedInventorySize = null; 
-            renderInventoryView(); 
-        }
-        function resetInventoryView() { 
-            inventoryViewLevel = 0; 
-            selectedInventoryName = null; 
-            selectedInventorySize = null; 
-            renderInventoryView(); 
-        }
-
-        // ==========================================
-        // TASKS MODE
-        // ==========================================
-
-        function renderTasks() {
-            const container = document.getElementById('task-content'); 
-            const crumb = document.getElementById('task-crumb');
-            document.getElementById('task-tabs-container').classList.remove('hidden');
-            
-            if (currentTab === 'flyer') { 
-                document.getElementById('flyer-sub-tabs').classList.remove('hidden'); 
-            } else { 
-                document.getElementById('flyer-sub-tabs').classList.add('hidden'); 
-            }
-
-            let myItems = []; 
-            const now = new Date().getTime();
-            
-            const taskFilter = (i) => {
-                if (taskViewTargetUser === 'ASSIST') {
-                    const assignee = (i.ASSIGNEDTO || "");
-                    if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) {
-                        return false;
-                    }
-                } else {
-                    if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) {
-                        return false;
-                    }
-                }
-                
-                if (i.TASK_TAB !== currentTab) {
-                    return false;
-                }
-                
-                if (i.TIMESTAMP) {
-                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
-                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
-                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
-                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
-                    
-                    let isLowStock = false;
-                    if (ss > 0) {
-                        isLowStock = ptr < (ss * 0.10);
-                    } else {
-                        isLowStock = ptr <= 0;
-                    }
-                    
-                    if (daysOld < 10 && !isLowStock) {
-                        return false; 
-                    }
-                }
-                return true;
-            };
-            
-            if (currentTab === 'requests') {
-                 if (taskViewTargetUser === 'ASSIST') {
-                        myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
-                        crumb.innerText = `Kayla & Morgan / Urgent Requests`;
-                 } else {
-                        myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                        crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
-                 }
-            } else if (currentTab === 'flyer') {
-                myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
-            } else { 
-                myItems = fullInventory.filter(taskFilter); 
-            }
-
-            const term = document.getElementById('task-search').value.toLowerCase();
-            if (term) { 
-                const matched = myItems.filter(i => {
-                    const common = (i.COMMONNAME || "").toLowerCase();
-                    const code = (i.ITEMCODE || "").toLowerCase();
-                    const loc = (i.LOCATIONCODE || "").toLowerCase();
-                    return common.includes(term) || code.includes(term) || loc.includes(term);
-                }); 
-                
-                let html = "";
-                for (let j = 0; j < matched.length; j++) {
-                    html += createRowHtml(matched[j], fullInventory.indexOf(matched[j]), 'tasks');
-                }
-                container.innerHTML = html;
-                return; 
-            }
-
-            if (myItems.length === 0 && currentTab === 'requests') { 
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; 
-                return; 
-            }
-            
-            if (currentTab === 'requests') { 
-                let html = `
-                <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}">
-                    <i class="ph-bold ph-arrow-left"></i> Change User
-                </div>`;
-                
-                for (let j = 0; j < myItems.length; j++) {
-                    html += createRowHtml(myItems[j], fullInventory.indexOf(myItems[j]), 'tasks');
-                }
-                container.innerHTML = html;
-                return; 
-            }
-
-            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
-
-            if (currentTab === 'flyer') {
-                const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
-                
-                if (taskViewLevel === 0) {
-                    crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
-                    
-                    if (myItems.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; 
-                        return; 
-                    }
-
-                    const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
-                    
-                    let html = `
-                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}">
-                        <i class="ph-bold ph-arrow-left"></i> Change User
-                    </div>`;
-                    
-                    for (let p = 0; p < projects.length; p++) {
-                        const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === projects[p]).length;
-                        html += `
-                        <div class="drill-item" onclick="openFlyerProject('${projects[p].replace(/'/g, "\\'")}')">
-                            <div class="flex items-center gap-3">
-                                <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                                <span class="font-bold text-lg">${projects[p]} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                            </div>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                }
-                else if (taskViewLevel === 1) {
-                    crumb.innerText = `Flyer / ${selectedFlyerProject}`;
-                    const projectItems = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
-                    
-                    let projNote = "";
-                    if (projectItems.length > 0 && projectItems[0].SAVED_NOTE) {
-                        let parts = projectItems[0].SAVED_NOTE.split(" | ");
-                        projNote = parts[parts.length - 1]; 
-                    }
-
-                    let instructionBanner = "";
-                    if (projNote) {
-                        instructionBanner = `
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-2 mx-2 rounded shadow-sm">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="ph-fill ph-info text-yellow-500"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-yellow-700 font-bold uppercase">Project Instructions</p>
-                                    <p class="text-sm text-yellow-800 mt-1">${projNote}</p>
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-
-                    let completeBtn = '';
-                    if (ADMINS.includes(currentUser)) {
-                        completeBtn = `
-                        <div class="p-4 bg-white border-b border-gray-100">
-                            <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
-                                <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
-                            </button>
-                            <p class="text-xs text-center text-gray-400 mt-2">Removes items from this folder.</p>
-                        </div>`;
-                    }
-
-                    let html = `
-                    <div class="back-btn" onclick="resetTaskView()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Projects
-                    </div>` + instructionBanner + completeBtn;
-                    
-                    for (let j = 0; j < projectItems.length; j++) {
-                        html += createRowHtml(projectItems[j], fullInventory.indexOf(projectItems[j]), 'tasks');
-                    }
-                    container.innerHTML = html;
-                }
                 return;
             }
 
-            if (currentTab === 'season' || currentTab === 'location') {
-                if (taskViewLevel === 0) {
-                    let typeName = 'Season';
-                    if (currentTab === 'location') typeName = 'Location';
-                    crumb.innerText = `${displayUser} / ${typeName} / Blocks`; 
-                    
-                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                    
-                    if (blocks.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; 
-                        return; 
+            if (!currentReviewCustomer) {
+                document.getElementById('review-folder-title').innerText = currentReviewRep;
+                document.getElementById('review-back-label').innerText = "Back to Reps";
+                
+                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
+                
+                const customers = [...new Set(repItems.map(i => {
+                    const c = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    if (co && co !== c) {
+                        return `${c} / ${co}`;
                     }
-                    
-                    let html = `
-                    <div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}">
-                        <i class="ph-bold ph-arrow-left"></i> Change User
+                    return c;
+                }))].sort();
+
+                let html = "";
+                for (let i = 0; i < customers.length; i++) {
+                    let cust = customers[i];
+                    const count = repItems.filter(item => {
+                        const c = item.CUSTOMERNAME || "General";
+                        const co = item.CONSIGNEENAME || "";
+                        let combined = c;
+                        if (co && co !== c) {
+                            combined = `${c} / ${co}`;
+                        }
+                        return combined === cust;
+                    }).length;
+
+                    html += `
+                    <div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-sm">${cust}</span>
+                        </div>
+                        <span class="text-gray-400 font-bold text-xs">(${count})</span>
+                        <i class="ph-bold ph-caret-right ml-2"></i>
                     </div>`;
-                    
-                    for (let b = 0; b < blocks.length; b++) {
-                        const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === blocks[b]).length;
-                        html += `
-                        <div class="drill-item" onclick="selectTaskBlock('${blocks[b]}')">
-                            <span class="font-bold text-lg">${blocks[b]} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                } else if (taskViewLevel === 1) {
-                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
-                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
-                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-                    
-                    let html = `
-                    <div class="back-btn" onclick="resetTaskView()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Blocks
-                    </div>`;
-                    
-                    for (let l = 0; l < locs.length; l++) {
-                        const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === locs[l]).length;
-                        html += `
-                        <div class="drill-item" onclick="selectTaskLoc('${locs[l]}')">
-                            <span class="font-bold text-lg">${locs[l]} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                } else {
-                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
-                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
-                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                    
-                    let html = `
-                    <div class="back-btn" onclick="backToTaskLocs()">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Locs
-                    </div>`;
-                    
-                    for (let i = 0; i < items.length; i++) {
-                        html += createRowHtml(items[i], fullInventory.indexOf(items[i]), 'tasks');
-                    }
-                    container.innerHTML = html;
                 }
+                container.innerHTML = html;
+                return;
+            }
+
+            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
+            document.getElementById('review-back-label').innerText = "Back to Customers";
+            
+            let finalItems = fullInventory.filter(i => {
+                if (i.TASK_TAB !== folderTaskTab) return false;
+                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
+                
+                const c = i.CUSTOMERNAME || "General";
+                const co = i.CONSIGNEENAME || "";
+                let combined = c;
+                if (co && co !== c) {
+                    combined = `${c} / ${co}`;
+                }
+                return combined === currentReviewCustomer;
+            });
+
+            if (term) {
+                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+            }
+
+            if (finalItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
+            } else {
+                let html = "";
+                for (let i = 0; i < finalItems.length; i++) {
+                    let item = finalItems[i];
+                    let approveBtn = "";
+                    
+                    if (folderTaskTab === 'requests') { 
+                         approveBtn = `
+                         <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
+                             <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
+                         </button>`;
+                    }
+                    
+                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                    html += `
+                    <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
+                        ${cardHtml}
+                        <div class="px-2 pb-2">${approveBtn}</div>
+                    </div>`;
+                }
+                container.innerHTML = html;
             }
         }
         
-        function renderTeamSelector() { 
-            document.getElementById('team-selector').classList.remove('hidden'); 
-            document.getElementById('task-tabs-container').classList.add('hidden'); 
-            document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; 
-            document.getElementById('task-crumb').innerText = "Team View"; 
-        }
-        
-        function setTaskUser(user) { 
-            taskViewTargetUser = user; 
-            document.getElementById('team-selector').classList.add('hidden'); 
-            document.getElementById('task-tabs-container').classList.remove('hidden'); 
-            taskViewLevel = 0; 
-            renderTasks(); 
-        }
-        
-        function setTaskTab(t) { 
-            currentTab = t; 
-            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
-            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
-            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
-            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
-            document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
-            taskViewLevel = 0; 
-            renderTasks(); 
+        function selectReviewRep(repName) {
+            currentReviewRep = repName;
+            renderReviewContent();
         }
 
-        function setFlyerSubTab(sub) {
-            currentFlyerTab = sub;
-            document.getElementById('fst-crop').classList.toggle('active', sub === 'flyer_crop');
-            document.getElementById('fst-endcap').classList.toggle('active', sub === 'flyer_endcap');
-            document.getElementById('fst-spot').classList.toggle('active', sub === 'flyer_spot');
-            taskViewLevel = 0;
-            renderTasks();
+        function selectReviewCustomer(custName) {
+            currentReviewCustomer = custName;
+            renderReviewContent();
         }
         
-        function openFlyerProject(projName) { 
-            selectedFlyerProject = projName; 
-            taskViewLevel = 1; 
-            renderTasks(); 
+        function selectReviewName(n) { 
+            selectedReviewName = n; 
+            reviewViewLevel = 1; 
+            renderReviewContent(); 
         }
-        function selectTaskBlock(b) { 
-            selectedTaskBlock = b; 
-            taskViewLevel = 1; 
-            renderTasks(); 
-        }
-        function selectTaskLoc(l) { 
-            selectedTaskLoc = l; 
-            taskViewLevel = 2; 
-            renderTasks(); 
-        }
-        function backToTaskLocs() { 
-            taskViewLevel = 1; 
-            selectedTaskLoc = null; 
-            renderTasks(); 
-        }
-        function resetTaskView() { 
-            taskViewLevel = 0; 
-            selectedTaskBlock = null; 
-            selectedTaskLoc = null; 
-            renderTasks(); 
+        function selectReviewSize(s) { 
+            selectedReviewSize = s; 
+            reviewViewLevel = 2; 
+            renderReviewContent(); 
         }
 
         // ==========================================
@@ -3559,277 +2559,6 @@
                 html += createRowHtml(items[i], fullInventory.indexOf(items[i]), 'viewer');
             }
             document.getElementById('viewer-content').innerHTML = html; 
-        }
-
-        function renderManagerFolders() {
-            document.getElementById('review-root-folders').classList.remove('hidden');
-            document.getElementById('review-folder-view').classList.add('hidden');
-            
-            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
-            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
-            const noWinnerCount = fullInventory.filter(i => {
-                const pri = parseFloat(i.PRIORITY);
-                const qty = parseFloat(i.PTRAVAILABLE) || 0;
-                return (pri > 0 && pri < 9999) && (qty <= 0);
-            }).length;
-
-            const html = `
-                <div class="space-y-2">
-                    <div class="drill-item" onclick="openReviewFolder('pending')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openReviewFolder('completed')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openReviewFolder('item_review')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
-                        </div>
-                        <i class="ph-bold ph-caret-right"></i>
-                    </div>
-                </div>
-            `;
-            document.getElementById('review-root-folders').innerHTML = html;
-        }
-
-        function openReviewFolder(folderType) {
-            currentReviewFolder = folderType;
-            currentReviewRep = null;
-            currentReviewCustomer = null;
-            
-            document.getElementById('review-root-folders').classList.add('hidden');
-            document.getElementById('review-folder-view').classList.remove('hidden');
-            
-            let title = "Folder";
-            if (folderType === 'pending') title = "Pending Requests";
-            if (folderType === 'completed') title = "Completed Requests";
-            if (folderType === 'item_review') title = "Item Review (No Winner)";
-            
-            document.getElementById('review-folder-title').innerText = title;
-            document.getElementById('review-back-label').innerText = "Back to Folders";
-            reviewViewLevel = 0;
-            renderReviewContent();
-        }
-
-        function resetReviewFolders() {
-            if (currentReviewCustomer) {
-                currentReviewCustomer = null;
-                renderReviewContent();
-                return;
-            }
-            if (currentReviewRep) {
-                currentReviewRep = null;
-                renderReviewContent();
-                return;
-            }
-            currentReviewFolder = null;
-            renderManagerFolders();
-        }
-
-        function renderReviewContent() {
-            const container = document.getElementById('review-content');
-            const term = document.getElementById('review-search').value.toLowerCase();
-            const failContainer = document.getElementById('failed-saves-container');
-            
-            if (currentReviewFolder === 'completed') {
-                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-                if (failed.length > 0) { 
-                    failContainer.innerHTML = `
-                    <div class="failed-sync-banner">
-                        <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
-                        <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
-                    </div>`; 
-                } else { 
-                    failContainer.innerHTML = ''; 
-                }
-            } else {
-                failContainer.innerHTML = '';
-            }
-
-            let folderTaskTab = 'review';
-            if (currentReviewFolder === 'pending') {
-                folderTaskTab = 'requests';
-            }
-            
-            // --- NO WINNER FOLDER (Simple List) ---
-            if (currentReviewFolder === 'item_review') {
-                let filteredItems = fullInventory.filter(i => {
-                    const pri = parseFloat(i.PRIORITY);
-                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
-                    return (pri > 0 && pri < 9999) && (qty <= 0);
-                });
-                
-                if (term) { 
-                    filteredItems = filteredItems.filter(i => {
-                        const common = (i.COMMONNAME||"").toLowerCase();
-                        const code = (i.ITEMCODE||"").toLowerCase();
-                        return common.includes(term) || code.includes(term);
-                    }); 
-                }
-
-                if (filteredItems.length === 0) { 
-                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
-                    return; 
-                }
-
-                let html = "";
-                for (let i = 0; i < filteredItems.length; i++) {
-                    html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
-                }
-                container.innerHTML = html; 
-                return;
-            }
-
-            // --- PENDING & COMPLETED FOLDERS ---
-            
-            // LEVEL 1: LIST SALES REPS
-            if (!currentReviewRep) {
-                if (currentReviewFolder === 'pending') {
-                    document.getElementById('review-folder-title').innerText = "Pending Requests";
-                } else {
-                    document.getElementById('review-folder-title').innerText = "Completed Requests";
-                }
-                document.getElementById('review-back-label').innerText = "Back to Folders";
-                
-                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
-                activeReps.sort();
-                
-                let html = "";
-                for (let i = 0; i < activeReps.length; i++) {
-                    let repName = activeReps[i];
-                    const count = fullInventory.filter(item => item.TASK_TAB === folderTaskTab && (item.SALESREP || "Unknown") === repName).length;
-                    html += `
-                    <div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
-                            <span class="font-bold text-lg">${repName}</span>
-                        </div>
-                        <span class="text-gray-400 font-bold text-sm">(${count})</span>
-                        <i class="ph-bold ph-caret-right ml-2"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-                return;
-            }
-
-            // LEVEL 2: LIST CUSTOMERS FOR SELECTED REP
-            if (!currentReviewCustomer) {
-                document.getElementById('review-folder-title').innerText = currentReviewRep;
-                document.getElementById('review-back-label').innerText = "Back to Reps";
-                
-                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
-                
-                const customers = [...new Set(repItems.map(i => {
-                    const c = i.CUSTOMERNAME || "General";
-                    const co = i.CONSIGNEENAME || "";
-                    if (co && co !== c) {
-                        return `${c} / ${co}`;
-                    }
-                    return c;
-                }))].sort();
-
-                let html = "";
-                for (let i = 0; i < customers.length; i++) {
-                    let cust = customers[i];
-                    const count = repItems.filter(item => {
-                        const c = item.CUSTOMERNAME || "General";
-                        const co = item.CONSIGNEENAME || "";
-                        let combined = c;
-                        if (co && co !== c) {
-                            combined = `${c} / ${co}`;
-                        }
-                        return combined === cust;
-                    }).length;
-
-                    html += `
-                    <div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                            <span class="font-bold text-sm">${cust}</span>
-                        </div>
-                        <span class="text-gray-400 font-bold text-xs">(${count})</span>
-                        <i class="ph-bold ph-caret-right ml-2"></i>
-                    </div>`;
-                }
-                container.innerHTML = html;
-                return;
-            }
-
-            // LEVEL 3: SHOW ITEMS FOR CUSTOMER
-            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
-            document.getElementById('review-back-label').innerText = "Back to Customers";
-            
-            let finalItems = fullInventory.filter(i => {
-                if (i.TASK_TAB !== folderTaskTab) return false;
-                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
-                
-                const c = i.CUSTOMERNAME || "General";
-                const co = i.CONSIGNEENAME || "";
-                let combined = c;
-                if (co && co !== c) {
-                    combined = `${c} / ${co}`;
-                }
-                return combined === currentReviewCustomer;
-            });
-
-            if (term) {
-                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
-            }
-
-            if (finalItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
-            } else {
-                let html = "";
-                for (let i = 0; i < finalItems.length; i++) {
-                    let item = finalItems[i];
-                    let approveBtn = "";
-                    
-                    if (folderTaskTab === 'requests') { 
-                         approveBtn = `
-                         <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
-                             <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
-                         </button>`;
-                    }
-                    
-                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
-                    html += `
-                    <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
-                        ${cardHtml}
-                        <div class="px-2 pb-2">${approveBtn}</div>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            }
-        }
-        
-        function selectReviewRep(repName) {
-            currentReviewRep = repName;
-            renderReviewContent();
-        }
-
-        function selectReviewCustomer(custName) {
-            currentReviewCustomer = custName;
-            renderReviewContent();
-        }
-        
-        function selectReviewName(n) { 
-            selectedReviewName = n; 
-            reviewViewLevel = 1; 
-            renderReviewContent(); 
-        }
-        function selectReviewSize(s) { 
-            selectedReviewSize = s; 
-            reviewViewLevel = 2; 
-            renderReviewContent(); 
         }
 
         function renderSalesOffice() {
