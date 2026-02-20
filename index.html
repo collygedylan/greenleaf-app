@@ -45,6 +45,20 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
             max-width: 360px; text-align: center; 
         }
+        .user-btn { 
+            width: 100%; padding: 12px; margin-bottom: 10px; 
+            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
+            color: #374151; background: white; display: flex; 
+            align-items: center; gap: 10px; transition: all 0.2s; 
+        }
+        .user-btn:hover { 
+            border-color: var(--brand-gold); background-color: #fffbeb; 
+        }
+        .pin-input { 
+            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
+            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
+            margin-bottom: 20px; outline: none; display: none; 
+        }
         
         #toast-notification { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
@@ -450,6 +464,8 @@
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
+            
+            <div id="login-buttons" class="hidden"></div>
             
             <div id="login-container" class="hidden mt-4">
                 <input type="text" id="login-username" class="w-full p-3 font-bold border-2 border-gray-200 rounded-lg mb-3 outline-none focus:border-[#007a4d]" placeholder="Username">
@@ -984,38 +1000,69 @@
         }
 
         function handleLogin() { 
-            const usernameInput = document.getElementById('login-username').value.trim();
-            const passwordInput = document.getElementById('login-password').value;
-            
-            if(!usernameInput || !passwordInput) {
-                showToast("Error", "Please enter username and password", true);
-                return;
-            }
-
-            const userObj = SYSTEM_USERS.find(u => u.name.toLowerCase() === usernameInput.toLowerCase());
-
-            if (userObj && passwordInput === userObj.pin) { 
-                targetLoginUser = userObj; 
+            try {
+                const usernameInput = document.getElementById('login-username').value.trim();
+                const passwordInput = document.getElementById('login-password').value.trim();
                 
-                if (targetLoginUser.resetRequired) {
-                    document.getElementById('login-container').classList.add('hidden');
-                    document.getElementById('reset-password-container').classList.remove('hidden');
-                    document.getElementById('new-password').focus();
+                if(!usernameInput || !passwordInput) {
+                    showToast("Error", "Please enter username and password", true);
                     return;
                 }
 
-                currentUser = targetLoginUser.name;
-                isAdmin = (targetLoginUser.role === "Admin");
-                
-                document.getElementById('login-container').classList.add('hidden'); 
-                document.getElementById('loading-spinner').classList.remove('hidden'); 
-                document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
-                
-                fetchData(); 
-            } else { 
-                showToast("Error", "Invalid Username or Password", true); 
-            } 
+                // Bulletproof search that ignores empty rows in your Google Sheet
+                const userObj = SYSTEM_USERS.find(u => {
+                    const dbName = u.name ? String(u.name).trim().toLowerCase() : "";
+                    return dbName === usernameInput.toLowerCase();
+                });
+
+                if (!userObj) {
+                    showToast("Error", "Username not found in system", true);
+                    console.log("Users currently loaded:", SYSTEM_USERS);
+                    return;
+                }
+
+                // Verify Password
+                if (String(passwordInput) === String(userObj.pin)) { 
+                    targetLoginUser = userObj; 
+                    
+                    // Check if they are forced to reset password
+                    if (targetLoginUser.resetRequired) {
+                        document.getElementById('login-container').classList.add('hidden');
+                        document.getElementById('reset-password-container').classList.remove('hidden');
+                        document.getElementById('new-password').focus();
+                        return;
+                    }
+
+                    // Standard Login
+                    currentUser = targetLoginUser.name;
+                    isAdmin = (String(targetLoginUser.role).toUpperCase() === "ADMIN");
+                    
+                    document.getElementById('login-container').classList.add('hidden'); 
+                    document.getElementById('loading-spinner').classList.remove('hidden'); 
+                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                    
+                    fetchData(); 
+                } else { 
+                    showToast("Error", "Incorrect Password", true); 
+                } 
+            } catch(err) {
+                console.error("Login Crash:", err);
+                showToast("Error", "System error. Check console.", true);
+            }
         }
+
+        // BONUS: Let users press "Enter" on their keyboard to log in
+        document.addEventListener("DOMContentLoaded", function() {
+            const passInput = document.getElementById("login-password");
+            if(passInput) {
+                passInput.addEventListener("keypress", function(event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleLogin();
+                    }
+                });
+            }
+        });
 
         function submitNewPassword() {
             const pass1 = document.getElementById('new-password').value;
@@ -1050,7 +1097,7 @@
                     targetLoginUser.resetRequired = false;
                     
                     currentUser = targetLoginUser.name;
-                    isAdmin = (targetLoginUser.role === "Admin");
+                    isAdmin = (String(targetLoginUser.role).toUpperCase() === "ADMIN");
                     
                     document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
                     showToast("Success", "Password updated successfully!");
