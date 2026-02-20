@@ -3,97 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO 00</title>
+    <title>GNC-PRO 02</title>
+    
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="GNC LOGO.png">
     <link rel="apple-touch-icon" href="GNC LOGO.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
     <style>
-        :root{--brand-green:#007a4d;--brand-gold:#e3a000;--text-main:#111827}
-        body{font-family:"Amazon Ember",Arial,sans-serif;background-color:white;color:var(--text-main);overscroll-behavior-y:contain;user-select:none;-webkit-user-select:none}
-        .nav-header{background:var(--brand-green);color:white;padding-top:max(10px,env(safe-area-inset-top))}
-        #view-login{position:fixed;top:0;left:0;width:100%;height:100%;background-color:var(--brand-green);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-        .login-card{background:white;padding:30px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);width:100%;max-width:360px;text-align:center}
-        .input-field{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin-bottom:12px}
-        #toast-notification{position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:16px 24px;border-radius:50px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);z-index:9999;transition:top 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);display:flex;align-items:center;gap:12px;width:90%;max-width:400px;pointer-events:none}
-        #toast-notification.show{top:20px}
-        #side-drawer{position:fixed;top:0;left:-280px;width:280px;height:100%;background:white;z-index:2000;box-shadow:2px 0 10px rgba(0,0,0,0.2);transition:left 0.3s ease-in-out}
-        #side-drawer.open{left:0}
-        #drawer-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1999;display:none}
-        #drawer-overlay.open{display:block}
-        .drawer-header{background:var(--brand-green);color:white;padding:20px;font-weight:bold;font-size:18px}
-        .drawer-item{padding:16px 20px;border-bottom:1px solid #f3f4f6;cursor:pointer;display:flex;align-items:center;gap:12px;color:#374151;font-weight:500}
-        .drill-item{border-bottom:1px solid #e5e7eb;padding:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:white;transition:background 0.1s;user-select:none}
-        .drill-item:active{background:#f3f4f6}
-        .inv-card{border:1px solid #e5e7eb;border-left-width:6px;border-radius:8px;padding:12px;margin-bottom:8px;background:white;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:transform 0.1s;user-select:none}
-        .status-green{border-left-color:#22c55e} .status-yellow{border-left-color:#eab308;background-color:#fffbeb} .status-red{border-left-color:#ef4444;background-color:#fef2f2} .status-blue{border-left-color:#3b82f6;background-color:#eff6ff} .status-purple{border-left-color:#a855f7;background-color:#f3e8ff} .status-orange{border-left-color:#f97316;background-color:#fff7ed} .status-black{border-left-color:#1f2937;background-color:#f9fafb} .status-default{border-left-color:#e5e7eb}
-        .batch-mode .select-check{display:block !important;width:24px;height:24px;margin-right:12px;accent-color:var(--brand-green);flex-shrink:0}
-        .select-check{display:none}
-        .inv-card.selecting{background-color:#f0fdf4 !important;border-color:#15803d !important;transform:scale(0.98)}
-        .back-btn{display:flex;align-items:center;gap:5px;color:#6b7280;font-size:14px;font-weight:600;margin-bottom:20px;cursor:pointer;padding:10px 0}
-        .task-tabs{display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb;margin-bottom:10px}
-        .task-tab{flex:1;text-align:center;padding:12px;font-size:11px;font-weight:700;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
-        .task-tab.active{color:var(--brand-green);border-bottom-color:var(--brand-green);background:white}
-        .flyer-sub-tabs{display:flex;padding:8px;gap:8px;background:#fff;overflow-x:auto;border-bottom:1px solid #f3f4f6}
-        .flyer-pill{white-space:nowrap;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;color:#4b5563;background:#f3f4f6;border:1px solid #e5e7eb;cursor:pointer;flex:1;text-align:center}
-        .flyer-pill.active{background:#007a4d;color:white;border-color:#007a4d}
-        #action-bar{position:fixed;bottom:0;left:0;width:100%;background:white;border-top:1px solid #e5e7eb;padding:12px;box-shadow:0 -4px 6px rgba(0,0,0,0.05);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;z-index:4000;transition:transform 0.3s;transform:translateY(100%);padding-bottom:max(12px,env(safe-area-inset-bottom))}
-        #action-bar.visible{transform:translateY(0)}
-        .action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;border-radius:8px;font-size:10px;font-weight:700;color:white;cursor:pointer;text-align:center}
-        .home-btn{background:white;padding:24px;border-radius:12px;border:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s}
-        .home-btn:active{background-color:#f9fafb;transform:scale(0.98)}
-        .home-icon{font-size:32px;margin-bottom:4px}
-        .detail-tabs{display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb;margin-bottom:10px}
-        .detail-tab{flex:1;text-align:center;padding:14px;font-size:13px;font-weight:700;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent}
-        .detail-tab.active{color:var(--brand-green);border-bottom-color:var(--brand-green);background:white}
-        .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-        .overview-card{background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0}
-        .overview-label{font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px}
-        .overview-val{font-size:13px;font-weight:600;color:#0f172a;word-break:break-all}
-        .full-width{grid-column:span 2}
-        .expand-trigger{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f9fafb;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;border:1px solid #e5e7eb}
-        .expand-content{display:none;margin-top:12px;padding:12px;background:#f9fafb;border-radius:6px}
-        .expanded .expand-content{display:block}
-        .dynamic-stack{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
-        .readonly-field{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;font-weight:600}
-        .cam-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-        .camera-btn,.lib-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:20px;border-radius:8px;cursor:pointer}
-        .camera-btn{background-color:#f0fdf4;border:2px dashed #16a34a;color:#15803d}
-        .lib-btn{background-color:#eff6ff;border:2px dashed #3b82f6;color:#2563eb}
-        #assign-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
-        .modal-card{background:white;width:100%;max-width:400px;border-radius:12px;padding:24px;max-height:90vh;overflow-y:auto}
-        #batch-indicator{display:none;background:#dc2626;color:white;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:bold;animation:pulse 2s infinite;cursor:pointer}
-        #install-btn{display:none;color:#007a4d;font-weight:bold;cursor:pointer}
-        .filter-row-container{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px 0;align-items:center;white-space:nowrap;-webkit-overflow-scrolling:touch;-ms-overflow-style:none;scrollbar-width:none}
-        .filter-row-container::-webkit-scrollbar{display:none}
-        .ms-container{position:relative}
-        .ms-btn{background:white;border:1px solid #d1d5db;padding:8px 12px;border-radius:6px;text-align:left;font-size:12px;font-weight:700;color:#4b5563;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.05);white-space:nowrap}
-        .ms-options{display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border:1px solid #d1d5db;border-radius:8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px}
-        .ms-options.show{display:block}
-        .ms-option{padding:10px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;color:#1f2937;white-space:normal}
-        .ms-option:hover{background:#f9fafb}
-        .ms-option input{width:16px;height:16px;accent-color:var(--brand-green);flex-shrink:0}
-        .ms-option.selected{background-color:#f0fdf4}
-        #view-photo-editor{position:fixed;top:0;left:0;width:100%;height:100%;background:#111827;z-index:6000;display:none;flex-direction:column}
-        .editor-canvas-container{flex-grow:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:20px}
-        .editor-canvas-container img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
-        .editor-controls{background:#1f2937;padding:20px;border-top:1px solid #374151;padding-bottom:max(20px,env(safe-area-inset-bottom))}
-        .filter-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:15px}
-        .filter-btn{flex:0 0 auto;background:#374151;color:white;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #4b5563}
-        .filter-btn.active{background:#007a4d;border-color:#007a4d}
-        #ptr-spinner{position:absolute;top:-40px;left:50%;transform:translateX(-50%);z-index:10;transition:top 0.2s;display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.2)}
-        #ptr-spinner i{color:var(--brand-green);font-size:18px}
-        #ptr-spinner.loading i{animation:spin 1s linear infinite}
-        @keyframes spin{100%{transform:rotate(360deg)}}
-        @keyframes pulse{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
-        .failed-sync-banner{background:#fee2e2;border:1px solid #ef4444;color:#b91c1c;padding:12px;border-radius:8px;margin-bottom:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
-        #request-form-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:6000;display:none;flex-direction:column}
-        .req-list-item{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-        .req-list-details{font-size:12px;color:#166534;line-height:1.4}
-        .req-remove-btn{color:#ef4444;padding:8px;cursor:pointer}
+        :root { 
+            --brand-green: #007a4d; 
+            --brand-gold: #e3a000; 
+            --text-main: #111827; 
+        }
+        body { 
+            font-family: "Amazon Ember", Arial, sans-serif; 
+            background-color: white; 
+            color: var(--text-main); 
+            overscroll-behavior-y: contain; 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
+        .nav-header { 
+            background: var(--brand-green); 
+            color: white; 
+            padding-top: max(10px, env(safe-area-inset-top)); 
+        }
+        
+        #view-login { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: var(--brand-green); z-index: 9999; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; padding: 20px; 
+        }
+        .login-card { 
+            background: white; padding: 30px; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
+            max-width: 360px; text-align: center; 
+        }
+        .user-btn { 
+            width: 100%; padding: 12px; margin-bottom: 10px; 
+            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
+            color: #374151; background: white; display: flex; 
+            align-items: center; gap: 10px; transition: all 0.2s; 
+        }
+        .user-btn:hover { 
+            border-color: var(--brand-gold); background-color: #fffbeb; 
+        }
+        .pin-input { 
+            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
+            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
+            margin-bottom: 20px; outline: none; display: none; 
+        }
+        
+        #toast-notification { 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            background: #16a34a; color: white; padding: 16px 24px; 
+            border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
+            z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+            display: flex; align-items: center; gap: 12px; width: 90%; 
+            max-width: 400px; pointer-events: none; 
+        }
+        #toast-notification.show { top: 20px; }
+        
+        #side-drawer { 
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%; 
+            background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
+            transition: left 0.3s ease-in-out; 
+        }
+        #side-drawer.open { left: 0; }
+        #drawer-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 1999; display: none; 
+        }
+        #drawer-overlay.open { display: block; }
+        .drawer-header { 
+            background: var(--brand-green); color: white; 
+            padding: 20px; font-weight: bold; font-size: 18px; 
+        }
+        .drawer-item { 
+            padding: 16px 20px; border-bottom: 1px solid #f3f4f6; 
+            cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            color: #374151; font-weight: 500; 
+        }
+
+        .drill-item { 
+            border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; 
+            justify-content: space-between; align-items: center; cursor: pointer; 
+            background: white; transition: background 0.1s; user-select: none; 
+        }
+        .drill-item:active { background: #f3f4f6; }
+        
+        /* CARD STYLES */
+        .inv-card { 
+            border: 1px solid #e5e7eb; 
+            border-left-width: 6px; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            background: white; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
+            transition: transform 0.1s; 
+            user-select: none; 
+        }
+        
+        /* --- DYNAMIC COLOR CLASSES --- */
+        .status-green { border-left-color: #22c55e; } 
+        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } 
+        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } 
+        .status-blue { border-left-color: #3b82f6; background-color: #eff6ff; } 
+        .status-purple { border-left-color: #a855f7; background-color: #f3e8ff; } 
+        .status-orange { border-left-color: #f97316; background-color: #fff7ed; } 
+        .status-black { border-left-color: #1f2937; background-color: #f9fafb; } 
+        .status-default { border-left-color: #e5e7eb; } 
+
+        /* BATCH MODE STYLES */
+        .batch-mode .select-check { 
+            display: block !important; width: 24px; height: 24px; 
+            margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; 
+        }
+        .select-check { display: none; } 
+        .inv-card.selecting { 
+            background-color: #f0fdf4 !important; 
+            border-color: #15803d !important; 
+            transform: scale(0.98); 
+        }
+        
+        .back-btn { 
+            display: flex; align-items: center; gap: 5px; color: #6b7280; 
+            font-size: 14px; font-weight: 600; margin-bottom: 20px; 
+            cursor: pointer; padding: 10px 0; 
+        }
+        
+        .task-tabs { 
+            display: flex; border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; margin-bottom: 10px; 
+        }
+        .task-tab { 
+            flex: 1; text-align: center; padding: 12px; font-size: 11px; 
+            font-weight: 700; color: #6b7280; cursor: pointer; 
+            border-bottom: 3px solid transparent; text-transform: uppercase; 
+        }
+        .task-tab.active { 
+            color: var(--brand-green); border-bottom-color: var(--brand-green); 
+            background: white; 
+        }
+        .task-tab.alert { 
+            color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; 
+        }
+        
+        .flyer-sub-tabs { 
+            display: flex; padding: 8px; gap: 8px; background: #fff; 
+            overflow-x: auto; border-bottom: 1px solid #f3f4f6; 
+        }
+        .flyer-pill { 
+            white-space: nowrap; padding: 6px 12px; border-radius: 20px; 
+            font-size: 11px; font-weight: 700; color: #4b5563; 
+            background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; 
+            flex: 1; text-align: center; 
+        }
+        .flyer-pill.active { 
+            background: #007a4d; color: white; border-color: #007a4d; 
+        }
+
+        #action-bar { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: white; border-top: 1px solid #e5e7eb; padding: 12px; 
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; 
+            transition: transform 0.3s; transform: translateY(100%); 
+            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
+        }
+        #action-bar.visible { transform: translateY(0); }
+        .action-btn { 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; 
+            font-size: 10px; font-weight: 700; color: white; cursor: pointer; 
+            text-align: center; 
+        }
+        
+        .home-btn { 
+            background: white; padding: 24px; border-radius: 12px; 
+            border: 1px solid #e5e7eb; display: flex; flex-direction: column; 
+            align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            cursor: pointer; transition: all 0.2s; 
+        }
+        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
+        .home-icon { font-size: 32px; margin-bottom: 4px; }
+
+        .detail-tabs { 
+            display: flex; border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; margin-bottom: 10px; 
+        }
+        .detail-tab { 
+            flex: 1; text-align: center; padding: 14px; font-size: 13px; 
+            font-weight: 700; color: #6b7280; cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+        }
+        .detail-tab.active { 
+            color: var(--brand-green); border-bottom-color: var(--brand-green); 
+            background: white; 
+        }
+        
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
+        .full-width { grid-column: span 2; }
+        
+        .expand-trigger { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; 
+            font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; 
+        }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .expanded .expand-content { display: block; }
+        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
+        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        
+        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .camera-btn { 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; width: 100%; padding: 20px; 
+            background-color: #f0fdf4; border: 2px dashed #16a34a; 
+            border-radius: 8px; color: #15803d; cursor: pointer; 
+        }
+        .lib-btn { 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; width: 100%; padding: 20px; 
+            background-color: #eff6ff; border: 2px dashed #3b82f6; 
+            border-radius: 8px; color: #2563eb; cursor: pointer; 
+        }
+
+        #assign-modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 5000; display: none; 
+            align-items: center; justify-content: center; padding: 20px; 
+            overflow-y: auto; 
+        }
+        .modal-card { 
+            background: white; width: 100%; max-width: 400px; 
+            border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; 
+        }
+        
+        #batch-indicator { 
+            display: none; background: #dc2626; color: white; padding: 4px 12px; 
+            border-radius: 20px; font-size: 10px; font-weight: bold; 
+            animation: pulse 2s infinite; cursor: pointer; 
+        }
+        
+        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        
+        .filter-row-container { 
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; 
+            align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; 
+        }
+        .filter-row-container::-webkit-scrollbar { display: none; }
+        .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .ms-container { position: relative; }
+        .ms-btn { 
+            background: white; border: 1px solid #d1d5db; padding: 8px 12px; 
+            border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; 
+            color: #4b5563; display: flex; justify-content: space-between; 
+            align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            white-space: nowrap; 
+        }
+        .ms-options { 
+            display: none; position: absolute; top: 100%; left: 0; min-width: 200px; 
+            background: white; border: 1px solid #d1d5db; border-radius: 8px; 
+            max-height: 300px; overflow-y: auto; z-index: 100; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; 
+        }
+        .ms-options.show { display: block; }
+        .ms-option { 
+            padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; 
+            align-items: center; gap: 8px; font-size: 12px; cursor: pointer; 
+            color: #1f2937; white-space: normal; 
+        }
+        .ms-option:hover { background: #f9fafb; }
+        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
+        .ms-option.selected { background-color: #f0fdf4; }
+
+        #view-photo-editor { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #111827; z-index: 6000; display: none; flex-direction: column; 
+        }
+        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
+        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
+        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        
+        .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
+        .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
+        .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
+
+        #ptr-spinner { 
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%); 
+            z-index: 10; transition: top 0.2s; display: flex; align-items: center; 
+            justify-content: center; width: 30px; height: 30px; background: white; 
+            border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
+        #ptr-spinner.loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .failed-sync-banner { 
+            background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; 
+            padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        
+        .data-badge { 
+            display: inline-flex; align-items: center; padding: 2px 6px; 
+            border-radius: 4px; font-size: 10px; font-weight: 700; 
+            margin-right: 4px; margin-top: 4px; 
+        }
+        .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .text-production { color: #d97706; }
+
+        /* Request Form Styles & List Item */
+        #request-form-modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: white; z-index: 6000; display: none; flex-direction: column; 
+        }
+        
+        .req-list-item {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+            padding: 10px; margin-bottom: 8px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .req-list-details { font-size: 12px; color: #166534; line-height: 1.4; }
+        .req-remove-btn { color: #ef4444; padding: 8px; cursor: pointer; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -115,6 +366,7 @@
                 <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
+            
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
                 <i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO
             </button>
@@ -127,6 +379,7 @@
             <button onclick="closeRequestForm()" class="text-white font-bold">Cancel</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
+            
             <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm mb-4">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">1. Request Header</h3>
                 <div class="mb-2">
@@ -142,23 +395,29 @@
                     <datalist id="req-cust-list"></datalist>
                 </div>
             </div>
+
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">2. Item Details</h3>
+                
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Item Name</label>
                     <input type="text" id="req-item" list="req-item-list" class="input-field mb-0" placeholder="Search Drive Inventory..." autocomplete="off" oninput="handleItemChange()">
                     <datalist id="req-item-list"></datalist>
                 </div>
+                
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase">Container Size</label>
-                        <select id="req-size" class="input-field bg-white mb-0"><option value="">-- Select Item First --</option></select>
+                        <select id="req-size" class="input-field bg-white mb-0">
+                            <option value="">-- Select Item First --</option>
+                        </select>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase">Request Qty</label>
                         <input type="number" id="req-qty" class="input-field mb-0" placeholder="0">
                     </div>
                 </div>
+                
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">On Reserve?</label>
                     <select id="req-reserve" class="input-field bg-white mb-0">
@@ -166,28 +425,34 @@
                         <option value="Yes">Yes</option>
                     </select>
                 </div>
+
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
                     <input type="text" id="req-use" class="input-field mb-0" placeholder="e.g. Landscape Job">
                 </div>
+
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Ship Date</label>
                     <input type="date" id="req-date" class="input-field mb-0">
                 </div>
+
                 <button onclick="addItemToRequestList()" class="w-full bg-white border-2 border-[#007a4d] text-[#007a4d] font-bold py-3 rounded-lg mt-2 flex items-center justify-center gap-2">
                     <i class="ph-bold ph-plus-circle"></i> ADD ITEM TO LIST
                 </button>
             </div>
+
             <div id="req-preview-container" class="hidden mb-20">
                 <div class="flex justify-between items-end mb-2">
                     <h3 class="text-xs font-bold text-gray-500 uppercase">Items to Submit</h3>
                     <span id="req-count-badge" class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
                 <div id="req-list-content"></div>
+                
                 <button onclick="submitRequestBatch()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2">
                     <i class="ph-bold ph-paper-plane-right text-xl"></i> SUBMIT ALL REQUESTS
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -195,42 +460,39 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO 00
+                GNC-PRO 02
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
-            <div id="login-form">
-                <input type="text" id="login-username" class="input-field mb-3 text-center" placeholder="Username" autocapitalize="none">
-                <input type="password" id="login-password" class="input-field mb-4 text-center" placeholder="Password">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow" onclick="doLogin()">LOGIN</button>
-            </div>
-
-            <div id="reset-form" class="hidden">
-                <p class="text-sm font-bold text-red-600 mb-3">Password Reset Required</p>
-                <input type="password" id="reset-new-pass" class="input-field mb-3 text-center" placeholder="New Password">
-                <input type="password" id="reset-confirm-pass" class="input-field mb-4 text-center" placeholder="Confirm Password">
-                <button class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow" onclick="doPasswordReset()">UPDATE PASSWORD</button>
+            <div id="login-buttons" class="hidden"></div>
+            
+            <div id="pin-container" class="hidden mt-4">
+                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
+                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
             
-            <div id="loading-spinner" class="hidden flex-col items-center mt-4">
-                <i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d] mb-2"></i>
-                <div id="loading-text" class="text-[#007a4d] font-bold text-sm text-center">Loading...</div>
+            <div id="loading-spinner" class="flex flex-col items-center">
+                <i class="ph-bold ph-spinner animate-spin text-3xl text-gray-400 mb-2"></i>
+                <div id="loading-text" class="text-gray-500 font-bold text-sm text-center">Loading Data...</div>
             </div>
         </div>
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
+        
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO 00 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO 02 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
+            
             <div class="flex items-center gap-2">
                 <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
                 <img src="GNC LOGO.png" alt="Logo" class="h-8 w-auto object-contain">
@@ -263,7 +525,7 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">GNC-PRO 00</h1>
+                    <h1 class="text-2xl font-bold">Greenleaf Pro</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -278,7 +540,9 @@
 
                 <div onclick="openRequestForm()" class="bg-white p-4 rounded-xl mb-4 shadow border border-gray-200 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700"><i class="ph-bold ph-plus text-xl"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                            <i class="ph-bold ph-plus text-xl"></i>
+                        </div>
                         <div class="font-bold text-gray-800">Create New Request</div>
                     </div>
                     <i class="ph-bold ph-caret-right text-gray-300"></i>
@@ -299,34 +563,55 @@
 
             <div id="view-salesoffice" class="hidden">
                 <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes</h2>
-                <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100"><strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.</div>
+                <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100">
+                    <strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.
+                </div>
                 <input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search Plants or Codes..." onkeyup="renderSalesOffice()">
                 <div id="salesoffice-content"></div>
             </div>
 
             <div id="view-directory" class="hidden">
                 <h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-address-book text-xl"></i> Company Directory</h2>
-                <div class="task-tabs mb-4"><div class="task-tab active">Sales Reps</div></div>
+                <div class="task-tabs mb-4">
+                    <div class="task-tab active">Sales Reps</div>
+                </div>
                 <input type="text" id="directory-search" class="input-field mb-4" placeholder="Search Rep Name..." onkeyup="renderDirectoryView()">
                 <div id="directory-content"></div>
             </div>
 
             <div id="view-drive" class="hidden">
                 <h2 class="text-sm font-bold text-blue-600 uppercase mb-2">Drive Mode</h2>
+                
                 <div class="filter-row-container">
-                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-group" class="ms-options"></div></div>
-                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-season" class="ms-options"></div></div>
-                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-lot" class="ms-options"></div></div>
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-group" class="ms-options"></div>
+                    </div>
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-season" class="ms-options"></div>
+                    </div>
+                    <div class="ms-container filter-item">
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <div id="ms-lot" class="ms-options"></div>
+                    </div>
+                    
                     <div class="flex items-center gap-1 filter-item bg-white border border-gray-300 rounded-md p-1 h-[34px]">
-                        <select id="lts-operator" class="text-xs bg-transparent font-bold text-gray-600 outline-none" onchange="renderDriveView()"><option value="gt">></option><option value="lt"><</option></select>
+                        <select id="lts-operator" class="text-xs bg-transparent font-bold text-gray-600 outline-none" onchange="renderDriveView()">
+                            <option value="gt">></option>
+                            <option value="lt"><</option>
+                        </select>
                         <input type="number" id="lts-value" class="w-12 text-xs outline-none" placeholder="LTS" onkeyup="renderDriveView()">
                     </div>
+
                     <button onclick="resetDriveFilters()" class="filter-item text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded border border-red-100">RESET</button>
                 </div>
+
                 <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleDriveSearch(this.value)">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
+
             <div id="view-production" class="hidden">
                 <h2 class="text-sm font-bold text-production uppercase mb-4">Production & Grower Notes</h2>
                 
@@ -410,10 +695,13 @@
             </div>
             
             <div id="view-review" class="hidden">
-                <h2 class="text-sm font-bold text-[#007a4d] uppercase mb-4">Manager Review</h2>
-                <div id="review-folder-view">
-                    <div class="back-btn hidden" id="review-back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
-                    <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800">Manager Review</h3>
+                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
+                
+                <div id="review-root-folders"></div>
+                
+                <div id="review-folder-view" class="hidden">
+                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
+                    <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800"></h3>
                     <div id="failed-saves-container"></div>
                     <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewContent()">
                     <div id="review-content"></div>
@@ -582,6 +870,64 @@
         </nav>
     </div>
 
+    <div id="assign-modal">
+        <div class="modal-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Assign Items</h2>
+                <div class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold" id="assign-count">0 Items</div>
+            </div>
+
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">1. Select Assignment Type</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="requests" class="hidden" checked onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-clipboard-text text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Request</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="season" class="hidden" onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-sun text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Season</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="location" class="hidden" onchange="toggleFlyerOptions(false)">
+                    <i class="ph-bold ph-map-pin text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Location</span>
+                </label>
+                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
+                    <input type="radio" name="assign_type" value="flyer" class="hidden" onchange="toggleFlyerOptions(true)">
+                    <i class="ph-bold ph-image text-2xl text-gray-500"></i>
+                    <span class="text-xs font-bold">Flyer Project</span>
+                </label>
+            </div>
+
+            <div id="flyer-options-box" class="hidden mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+                <div class="mb-2">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Project Name</label>
+                    <input type="text" id="flyer-project-name" list="dl-projects" class="w-full p-2 border rounded text-sm bg-white" placeholder="e.g. Spring 2024">
+                    <datalist id="dl-projects"></datalist>
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_crop" checked class="accent-[#007a4d]"> <span class="text-xs font-bold">Crop Update</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_endcap" class="accent-[#007a4d]"> <span class="text-xs font-bold">End Cap</span></label>
+                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_spot" class="accent-[#007a4d]"> <span class="text-xs font-bold">Spotlight</span></label>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">2. Directions (Required)</h3>
+            <textarea id="assign-note" class="w-full p-3 border rounded-lg text-sm mb-4 h-20 bg-gray-50 focus:bg-white focus:border-[#007a4d] outline-none" placeholder="What needs to be done? e.g. Check for mites, get new photo..."></textarea>
+
+            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
+            <div id="assign-checkboxes" class="space-y-2 mb-6">
+            </div>
+            
+            <div class="flex gap-3">
+                <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
+                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg shadow-md" onclick="batchAssign()">CONFIRM ASSIGN</button>
+            </div>
+        </div>
+    </div>
+
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
@@ -589,31 +935,148 @@
         // CONFIGURATION
         // ==========================================
         
-        // YOUR EXACT WEB APP URL
+        // ADD YOUR URL HERE
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlmvqfFpLll_qFdJOlsJYIlWzGRAKdWC0dQ4PSYrCX2irSDF5SMk5Eiv0_eh0I7SYR/exec"; 
         
-        // BASE MANAGER EMAILS (Added dynamically)
-        const MANAGERS_EMAILS = [
-            "dylan_collyge@greenleafnursery.com",
-            "kayla_kneep@greenleafnursery.com"
-        ];
+        // This handles standard emails. J.D. removed per request.
+        const MANAGERS_EMAILS = ["dylan_collyge@greenleafnursery.com"];
 
         // ==========================================
-        // GLOBAL VARIABLES
+        // DYNAMIC LOGIN & USERS
         // ==========================================
+        
+        // We initialize with a safe fallback in case the API fetch fails.
+        let SYSTEM_USERS = [
+            { name: "Dylan", initial: "D", role: "Admin", pin: "1234", color: "blue" },
+            { name: "Kayla", initial: "K", role: "User", pin: "1234", color: "pink" },
+            { name: "Morgan", initial: "M", role: "User", pin: "1234", color: "purple" },
+            { name: "J.D.", initial: "J", role: "Admin", pin: "1234", color: "green" }
+        ];
+
+        let targetLoginUser = null; 
+
+        // Call this the moment the page starts loading
+        function fetchAppUsers() {
+            fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data && data.data.length > 0) {
+                        SYSTEM_USERS = data.data;
+                    }
+                    buildLoginButtons();
+                })
+                .catch(err => {
+                    console.error("Failed to load users, using fallback.", err);
+                    buildLoginButtons();
+                });
+        }
+
+        function buildLoginButtons() {
+            document.getElementById('loading-spinner').classList.add('hidden');
+            const btnContainer = document.getElementById('login-buttons');
+            btnContainer.classList.remove('hidden');
+            
+            let html = "";
+            SYSTEM_USERS.forEach(u => {
+                const isAdminLabel = u.role === "Admin" ? " (Admin)" : "";
+                const bgColor = `bg-${u.color}-100`;
+                const textColor = `text-${u.color}-600`;
+                
+                html += `
+                <button class="user-btn" onclick="selectUser('${u.name}')">
+                    <div class="w-8 h-8 rounded-full ${bgColor} flex items-center justify-center ${textColor} font-bold">${u.initial}</div>
+                    ${u.name}${isAdminLabel}
+                </button>`;
+            });
+            btnContainer.innerHTML = html;
+        }
+
+        function selectUser(name) { 
+            const userObj = SYSTEM_USERS.find(u => u.name === name);
+            if (!userObj) return;
+
+            targetLoginUser = userObj;
+            document.getElementById('login-buttons').classList.add('hidden'); 
+            document.getElementById('pin-container').classList.remove('hidden'); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
+        }
+        
+        function verifyPin() { 
+            const entered = document.getElementById('pin-code').value;
+            
+            if (entered === targetLoginUser.pin) { 
+                currentUser = targetLoginUser.name;
+                isAdmin = (targetLoginUser.role === "Admin");
+                
+                document.getElementById('pin-container').classList.add('hidden'); 
+                document.getElementById('loading-spinner').classList.remove('hidden'); 
+                document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                
+                fetchData(); 
+            } else { 
+                showToast("Error", "Incorrect PIN", true); 
+            } 
+        }
+        
+        function resetLogin() { 
+            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-buttons').classList.remove('hidden'); 
+            document.getElementById('loading-spinner').classList.add('hidden'); 
+            document.getElementById('pin-code').value = "";
+            targetLoginUser = null;
+        }
+
+        // Run immediately
+        fetchAppUsers();
+
+        // ==========================================
+        // EMAIL & REQUEST HELPER LOGIC
+        // ==========================================
+        
+        function getRepEmail(repName) {
+            const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
+            return entry ? entry.email : null;
+        }
+
+        function generateHtmlForItems(items, title, directions) {
+            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
+                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
+            
+            if (directions) {
+                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
+                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
+                         </div>`;
+            }
+
+            items.forEach(item => {
+                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555; font-size: 12px;">
+                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
+                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
+                                Item: ${item.ITEMCODE}
+                            </span>`;
+                if (item.SAVED_NOTE) {
+                    html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
+                }
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
+
+        // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
         let salesNoteMap = {}; 
         let allCommonNames = []; 
+        let socReps = []; 
         let socData = []; 
         let activeItem = null; 
         
-        // USER AUTHENTICATION STATE
         let currentUser = null; 
         let isAdmin = false; 
-        let targetLoginUser = null; 
-        let STATIC_DIRECTORY = []; 
-
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
         let currentFlyerTab = 'flyer_crop'; 
@@ -635,6 +1098,7 @@
         let debounceTimer; 
         let syncPauseUntil = 0; 
         
+        let STATIC_DIRECTORY = []; 
         window.lastLocalUpdate = 0;
 
         let driveViewLevel = 0;
@@ -665,7 +1129,6 @@
         let currentReviewFolder = null; 
         let currentReviewRep = null; 
         let currentReviewCustomer = null; 
-        let currentVirtualFolder = null;
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -693,212 +1156,8 @@
 
         let currentSocTab = 'reps';
 
-        // ==========================================
-        // AUTHENTICATION SYSTEM (NEW)
-        // ==========================================
-        
-        function doLogin() {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value.trim();
-            
-            if (!user || !pass) { 
-                showToast("Error", "Please enter your username and password.", true); 
-                return; 
-            }
-
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = "Authenticating...";
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ 
-                    type: "login", 
-                    username: user, 
-                    password: pass 
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    targetLoginUser = data.user;
-                    
-                    if (data.user.needsReset) {
-                        document.getElementById('loading-spinner').classList.add('hidden');
-                        document.getElementById('reset-form').classList.remove('hidden');
-                    } else {
-                        currentUser = data.user.name;
-                        isAdmin = (data.user.role === "Admin" || data.user.role === "Manager");
-                        document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
-                        fetchData();
-                    }
-                } else {
-                    showToast("Login Failed", data.message, true);
-                    resetLogin();
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Could not connect to authentication server.", true);
-                resetLogin();
-            });
-        }
-
-        function doPasswordReset() {
-            const newPass = document.getElementById('reset-new-pass').value;
-            const confirmPass = document.getElementById('reset-confirm-pass').value;
-            
-            if (!newPass) {
-                showToast("Error", "Password cannot be blank.", true); 
-                return;
-            }
-            
-            if (newPass !== confirmPass) {
-                showToast("Error", "Passwords do not match.", true); 
-                return;
-            }
-            
-            document.getElementById('reset-form').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = "Updating Password...";
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    type: "change_password",
-                    username: targetLoginUser.username,
-                    currentPassword: document.getElementById('login-password').value,
-                    newPassword: newPass
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    currentUser = targetLoginUser.name;
-                    isAdmin = (targetLoginUser.role === "Admin" || targetLoginUser.role === "Manager");
-                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
-                    fetchData();
-                } else {
-                    showToast("Error", data.message, true);
-                    resetLogin();
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Failed to update password.", true);
-                resetLogin();
-            });
-        }
-
-        function resetLogin() {
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('reset-form').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.add('hidden');
-            document.getElementById('login-password').value = "";
-            document.getElementById('reset-new-pass').value = "";
-            document.getElementById('reset-confirm-pass').value = "";
-            targetLoginUser = null;
-        }
-
-        // ==========================================
-        // DATA FILTRATION LOGIC
-        // ==========================================
-        
-        function enforceRoleBasedFiltering() {
-            if (isAdmin) {
-                return;
-            }
-            
-            const myName = String(targetLoginUser.name || "").toLowerCase();
-            const myLastFirst = String(targetLoginUser.nameLastFirst || "").toLowerCase();
-            const myInitials = String(targetLoginUser.initials || "").toLowerCase();
-            const myRepId = String(targetLoginUser.repId || "").toLowerCase();
-            const myEmail = String(targetLoginUser.email || "").toLowerCase();
-
-            // Filter full inventory array
-            fullInventory = fullInventory.filter(function(item) {
-                const assigned = String(item.ASSIGNEDTO || "").toLowerCase();
-                const reqAssigned = String(item.REQUEST_ASSIGNED_TO || "").toLowerCase();
-                const salesRep = String(item.SALESREP || "").toLowerCase();
-                
-                let isMatch = false;
-                
-                if (myName && (assigned.includes(myName) || reqAssigned.includes(myName) || salesRep.includes(myName))) {
-                    isMatch = true;
-                }
-                if (myLastFirst && salesRep.includes(myLastFirst)) {
-                    isMatch = true;
-                }
-                if (myInitials && salesRep.includes(myInitials)) {
-                    isMatch = true;
-                }
-                if (myRepId && salesRep.includes(myRepId)) {
-                    isMatch = true;
-                }
-                if (myEmail && salesRep.includes(myEmail)) {
-                    isMatch = true;
-                }
-                
-                return isMatch;
-            });
-            
-            // Re-populate allCommonNames based only on the filtered list
-            allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-        }
-
-        // ==========================================
-        // EMAIL & REQUEST HELPER LOGIC
-        // ==========================================
-        
-        function getRepEmail(repName) {
-            const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
-            return entry ? entry.email : null;
-        }
-
-        function sendEmailNotification(toAddress, subject, htmlBody) {
-            const payload = {
-                type: "send_email",
-                to: toAddress,
-                subject: subject,
-                htmlBody: htmlBody
-            };
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            }).catch(e => console.error("Email API Failed: ", e));
-        }
-
-        function generateHtmlForItems(items, title, directions) {
-            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
-                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
-            
-            if (directions) {
-                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
-                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
-                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
-                         </div>`;
-            }
-
-            items.forEach(item => {
-                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
-                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
-                            <span style="color: #555; font-size: 12px;">
-                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
-                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
-                                Item: ${item.ITEMCODE}
-                            </span>`;
-                if (item.SAVED_NOTE) {
-                    html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
-                }
-                html += `</div>`;
-            });
-            return html + "</div>";
-        }
-
-
         function normalizeRepName(name) {
-            if (!name) {
-                return "";
-            }
+            if (!name) return "";
             name = name.trim();
             if (name.includes(",")) {
                 let parts = name.split(",");
@@ -910,9 +1169,7 @@
         }
 
         function getLocPrefix(loc) {
-            if (!loc) {
-                return "No Loc";
-            }
+            if (!loc) return "No Loc";
             let parts = loc.split('.');
             if (parts.length >= 3) {
                 return parts[0] + '.' + parts[1]; 
@@ -923,6 +1180,8 @@
         // ==========================================
         // NEW REQUEST FORM SYSTEM
         // ==========================================
+        let pendingRequestItems = []; 
+
         function openRequestForm() {
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
@@ -964,9 +1223,7 @@
             const loading = document.getElementById('cust-loading');
             
             custList.innerHTML = "";
-            if (!repName) {
-                return;
-            }
+            if (!repName) return;
 
             loading.classList.remove('hidden');
 
@@ -1003,9 +1260,7 @@
             const sizeSelect = document.getElementById('req-size');
             
             sizeSelect.innerHTML = '<option value="">-- Select Size --</option>';
-            if (!itemName) {
-                return;
-            }
+            if (!itemName) return;
 
             const matchingItems = fullInventory.filter(i => i.COMMONNAME === itemName);
             
@@ -1109,9 +1364,7 @@
             const rep = document.getElementById('req-rep').value;
             const custInput = document.getElementById('req-cust').value.toUpperCase().trim();
             
-            if (pendingRequestItems.length === 0) {
-                return;
-            }
+            if (pendingRequestItems.length === 0) return;
 
             // PAUSE SYNC FOR 60 SECONDS TO PREVENT VANISHING ITEMS
             syncPauseUntil = new Date().getTime() + 60000; 
@@ -1184,7 +1437,7 @@
             closeRequestForm();
             switchView('review');
             setTimeout(() => { 
-                resetReviewFolders();
+                openReviewFolder('pending'); 
             }, 300);
         }
 
@@ -1193,9 +1446,7 @@
         // ==========================================
 
         function approveAndSendToRep(item) {
-            if (!confirm("Approve this request and email the Sales Rep?")) {
-                return;
-            }
+            if (!confirm("Approve this request and email the Sales Rep?")) return;
 
             const repEntry = STATIC_DIRECTORY.find(d => d.name === item.SALESREP);
             const repEmail = repEntry ? repEntry.email : "dylan_collyge@greenleafnursery.com"; 
@@ -1374,12 +1625,11 @@
                     noteTemplates = cloudJson.templates || []; 
                     salesNoteMap = cloudJson.salesMap || {}; 
                     
+                    allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+                    
                     if (dirJson.status === 'success' && dirJson.data.length > 0) {
                         STATIC_DIRECTORY = dirJson.data;
                     }
-                    
-                    // APPLY ROLE-BASED FILTERING AFTER DATA LOAD
-                    enforceRoleBasedFiltering();
 
                     if (!isSilent) { 
                         applyAssignments(); 
@@ -1404,7 +1654,11 @@
                         } else if (!document.getElementById('view-drive').classList.contains('hidden')) { 
                             renderDriveView(); 
                         } else if (!document.getElementById('view-review').classList.contains('hidden')) { 
-                            renderReviewContent(); 
+                            if (currentReviewFolder) { 
+                                renderReviewContent(); 
+                            } else { 
+                                renderManagerFolders(); 
+                            }
                         } 
                     }
                 } else { 
@@ -1559,9 +1813,7 @@
         }
 
         function markRequestComplete() {
-            if (!activeItem) {
-                return;
-            }
+            if (!activeItem) return;
             
             syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
@@ -1594,6 +1846,7 @@
                 recipients.push(repEmail);
             }
             
+            // Fixed undefined USER_EMAILS lookup here
             const senderEmail = getRepEmail(currentUser);
             if (senderEmail) {
                 recipients.push(senderEmail);
@@ -1838,9 +2091,7 @@
         }
 
         function deletePhoto(index) {
-            if (!confirm("Are you sure you want to delete this photo?")) {
-                return;
-            }
+            if (!confirm("Are you sure you want to delete this photo?")) return;
             
             if (autoSyncTimer) clearInterval(autoSyncTimer);
             
@@ -2350,15 +2601,9 @@
 
         function updateDriveFilterState(type) {
             let div;
-            if (type === 'groups') {
-                div = document.getElementById('ms-group');
-            }
-            if (type === 'seasons') {
-                div = document.getElementById('ms-season');
-            }
-            if (type === 'lots') {
-                div = document.getElementById('ms-lot');
-            }
+            if (type === 'groups') div = document.getElementById('ms-group');
+            if (type === 'seasons') div = document.getElementById('ms-season');
+            if (type === 'lots') div = document.getElementById('ms-lot');
 
             const checks = div.querySelectorAll('input[type="checkbox"]:checked');
             const values = Array.from(checks).map(c => c.value);
@@ -2381,15 +2626,9 @@
 
         function toggleAllDrive(type) {
             let div;
-            if (type === 'groups') {
-                div = document.getElementById('ms-group');
-            }
-            if (type === 'seasons') {
-                div = document.getElementById('ms-season');
-            }
-            if (type === 'lots') {
-                div = document.getElementById('ms-lot');
-            }
+            if (type === 'groups') div = document.getElementById('ms-group');
+            if (type === 'seasons') div = document.getElementById('ms-season');
+            if (type === 'lots') div = document.getElementById('ms-lot');
 
             const allChecks = div.querySelectorAll('input[type="checkbox"]');
             const allChecked = Array.from(allChecks).every(c => c.checked);
@@ -2493,6 +2732,7 @@
                 return; 
             }
             
+            // 2. LEVEL 0: LIST COMMON NAMES
             if (driveViewLevel === 0) {
                 crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
@@ -2507,6 +2747,7 @@
                 }
                 container.innerHTML = html;
             }
+            // 3. LEVEL 1: LIST SIZES
             else if (driveViewLevel === 1) {
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
@@ -2527,6 +2768,7 @@
                 }
                 container.innerHTML = html;
             }
+            // 4. LEVEL 2: CARDS
             else if (driveViewLevel === 2) {
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
                 
@@ -3050,7 +3292,7 @@
                     }
 
                     let completeBtn = '';
-                    if (isAdmin) {
+                    if (ADMINS.includes(currentUser)) {
                         completeBtn = `
                         <div class="p-4 bg-white border-b border-gray-100">
                             <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
@@ -3200,7 +3442,7 @@
         }
 
         // ==========================================
-        // DATA VIEWER & REVIEW (NEW FOLDER UX)
+        // DATA VIEWER & REVIEW
         // ==========================================
 
         function renderViewerNames() {
@@ -3265,276 +3507,275 @@
             document.getElementById('viewer-content').innerHTML = html; 
         }
 
-        // --- NEW MANAGER REVIEW (VIRTUAL FOLDERS) ---
-
         function renderManagerFolders() {
+            document.getElementById('review-root-folders').classList.remove('hidden');
+            document.getElementById('review-folder-view').classList.add('hidden');
+            
+            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
+            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
+            const noWinnerCount = fullInventory.filter(i => {
+                const pri = parseFloat(i.PRIORITY);
+                const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                return (pri > 0 && pri < 9999) && (qty <= 0);
+            }).length;
+
+            const html = `
+                <div class="space-y-2">
+                    <div class="drill-item" onclick="openReviewFolder('pending')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('completed')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('item_review')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                </div>
+            `;
+            document.getElementById('review-root-folders').innerHTML = html;
+        }
+
+        function openReviewFolder(folderType) {
+            currentReviewFolder = folderType;
+            currentReviewRep = null;
+            currentReviewCustomer = null;
+            
+            document.getElementById('review-root-folders').classList.add('hidden');
+            document.getElementById('review-folder-view').classList.remove('hidden');
+            
+            let title = "Folder";
+            if (folderType === 'pending') title = "Pending Requests";
+            if (folderType === 'completed') title = "Completed Requests";
+            if (folderType === 'item_review') title = "Item Review (No Winner)";
+            
+            document.getElementById('review-folder-title').innerText = title;
+            document.getElementById('review-back-label').innerText = "Back to Folders";
             reviewViewLevel = 0;
             renderReviewContent();
         }
 
         function resetReviewFolders() {
-            if (reviewViewLevel === 3) {
-                reviewViewLevel = 2;
-                currentVirtualFolder = null;
-            } else if (reviewViewLevel === 2) {
-                reviewViewLevel = 1;
+            if (currentReviewCustomer) {
                 currentReviewCustomer = null;
-            } else if (reviewViewLevel === 1) {
-                reviewViewLevel = 0;
-                currentReviewRep = null;
+                renderReviewContent();
+                return;
             }
-            renderReviewContent();
+            if (currentReviewRep) {
+                currentReviewRep = null;
+                renderReviewContent();
+                return;
+            }
+            currentReviewFolder = null;
+            renderManagerFolders();
         }
 
         function renderReviewContent() {
             const container = document.getElementById('review-content');
             const term = document.getElementById('review-search').value.toLowerCase();
             const failContainer = document.getElementById('failed-saves-container');
-            const backBtn = document.getElementById('review-back-btn');
             
-            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
-            if (failed.length > 0) { 
-                failContainer.innerHTML = `
-                <div class="failed-sync-banner">
-                    <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
-                    <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
-                </div>`; 
-            } else { 
-                failContainer.innerHTML = ''; 
+            if (currentReviewFolder === 'completed') {
+                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+                if (failed.length > 0) { 
+                    failContainer.innerHTML = `
+                    <div class="failed-sync-banner">
+                        <div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div>
+                        <button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button>
+                    </div>`; 
+                } else { 
+                    failContainer.innerHTML = ''; 
+                }
+            } else {
+                failContainer.innerHTML = '';
             }
 
-            // LEVEL 0: LIST REPS
-            if (reviewViewLevel === 0) {
-                backBtn.classList.add('hidden');
-                document.getElementById('review-folder-title').innerText = "Manager Review";
-                
-                let reps = [...new Set([
-                    ...STATIC_DIRECTORY.map(r => r.name),
-                    ...fullInventory.filter(i => i.TASK_TAB === 'requests' || i.TASK_TAB === 'review').map(i => i.SALESREP)
-                ])].filter(Boolean).sort();
-
-                let html = `
-                    <div class="drill-item" onclick="openNoWinnerFolder()">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
-                            <span class="font-bold text-lg">Item Review (No Winner)</span>
-                        </div>
-                        <i class="ph-bold ph-caret-right ml-2"></i>
-                    </div>
-                `;
-
-                reps.forEach(rep => {
-                    const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === rep).length;
-                    let badge = pendingCount > 0 ? `<span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">${pendingCount} Pending</span>` : '';
-                    
-                    html += `
-                    <div class="drill-item" onclick="selectReviewRep('${rep.replace(/'/g, "\\'")}')">
-                        <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
-                            <span class="font-bold text-lg">${rep} ${badge}</span>
-                        </div>
-                        <i class="ph-bold ph-caret-right ml-2"></i>
-                    </div>`;
+            let folderTaskTab = 'review';
+            if (currentReviewFolder === 'pending') {
+                folderTaskTab = 'requests';
+            }
+            
+            // --- NO WINNER FOLDER (Simple List) ---
+            if (currentReviewFolder === 'item_review') {
+                let filteredItems = fullInventory.filter(i => {
+                    const pri = parseFloat(i.PRIORITY);
+                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                    return (pri > 0 && pri < 9999) && (qty <= 0);
                 });
-                container.innerHTML = html;
-            } 
-            // LEVEL 1: LIST CUSTOMERS
-            else if (reviewViewLevel === 1) {
-                backBtn.classList.remove('hidden');
-                document.getElementById('review-back-label').innerText = "All Reps";
-                document.getElementById('review-folder-title').innerText = currentReviewRep;
                 
-                let custs = [...new Set([
-                    ...socData.map(i => i.CUSTOMERNAME),
-                    ...fullInventory.filter(i => i.SALESREP === currentReviewRep).map(i => i.CUSTOMERNAME)
-                ])].filter(c => c && c !== "Unknown Customer").sort();
+                if (term) { 
+                    filteredItems = filteredItems.filter(i => {
+                        const common = (i.COMMONNAME||"").toLowerCase();
+                        const code = (i.ITEMCODE||"").toLowerCase();
+                        return common.includes(term) || code.includes(term);
+                    }); 
+                }
+
+                if (filteredItems.length === 0) { 
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
+                    return; 
+                }
 
                 let html = "";
-                if (custs.length === 0) {
-                    html = "<div class='p-4 text-center text-gray-500'>No customers found.</div>";
+                for (let i = 0; i < filteredItems.length; i++) {
+                    html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
                 }
+                container.innerHTML = html; 
+                return;
+            }
+
+            // --- PENDING & COMPLETED FOLDERS ---
+            
+            // LEVEL 1: LIST SALES REPS
+            if (!currentReviewRep) {
+                if (currentReviewFolder === 'pending') {
+                    document.getElementById('review-folder-title').innerText = "Pending Requests";
+                } else {
+                    document.getElementById('review-folder-title').innerText = "Completed Requests";
+                }
+                document.getElementById('review-back-label').innerText = "Back to Folders";
                 
-                custs.forEach(c => {
-                    const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === c).length;
-                    let badge = pendingCount > 0 ? `<span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">${pendingCount}</span>` : '';
-                    
+                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
+                activeReps.sort();
+                
+                let html = "";
+                for (let i = 0; i < activeReps.length; i++) {
+                    let repName = activeReps[i];
+                    const count = fullInventory.filter(item => item.TASK_TAB === folderTaskTab && (item.SALESREP || "Unknown") === repName).length;
                     html += `
-                    <div class="drill-item" onclick="selectReviewCustomer('${c.replace(/'/g, "\\'")}')">
+                    <div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
                         <div class="flex items-center gap-3">
-                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
-                            <span class="font-bold text-sm">${c} ${badge}</span>
+                            <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
+                            <span class="font-bold text-lg">${repName}</span>
                         </div>
+                        <span class="text-gray-400 font-bold text-sm">(${count})</span>
                         <i class="ph-bold ph-caret-right ml-2"></i>
                     </div>`;
-                });
+                }
+                container.innerHTML = html;
+                return;
+            }
+
+            // LEVEL 2: LIST CUSTOMERS FOR SELECTED REP
+            if (!currentReviewCustomer) {
+                document.getElementById('review-folder-title').innerText = currentReviewRep;
+                document.getElementById('review-back-label').innerText = "Back to Reps";
+                
+                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
+                
+                const customers = [...new Set(repItems.map(i => {
+                    const c = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    if (co && co !== c) {
+                        return `${c} / ${co}`;
+                    }
+                    return c;
+                }))].sort();
+
+                let html = "";
+                for (let i = 0; i < customers.length; i++) {
+                    let cust = customers[i];
+                    const count = repItems.filter(item => {
+                        const c = item.CUSTOMERNAME || "General";
+                        const co = item.CONSIGNEENAME || "";
+                        let combined = c;
+                        if (co && co !== c) {
+                            combined = `${c} / ${co}`;
+                        }
+                        return combined === cust;
+                    }).length;
+
+                    html += `
+                    <div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-sm">${cust}</span>
+                        </div>
+                        <span class="text-gray-400 font-bold text-xs">(${count})</span>
+                        <i class="ph-bold ph-caret-right ml-2"></i>
+                    </div>`;
+                }
+                container.innerHTML = html;
+                return;
+            }
+
+            // LEVEL 3: SHOW ITEMS FOR CUSTOMER
+            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
+            document.getElementById('review-back-label').innerText = "Back to Customers";
+            
+            let finalItems = fullInventory.filter(i => {
+                if (i.TASK_TAB !== folderTaskTab) return false;
+                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
+                
+                const c = i.CUSTOMERNAME || "General";
+                const co = i.CONSIGNEENAME || "";
+                let combined = c;
+                if (co && co !== c) {
+                    combined = `${c} / ${co}`;
+                }
+                return combined === currentReviewCustomer;
+            });
+
+            if (term) {
+                finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+            }
+
+            if (finalItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
+            } else {
+                let html = "";
+                for (let i = 0; i < finalItems.length; i++) {
+                    let item = finalItems[i];
+                    let approveBtn = "";
+                    
+                    if (folderTaskTab === 'requests') { 
+                         approveBtn = `
+                         <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
+                             <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
+                         </button>`;
+                    }
+                    
+                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                    html += `
+                    <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
+                        ${cardHtml}
+                        <div class="px-2 pb-2">${approveBtn}</div>
+                    </div>`;
+                }
                 container.innerHTML = html;
             }
-            // LEVEL 2: 4 VIRTUAL FOLDERS
-            else if (reviewViewLevel === 2) {
-                backBtn.classList.remove('hidden');
-                document.getElementById('review-back-label').innerText = "Customers";
-                document.getElementById('review-folder-title').innerText = currentReviewCustomer;
-
-                const socCount = socData.filter(i => i.CUSTOMERNAME === currentReviewCustomer).length;
-                const pendCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer).length;
-                const compCount = fullInventory.filter(i => i.TASK_TAB === 'review' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer).length;
-
-                container.innerHTML = `
-                    <div class="drill-item" onclick="openVirtualFolder('soc')">
-                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-green-600 text-2xl"></i><span class="font-bold">1. SOC Data <span class="text-gray-400 text-xs font-normal">(${socCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openVirtualFolder('pending')">
-                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-red-500 text-2xl"></i><span class="font-bold">2. Pending Requests <span class="text-gray-400 text-xs font-normal">(${pendCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openVirtualFolder('completed')">
-                        <div class="flex items-center gap-3"><i class="ph-fill ph-folder text-blue-500 text-2xl"></i><span class="font-bold">3. Completed Requests <span class="text-gray-400 text-xs font-normal">(${compCount})</span></span></div><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                    <div class="drill-item" onclick="openVirtualFolder('form')">
-                        <div class="flex items-center gap-3"><i class="ph-fill ph-plus-circle text-purple-600 text-2xl"></i><span class="font-bold">4. Request Form</span></div><i class="ph-bold ph-caret-right"></i>
-                    </div>
-                `;
-            }
-            // LEVEL 3: DATA RENDERER
-            else if (reviewViewLevel === 3) {
-                backBtn.classList.remove('hidden');
-                document.getElementById('review-back-label').innerText = "Folders";
-                
-                if (currentVirtualFolder === 'no_winner') {
-                    document.getElementById('review-folder-title').innerText = "Item Review (No Winner)";
-                    let filteredItems = fullInventory.filter(i => {
-                        const pri = parseFloat(i.PRIORITY);
-                        const qty = parseFloat(i.PTRAVAILABLE) || 0;
-                        return (pri > 0 && pri < 9999) && (qty <= 0);
-                    });
-                    
-                    if (term) {
-                        filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                    }
-                    
-                    if (filteredItems.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
-                        return; 
-                    }
-                    
-                    let html = "";
-                    for (let i = 0; i < filteredItems.length; i++) {
-                        html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
-                    }
-                    container.innerHTML = html; 
-                } 
-                else if (currentVirtualFolder === 'soc') {
-                    document.getElementById('review-folder-title').innerText = "1. SOC Data";
-                    let matched = socData.filter(i => i.CUSTOMERNAME === currentReviewCustomer);
-                    
-                    if (term) {
-                        matched = matched.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                    }
-                    
-                    if (matched.length === 0) { 
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No SOC Data.</div>`; 
-                        return; 
-                    }
-                    
-                    let html = "";
-                    for (let m = 0; m < matched.length; m++) {
-                        let i = matched[m];
-                        html += `
-                        <div class="inv-card">
-                            <div class="font-bold text-[#007a4d]">${i.COMMONNAME || 'Unknown'} - ${i.CONTSIZE || ''}</div>
-                            <div class="text-xs font-bold text-gray-500 mb-1">Code: ${i.ITEMCODE || '-'} | Rep: ${i.SALESREP || '-'}</div>
-                            <div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                }
-                else if (currentVirtualFolder === 'pending' || currentVirtualFolder === 'completed') {
-                    const taskTarget = currentVirtualFolder === 'pending' ? 'requests' : 'review';
-                    document.getElementById('review-folder-title').innerText = currentVirtualFolder === 'pending' ? "2. Pending Requests" : "3. Completed Requests";
-                    
-                    let finalItems = fullInventory.filter(i => i.TASK_TAB === taskTarget && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer);
-                    
-                    if (term) {
-                        finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
-                    }
-                    
-                    if (finalItems.length === 0) {
-                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
-                    } else {
-                        let html = "";
-                        for (let i = 0; i < finalItems.length; i++) {
-                            let item = finalItems[i];
-                            let approveBtn = "";
-                            if (taskTarget === 'requests' && isAdmin) { 
-                                 approveBtn = `
-                                 <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs flex items-center justify-center gap-2">
-                                     <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
-                                 </button>`;
-                            }
-                            let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
-                            html += `
-                            <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200 shadow-sm">
-                                ${cardHtml}
-                                <div class="px-2 pb-2">${approveBtn}</div>
-                            </div>`;
-                        }
-                        container.innerHTML = html;
-                    }
-                }
-            }
         }
-
-        function openNoWinnerFolder() {
-            currentVirtualFolder = 'no_winner';
-            reviewViewLevel = 3;
-            renderReviewContent();
-        }
-
+        
         function selectReviewRep(repName) {
             currentReviewRep = repName;
-            document.getElementById('review-content').innerHTML = '<div class="p-8 text-center flex flex-col items-center"><i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d]"></i><div class="mt-2 text-gray-500 font-bold">Loading Data...</div></div>';
-            
-            if (selectedSocRep !== repName || socData.length === 0) {
-                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
-                const queryParam = dirEntry ? dirEntry.name : repName;
-                
-                fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') { 
-                        socData = data.data; 
-                        selectedSocRep = queryParam;
-                    }
-                    reviewViewLevel = 1;
-                    renderReviewContent();
-                }).catch(e => {
-                    reviewViewLevel = 1; 
-                    renderReviewContent();
-                });
-            } else {
-                reviewViewLevel = 1;
-                renderReviewContent();
-            }
+            renderReviewContent();
         }
 
         function selectReviewCustomer(custName) {
             currentReviewCustomer = custName;
-            reviewViewLevel = 2;
             renderReviewContent();
         }
-
-        function openVirtualFolder(folder) {
-            if (folder === 'form') {
-                openRequestForm();
-                document.getElementById('req-rep').value = currentReviewRep;
-                handleRepChange();
-                setTimeout(() => {
-                    document.getElementById('req-cust').value = currentReviewCustomer;
-                }, 500);
-                return;
-            }
-            currentVirtualFolder = folder;
-            reviewViewLevel = 3;
-            renderReviewContent();
+        
+        function selectReviewName(n) { 
+            selectedReviewName = n; 
+            reviewViewLevel = 1; 
+            renderReviewContent(); 
+        }
+        function selectReviewSize(s) { 
+            selectedReviewSize = s; 
+            reviewViewLevel = 2; 
+            renderReviewContent(); 
         }
 
         function renderSalesOffice() {
@@ -3596,9 +3837,7 @@
 
         function approveSalesItem(id) {
             const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
-            if (itemIdx === -1) {
-                return;
-            }
+            if (itemIdx === -1) return;
             
             const item = fullInventory[itemIdx];
             item.SO_STATUS = "APPROVED";
@@ -3624,9 +3863,7 @@
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 body: JSON.stringify(payload) 
-            }).catch(err => {
-                logFailedSave(payload);
-            });
+            }).catch(err => logFailedSave(payload));
         }
 
         function launchApp() { 
@@ -3685,18 +3922,11 @@
             
             document.getElementById('view-'+v).classList.remove('hidden'); 
             
-            if (v === 'drive') {
-                renderDriveNames(); 
-            }
-            if (v === 'inventory') {
-                renderInventoryView(); 
-            }
-            if (v === 'production') {
-                renderProductionView(); 
-            }
-            if (v === 'directory') {
-                renderDirectoryView(); 
-            }
+            if (v === 'drive') renderDriveNames(); 
+            if (v === 'inventory') renderInventoryView(); 
+            if (v === 'production') renderProductionView(); 
+            if (v === 'directory') renderDirectoryView(); 
+            
             if (v === 'tasks') { 
                 if (isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
                     renderTeamSelector(); 
@@ -3705,18 +3935,10 @@
                 } 
             } 
             
-            if (v === 'viewer') {
-                renderViewerNames(); 
-            }
-            if (v === 'review') {
-                renderManagerFolders(); 
-            }
-            if (v === 'soc') {
-                renderSocView(); 
-            }
-            if (v === 'salesoffice') {
-                renderSalesOffice(); 
-            }
+            if (v === 'viewer') renderViewerNames(); 
+            if (v === 'review') renderManagerFolders(); 
+            if (v === 'soc') renderSocView(); 
+            if (v === 'salesoffice') renderSalesOffice(); 
         }
         
         function switchDetailTab(tab) { 
@@ -3762,18 +3984,10 @@
             document.getElementById('view-detail').classList.add('hidden'); 
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             
-            if (lastView === 'tasks') {
-                renderTasks(); 
-            }
-            if (lastView === 'drive') {
-                renderDriveNames(); 
-            }
-            if (lastView === 'inventory') {
-                renderInventoryView(); 
-            }
-            if (lastView === 'production') {
-                renderProductionView(); 
-            }
+            if (lastView === 'tasks') renderTasks(); 
+            if (lastView === 'drive') renderDriveNames(); 
+            if (lastView === 'inventory') renderInventoryView(); 
+            if (lastView === 'production') renderProductionView(); 
         }
 
         function openDetail(idx, originView) {
@@ -3903,21 +4117,11 @@
         }
 
         function handleSmartFill(el) {
-            if (el.id === 'in-match') {
-                activeItem.SAVED_MATCH = el.value;
-            }
-            if (el.id === 'in-spec') {
-                activeItem.SAVED_SPEC = el.value;
-            }
-            if (el.id === 'in-pick') {
-                activeItem.SAVED_PICK = el.value;
-            }
-            if (el.id === 'in-note') {
-                activeItem.SAVED_NOTE = document.getElementById('in-note').value;
-            }
-            if (el.id === 'in-sales-desc') {
-                activeItem.SAVED_SALES_DESC = el.value;
-            }
+            if (el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
+            if (el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
+            if (el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
+            if (el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
+            if (el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
             
             const specVal = document.getElementById('in-spec').value;
             const salesEl = document.getElementById('in-sales-desc');
@@ -4008,26 +4212,11 @@
             const cont = document.getElementById('input-container');
             
             cont.innerHTML = `
-            <div class="mb-2">
-                <div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div>
-                <div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div>
-            </div>
-            <div class="mb-2">
-                <div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div>
-                <div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div>
-            </div>
-            <div class="mb-2">
-                <div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div>
-                <div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div>
-            </div>
-            <div class="mb-2">
-                <div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div>
-                <div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div>
-            </div>
-            <div class="mb-2">
-                <div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div>
-                <div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div>
-            </div>`;
+            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
+            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
+            <div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div>
+            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
+            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>`;
             
             if (canEditThisView) { 
                 document.getElementById('btn-edit-container').classList.remove('hidden'); 
@@ -4037,9 +4226,7 @@
         }
 
         function renderAllFields() {
-            if (!activeItem) {
-                return;
-            }
+            if (!activeItem) return;
             
             const hiddenKeys = [
                 'UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 
@@ -4464,18 +4651,15 @@
             
             const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
 
+            // --- FIXED EMAIL RECIPIENT LOGIC ---
             let recipients = [...MANAGERS_EMAILS];
             selectedUsers.forEach(uName => {
                 const email = getRepEmail(uName);
-                if (email) {
-                    recipients.push(email);
-                }
+                if (email) recipients.push(email);
             });
             
             const senderEmail = getRepEmail(currentUser);
-            if (senderEmail) {
-                recipients.push(senderEmail);
-            }
+            if (senderEmail) recipients.push(senderEmail);
             
             recipients = [...new Set(recipients)];
 
