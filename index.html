@@ -45,6 +45,20 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
             max-width: 360px; text-align: center; 
         }
+        .user-btn { 
+            width: 100%; padding: 12px; margin-bottom: 10px; 
+            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
+            color: #374151; background: white; display: flex; 
+            align-items: center; gap: 10px; transition: all 0.2s; 
+        }
+        .user-btn:hover { 
+            border-color: var(--brand-gold); background-color: #fffbeb; 
+        }
+        .pin-input { 
+            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
+            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
+            margin-bottom: 20px; outline: none; display: none; 
+        }
         
         #toast-notification { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
@@ -448,8 +462,6 @@
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
                 GNC-PRO 003
             </div>
-            
-            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
             <div id="login-container" class="hidden mt-4">
                 <input type="text" id="login-username" class="w-full p-3 font-bold border-2 border-gray-200 rounded-lg mb-3 outline-none focus:border-[#007a4d]" placeholder="Username">
@@ -985,39 +997,48 @@
 
         function handleLogin() { 
             try {
-                const usernameInput = document.getElementById('login-username').value.trim();
-                const passwordInput = document.getElementById('login-password').value.trim();
+                const userEl = document.getElementById('login-username');
+                const passEl = document.getElementById('login-password');
                 
-                if(!usernameInput || !passwordInput) {
-                    showToast("Error", "Please enter username and password", true);
+                if (!userEl || !passEl) {
+                    alert("System error: Login fields missing.");
                     return;
                 }
 
-                // Bulletproof search that ignores empty rows in your Google Sheet
+                const usernameInput = userEl.value.trim();
+                const passwordInput = passEl.value;
+                
+                if(!usernameInput || !passwordInput) {
+                    alert("Please enter both your Username and Password.");
+                    return;
+                }
+
+                // Make sure SYSTEM_USERS has data
+                if (!SYSTEM_USERS || SYSTEM_USERS.length === 0) {
+                    alert("System users not loaded yet. Please wait or refresh.");
+                    return;
+                }
+
                 const userObj = SYSTEM_USERS.find(u => {
                     const dbName = u.name ? String(u.name).trim().toLowerCase() : "";
                     return dbName === usernameInput.toLowerCase();
                 });
 
                 if (!userObj) {
-                    showToast("Error", "Username not found in system", true);
-                    console.log("Users currently loaded:", SYSTEM_USERS);
+                    alert("Username '" + usernameInput + "' not found! Make sure it matches the exact USERNAME in the Google Sheet.");
                     return;
                 }
 
-                // Verify Password
                 if (String(passwordInput) === String(userObj.pin)) { 
                     targetLoginUser = userObj; 
                     
-                    // Check if they are forced to reset password
-                    if (targetLoginUser.resetRequired) {
+                    if (targetLoginUser.resetRequired === true || targetLoginUser.resetRequired === "TRUE" || targetLoginUser.resetRequired === "true") {
                         document.getElementById('login-container').classList.add('hidden');
                         document.getElementById('reset-password-container').classList.remove('hidden');
                         document.getElementById('new-password').focus();
                         return;
                     }
 
-                    // Standard Login
                     currentUser = targetLoginUser.name;
                     isAdmin = (String(targetLoginUser.role).toUpperCase() === "ADMIN");
                     
@@ -1027,11 +1048,11 @@
                     
                     fetchData(); 
                 } else { 
-                    showToast("Error", "Incorrect Password", true); 
+                    alert("Incorrect Password. Please try again."); 
                 } 
             } catch(err) {
-                console.error("Login Crash:", err);
-                showToast("Error", "System error. Check console.", true);
+                alert("Login Error: " + err.message);
+                console.error(err);
             }
         }
 
@@ -1049,52 +1070,56 @@
         });
 
         function submitNewPassword() {
-            const pass1 = document.getElementById('new-password').value;
-            const pass2 = document.getElementById('confirm-password').value;
+            try {
+                const pass1 = document.getElementById('new-password').value;
+                const pass2 = document.getElementById('confirm-password').value;
 
-            if (!pass1 || pass1.length < 4) {
-                showToast("Error", "Password must be at least 4 characters", true);
-                return;
-            }
-            if (pass1 !== pass2) {
-                showToast("Error", "Passwords do not match", true);
-                return;
-            }
-
-            document.getElementById('reset-password-container').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = "Updating Credentials...";
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    type: "update_password",
-                    username: targetLoginUser.name,
-                    oldPassword: targetLoginUser.pin,
-                    newPassword: pass1
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    targetLoginUser.pin = pass1;
-                    targetLoginUser.resetRequired = false;
-                    
-                    currentUser = targetLoginUser.name;
-                    isAdmin = (String(targetLoginUser.role).toUpperCase() === "ADMIN");
-                    
-                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
-                    showToast("Success", "Password updated successfully!");
-                    fetchData(); 
-                } else {
-                    showToast("Error", data.message, true);
-                    resetLogin();
+                if (!pass1 || pass1.length < 4) {
+                    alert("Password must be at least 4 characters long.");
+                    return;
                 }
-            })
-            .catch(err => {
-                showToast("Network Error", "Could not update password.", true);
-                resetLogin();
-            });
+                if (pass1 !== pass2) {
+                    alert("Passwords do not match. Please re-type.");
+                    return;
+                }
+
+                document.getElementById('reset-password-container').classList.add('hidden');
+                document.getElementById('loading-spinner').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Updating Credentials...";
+
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        type: "update_password",
+                        username: targetLoginUser.name,
+                        oldPassword: targetLoginUser.pin,
+                        newPassword: pass1
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        targetLoginUser.pin = pass1;
+                        targetLoginUser.resetRequired = false;
+                        
+                        currentUser = targetLoginUser.name;
+                        isAdmin = (String(targetLoginUser.role).toUpperCase() === "ADMIN");
+                        
+                        document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                        showToast("Success", "Password updated successfully!");
+                        fetchData(); 
+                    } else {
+                        alert("Error updating password: " + data.message);
+                        resetLogin();
+                    }
+                })
+                .catch(err => {
+                    alert("Network Error: Could not connect to Google Sheets.");
+                    resetLogin();
+                });
+            } catch(e) {
+                alert("System error processing password reset.");
+            }
         }
         
         function resetLogin() { 
@@ -1107,8 +1132,6 @@
             document.getElementById('confirm-password').value = "";
             targetLoginUser = null;
         }
-
-        fetchAppUsers();
 
         // ==========================================
         // SYSTEM STATUS FETCHER
