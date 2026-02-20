@@ -20,6 +20,7 @@
             --brand-gold: #e3a000; 
             --text-main: #111827; 
         }
+        
         body { 
             font-family: "Amazon Ember", Arial, sans-serif; 
             background-color: white; 
@@ -28,6 +29,7 @@
             user-select: none; 
             -webkit-user-select: none; 
         }
+        
         .nav-header { 
             background: var(--brand-green); 
             color: white; 
@@ -35,68 +37,152 @@
         }
         
         #view-login { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: var(--brand-green); z-index: 9999; 
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; padding: 20px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: var(--brand-green); 
+            z-index: 9999; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
         }
+        
         .login-card { 
-            background: white; padding: 30px; border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
-            max-width: 360px; text-align: center; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
         }
+        
         .user-btn { 
-            width: 100%; padding: 12px; margin-bottom: 10px; 
-            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
-            color: #374151; background: white; display: flex; 
-            align-items: center; gap: 10px; transition: all 0.2s; 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            color: #374151; 
+            background: white; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            transition: all 0.2s; 
         }
+        
         .user-btn:hover { 
-            border-color: var(--brand-gold); background-color: #fffbeb; 
+            border-color: var(--brand-gold); 
+            background-color: #fffbeb; 
         }
+        
         .pin-input { 
-            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
-            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
-            margin-bottom: 20px; outline: none; display: none; 
+            width: 100%; 
+            padding: 14px; 
+            font-size: 24px; 
+            text-align: center; 
+            letter-spacing: 4px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            outline: none; 
+            display: none; 
         }
         
         #toast-notification { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            background: #16a34a; color: white; padding: 16px 24px; 
-            border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
-            z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
-            display: flex; align-items: center; gap: 12px; width: 90%; 
-            max-width: 400px; pointer-events: none; 
+            position: fixed; 
+            top: -100px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: #16a34a; 
+            color: white; 
+            padding: 16px 24px; 
+            border-radius: 50px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
+            z-index: 9999; 
+            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            width: 90%; 
+            max-width: 400px; 
+            pointer-events: none; 
         }
-        #toast-notification.show { top: 20px; }
+        
+        #toast-notification.show { 
+            top: 20px; 
+        }
         
         #side-drawer { 
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%; 
-            background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
+            position: fixed; 
+            top: 0; 
+            left: -280px; 
+            width: 280px; 
+            height: 100%; 
+            background: white; 
+            z-index: 2000; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
             transition: left 0.3s ease-in-out; 
         }
-        #side-drawer.open { left: 0; }
+        
+        #side-drawer.open { 
+            left: 0; 
+        }
+        
         #drawer-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); z-index: 1999; display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1999; 
+            display: none; 
         }
-        #drawer-overlay.open { display: block; }
+        
+        #drawer-overlay.open { 
+            display: block; 
+        }
+        
         .drawer-header { 
-            background: var(--brand-green); color: white; 
-            padding: 20px; font-weight: bold; font-size: 18px; 
+            background: var(--brand-green); 
+            color: white; 
+            padding: 20px; 
+            font-weight: bold; 
+            font-size: 18px; 
         }
+        
         .drawer-item { 
-            padding: 16px 20px; border-bottom: 1px solid #f3f4f6; 
-            cursor: pointer; display: flex; align-items: center; gap: 12px; 
-            color: #374151; font-weight: 500; 
+            padding: 16px 20px; 
+            border-bottom: 1px solid #f3f4f6; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            color: #374151; 
+            font-weight: 500; 
         }
 
         .drill-item { 
-            border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; 
-            justify-content: space-between; align-items: center; cursor: pointer; 
-            background: white; transition: background 0.1s; user-select: none; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            background: white; 
+            transition: background 0.1s; 
+            user-select: none; 
         }
-        .drill-item:active { background: #f3f4f6; }
+        
+        .drill-item:active { 
+            background: #f3f4f6; 
+        }
         
         /* CARD STYLES */
         .inv-card { 
@@ -123,10 +209,18 @@
 
         /* BATCH MODE STYLES */
         .batch-mode .select-check { 
-            display: block !important; width: 24px; height: 24px; 
-            margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; 
+            display: block !important; 
+            width: 24px; 
+            height: 24px; 
+            margin-right: 12px; 
+            accent-color: var(--brand-green); 
+            flex-shrink: 0; 
         }
-        .select-check { display: none; } 
+        
+        .select-check { 
+            display: none; 
+        } 
+        
         .inv-card.selecting { 
             background-color: #f0fdf4 !important; 
             border-color: #15803d !important; 
@@ -134,199 +228,531 @@
         }
         
         .back-btn { 
-            display: flex; align-items: center; gap: 5px; color: #6b7280; 
-            font-size: 14px; font-weight: 600; margin-bottom: 20px; 
-            cursor: pointer; padding: 10px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: #6b7280; 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            cursor: pointer; 
+            padding: 10px 0; 
         }
         
         .task-tabs { 
-            display: flex; border-bottom: 1px solid #e5e7eb; 
-            background: #f9fafb; margin-bottom: 10px; 
+            display: flex; 
+            border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; 
+            margin-bottom: 10px; 
         }
+        
         .task-tab { 
-            flex: 1; text-align: center; padding: 12px; font-size: 11px; 
-            font-weight: 700; color: #6b7280; cursor: pointer; 
-            border-bottom: 3px solid transparent; text-transform: uppercase; 
+            flex: 1; 
+            text-align: center; 
+            padding: 12px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            text-transform: uppercase; 
         }
+        
         .task-tab.active { 
-            color: var(--brand-green); border-bottom-color: var(--brand-green); 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
             background: white; 
         }
+        
         .task-tab.alert { 
-            color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; 
+            color: #ef4444; 
+            border-bottom-color: #ef4444; 
+            background: #fef2f2; 
         }
         
         .flyer-sub-tabs { 
-            display: flex; padding: 8px; gap: 8px; background: #fff; 
-            overflow-x: auto; border-bottom: 1px solid #f3f4f6; 
+            display: flex; 
+            padding: 8px; 
+            gap: 8px; 
+            background: #fff; 
+            overflow-x: auto; 
+            border-bottom: 1px solid #f3f4f6; 
         }
+        
         .flyer-pill { 
-            white-space: nowrap; padding: 6px 12px; border-radius: 20px; 
-            font-size: 11px; font-weight: 700; color: #4b5563; 
-            background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; 
-            flex: 1; text-align: center; 
+            white-space: nowrap; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #4b5563; 
+            background: #f3f4f6; 
+            border: 1px solid #e5e7eb; 
+            cursor: pointer; 
+            flex: 1; 
+            text-align: center; 
         }
+        
         .flyer-pill.active { 
-            background: #007a4d; color: white; border-color: #007a4d; 
+            background: #007a4d; 
+            color: white; 
+            border-color: #007a4d; 
         }
 
         #action-bar { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: white; border-top: 1px solid #e5e7eb; padding: 12px; 
-            box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; 
-            transition: transform 0.3s; transform: translateY(100%); 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: white; 
+            border-top: 1px solid #e5e7eb; 
+            padding: 12px; 
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.05); 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr; 
+            gap: 8px; 
+            z-index: 4000; 
+            transition: transform 0.3s; 
+            transform: translateY(100%); 
             padding-bottom: max(12px, env(safe-area-inset-bottom)); 
         }
-        #action-bar.visible { transform: translateY(0); }
+        
+        #action-bar.visible { 
+            transform: translateY(0); 
+        }
+        
         .action-btn { 
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; 
-            font-size: 10px; font-weight: 700; color: white; cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 2px; 
+            padding: 8px; 
+            border-radius: 8px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            color: white; 
+            cursor: pointer; 
             text-align: center; 
         }
         
         .home-btn { 
-            background: white; padding: 24px; border-radius: 12px; 
-            border: 1px solid #e5e7eb; display: flex; flex-direction: column; 
-            align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            cursor: pointer; transition: all 0.2s; 
+            background: white; 
+            padding: 24px; 
+            border-radius: 12px; 
+            border: 1px solid #e5e7eb; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            cursor: pointer; 
+            transition: all 0.2s; 
         }
-        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 4px; }
+        
+        .home-btn:active { 
+            background-color: #f9fafb; 
+            transform: scale(0.98); 
+        }
+        
+        .home-icon { 
+            font-size: 32px; 
+            margin-bottom: 4px; 
+        }
 
         .detail-tabs { 
-            display: flex; border-bottom: 1px solid #e5e7eb; 
-            background: #f9fafb; margin-bottom: 10px; 
+            display: flex; 
+            border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; 
+            margin-bottom: 10px; 
         }
+        
         .detail-tab { 
-            flex: 1; text-align: center; padding: 14px; font-size: 13px; 
-            font-weight: 700; color: #6b7280; cursor: pointer; 
+            flex: 1; 
+            text-align: center; 
+            padding: 14px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
             border-bottom: 3px solid transparent; 
         }
+        
         .detail-tab.active { 
-            color: var(--brand-green); border-bottom-color: var(--brand-green); 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
             background: white; 
         }
         
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
-        .full-width { grid-column: span 2; }
+        .overview-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 16px; 
+        }
+        
+        .overview-card { 
+            background: #f8fafc; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #e2e8f0; 
+        }
+        
+        .overview-label { 
+            font-size: 9px; 
+            font-weight: 800; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            margin-bottom: 2px; 
+        }
+        
+        .overview-val { 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #0f172a; 
+            word-break: break-all; 
+        }
+        
+        .full-width { 
+            grid-column: span 2; 
+        }
         
         .expand-trigger { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; 
-            font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px; 
+            background: #f9fafb; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px; 
+            border: 1px solid #e5e7eb; 
         }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
-        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
         
-        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .camera-btn { 
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; width: 100%; padding: 20px; 
-            background-color: #f0fdf4; border: 2px dashed #16a34a; 
-            border-radius: 8px; color: #15803d; cursor: pointer; 
+        .expand-content { 
+            display: none; 
+            margin-top: 12px; 
+            padding: 12px; 
+            background: #f9fafb; 
+            border-radius: 6px; 
         }
+        
+        .expanded .expand-content { 
+            display: block; 
+        }
+        
+        .dynamic-stack { 
+            margin-bottom: 12px; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding-bottom: 8px; 
+        }
+        
+        .input-field { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            margin-bottom: 12px; 
+        }
+        
+        .readonly-field { 
+            background: #f3f4f6; 
+            color: #374151; 
+            border: 1px solid #e5e7eb; 
+            font-weight: 600; 
+        }
+        
+        .cam-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 16px; 
+        }
+        
+        .camera-btn { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            padding: 20px; 
+            background-color: #f0fdf4; 
+            border: 2px dashed #16a34a; 
+            border-radius: 8px; 
+            color: #15803d; 
+            cursor: pointer; 
+        }
+        
         .lib-btn { 
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; width: 100%; padding: 20px; 
-            background-color: #eff6ff; border: 2px dashed #3b82f6; 
-            border-radius: 8px; color: #2563eb; cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            padding: 20px; 
+            background-color: #eff6ff; 
+            border: 2px dashed #3b82f6; 
+            border-radius: 8px; 
+            color: #2563eb; 
+            cursor: pointer; 
         }
 
         #assign-modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); z-index: 5000; display: none; 
-            align-items: center; justify-content: center; padding: 20px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 5000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
             overflow-y: auto; 
         }
+        
         .modal-card { 
-            background: white; width: 100%; max-width: 400px; 
-            border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; 
+            background: white; 
+            width: 100%; 
+            max-width: 400px; 
+            border-radius: 12px; 
+            padding: 24px; 
+            max-height: 90vh; 
+            overflow-y: auto; 
         }
         
         #batch-indicator { 
-            display: none; background: #dc2626; color: white; padding: 4px 12px; 
-            border-radius: 20px; font-size: 10px; font-weight: bold; 
-            animation: pulse 2s infinite; cursor: pointer; 
+            display: none; 
+            background: #dc2626; 
+            color: white; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: bold; 
+            animation: pulse 2s infinite; 
+            cursor: pointer; 
         }
         
-        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        #install-btn { 
+            display: none; 
+            color: #007a4d; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
         
         .filter-row-container { 
-            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; 
-            align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; 
+            display: flex; 
+            gap: 8px; 
+            overflow-x: auto; 
+            padding: 4px 0 12px 0; 
+            align-items: center; 
+            white-space: nowrap; 
+            -webkit-overflow-scrolling: touch; 
         }
-        .filter-row-container::-webkit-scrollbar { display: none; }
-        .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .ms-container { position: relative; }
+        .filter-row-container::-webkit-scrollbar { 
+            display: none; 
+        }
+        
+        .filter-row-container { 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+        }
+        
+        .ms-container { 
+            position: relative; 
+        }
+        
         .ms-btn { 
-            background: white; border: 1px solid #d1d5db; padding: 8px 12px; 
-            border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; 
-            color: #4b5563; display: flex; justify-content: space-between; 
-            align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            background: white; 
+            border: 1px solid #d1d5db; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #4b5563; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
             white-space: nowrap; 
         }
+        
         .ms-options { 
-            display: none; position: absolute; top: 100%; left: 0; min-width: 200px; 
-            background: white; border: 1px solid #d1d5db; border-radius: 8px; 
-            max-height: 300px; overflow-y: auto; z-index: 100; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            min-width: 200px; 
+            background: white; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            z-index: 100; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+            margin-top: 4px; 
         }
-        .ms-options.show { display: block; }
+        
+        .ms-options.show { 
+            display: block; 
+        }
+        
         .ms-option { 
-            padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; 
-            align-items: center; gap: 8px; font-size: 12px; cursor: pointer; 
-            color: #1f2937; white-space: normal; 
+            padding: 10px; 
+            border-bottom: 1px solid #f3f4f6; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 12px; 
+            cursor: pointer; 
+            color: #1f2937; 
+            white-space: normal; 
         }
-        .ms-option:hover { background: #f9fafb; }
-        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
-        .ms-option.selected { background-color: #f0fdf4; }
+        
+        .ms-option:hover { 
+            background: #f9fafb; 
+        }
+        
+        .ms-option input { 
+            width: 16px; 
+            height: 16px; 
+            accent-color: var(--brand-green); 
+            flex-shrink: 0; 
+        }
+        
+        .ms-option.selected { 
+            background-color: #f0fdf4; 
+        }
 
         #view-photo-editor { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #111827; z-index: 6000; display: none; flex-direction: column; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #111827; 
+            z-index: 6000; 
+            display: none; 
+            flex-direction: column; 
         }
-        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
-        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
-        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
-        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        
+        .editor-canvas-container { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            padding: 20px; 
+        }
+        
+        .editor-canvas-container img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+        }
+        
+        .editor-controls { 
+            background: #1f2937; 
+            padding: 20px; 
+            border-top: 1px solid #374151; 
+            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+        }
+        
+        .filter-scroll { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        
+        .filter-btn { 
+            flex: 0 0 auto; 
+            background: #374151; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: 1px solid #4b5563; 
+        }
+        
+        .filter-btn.active { 
+            background: #007a4d; 
+            border-color: #007a4d; 
+        }
         
         .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
         .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
         .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
 
         #ptr-spinner { 
-            position: absolute; top: -40px; left: 50%; transform: translateX(-50%); 
-            z-index: 10; transition: top 0.2s; display: flex; align-items: center; 
-            justify-content: center; width: 30px; height: 30px; background: white; 
-            border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            position: absolute; 
+            top: -40px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 10; 
+            transition: top 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 30px; 
+            height: 30px; 
+            background: white; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
         }
-        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
-        #ptr-spinner.loading i { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        #ptr-spinner i { 
+            color: var(--brand-green); 
+            font-size: 18px; 
+        }
+        
+        #ptr-spinner.loading i { 
+            animation: spin 1s linear infinite; 
+        }
+        
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        @keyframes pulse { 
+            0% { opacity: 1; } 
+            50% { opacity: 0.7; } 
+            100% { opacity: 1; } 
+        }
         
         .failed-sync-banner { 
-            background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; 
-            padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; 
-            display: flex; justify-content: space-between; align-items: center; 
+            background: #fee2e2; 
+            border: 1px solid #ef4444; 
+            color: #b91c1c; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 16px; 
+            font-weight: bold; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
         }
         
         .data-badge { 
-            display: inline-flex; align-items: center; padding: 2px 6px; 
-            border-radius: 4px; font-size: 10px; font-weight: 700; 
-            margin-right: 4px; margin-top: 4px; 
+            display: inline-flex; 
+            align-items: center; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-right: 4px; 
+            margin-top: 4px; 
         }
+        
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
@@ -334,17 +760,39 @@
 
         /* Request Form Styles & List Item */
         #request-form-modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; z-index: 6000; display: none; flex-direction: column; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: white; 
+            z-index: 6000; 
+            display: none; 
+            flex-direction: column; 
         }
         
         .req-list-item {
-            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
-            padding: 10px; margin-bottom: 8px; display: flex;
-            justify-content: space-between; align-items: center;
+            background: #f0fdf4; 
+            border: 1px solid #bbf7d0; 
+            border-radius: 8px;
+            padding: 10px; 
+            margin-bottom: 8px; 
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
         }
-        .req-list-details { font-size: 12px; color: #166534; line-height: 1.4; }
-        .req-remove-btn { color: #ef4444; padding: 8px; cursor: pointer; }
+        
+        .req-list-details { 
+            font-size: 12px; 
+            color: #166534; 
+            line-height: 1.4; 
+        }
+        
+        .req-remove-btn { 
+            color: #ef4444; 
+            padding: 8px; 
+            cursor: pointer; 
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -1039,7 +1487,6 @@
             return entry ? entry.email : null;
         }
 
-        // --- NEW MISSING FUNCTION ADDED ---
         function sendEmailNotification(toAddress, subject, htmlBody) {
             const payload = {
                 type: "send_email",
@@ -1453,7 +1900,6 @@
             closeRequestForm();
             switchView('review');
             setTimeout(() => { 
-                // In new structure, review root is level 0.
                 resetReviewFolders();
             }, 300);
         }
@@ -1859,7 +2305,6 @@
                 recipients.push(repEmail);
             }
             
-            // Fixed: Safely fallback to user email search if USER_EMAILS is missing
             const senderEmail = getRepEmail(currentUser);
             if (senderEmail) {
                 recipients.push(senderEmail);
@@ -3605,7 +4050,9 @@
                 ])].filter(c => c && c !== "Unknown Customer").sort();
 
                 let html = "";
-                if (custs.length === 0) html = "<div class='p-4 text-center text-gray-500'>No customers found.</div>";
+                if (custs.length === 0) {
+                    html = "<div class='p-4 text-center text-gray-500'>No customers found.</div>";
+                }
                 
                 custs.forEach(c => {
                     const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests' && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === c).length;
@@ -3659,17 +4106,35 @@
                         const qty = parseFloat(i.PTRAVAILABLE) || 0;
                         return (pri > 0 && pri < 9999) && (qty <= 0);
                     });
-                    if (term) filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                    if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; return; }
+                    
+                    if (term) {
+                        filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    }
+                    
+                    if (filteredItems.length === 0) { 
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; 
+                        return; 
+                    }
+                    
                     let html = "";
-                    for (let i = 0; i < filteredItems.length; i++) html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
+                    for (let i = 0; i < filteredItems.length; i++) {
+                        html += createRowHtml(filteredItems[i], fullInventory.indexOf(filteredItems[i]), 'review');
+                    }
                     container.innerHTML = html; 
                 } 
                 else if (currentVirtualFolder === 'soc') {
                     document.getElementById('review-folder-title').innerText = "1. SOC Data";
                     let matched = socData.filter(i => i.CUSTOMERNAME === currentReviewCustomer);
-                    if (term) matched = matched.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
-                    if (matched.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No SOC Data.</div>`; return; }
+                    
+                    if (term) {
+                        matched = matched.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    }
+                    
+                    if (matched.length === 0) { 
+                        container.innerHTML = `<div class="p-8 text-center text-gray-400">No SOC Data.</div>`; 
+                        return; 
+                    }
+                    
                     let html = "";
                     for (let m = 0; m < matched.length; m++) {
                         let i = matched[m];
@@ -3687,7 +4152,10 @@
                     document.getElementById('review-folder-title').innerText = currentVirtualFolder === 'pending' ? "2. Pending Requests" : "3. Completed Requests";
                     
                     let finalItems = fullInventory.filter(i => i.TASK_TAB === taskTarget && i.SALESREP === currentReviewRep && i.CUSTOMERNAME === currentReviewCustomer);
-                    if (term) finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+                    
+                    if (term) {
+                        finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+                    }
                     
                     if (finalItems.length === 0) {
                         container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
@@ -3698,13 +4166,13 @@
                             let approveBtn = "";
                             if (taskTarget === 'requests') { 
                                  approveBtn = `
-                                 <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs">
+                                 <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs flex items-center justify-center gap-2">
                                      <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
                                  </button>`;
                             }
                             let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
                             html += `
-                            <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">
+                            <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200 shadow-sm">
                                 ${cardHtml}
                                 <div class="px-2 pb-2">${approveBtn}</div>
                             </div>`;
@@ -3725,7 +4193,6 @@
             currentReviewRep = repName;
             document.getElementById('review-content').innerHTML = '<div class="p-8 text-center flex flex-col items-center"><i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d]"></i><div class="mt-2 text-gray-500 font-bold">Loading Data...</div></div>';
             
-            // Fetch SOC data for this rep if not already loaded so it shows up in Level 1 & 2
             if (selectedSocRep !== repName || socData.length === 0) {
                 const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
                 const queryParam = dirEntry ? dirEntry.name : repName;
@@ -3829,7 +4296,9 @@
 
         function approveSalesItem(id) {
             const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
-            if (itemIdx === -1) return;
+            if (itemIdx === -1) {
+                return;
+            }
             
             const item = fullInventory[itemIdx];
             item.SO_STATUS = "APPROVED";
@@ -3855,7 +4324,9 @@
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 body: JSON.stringify(payload) 
-            }).catch(err => logFailedSave(payload));
+            }).catch(err => {
+                logFailedSave(payload);
+            });
         }
 
         function launchApp() { 
@@ -3914,11 +4385,18 @@
             
             document.getElementById('view-'+v).classList.remove('hidden'); 
             
-            if (v === 'drive') renderDriveNames(); 
-            if (v === 'inventory') renderInventoryView(); 
-            if (v === 'production') renderProductionView(); 
-            if (v === 'directory') renderDirectoryView(); 
-            
+            if (v === 'drive') {
+                renderDriveNames(); 
+            }
+            if (v === 'inventory') {
+                renderInventoryView(); 
+            }
+            if (v === 'production') {
+                renderProductionView(); 
+            }
+            if (v === 'directory') {
+                renderDirectoryView(); 
+            }
             if (v === 'tasks') { 
                 if (isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
                     renderTeamSelector(); 
@@ -3927,10 +4405,18 @@
                 } 
             } 
             
-            if (v === 'viewer') renderViewerNames(); 
-            if (v === 'review') renderManagerFolders(); 
-            if (v === 'soc') renderSocView(); 
-            if (v === 'salesoffice') renderSalesOffice(); 
+            if (v === 'viewer') {
+                renderViewerNames(); 
+            }
+            if (v === 'review') {
+                renderManagerFolders(); 
+            }
+            if (v === 'soc') {
+                renderSocView(); 
+            }
+            if (v === 'salesoffice') {
+                renderSalesOffice(); 
+            }
         }
         
         function switchDetailTab(tab) { 
@@ -3976,10 +4462,18 @@
             document.getElementById('view-detail').classList.add('hidden'); 
             document.getElementById('view-' + lastView).classList.remove('hidden'); 
             
-            if (lastView === 'tasks') renderTasks(); 
-            if (lastView === 'drive') renderDriveNames(); 
-            if (lastView === 'inventory') renderInventoryView(); 
-            if (lastView === 'production') renderProductionView(); 
+            if (lastView === 'tasks') {
+                renderTasks(); 
+            }
+            if (lastView === 'drive') {
+                renderDriveNames(); 
+            }
+            if (lastView === 'inventory') {
+                renderInventoryView(); 
+            }
+            if (lastView === 'production') {
+                renderProductionView(); 
+            }
         }
 
         function openDetail(idx, originView) {
@@ -4109,11 +4603,21 @@
         }
 
         function handleSmartFill(el) {
-            if (el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
-            if (el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
-            if (el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
-            if (el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
-            if (el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
+            if (el.id === 'in-match') {
+                activeItem.SAVED_MATCH = el.value;
+            }
+            if (el.id === 'in-spec') {
+                activeItem.SAVED_SPEC = el.value;
+            }
+            if (el.id === 'in-pick') {
+                activeItem.SAVED_PICK = el.value;
+            }
+            if (el.id === 'in-note') {
+                activeItem.SAVED_NOTE = el.value;
+            }
+            if (el.id === 'in-sales-desc') {
+                activeItem.SAVED_SALES_DESC = el.value;
+            }
             
             const specVal = document.getElementById('in-spec').value;
             const salesEl = document.getElementById('in-sales-desc');
@@ -4204,11 +4708,26 @@
             const cont = document.getElementById('input-container');
             
             cont.innerHTML = `
-            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div>
-            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div>
-            <div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div>
-            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div>
-            <div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>`;
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div>
+                <div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div>
+            </div>`;
             
             if (canEditThisView) { 
                 document.getElementById('btn-edit-container').classList.remove('hidden'); 
@@ -4218,7 +4737,9 @@
         }
 
         function renderAllFields() {
-            if (!activeItem) return;
+            if (!activeItem) {
+                return;
+            }
             
             const hiddenKeys = [
                 'UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 
@@ -4643,15 +5164,18 @@
             
             const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
 
-            // --- FIXED EMAIL RECIPIENT LOGIC ---
             let recipients = [...MANAGERS_EMAILS];
             selectedUsers.forEach(uName => {
                 const email = getRepEmail(uName);
-                if (email) recipients.push(email);
+                if (email) {
+                    recipients.push(email);
+                }
             });
             
             const senderEmail = getRepEmail(currentUser);
-            if (senderEmail) recipients.push(senderEmail);
+            if (senderEmail) {
+                recipients.push(senderEmail);
+            }
             
             recipients = [...new Set(recipients)];
 
