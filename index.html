@@ -4,795 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GNC-PRO 00</title>
-    
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="GNC LOGO.png">
     <link rel="apple-touch-icon" href="GNC LOGO.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <style>
-        :root { 
-            --brand-green: #007a4d; 
-            --brand-gold: #e3a000; 
-            --text-main: #111827; 
-        }
-        
-        body { 
-            font-family: "Amazon Ember", Arial, sans-serif; 
-            background-color: white; 
-            color: var(--text-main); 
-            overscroll-behavior-y: contain; 
-            user-select: none; 
-            -webkit-user-select: none; 
-        }
-        
-        .nav-header { 
-            background: var(--brand-green); 
-            color: white; 
-            padding-top: max(10px, env(safe-area-inset-top)); 
-        }
-        
-        #view-login { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: var(--brand-green); 
-            z-index: 9999; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px; 
-        }
-        
-        .login-card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            width: 100%; 
-            max-width: 360px; 
-            text-align: center; 
-        }
-        
-        .user-btn { 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            border: 2px solid #e5e7eb; 
-            border-radius: 8px; 
-            font-weight: 700; 
-            color: #374151; 
-            background: white; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            transition: all 0.2s; 
-        }
-        
-        .user-btn:hover { 
-            border-color: var(--brand-gold); 
-            background-color: #fffbeb; 
-        }
-        
-        .pin-input { 
-            width: 100%; 
-            padding: 14px; 
-            font-size: 24px; 
-            text-align: center; 
-            letter-spacing: 4px; 
-            border: 2px solid #e5e7eb; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-            outline: none; 
-            display: none; 
-        }
-        
-        #toast-notification { 
-            position: fixed; 
-            top: -100px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: #16a34a; 
-            color: white; 
-            padding: 16px 24px; 
-            border-radius: 50px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
-            z-index: 9999; 
-            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            width: 90%; 
-            max-width: 400px; 
-            pointer-events: none; 
-        }
-        
-        #toast-notification.show { 
-            top: 20px; 
-        }
-        
-        #side-drawer { 
-            position: fixed; 
-            top: 0; 
-            left: -280px; 
-            width: 280px; 
-            height: 100%; 
-            background: white; 
-            z-index: 2000; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
-            transition: left 0.3s ease-in-out; 
-        }
-        
-        #side-drawer.open { 
-            left: 0; 
-        }
-        
-        #drawer-overlay { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 1999; 
-            display: none; 
-        }
-        
-        #drawer-overlay.open { 
-            display: block; 
-        }
-        
-        .drawer-header { 
-            background: var(--brand-green); 
-            color: white; 
-            padding: 20px; 
-            font-weight: bold; 
-            font-size: 18px; 
-        }
-        
-        .drawer-item { 
-            padding: 16px 20px; 
-            border-bottom: 1px solid #f3f4f6; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            color: #374151; 
-            font-weight: 500; 
-        }
-
-        .drill-item { 
-            border-bottom: 1px solid #e5e7eb; 
-            padding: 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            cursor: pointer; 
-            background: white; 
-            transition: background 0.1s; 
-            user-select: none; 
-        }
-        
-        .drill-item:active { 
-            background: #f3f4f6; 
-        }
-        
-        /* CARD STYLES */
-        .inv-card { 
-            border: 1px solid #e5e7eb; 
-            border-left-width: 6px; 
-            border-radius: 8px; 
-            padding: 12px; 
-            margin-bottom: 8px; 
-            background: white; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
-            transition: transform 0.1s; 
-            user-select: none; 
-        }
-        
-        /* --- DYNAMIC COLOR CLASSES --- */
-        .status-green { border-left-color: #22c55e; } 
-        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } 
-        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } 
-        .status-blue { border-left-color: #3b82f6; background-color: #eff6ff; } 
-        .status-purple { border-left-color: #a855f7; background-color: #f3e8ff; } 
-        .status-orange { border-left-color: #f97316; background-color: #fff7ed; } 
-        .status-black { border-left-color: #1f2937; background-color: #f9fafb; } 
-        .status-default { border-left-color: #e5e7eb; } 
-
-        /* BATCH MODE STYLES */
-        .batch-mode .select-check { 
-            display: block !important; 
-            width: 24px; 
-            height: 24px; 
-            margin-right: 12px; 
-            accent-color: var(--brand-green); 
-            flex-shrink: 0; 
-        }
-        
-        .select-check { 
-            display: none; 
-        } 
-        
-        .inv-card.selecting { 
-            background-color: #f0fdf4 !important; 
-            border-color: #15803d !important; 
-            transform: scale(0.98); 
-        }
-        
-        .back-btn { 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-            color: #6b7280; 
-            font-size: 14px; 
-            font-weight: 600; 
-            margin-bottom: 20px; 
-            cursor: pointer; 
-            padding: 10px 0; 
-        }
-        
-        .task-tabs { 
-            display: flex; 
-            border-bottom: 1px solid #e5e7eb; 
-            background: #f9fafb; 
-            margin-bottom: 10px; 
-        }
-        
-        .task-tab { 
-            flex: 1; 
-            text-align: center; 
-            padding: 12px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            color: #6b7280; 
-            cursor: pointer; 
-            border-bottom: 3px solid transparent; 
-            text-transform: uppercase; 
-        }
-        
-        .task-tab.active { 
-            color: var(--brand-green); 
-            border-bottom-color: var(--brand-green); 
-            background: white; 
-        }
-        
-        .task-tab.alert { 
-            color: #ef4444; 
-            border-bottom-color: #ef4444; 
-            background: #fef2f2; 
-        }
-        
-        .flyer-sub-tabs { 
-            display: flex; 
-            padding: 8px; 
-            gap: 8px; 
-            background: #fff; 
-            overflow-x: auto; 
-            border-bottom: 1px solid #f3f4f6; 
-        }
-        
-        .flyer-pill { 
-            white-space: nowrap; 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            color: #4b5563; 
-            background: #f3f4f6; 
-            border: 1px solid #e5e7eb; 
-            cursor: pointer; 
-            flex: 1; 
-            text-align: center; 
-        }
-        
-        .flyer-pill.active { 
-            background: #007a4d; 
-            color: white; 
-            border-color: #007a4d; 
-        }
-
-        #action-bar { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: white; 
-            border-top: 1px solid #e5e7eb; 
-            padding: 12px; 
-            box-shadow: 0 -4px 6px rgba(0,0,0,0.05); 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1fr; 
-            gap: 8px; 
-            z-index: 4000; 
-            transition: transform 0.3s; 
-            transform: translateY(100%); 
-            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
-        }
-        
-        #action-bar.visible { 
-            transform: translateY(0); 
-        }
-        
-        .action-btn { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 2px; 
-            padding: 8px; 
-            border-radius: 8px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            color: white; 
-            cursor: pointer; 
-            text-align: center; 
-        }
-        
-        .home-btn { 
-            background: white; 
-            padding: 24px; 
-            border-radius: 12px; 
-            border: 1px solid #e5e7eb; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 8px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            cursor: pointer; 
-            transition: all 0.2s; 
-        }
-        
-        .home-btn:active { 
-            background-color: #f9fafb; 
-            transform: scale(0.98); 
-        }
-        
-        .home-icon { 
-            font-size: 32px; 
-            margin-bottom: 4px; 
-        }
-
-        .detail-tabs { 
-            display: flex; 
-            border-bottom: 1px solid #e5e7eb; 
-            background: #f9fafb; 
-            margin-bottom: 10px; 
-        }
-        
-        .detail-tab { 
-            flex: 1; 
-            text-align: center; 
-            padding: 14px; 
-            font-size: 13px; 
-            font-weight: 700; 
-            color: #6b7280; 
-            cursor: pointer; 
-            border-bottom: 3px solid transparent; 
-        }
-        
-        .detail-tab.active { 
-            color: var(--brand-green); 
-            border-bottom-color: var(--brand-green); 
-            background: white; 
-        }
-        
-        .overview-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 8px; 
-            margin-bottom: 16px; 
-        }
-        
-        .overview-card { 
-            background: #f8fafc; 
-            padding: 10px; 
-            border-radius: 6px; 
-            border: 1px solid #e2e8f0; 
-        }
-        
-        .overview-label { 
-            font-size: 9px; 
-            font-weight: 800; 
-            color: #64748b; 
-            text-transform: uppercase; 
-            margin-bottom: 2px; 
-        }
-        
-        .overview-val { 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: #0f172a; 
-            word-break: break-all; 
-        }
-        
-        .full-width { 
-            grid-column: span 2; 
-        }
-        
-        .expand-trigger { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 12px; 
-            background: #f9fafb; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            font-size: 14px; 
-            border: 1px solid #e5e7eb; 
-        }
-        
-        .expand-content { 
-            display: none; 
-            margin-top: 12px; 
-            padding: 12px; 
-            background: #f9fafb; 
-            border-radius: 6px; 
-        }
-        
-        .expanded .expand-content { 
-            display: block; 
-        }
-        
-        .dynamic-stack { 
-            margin-bottom: 12px; 
-            border-bottom: 1px solid #e5e7eb; 
-            padding-bottom: 8px; 
-        }
-        
-        .input-field { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #d1d5db; 
-            border-radius: 8px; 
-            font-size: 15px; 
-            margin-bottom: 12px; 
-        }
-        
-        .readonly-field { 
-            background: #f3f4f6; 
-            color: #374151; 
-            border: 1px solid #e5e7eb; 
-            font-weight: 600; 
-        }
-        
-        .cam-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 8px; 
-            margin-bottom: 16px; 
-        }
-        
-        .camera-btn { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
-            padding: 20px; 
-            background-color: #f0fdf4; 
-            border: 2px dashed #16a34a; 
-            border-radius: 8px; 
-            color: #15803d; 
-            cursor: pointer; 
-        }
-        
-        .lib-btn { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
-            padding: 20px; 
-            background-color: #eff6ff; 
-            border: 2px dashed #3b82f6; 
-            border-radius: 8px; 
-            color: #2563eb; 
-            cursor: pointer; 
-        }
-
-        #assign-modal { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.6); 
-            z-index: 5000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px; 
-            overflow-y: auto; 
-        }
-        
-        .modal-card { 
-            background: white; 
-            width: 100%; 
-            max-width: 400px; 
-            border-radius: 12px; 
-            padding: 24px; 
-            max-height: 90vh; 
-            overflow-y: auto; 
-        }
-        
-        #batch-indicator { 
-            display: none; 
-            background: #dc2626; 
-            color: white; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 10px; 
-            font-weight: bold; 
-            animation: pulse 2s infinite; 
-            cursor: pointer; 
-        }
-        
-        #install-btn { 
-            display: none; 
-            color: #007a4d; 
-            font-weight: bold; 
-            cursor: pointer; 
-        }
-        
-        .filter-row-container { 
-            display: flex; 
-            gap: 8px; 
-            overflow-x: auto; 
-            padding: 4px 0 12px 0; 
-            align-items: center; 
-            white-space: nowrap; 
-            -webkit-overflow-scrolling: touch; 
-        }
-        
-        .filter-row-container::-webkit-scrollbar { 
-            display: none; 
-        }
-        
-        .filter-row-container { 
-            -ms-overflow-style: none; 
-            scrollbar-width: none; 
-        }
-        
-        .ms-container { 
-            position: relative; 
-        }
-        
-        .ms-btn { 
-            background: white; 
-            border: 1px solid #d1d5db; 
-            padding: 8px 12px; 
-            border-radius: 6px; 
-            text-align: left; 
-            font-size: 12px; 
-            font-weight: 700; 
-            color: #4b5563; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
-            white-space: nowrap; 
-        }
-        
-        .ms-options { 
-            display: none; 
-            position: absolute; 
-            top: 100%; 
-            left: 0; 
-            min-width: 200px; 
-            background: white; 
-            border: 1px solid #d1d5db; 
-            border-radius: 8px; 
-            max-height: 300px; 
-            overflow-y: auto; 
-            z-index: 100; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
-            margin-top: 4px; 
-        }
-        
-        .ms-options.show { 
-            display: block; 
-        }
-        
-        .ms-option { 
-            padding: 10px; 
-            border-bottom: 1px solid #f3f4f6; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-size: 12px; 
-            cursor: pointer; 
-            color: #1f2937; 
-            white-space: normal; 
-        }
-        
-        .ms-option:hover { 
-            background: #f9fafb; 
-        }
-        
-        .ms-option input { 
-            width: 16px; 
-            height: 16px; 
-            accent-color: var(--brand-green); 
-            flex-shrink: 0; 
-        }
-        
-        .ms-option.selected { 
-            background-color: #f0fdf4; 
-        }
-
-        #view-photo-editor { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: #111827; 
-            z-index: 6000; 
-            display: none; 
-            flex-direction: column; 
-        }
-        
-        .editor-canvas-container { 
-            flex-grow: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden; 
-            padding: 20px; 
-        }
-        
-        .editor-canvas-container img { 
-            max-width: 100%; 
-            max-height: 100%; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
-        }
-        
-        .editor-controls { 
-            background: #1f2937; 
-            padding: 20px; 
-            border-top: 1px solid #374151; 
-            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
-        }
-        
-        .filter-scroll { 
-            display: flex; 
-            gap: 10px; 
-            overflow-x: auto; 
-            padding-bottom: 10px; 
-            margin-bottom: 15px; 
-        }
-        
-        .filter-btn { 
-            flex: 0 0 auto; 
-            background: #374151; 
-            color: white; 
-            padding: 8px 16px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            border: 1px solid #4b5563; 
-        }
-        
-        .filter-btn.active { 
-            background: #007a4d; 
-            border-color: #007a4d; 
-        }
-        
-        .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
-        .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
-        .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
-
-        #ptr-spinner { 
-            position: absolute; 
-            top: -40px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 10; 
-            transition: top 0.2s; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            width: 30px; 
-            height: 30px; 
-            background: white; 
-            border-radius: 50%; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-        }
-        
-        #ptr-spinner i { 
-            color: var(--brand-green); 
-            font-size: 18px; 
-        }
-        
-        #ptr-spinner.loading i { 
-            animation: spin 1s linear infinite; 
-        }
-        
-        @keyframes spin { 
-            100% { transform: rotate(360deg); } 
-        }
-        
-        @keyframes pulse { 
-            0% { opacity: 1; } 
-            50% { opacity: 0.7; } 
-            100% { opacity: 1; } 
-        }
-        
-        .failed-sync-banner { 
-            background: #fee2e2; 
-            border: 1px solid #ef4444; 
-            color: #b91c1c; 
-            padding: 12px; 
-            border-radius: 8px; 
-            margin-bottom: 16px; 
-            font-weight: bold; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .data-badge { 
-            display: inline-flex; 
-            align-items: center; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            margin-right: 4px; 
-            margin-top: 4px; 
-        }
-        
-        .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-        .text-production { color: #d97706; }
-
-        /* Request Form Styles & List Item */
-        #request-form-modal { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: white; 
-            z-index: 6000; 
-            display: none; 
-            flex-direction: column; 
-        }
-        
-        .req-list-item {
-            background: #f0fdf4; 
-            border: 1px solid #bbf7d0; 
-            border-radius: 8px;
-            padding: 10px; 
-            margin-bottom: 8px; 
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-        }
-        
-        .req-list-details { 
-            font-size: 12px; 
-            color: #166534; 
-            line-height: 1.4; 
-        }
-        
-        .req-remove-btn { 
-            color: #ef4444; 
-            padding: 8px; 
-            cursor: pointer; 
-        }
+        :root{--brand-green:#007a4d;--brand-gold:#e3a000;--text-main:#111827}
+        body{font-family:"Amazon Ember",Arial,sans-serif;background-color:white;color:var(--text-main);overscroll-behavior-y:contain;user-select:none;-webkit-user-select:none}
+        .nav-header{background:var(--brand-green);color:white;padding-top:max(10px,env(safe-area-inset-top))}
+        #view-login{position:fixed;top:0;left:0;width:100%;height:100%;background-color:var(--brand-green);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+        .login-card{background:white;padding:30px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);width:100%;max-width:360px;text-align:center}
+        .input-field{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin-bottom:12px}
+        #toast-notification{position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:16px 24px;border-radius:50px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);z-index:9999;transition:top 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);display:flex;align-items:center;gap:12px;width:90%;max-width:400px;pointer-events:none}
+        #toast-notification.show{top:20px}
+        #side-drawer{position:fixed;top:0;left:-280px;width:280px;height:100%;background:white;z-index:2000;box-shadow:2px 0 10px rgba(0,0,0,0.2);transition:left 0.3s ease-in-out}
+        #side-drawer.open{left:0}
+        #drawer-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1999;display:none}
+        #drawer-overlay.open{display:block}
+        .drawer-header{background:var(--brand-green);color:white;padding:20px;font-weight:bold;font-size:18px}
+        .drawer-item{padding:16px 20px;border-bottom:1px solid #f3f4f6;cursor:pointer;display:flex;align-items:center;gap:12px;color:#374151;font-weight:500}
+        .drill-item{border-bottom:1px solid #e5e7eb;padding:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:white;transition:background 0.1s;user-select:none}
+        .drill-item:active{background:#f3f4f6}
+        .inv-card{border:1px solid #e5e7eb;border-left-width:6px;border-radius:8px;padding:12px;margin-bottom:8px;background:white;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:transform 0.1s;user-select:none}
+        .status-green{border-left-color:#22c55e} .status-yellow{border-left-color:#eab308;background-color:#fffbeb} .status-red{border-left-color:#ef4444;background-color:#fef2f2} .status-blue{border-left-color:#3b82f6;background-color:#eff6ff} .status-purple{border-left-color:#a855f7;background-color:#f3e8ff} .status-orange{border-left-color:#f97316;background-color:#fff7ed} .status-black{border-left-color:#1f2937;background-color:#f9fafb} .status-default{border-left-color:#e5e7eb}
+        .batch-mode .select-check{display:block !important;width:24px;height:24px;margin-right:12px;accent-color:var(--brand-green);flex-shrink:0}
+        .select-check{display:none}
+        .inv-card.selecting{background-color:#f0fdf4 !important;border-color:#15803d !important;transform:scale(0.98)}
+        .back-btn{display:flex;align-items:center;gap:5px;color:#6b7280;font-size:14px;font-weight:600;margin-bottom:20px;cursor:pointer;padding:10px 0}
+        .task-tabs{display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb;margin-bottom:10px}
+        .task-tab{flex:1;text-align:center;padding:12px;font-size:11px;font-weight:700;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent;text-transform:uppercase}
+        .task-tab.active{color:var(--brand-green);border-bottom-color:var(--brand-green);background:white}
+        .flyer-sub-tabs{display:flex;padding:8px;gap:8px;background:#fff;overflow-x:auto;border-bottom:1px solid #f3f4f6}
+        .flyer-pill{white-space:nowrap;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;color:#4b5563;background:#f3f4f6;border:1px solid #e5e7eb;cursor:pointer;flex:1;text-align:center}
+        .flyer-pill.active{background:#007a4d;color:white;border-color:#007a4d}
+        #action-bar{position:fixed;bottom:0;left:0;width:100%;background:white;border-top:1px solid #e5e7eb;padding:12px;box-shadow:0 -4px 6px rgba(0,0,0,0.05);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;z-index:4000;transition:transform 0.3s;transform:translateY(100%);padding-bottom:max(12px,env(safe-area-inset-bottom))}
+        #action-bar.visible{transform:translateY(0)}
+        .action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;border-radius:8px;font-size:10px;font-weight:700;color:white;cursor:pointer;text-align:center}
+        .home-btn{background:white;padding:24px;border-radius:12px;border:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s}
+        .home-btn:active{background-color:#f9fafb;transform:scale(0.98)}
+        .home-icon{font-size:32px;margin-bottom:4px}
+        .detail-tabs{display:flex;border-bottom:1px solid #e5e7eb;background:#f9fafb;margin-bottom:10px}
+        .detail-tab{flex:1;text-align:center;padding:14px;font-size:13px;font-weight:700;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent}
+        .detail-tab.active{color:var(--brand-green);border-bottom-color:var(--brand-green);background:white}
+        .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+        .overview-card{background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0}
+        .overview-label{font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px}
+        .overview-val{font-size:13px;font-weight:600;color:#0f172a;word-break:break-all}
+        .full-width{grid-column:span 2}
+        .expand-trigger{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f9fafb;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;border:1px solid #e5e7eb}
+        .expand-content{display:none;margin-top:12px;padding:12px;background:#f9fafb;border-radius:6px}
+        .expanded .expand-content{display:block}
+        .dynamic-stack{margin-bottom:12px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
+        .readonly-field{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;font-weight:600}
+        .cam-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+        .camera-btn,.lib-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:20px;border-radius:8px;cursor:pointer}
+        .camera-btn{background-color:#f0fdf4;border:2px dashed #16a34a;color:#15803d}
+        .lib-btn{background-color:#eff6ff;border:2px dashed #3b82f6;color:#2563eb}
+        #assign-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+        .modal-card{background:white;width:100%;max-width:400px;border-radius:12px;padding:24px;max-height:90vh;overflow-y:auto}
+        #batch-indicator{display:none;background:#dc2626;color:white;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:bold;animation:pulse 2s infinite;cursor:pointer}
+        #install-btn{display:none;color:#007a4d;font-weight:bold;cursor:pointer}
+        .filter-row-container{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px 0;align-items:center;white-space:nowrap;-webkit-overflow-scrolling:touch;-ms-overflow-style:none;scrollbar-width:none}
+        .filter-row-container::-webkit-scrollbar{display:none}
+        .ms-container{position:relative}
+        .ms-btn{background:white;border:1px solid #d1d5db;padding:8px 12px;border-radius:6px;text-align:left;font-size:12px;font-weight:700;color:#4b5563;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.05);white-space:nowrap}
+        .ms-options{display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border:1px solid #d1d5db;border-radius:8px;max-height:300px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px}
+        .ms-options.show{display:block}
+        .ms-option{padding:10px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;color:#1f2937;white-space:normal}
+        .ms-option:hover{background:#f9fafb}
+        .ms-option input{width:16px;height:16px;accent-color:var(--brand-green);flex-shrink:0}
+        .ms-option.selected{background-color:#f0fdf4}
+        #view-photo-editor{position:fixed;top:0;left:0;width:100%;height:100%;background:#111827;z-index:6000;display:none;flex-direction:column}
+        .editor-canvas-container{flex-grow:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:20px}
+        .editor-canvas-container img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
+        .editor-controls{background:#1f2937;padding:20px;border-top:1px solid #374151;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+        .filter-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:15px}
+        .filter-btn{flex:0 0 auto;background:#374151;color:white;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #4b5563}
+        .filter-btn.active{background:#007a4d;border-color:#007a4d}
+        #ptr-spinner{position:absolute;top:-40px;left:50%;transform:translateX(-50%);z-index:10;transition:top 0.2s;display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,0.2)}
+        #ptr-spinner i{color:var(--brand-green);font-size:18px}
+        #ptr-spinner.loading i{animation:spin 1s linear infinite}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+        @keyframes pulse{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
+        .failed-sync-banner{background:#fee2e2;border:1px solid #ef4444;color:#b91c1c;padding:12px;border-radius:8px;margin-bottom:16px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+        #request-form-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:6000;display:none;flex-direction:column}
+        .req-list-item{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+        .req-list-details{font-size:12px;color:#166534;line-height:1.4}
+        .req-remove-btn{color:#ef4444;padding:8px;cursor:pointer}
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -814,7 +115,6 @@
                 <div class="filter-btn active" id="btn-pro" onclick="toggleEdit('pro')"><i class="ph-fill ph-magic-wand"></i> Auto Light</div>
                 <div class="filter-btn" id="btn-dirt" onclick="toggleEdit('dirt')"><i class="ph-fill ph-eraser"></i> Pot Polish</div>
             </div>
-            
             <button onclick="finalizeUpload()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-2 flex items-center justify-center gap-2">
                 <i class="ph-bold ph-upload-simple text-xl"></i> UPLOAD PHOTO
             </button>
@@ -827,7 +127,6 @@
             <button onclick="closeRequestForm()" class="text-white font-bold">Cancel</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
-            
             <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm mb-4">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">1. Request Header</h3>
                 <div class="mb-2">
@@ -843,29 +142,23 @@
                     <datalist id="req-cust-list"></datalist>
                 </div>
             </div>
-
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">2. Item Details</h3>
-                
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Item Name</label>
                     <input type="text" id="req-item" list="req-item-list" class="input-field mb-0" placeholder="Search Drive Inventory..." autocomplete="off" oninput="handleItemChange()">
                     <datalist id="req-item-list"></datalist>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase">Container Size</label>
-                        <select id="req-size" class="input-field bg-white mb-0">
-                            <option value="">-- Select Item First --</option>
-                        </select>
+                        <select id="req-size" class="input-field bg-white mb-0"><option value="">-- Select Item First --</option></select>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase">Request Qty</label>
                         <input type="number" id="req-qty" class="input-field mb-0" placeholder="0">
                     </div>
                 </div>
-                
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">On Reserve?</label>
                     <select id="req-reserve" class="input-field bg-white mb-0">
@@ -873,34 +166,28 @@
                         <option value="Yes">Yes</option>
                     </select>
                 </div>
-
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Use / Notes</label>
                     <input type="text" id="req-use" class="input-field mb-0" placeholder="e.g. Landscape Job">
                 </div>
-
                 <div class="mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase">Ship Date</label>
                     <input type="date" id="req-date" class="input-field mb-0">
                 </div>
-
                 <button onclick="addItemToRequestList()" class="w-full bg-white border-2 border-[#007a4d] text-[#007a4d] font-bold py-3 rounded-lg mt-2 flex items-center justify-center gap-2">
                     <i class="ph-bold ph-plus-circle"></i> ADD ITEM TO LIST
                 </button>
             </div>
-
             <div id="req-preview-container" class="hidden mb-20">
                 <div class="flex justify-between items-end mb-2">
                     <h3 class="text-xs font-bold text-gray-500 uppercase">Items to Submit</h3>
                     <span id="req-count-badge" class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
                 </div>
                 <div id="req-list-content"></div>
-                
                 <button onclick="submitRequestBatch()" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex items-center justify-center gap-2">
                     <i class="ph-bold ph-paper-plane-right text-xl"></i> SUBMIT ALL REQUESTS
                 </button>
             </div>
-
         </div>
     </div>
 
@@ -913,23 +200,27 @@
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
-            <div id="login-buttons" class="hidden"></div>
-            
-            <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
-                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
+            <div id="login-form">
+                <input type="text" id="login-username" class="input-field mb-3 text-center" placeholder="Username" autocapitalize="none">
+                <input type="password" id="login-password" class="input-field mb-4 text-center" placeholder="Password">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow" onclick="doLogin()">LOGIN</button>
+            </div>
+
+            <div id="reset-form" class="hidden">
+                <p class="text-sm font-bold text-red-600 mb-3">Password Reset Required</p>
+                <input type="password" id="reset-new-pass" class="input-field mb-3 text-center" placeholder="New Password">
+                <input type="password" id="reset-confirm-pass" class="input-field mb-4 text-center" placeholder="Confirm Password">
+                <button class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow" onclick="doPasswordReset()">UPDATE PASSWORD</button>
             </div>
             
-            <div id="loading-spinner" class="flex flex-col items-center">
-                <i class="ph-bold ph-spinner animate-spin text-3xl text-gray-400 mb-2"></i>
-                <div id="loading-text" class="text-gray-500 font-bold text-sm text-center">Loading Data...</div>
+            <div id="loading-spinner" class="hidden flex-col items-center mt-4">
+                <i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d] mb-2"></i>
+                <div id="loading-text" class="text-[#007a4d] font-bold text-sm text-center">Loading...</div>
             </div>
         </div>
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
-        
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
@@ -940,7 +231,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="flex items-center gap-2">
                 <div id="batch-indicator" onclick="toggleBatch()">BATCH ON (TAP TO EXIT)</div>
                 <img src="GNC LOGO.png" alt="Logo" class="h-8 w-auto object-contain">
@@ -988,9 +278,7 @@
 
                 <div onclick="openRequestForm()" class="bg-white p-4 rounded-xl mb-4 shadow border border-gray-200 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
-                            <i class="ph-bold ph-plus text-xl"></i>
-                        </div>
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700"><i class="ph-bold ph-plus text-xl"></i></div>
                         <div class="font-bold text-gray-800">Create New Request</div>
                     </div>
                     <i class="ph-bold ph-caret-right text-gray-300"></i>
@@ -1011,55 +299,34 @@
 
             <div id="view-salesoffice" class="hidden">
                 <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes</h2>
-                <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100">
-                    <strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.
-                </div>
+                <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100"><strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.</div>
                 <input type="text" id="salesoffice-search" class="input-field mb-4" placeholder="Search Plants or Codes..." onkeyup="renderSalesOffice()">
                 <div id="salesoffice-content"></div>
             </div>
 
             <div id="view-directory" class="hidden">
                 <h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-address-book text-xl"></i> Company Directory</h2>
-                <div class="task-tabs mb-4">
-                    <div class="task-tab active">Sales Reps</div>
-                </div>
+                <div class="task-tabs mb-4"><div class="task-tab active">Sales Reps</div></div>
                 <input type="text" id="directory-search" class="input-field mb-4" placeholder="Search Rep Name..." onkeyup="renderDirectoryView()">
                 <div id="directory-content"></div>
             </div>
 
             <div id="view-drive" class="hidden">
                 <h2 class="text-sm font-bold text-blue-600 uppercase mb-2">Drive Mode</h2>
-                
                 <div class="filter-row-container">
-                    <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
-                        <div id="ms-group" class="ms-options"></div>
-                    </div>
-                    <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
-                        <div id="ms-season" class="ms-options"></div>
-                    </div>
-                    <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
-                        <div id="ms-lot" class="ms-options"></div>
-                    </div>
-                    
+                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-group" class="ms-options"></div></div>
+                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-season" class="ms-options"></div></div>
+                    <div class="ms-container filter-item"><button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button><div id="ms-lot" class="ms-options"></div></div>
                     <div class="flex items-center gap-1 filter-item bg-white border border-gray-300 rounded-md p-1 h-[34px]">
-                        <select id="lts-operator" class="text-xs bg-transparent font-bold text-gray-600 outline-none" onchange="renderDriveView()">
-                            <option value="gt">></option>
-                            <option value="lt"><</option>
-                        </select>
+                        <select id="lts-operator" class="text-xs bg-transparent font-bold text-gray-600 outline-none" onchange="renderDriveView()"><option value="gt">></option><option value="lt"><</option></select>
                         <input type="number" id="lts-value" class="w-12 text-xs outline-none" placeholder="LTS" onkeyup="renderDriveView()">
                     </div>
-
                     <button onclick="resetDriveFilters()" class="filter-item text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded border border-red-100">RESET</button>
                 </div>
-
                 <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleDriveSearch(this.value)">
                 <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
-
             <div id="view-production" class="hidden">
                 <h2 class="text-sm font-bold text-production uppercase mb-4">Production & Grower Notes</h2>
                 
@@ -1315,64 +582,6 @@
         </nav>
     </div>
 
-    <div id="assign-modal">
-        <div class="modal-card">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Assign Items</h2>
-                <div class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold" id="assign-count">0 Items</div>
-            </div>
-
-            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">1. Select Assignment Type</h3>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
-                    <input type="radio" name="assign_type" value="requests" class="hidden" checked onchange="toggleFlyerOptions(false)">
-                    <i class="ph-bold ph-clipboard-text text-2xl text-gray-500"></i>
-                    <span class="text-xs font-bold">Request</span>
-                </label>
-                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
-                    <input type="radio" name="assign_type" value="season" class="hidden" onchange="toggleFlyerOptions(false)">
-                    <i class="ph-bold ph-sun text-2xl text-gray-500"></i>
-                    <span class="text-xs font-bold">Season</span>
-                </label>
-                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
-                    <input type="radio" name="assign_type" value="location" class="hidden" onchange="toggleFlyerOptions(false)">
-                    <i class="ph-bold ph-map-pin text-2xl text-gray-500"></i>
-                    <span class="text-xs font-bold">Location</span>
-                </label>
-                <label class="cursor-pointer border-2 border-gray-200 rounded-lg p-3 flex flex-col items-center gap-1 hover:border-[#007a4d] has-[:checked]:border-[#007a4d] has-[:checked]:bg-green-50 transition-all">
-                    <input type="radio" name="assign_type" value="flyer" class="hidden" onchange="toggleFlyerOptions(true)">
-                    <i class="ph-bold ph-image text-2xl text-gray-500"></i>
-                    <span class="text-xs font-bold">Flyer Project</span>
-                </label>
-            </div>
-
-            <div id="flyer-options-box" class="hidden mb-4 p-3 bg-gray-50 rounded border border-gray-200">
-                <div class="mb-2">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Project Name</label>
-                    <input type="text" id="flyer-project-name" list="dl-projects" class="w-full p-2 border rounded text-sm bg-white" placeholder="e.g. Spring 2024">
-                    <datalist id="dl-projects"></datalist>
-                </div>
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_crop" checked class="accent-[#007a4d]"> <span class="text-xs font-bold">Crop Update</span></label>
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_endcap" class="accent-[#007a4d]"> <span class="text-xs font-bold">End Cap</span></label>
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_spot" class="accent-[#007a4d]"> <span class="text-xs font-bold">Spotlight</span></label>
-                </div>
-            </div>
-
-            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">2. Directions (Required)</h3>
-            <textarea id="assign-note" class="w-full p-3 border rounded-lg text-sm mb-4 h-20 bg-gray-50 focus:bg-white focus:border-[#007a4d] outline-none" placeholder="What needs to be done? e.g. Check for mites, get new photo..."></textarea>
-
-            <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
-            <div id="assign-checkboxes" class="space-y-2 mb-6">
-            </div>
-            
-            <div class="flex gap-3">
-                <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
-                <button class="flex-1 py-3 bg-[#e3a000] text-white font-bold rounded-lg shadow-md" onclick="batchAssign()">CONFIRM ASSIGN</button>
-            </div>
-        </div>
-    </div>
-
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
@@ -1380,167 +589,31 @@
         // CONFIGURATION
         // ==========================================
         
-        // ADD YOUR URL HERE
+        // YOUR EXACT WEB APP URL
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlmvqfFpLll_qFdJOlsJYIlWzGRAKdWC0dQ4PSYrCX2irSDF5SMk5Eiv0_eh0I7SYR/exec"; 
         
-        // This handles standard emails. J.D. removed per request.
+        // BASE MANAGER EMAILS (Added dynamically)
         const MANAGERS_EMAILS = [
             "dylan_collyge@greenleafnursery.com",
             "kayla_kneep@greenleafnursery.com"
         ];
 
         // ==========================================
-        // DYNAMIC LOGIN & USERS
+        // GLOBAL VARIABLES
         // ==========================================
-        
-        // We initialize with a safe fallback in case the API fetch fails.
-        let SYSTEM_USERS = [
-            { name: "Dylan", initial: "D", role: "Admin", pin: "1234", color: "blue" },
-            { name: "Kayla", initial: "K", role: "User", pin: "1234", color: "pink" },
-            { name: "Morgan", initial: "M", role: "User", pin: "1234", color: "purple" },
-            { name: "J.D.", initial: "J", role: "Admin", pin: "1234", color: "green" }
-        ];
-
-        let targetLoginUser = null; 
-
-        // Call this the moment the page starts loading
-        function fetchAppUsers() {
-            fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success' && data.data && data.data.length > 0) {
-                        SYSTEM_USERS = data.data;
-                    }
-                    buildLoginButtons();
-                })
-                .catch(err => {
-                    console.error("Failed to load users, using fallback.", err);
-                    buildLoginButtons();
-                });
-        }
-
-        function buildLoginButtons() {
-            document.getElementById('loading-spinner').classList.add('hidden');
-            const btnContainer = document.getElementById('login-buttons');
-            btnContainer.classList.remove('hidden');
-            
-            let html = "";
-            SYSTEM_USERS.forEach(u => {
-                const isAdminLabel = u.role === "Admin" ? " (Admin)" : "";
-                const bgColor = `bg-${u.color}-100`;
-                const textColor = `text-${u.color}-600`;
-                
-                html += `
-                <button class="user-btn" onclick="selectUser('${u.name}')">
-                    <div class="w-8 h-8 rounded-full ${bgColor} flex items-center justify-center ${textColor} font-bold">${u.initial}</div>
-                    ${u.name}${isAdminLabel}
-                </button>`;
-            });
-            btnContainer.innerHTML = html;
-        }
-
-        function selectUser(name) { 
-            const userObj = SYSTEM_USERS.find(u => u.name === name);
-            if (!userObj) {
-                return;
-            }
-
-            targetLoginUser = userObj;
-            document.getElementById('login-buttons').classList.add('hidden'); 
-            document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; 
-            document.getElementById('pin-code').focus(); 
-        }
-        
-        function verifyPin() { 
-            const entered = document.getElementById('pin-code').value;
-            
-            if (entered === targetLoginUser.pin) { 
-                currentUser = targetLoginUser.name;
-                isAdmin = (targetLoginUser.role === "Admin");
-                
-                document.getElementById('pin-container').classList.add('hidden'); 
-                document.getElementById('loading-spinner').classList.remove('hidden'); 
-                document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
-                
-                fetchData(); 
-            } else { 
-                showToast("Error", "Incorrect PIN", true); 
-            } 
-        }
-        
-        function resetLogin() { 
-            document.getElementById('pin-container').classList.add('hidden'); 
-            document.getElementById('login-buttons').classList.remove('hidden'); 
-            document.getElementById('loading-spinner').classList.add('hidden'); 
-            document.getElementById('pin-code').value = "";
-            targetLoginUser = null;
-        }
-
-        // Run immediately
-        fetchAppUsers();
-
-        // ==========================================
-        // EMAIL & REQUEST HELPER LOGIC
-        // ==========================================
-        
-        function getRepEmail(repName) {
-            const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
-            return entry ? entry.email : null;
-        }
-
-        function sendEmailNotification(toAddress, subject, htmlBody) {
-            const payload = {
-                type: "send_email",
-                to: toAddress,
-                subject: subject,
-                htmlBody: htmlBody
-            };
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            }).catch(e => console.error("Email API Failed: ", e));
-        }
-
-        function generateHtmlForItems(items, title, directions) {
-            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
-                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
-            
-            if (directions) {
-                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
-                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
-                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
-                         </div>`;
-            }
-
-            items.forEach(item => {
-                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
-                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
-                            <span style="color: #555; font-size: 12px;">
-                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
-                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
-                                Item: ${item.ITEMCODE}
-                            </span>`;
-                if (item.SAVED_NOTE) {
-                    html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
-                }
-                html += `</div>`;
-            });
-            return html + "</div>";
-        }
-
-        // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
         let salesNoteMap = {}; 
         let allCommonNames = []; 
-        let socReps = []; 
         let socData = []; 
         let activeItem = null; 
         
+        // USER AUTHENTICATION STATE
         let currentUser = null; 
         let isAdmin = false; 
+        let targetLoginUser = null; 
+        let STATIC_DIRECTORY = []; 
+
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
         let currentFlyerTab = 'flyer_crop'; 
@@ -1562,7 +635,6 @@
         let debounceTimer; 
         let syncPauseUntil = 0; 
         
-        let STATIC_DIRECTORY = []; 
         window.lastLocalUpdate = 0;
 
         let driveViewLevel = 0;
@@ -1621,6 +693,208 @@
 
         let currentSocTab = 'reps';
 
+        // ==========================================
+        // AUTHENTICATION SYSTEM (NEW)
+        // ==========================================
+        
+        function doLogin() {
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+            
+            if (!user || !pass) { 
+                showToast("Error", "Please enter your username and password.", true); 
+                return; 
+            }
+
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Authenticating...";
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    type: "login", 
+                    username: user, 
+                    password: pass 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    targetLoginUser = data.user;
+                    
+                    if (data.user.needsReset) {
+                        document.getElementById('loading-spinner').classList.add('hidden');
+                        document.getElementById('reset-form').classList.remove('hidden');
+                    } else {
+                        currentUser = data.user.name;
+                        isAdmin = (data.user.role === "Admin" || data.user.role === "Manager");
+                        document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                        fetchData();
+                    }
+                } else {
+                    showToast("Login Failed", data.message, true);
+                    resetLogin();
+                }
+            })
+            .catch(err => {
+                showToast("Network Error", "Could not connect to authentication server.", true);
+                resetLogin();
+            });
+        }
+
+        function doPasswordReset() {
+            const newPass = document.getElementById('reset-new-pass').value;
+            const confirmPass = document.getElementById('reset-confirm-pass').value;
+            
+            if (!newPass) {
+                showToast("Error", "Password cannot be blank.", true); 
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                showToast("Error", "Passwords do not match.", true); 
+                return;
+            }
+            
+            document.getElementById('reset-form').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Updating Password...";
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "change_password",
+                    username: targetLoginUser.username,
+                    currentPassword: document.getElementById('login-password').value,
+                    newPassword: newPass
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentUser = targetLoginUser.name;
+                    isAdmin = (targetLoginUser.role === "Admin" || targetLoginUser.role === "Manager");
+                    document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
+                    fetchData();
+                } else {
+                    showToast("Error", data.message, true);
+                    resetLogin();
+                }
+            })
+            .catch(err => {
+                showToast("Network Error", "Failed to update password.", true);
+                resetLogin();
+            });
+        }
+
+        function resetLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('reset-form').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('login-password').value = "";
+            document.getElementById('reset-new-pass').value = "";
+            document.getElementById('reset-confirm-pass').value = "";
+            targetLoginUser = null;
+        }
+
+        // ==========================================
+        // DATA FILTRATION LOGIC
+        // ==========================================
+        
+        function enforceRoleBasedFiltering() {
+            if (isAdmin) {
+                return;
+            }
+            
+            const myName = String(targetLoginUser.name || "").toLowerCase();
+            const myLastFirst = String(targetLoginUser.nameLastFirst || "").toLowerCase();
+            const myInitials = String(targetLoginUser.initials || "").toLowerCase();
+            const myRepId = String(targetLoginUser.repId || "").toLowerCase();
+            const myEmail = String(targetLoginUser.email || "").toLowerCase();
+
+            // Filter full inventory array
+            fullInventory = fullInventory.filter(function(item) {
+                const assigned = String(item.ASSIGNEDTO || "").toLowerCase();
+                const reqAssigned = String(item.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                const salesRep = String(item.SALESREP || "").toLowerCase();
+                
+                let isMatch = false;
+                
+                if (myName && (assigned.includes(myName) || reqAssigned.includes(myName) || salesRep.includes(myName))) {
+                    isMatch = true;
+                }
+                if (myLastFirst && salesRep.includes(myLastFirst)) {
+                    isMatch = true;
+                }
+                if (myInitials && salesRep.includes(myInitials)) {
+                    isMatch = true;
+                }
+                if (myRepId && salesRep.includes(myRepId)) {
+                    isMatch = true;
+                }
+                if (myEmail && salesRep.includes(myEmail)) {
+                    isMatch = true;
+                }
+                
+                return isMatch;
+            });
+            
+            // Re-populate allCommonNames based only on the filtered list
+            allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
+        }
+
+        // ==========================================
+        // EMAIL & REQUEST HELPER LOGIC
+        // ==========================================
+        
+        function getRepEmail(repName) {
+            const entry = STATIC_DIRECTORY.find(r => r.name.toLowerCase() === repName.toLowerCase());
+            return entry ? entry.email : null;
+        }
+
+        function sendEmailNotification(toAddress, subject, htmlBody) {
+            const payload = {
+                type: "send_email",
+                to: toAddress,
+                subject: subject,
+                htmlBody: htmlBody
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }).catch(e => console.error("Email API Failed: ", e));
+        }
+
+        function generateHtmlForItems(items, title, directions) {
+            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
+                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
+            
+            if (directions) {
+                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
+                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
+                         </div>`;
+            }
+
+            items.forEach(item => {
+                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555; font-size: 12px;">
+                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
+                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
+                                Item: ${item.ITEMCODE}
+                            </span>`;
+                if (item.SAVED_NOTE) {
+                    html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
+                }
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
+
+
         function normalizeRepName(name) {
             if (!name) {
                 return "";
@@ -1649,8 +923,6 @@
         // ==========================================
         // NEW REQUEST FORM SYSTEM
         // ==========================================
-        let pendingRequestItems = []; 
-
         function openRequestForm() {
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
@@ -2102,11 +1374,12 @@
                     noteTemplates = cloudJson.templates || []; 
                     salesNoteMap = cloudJson.salesMap || {}; 
                     
-                    allCommonNames = [...new Set(fullInventory.map(i => i.COMMONNAME))].sort();
-                    
                     if (dirJson.status === 'success' && dirJson.data.length > 0) {
                         STATIC_DIRECTORY = dirJson.data;
                     }
+                    
+                    // APPLY ROLE-BASED FILTERING AFTER DATA LOAD
+                    enforceRoleBasedFiltering();
 
                     if (!isSilent) { 
                         applyAssignments(); 
@@ -3077,9 +2350,15 @@
 
         function updateDriveFilterState(type) {
             let div;
-            if (type === 'groups') div = document.getElementById('ms-group');
-            if (type === 'seasons') div = document.getElementById('ms-season');
-            if (type === 'lots') div = document.getElementById('ms-lot');
+            if (type === 'groups') {
+                div = document.getElementById('ms-group');
+            }
+            if (type === 'seasons') {
+                div = document.getElementById('ms-season');
+            }
+            if (type === 'lots') {
+                div = document.getElementById('ms-lot');
+            }
 
             const checks = div.querySelectorAll('input[type="checkbox"]:checked');
             const values = Array.from(checks).map(c => c.value);
@@ -3102,9 +2381,15 @@
 
         function toggleAllDrive(type) {
             let div;
-            if (type === 'groups') div = document.getElementById('ms-group');
-            if (type === 'seasons') div = document.getElementById('ms-season');
-            if (type === 'lots') div = document.getElementById('ms-lot');
+            if (type === 'groups') {
+                div = document.getElementById('ms-group');
+            }
+            if (type === 'seasons') {
+                div = document.getElementById('ms-season');
+            }
+            if (type === 'lots') {
+                div = document.getElementById('ms-lot');
+            }
 
             const allChecks = div.querySelectorAll('input[type="checkbox"]');
             const allChecked = Array.from(allChecks).every(c => c.checked);
@@ -3208,7 +2493,6 @@
                 return; 
             }
             
-            // 2. LEVEL 0: LIST COMMON NAMES
             if (driveViewLevel === 0) {
                 crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
@@ -3223,7 +2507,6 @@
                 }
                 container.innerHTML = html;
             }
-            // 3. LEVEL 1: LIST SIZES
             else if (driveViewLevel === 1) {
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
@@ -3244,7 +2527,6 @@
                 }
                 container.innerHTML = html;
             }
-            // 4. LEVEL 2: CARDS
             else if (driveViewLevel === 2) {
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
                 
@@ -3768,7 +3050,7 @@
                     }
 
                     let completeBtn = '';
-                    if (ADMINS.includes(currentUser)) {
+                    if (isAdmin) {
                         completeBtn = `
                         <div class="p-4 bg-white border-b border-gray-100">
                             <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
@@ -4182,4 +3464,1170 @@
                         for (let i = 0; i < finalItems.length; i++) {
                             let item = finalItems[i];
                             let approveBtn = "";
-                            if (taskTarget === 'requests') {
+                            if (taskTarget === 'requests' && isAdmin) { 
+                                 approveBtn = `
+                                 <button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs flex items-center justify-center gap-2">
+                                     <i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP
+                                 </button>`;
+                            }
+                            let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                            html += `
+                            <div class="bg-white rounded-lg p-1 mb-2 border border-gray-200 shadow-sm">
+                                ${cardHtml}
+                                <div class="px-2 pb-2">${approveBtn}</div>
+                            </div>`;
+                        }
+                        container.innerHTML = html;
+                    }
+                }
+            }
+        }
+
+        function openNoWinnerFolder() {
+            currentVirtualFolder = 'no_winner';
+            reviewViewLevel = 3;
+            renderReviewContent();
+        }
+
+        function selectReviewRep(repName) {
+            currentReviewRep = repName;
+            document.getElementById('review-content').innerHTML = '<div class="p-8 text-center flex flex-col items-center"><i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d]"></i><div class="mt-2 text-gray-500 font-bold">Loading Data...</div></div>';
+            
+            if (selectedSocRep !== repName || socData.length === 0) {
+                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName || d.id === repName);
+                const queryParam = dirEntry ? dirEntry.name : repName;
+                
+                fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') { 
+                        socData = data.data; 
+                        selectedSocRep = queryParam;
+                    }
+                    reviewViewLevel = 1;
+                    renderReviewContent();
+                }).catch(e => {
+                    reviewViewLevel = 1; 
+                    renderReviewContent();
+                });
+            } else {
+                reviewViewLevel = 1;
+                renderReviewContent();
+            }
+        }
+
+        function selectReviewCustomer(custName) {
+            currentReviewCustomer = custName;
+            reviewViewLevel = 2;
+            renderReviewContent();
+        }
+
+        function openVirtualFolder(folder) {
+            if (folder === 'form') {
+                openRequestForm();
+                document.getElementById('req-rep').value = currentReviewRep;
+                handleRepChange();
+                setTimeout(() => {
+                    document.getElementById('req-cust').value = currentReviewCustomer;
+                }, 500);
+                return;
+            }
+            currentVirtualFolder = folder;
+            reviewViewLevel = 3;
+            renderReviewContent();
+        }
+
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); 
+            const searchInput = document.getElementById('salesoffice-search'); 
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const salesItems = fullInventory.filter(i => { 
+                if (!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") {
+                    return false; 
+                }
+                if (term) {
+                    const common = (i.COMMONNAME||"").toLowerCase();
+                    const code = (i.ITEMCODE||"").toLowerCase();
+                    if (!common.includes(term) && !code.includes(term)) {
+                        return false; 
+                    }
+                }
+                return true; 
+            });
+            
+            if (salesItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; 
+                return; 
+            }
+            
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            
+            let html = "";
+            for (let i = 0; i < salesItems.length; i++) {
+                let item = salesItems[i];
+                const isApproved = item.SO_STATUS === 'APPROVED';
+                
+                let statusColor = 'bg-white border-gray-200';
+                if (isApproved) {
+                    statusColor = 'bg-green-100 border-green-300';
+                }
+                
+                let btnHtml = "";
+                if (isApproved) {
+                    btnHtml = `<div class="mt-2 text-xs font-bold text-green-700 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Approved</div>`;
+                } else {
+                    btnHtml = `
+                    <button onclick="approveSalesItem('${item.UNIQUE_ID}')" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded shadow text-xs flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-check"></i> APPROVE & PUBLISH
+                    </button>`;
+                }
+
+                html += `
+                <div class="inv-card mb-3 !p-4 border ${statusColor}">
+                    <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                    <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-800 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
+                    ${btnHtml}
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function approveSalesItem(id) {
+            const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
+            if (itemIdx === -1) {
+                return;
+            }
+            
+            const item = fullInventory[itemIdx];
+            item.SO_STATUS = "APPROVED";
+            item.TIMESTAMP = new Date().toISOString(); 
+            
+            renderSalesOffice();
+            showToast("Approved", "10-day timer started for field team.");
+            
+            const payload = { 
+                type: "update", 
+                id: item.UNIQUE_ID, 
+                soStatus: "APPROVED",
+                match: item.SAVED_MATCH||"", 
+                spec: item.SAVED_SPEC||"", 
+                pick: item.SAVED_PICK||"", 
+                note: item.SAVED_NOTE||"", 
+                salesDesc: item.SAVED_SALES_DESC||"",
+                photoLink: item.SAVED_PHOTO_LINK||"",
+                photoName: item.SAVED_PHOTO_NAME||"",
+                user: currentUser
+            };
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            }).catch(err => {
+                logFailedSave(payload);
+            });
+        }
+
+        function launchApp() { 
+            document.getElementById('view-login').style.display = 'none'; 
+            document.getElementById('app-wrapper').classList.remove('hidden'); 
+            document.getElementById('header-user').innerText = currentUser; 
+            
+            if (isAdmin) { 
+                document.getElementById('home-btn-soc').classList.remove('hidden'); 
+                document.getElementById('home-btn-track').classList.remove('hidden'); 
+                document.getElementById('home-btn-review').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('home-btn-soc').classList.add('hidden'); 
+                document.getElementById('home-btn-track').classList.add('hidden'); 
+                document.getElementById('home-btn-review').classList.add('hidden'); 
+            } 
+            switchView('home'); 
+        }
+        
+        function applyAssignments() { 
+            let j = 0; 
+            for (let i = 0; i < fullInventory.length; i++) {
+                let item = fullInventory[i];
+                if (!item.ASSIGNEDTO) { 
+                    const group = (item.PLANTGROUPCODE || "").toString(); 
+                    if (group.includes("230") || group.includes("140")) { 
+                        item.ASSIGNEDTO = "Dylan"; 
+                    } else if (group.includes("330") || group.includes("300")) { 
+                        item.ASSIGNEDTO = "Kayla"; 
+                    } else { 
+                        const weight = j % 5; 
+                        if (weight < 3) {
+                            item.ASSIGNEDTO = "Dylan";
+                        } else if (weight === 3) {
+                            item.ASSIGNEDTO = "Kayla";
+                        } else {
+                            item.ASSIGNEDTO = "Morgan";
+                        }
+                        j++; 
+                    } 
+                } 
+            }
+        }
+        
+        function switchView(v) { 
+            localStorage.setItem('gl_last_view', v);
+            const views = [
+                'view-home', 'view-drive', 'view-tasks', 'view-viewer', 
+                'view-detail', 'view-review', 'view-soc', 'view-tracking', 
+                'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'
+            ];
+            
+            for (let i = 0; i < views.length; i++) {
+                document.getElementById(views[i]).classList.add('hidden'); 
+            }
+            
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+            
+            if (v === 'drive') {
+                renderDriveNames(); 
+            }
+            if (v === 'inventory') {
+                renderInventoryView(); 
+            }
+            if (v === 'production') {
+                renderProductionView(); 
+            }
+            if (v === 'directory') {
+                renderDirectoryView(); 
+            }
+            if (v === 'tasks') { 
+                if (isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { 
+                    renderTeamSelector(); 
+                } else { 
+                    renderTasks(); 
+                } 
+            } 
+            
+            if (v === 'viewer') {
+                renderViewerNames(); 
+            }
+            if (v === 'review') {
+                renderManagerFolders(); 
+            }
+            if (v === 'soc') {
+                renderSocView(); 
+            }
+            if (v === 'salesoffice') {
+                renderSalesOffice(); 
+            }
+        }
+        
+        function switchDetailTab(tab) { 
+            if (tab === 'overview') {
+                document.getElementById('dtab-overview').classList.add('active');
+            } else {
+                document.getElementById('dtab-overview').classList.remove('active');
+            }
+            
+            if (tab === 'actions') {
+                document.getElementById('dtab-actions').classList.add('active');
+            } else {
+                document.getElementById('dtab-actions').classList.remove('active');
+            }
+            
+            if (tab === 'grower') {
+                document.getElementById('dtab-grower').classList.add('active');
+            } else {
+                document.getElementById('dtab-grower').classList.remove('active');
+            }
+            
+            if (tab === 'overview') {
+                document.getElementById('det-overview-content').classList.remove('hidden');
+            } else {
+                document.getElementById('det-overview-content').classList.add('hidden');
+            }
+            
+            if (tab === 'actions') {
+                document.getElementById('det-actions-content').classList.remove('hidden');
+            } else {
+                document.getElementById('det-actions-content').classList.add('hidden');
+            }
+            
+            if (tab === 'grower') {
+                document.getElementById('det-grower-content').classList.remove('hidden');
+            } else {
+                document.getElementById('det-grower-content').classList.add('hidden');
+            }
+        }
+        
+        function goBackFromDetail() { 
+            localStorage.removeItem('gl_active_item'); 
+            document.getElementById('view-detail').classList.add('hidden'); 
+            document.getElementById('view-' + lastView).classList.remove('hidden'); 
+            
+            if (lastView === 'tasks') {
+                renderTasks(); 
+            }
+            if (lastView === 'drive') {
+                renderDriveNames(); 
+            }
+            if (lastView === 'inventory') {
+                renderInventoryView(); 
+            }
+            if (lastView === 'production') {
+                renderProductionView(); 
+            }
+        }
+
+        function openDetail(idx, originView) {
+            lastView = originView; 
+            currentOriginView = originView; 
+            activeItem = fullInventory[idx]; 
+            localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
+            
+            const views = [
+                'view-drive', 'view-tasks', 'view-viewer', 'view-review',
+                'view-soc', 'view-tracking', 'view-salesoffice', 'view-directory', 
+                'view-inventory', 'view-production'
+            ];
+            
+            for (let i = 0; i < views.length; i++) {
+                document.getElementById(views[i]).classList.add('hidden'); 
+            }
+            
+            document.getElementById('view-detail').classList.remove('hidden'); 
+            
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
+            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
+            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
+            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
+            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
+            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
+            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; 
+            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; 
+            document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; 
+            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+            
+            let custName = "Unknown Customer";
+            if (activeItem.CUSTOMERNAME) {
+                custName = activeItem.CUSTOMERNAME;
+            } else if (activeItem.CONSIGNEENAME) {
+                custName = activeItem.CONSIGNEENAME;
+            }
+            
+            document.getElementById('ov-customer').innerText = custName;
+            
+            let slts = "--";
+            if (activeItem.S_LTS) {
+                slts = activeItem.S_LTS;
+            } else if (activeItem.SLTS) {
+                slts = activeItem.SLTS;
+            }
+            document.getElementById('ov-slts').innerText = slts;
+
+            document.getElementById('expand-section').classList.remove('expanded'); 
+            document.getElementById('expand-content').innerHTML = ''; 
+            
+            if (originView === 'viewer') { 
+                document.getElementById('expand-section').classList.add('hidden'); 
+            } else { 
+                document.getElementById('expand-section').classList.remove('hidden'); 
+            }
+            
+            const tabActions = document.getElementById('dtab-actions'); 
+            const tabGrower = document.getElementById('dtab-grower');
+            
+            if (originView === 'production') { 
+                tabActions.classList.add('hidden'); 
+                tabGrower.classList.remove('hidden'); 
+                document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; 
+                document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; 
+                document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; 
+                document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; 
+                document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; 
+            } else { 
+                tabActions.classList.remove('hidden'); 
+                tabGrower.classList.add('hidden'); 
+            }
+            
+            const banner = document.getElementById('directions-banner');
+            const txt = document.getElementById('directions-text');
+            
+            if (activeItem.SAVED_NOTE && activeItem.SAVED_NOTE.includes("| Directions:")) {
+                 let parts = activeItem.SAVED_NOTE.split("| Directions:");
+                 if (parts.length > 1) {
+                     banner.classList.remove('hidden');
+                     txt.innerText = parts[1].trim();
+                 } else {
+                     banner.classList.add('hidden');
+                 }
+            } else {
+                 banner.classList.add('hidden');
+            }
+
+            renderOverviewData(); 
+            renderActionsTab(); 
+            switchDetailTab('overview');
+        }
+
+        function toggleExpand() { 
+            const section = document.getElementById('expand-section'); 
+            if (!section.classList.contains('expanded')) { 
+                renderAllFields(); 
+            } 
+            section.classList.toggle('expanded'); 
+        }
+
+        function renderActionsTab() {
+            const btnComplete = document.getElementById('request-complete-container'); 
+            
+            let hasData = false;
+            if (activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP) {
+                hasData = true;
+            }
+            
+            let canEditText = false; 
+            if (isAdmin && (currentOriginView === 'tasks' || currentOriginView === 'drive' || currentOriginView === 'review')) { 
+                canEditText = true; 
+            }
+            
+            const isFlyer = (activeItem.TASK_TAB || "").startsWith("flyer_");
+            if (activeItem.TASK_TAB === 'requests' || isFlyer) { 
+                btnComplete.classList.remove('hidden'); 
+            } else { 
+                btnComplete.classList.add('hidden'); 
+            }
+            
+            if (canEditText && !hasData) { 
+                showEditMode(); 
+            } else { 
+                showReadonlyMode(canEditText, hasData); 
+            }
+        }
+
+        function handleSmartFill(el) {
+            if (el.id === 'in-match') {
+                activeItem.SAVED_MATCH = el.value;
+            }
+            if (el.id === 'in-spec') {
+                activeItem.SAVED_SPEC = el.value;
+            }
+            if (el.id === 'in-pick') {
+                activeItem.SAVED_PICK = el.value;
+            }
+            if (el.id === 'in-note') {
+                activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+            }
+            if (el.id === 'in-sales-desc') {
+                activeItem.SAVED_SALES_DESC = el.value;
+            }
+            
+            const specVal = document.getElementById('in-spec').value;
+            const salesEl = document.getElementById('in-sales-desc');
+            let salesVal = salesEl.value;
+
+            if (specVal && salesVal.toUpperCase().includes("SPEC")) {
+                const newVal = salesVal.replace(/SPEC/gi, specVal);
+                salesEl.value = newVal;
+                activeItem.SAVED_SALES_DESC = newVal; 
+                showToast("Smart Fill", "Replaced 'SPEC' with " + specVal);
+            }
+        }
+
+        function showEditMode() {
+            document.getElementById('btn-cam-container').classList.remove('hidden'); 
+            document.getElementById('btn-save').classList.remove('hidden'); 
+            document.getElementById('btn-edit-container').classList.add('hidden'); 
+            document.getElementById('readonly-lock-banner').classList.add('hidden');
+            
+            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
+            
+            const cName = String(activeItem.COMMONNAME || "").toUpperCase();
+            const noteOptions = salesNoteMap[cName] || [];
+            
+            let dlHtml = `<datalist id="dl-notes">`; 
+            dlHtml += `<option value="Nice Full Plants / SPEC">`; 
+            dlHtml += `<option value="Consistent Grade / SPEC">`; 
+            
+            for (let i = 0; i < noteOptions.length; i++) {
+                dlHtml += `<option value="${noteOptions[i]}">`; 
+            }
+            
+            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
+            for (let i = 0; i < validNotes.length; i++) {
+                dlHtml += `<option value="${validNotes[i].note}">`; 
+            }
+            
+            dlHtml += `</datalist>`;
+            
+            let pHolder = "Type 'SPEC' to pull from column above..."; 
+            if (noteOptions.length > 0 || validNotes.length > 0) {
+                pHolder = "Tap for templates or type 'SPEC'...";
+            }
+            
+            const cont = document.getElementById('input-container');
+            
+            cont.innerHTML = `
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
+                <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label>
+                <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
+                <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase(); handleSmartFill(this)" onchange="handleSmartFill(this)">
+                ${dlHtml}
+                <div class="text-[9px] text-green-600 font-bold text-right mt-[-8px] mb-2">Tip: Type "SPEC" to auto-fill size</div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
+                <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}" oninput="handleSmartFill(this)">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
+                <textarea id="in-note" class="input-field h-24" placeholder="Any other notes..." oninput="handleSmartFill(this)">${activeItem.SAVED_NOTE||''}</textarea>
+            </div>`;
+        }
+
+        function showReadonlyMode(canEditThisView, hasData) {
+            document.getElementById('btn-cam-container').classList.remove('hidden'); 
+            
+            if (canEditThisView) { 
+                document.getElementById('btn-save').classList.remove('hidden'); 
+                document.getElementById('btn-save').classList.add('hidden'); 
+            } else { 
+                document.getElementById('btn-save').classList.add('hidden'); 
+            }
+            
+            if (hasData) { 
+                document.getElementById('readonly-lock-banner').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('readonly-lock-banner').classList.add('hidden'); 
+            }
+            
+            const cont = document.getElementById('input-container');
+            
+            cont.innerHTML = `
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div>
+                <div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div>
+                <div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div>
+            </div>`;
+            
+            if (canEditThisView) { 
+                document.getElementById('btn-edit-container').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('btn-edit-container').classList.add('hidden'); 
+            }
+        }
+
+        function renderAllFields() {
+            if (!activeItem) {
+                return;
+            }
+            
+            const hiddenKeys = [
+                'UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 
+                'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 
+                'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 
+                'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 
+                'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'
+            ];
+            
+            let html = '<div class="grid grid-cols-1 gap-2">';
+            
+            for (const [key, value] of Object.entries(activeItem)) { 
+                if (hiddenKeys.includes(key)) continue; 
+                html += `
+                <div class="flex justify-between border-b border-gray-200 py-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span>
+                    <span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span>
+                </div>`; 
+            }
+            
+            html += '</div>'; 
+            document.getElementById('expand-content').innerHTML = html;
+        }
+
+        function renderOverviewData() {
+            const box = document.getElementById('user-data-box'); 
+            const grid = document.getElementById('dynamic-user-grid'); 
+            const photoDiv = document.getElementById('photo-preview'); 
+            const photoList = document.getElementById('photo-list-container');
+            
+            let h = "";
+            
+            if (currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) { 
+                h += `
+                <div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;">
+                    <div class="overview-label text-red-600">Location Note</div>
+                    <div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div>
+                </div>`; 
+            }
+            
+            if (activeItem.SAVED_MATCH) {
+                h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
+            }
+            if (activeItem.SAVED_SPEC) {
+                h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
+            }
+            if (activeItem.SAVED_SALES_DESC) {
+                h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
+            }
+            if (activeItem.SAVED_PICK) {
+                h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
+            }
+            if (activeItem.SAVED_NOTE) {
+                h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            }
+            
+            if (activeItem.SAVED_PHOTO_LINK) {
+                photoDiv.classList.remove('hidden'); 
+                const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
+                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                let phHtml = "";
+                
+                for (let i = 0; i < urls.length; i++) {
+                    const url = urls[i];
+                    const dispName = names[i] || `Photo ${i+1}`; 
+                    let thumbUrl = url; 
+                    const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if (idMatch && idMatch[1]) { 
+                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                    }
+                    
+                    let deleteBtn = ""; 
+                    if (isAdmin) { 
+                        deleteBtn = `
+                        <div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer">
+                            <i class="ph-bold ph-trash text-xl"></i>
+                        </div>`; 
+                    }
+                    
+                    phHtml += `
+                    <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
+                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                            <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy">
+                            <div class="flex-grow min-w-0">
+                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                <div class="text-[10px] text-gray-400">Tap to view full size</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                        </a>
+                        ${deleteBtn}
+                    </div>`;
+                }
+                
+                photoList.innerHTML = phHtml; 
+                h += `
+                <div class="overview-card full-width">
+                    <div class="overview-label">Photos</div>
+                    <div class="overview-val">${urls.length} Attached</div>
+                </div>`;
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
+            
+            if (h) { 
+                grid.innerHTML = h; 
+                box.classList.remove('hidden'); 
+            } else { 
+                box.classList.add('hidden'); 
+            }
+        }
+
+        // ==========================================
+        // BATCH SELECTION LOGIC
+        // ==========================================
+
+        function updateSelected() { 
+            if (selectedIdx.length > 0) { 
+                document.getElementById('action-bar').classList.add('visible'); 
+            } else { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+            } 
+        }
+
+        function handleCardClick(idx, source) {
+            if (isBatch) {
+                toggleSelect(idx); 
+                return;
+            }
+            openDetail(idx, source);
+        }
+
+        function toggleSelect(idx) {
+            const indexInArray = selectedIdx.indexOf(idx);
+            
+            if (indexInArray > -1) {
+                selectedIdx.splice(indexInArray, 1); 
+            } else {
+                selectedIdx.push(idx); 
+            }
+
+            const row = document.getElementById('row-' + idx);
+            const cb = document.getElementById('cb-' + idx);
+            
+            if (row && cb) {
+                const isSelected = selectedIdx.includes(idx);
+                cb.checked = isSelected;
+                if (isSelected) {
+                    row.classList.add('selecting');
+                } else {
+                    row.classList.remove('selecting');
+                }
+            }
+            
+            updateSelected(); 
+        }
+        
+        function openAssignModal() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            } 
+            
+            document.getElementById('assign-count').innerText = selectedIdx.length + " Items";
+            document.getElementById('flyer-options-box').classList.add('hidden');
+            document.querySelector('input[name="assign_type"][value="requests"]').checked = true; 
+            document.getElementById('assign-note').value = "";
+            
+            const checkContainer = document.getElementById('assign-checkboxes');
+            let checkHtml = "";
+            
+            for (let i = 0; i < SYSTEM_USERS.length; i++) {
+                let user = SYSTEM_USERS[i];
+                checkHtml += `
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-assign-${user.name}" value="${user.name}" class="assign-user-checkbox w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full bg-${user.color}-100 flex items-center justify-center text-${user.color}-600 font-bold text-xs">${user.initial}</div>
+                    <span class="font-bold text-sm">${user.name}</span>
+                </label>`;
+            }
+            checkContainer.innerHTML = checkHtml;
+
+            document.getElementById('assign-modal').style.display = 'flex'; 
+        }
+
+        // ==========================================
+        // BATCH TEXT & EMAIL GENERATORS
+        // ==========================================
+        
+        function getBatchHtml() {
+            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx];
+                
+                html += `
+                <div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                    <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                    <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                
+                if (item.SAVED_MATCH) {
+                    html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                }
+                if (item.SAVED_PICK) {
+                    html += `Pick: ${item.SAVED_PICK}<br>`;
+                }
+                if (item.SAVED_SALES_DESC) {
+                    html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
+                }
+                if (item.SAVED_NOTE) {
+                    html += `Note: ${item.SAVED_NOTE}<br>`;
+                }
+                
+                if (item.SAVED_PHOTO_LINK) {
+                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    
+                    for (let u = 0; u < urls.length; u++) {
+                        const url = urls[u];
+                        const name = names[u] || `Photo ${u+1}`; 
+                        html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
+                    }
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+            return html + "</div>";
+        }
+
+        function getBatchText() {
+            let text = "";
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx];
+                
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                
+                if (item.SAVED_MATCH) {
+                    text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                }
+                if (item.SAVED_PICK) {
+                    text += `Pick: ${item.SAVED_PICK}\n`;
+                }
+                if (item.SAVED_SALES_DESC) {
+                    text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
+                }
+                if (item.SAVED_NOTE) {
+                    text += `Note: ${item.SAVED_NOTE}\n`;
+                }
+                
+                if (item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`; 
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    
+                    for (let u = 0; u < urls.length; u++) {
+                        const url = urls[u];
+                        const name = names[u] || `Photo ${u+1}`; 
+                        text += `• ${name} (${url})\n`; 
+                    }
+                }
+                text += `\n`;
+            }
+            return text;
+        }
+
+        function batchText() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
+        }
+        
+        function batchEmail() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Ready to paste into your email app."); 
+                    setTimeout(() => { 
+                        window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                    }, 1500); 
+                    isBatch = false; 
+                    toggleBatch();
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                });
+            } else { 
+                fallbackCopy(html); 
+                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+            }
+        }
+        
+        function copyBatchData() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Data copied to clipboard."); 
+                    isBatch = false; 
+                    toggleBatch(); 
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                });
+            } else { 
+                fallbackCopy(html); 
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div"); 
+            tempDiv.innerHTML = html; 
+            tempDiv.style.position = "fixed"; 
+            tempDiv.style.left = "-9999px"; 
+            document.body.appendChild(tempDiv);
+            
+            const range = document.createRange(); 
+            range.selectNodeContents(tempDiv); 
+            const sel = window.getSelection(); 
+            sel.removeAllRanges(); 
+            sel.addRange(range); 
+            
+            document.execCommand('copy'); 
+            document.body.removeChild(tempDiv);
+            
+            showToast("Copied!", "Data copied (Legacy Mode)."); 
+            isBatch = false; 
+            toggleBatch();
+        }
+
+        function batchAssign() {
+            const assignType = document.querySelector('input[name="assign_type"]:checked').value;
+            const noteText = document.getElementById('assign-note').value;
+            
+            let selectedUsers = []; 
+            const checkInputs = document.querySelectorAll('.assign-user-checkbox');
+            for (let i = 0; i < checkInputs.length; i++) {
+                if (checkInputs[i].checked) {
+                    selectedUsers.push(checkInputs[i].value);
+                }
+            }
+
+            if (selectedUsers.length === 0) { 
+                showToast("Warning", "Select at least one person.", true); 
+                return; 
+            }
+            
+            let assignStr = selectedUsers.join(" & ");
+            let taskTab = assignType; 
+            let projectName = "";
+
+            if (assignType === 'flyer') {
+                const flyerCat = document.querySelector('input[name="flyer_cat"]:checked').value;
+                const projName = document.getElementById('flyer-project-name').value;
+                if (!projName) { 
+                    showToast("Warning", "Project Name required for Flyer.", true); 
+                    return; 
+                }
+                taskTab = flyerCat; 
+                assignStr = projName; 
+                projectName = projName;
+            }
+
+            const updates = [];
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx]; 
+                
+                let newItemNote = item.SAVED_NOTE || "";
+                if (noteText) {
+                    if (newItemNote) {
+                        newItemNote = newItemNote + " | Directions: " + noteText;
+                    } else {
+                        newItemNote = "Directions: " + noteText;
+                    }
+                }
+
+                item.REQUEST_ASSIGNED_TO = assignStr; 
+                item.TASK_TAB = taskTab; 
+                item.SAVED_NOTE = newItemNote;
+                item.TIMESTAMP = new Date().toISOString(); 
+
+                updates.push({ 
+                    id: item.UNIQUE_ID, 
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
+                    taskTab: item.TASK_TAB, 
+                    note: item.SAVED_NOTE, 
+                    user: currentUser 
+                }); 
+            }
+
+            let assignTitle = `New Tasks Assigned by ${currentUser}`;
+            if (assignType === 'flyer') {
+                assignTitle = `New Flyer Project: ${projectName}`;
+            }
+
+            const itemsForEmail = [];
+            for (let i = 0; i < selectedIdx.length; i++) {
+                itemsForEmail.push(fullInventory[selectedIdx[i]]);
+            }
+            
+            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
+
+            let recipients = [...MANAGERS_EMAILS];
+            selectedUsers.forEach(uName => {
+                const email = getRepEmail(uName);
+                if (email) {
+                    recipients.push(email);
+                }
+            });
+            
+            const senderEmail = getRepEmail(currentUser);
+            if (senderEmail) {
+                recipients.push(senderEmail);
+            }
+            
+            recipients = [...new Set(recipients)];
+
+            const payload = {
+                type: "batch_update", 
+                updates: updates,
+                emailData: recipients.length > 0 ? {
+                    to: recipients.join(','),
+                    subject: assignTitle,
+                    htmlBody: emailBody
+                } : null
+            };
+
+            document.getElementById('assign-modal').style.display = 'none'; 
+            toggleBatch(); 
+            showToast("Saving", "Assigned & Email Sent...");
+
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if (data.status === 'success') { 
+                    fetchData(true); 
+                } else { 
+                    showToast("Error", data.message, true); 
+                } 
+            })
+            .catch(err => { 
+                showToast("Network Error", "Saved offline.", true); 
+            });
+        }
+
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            
+            if (item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if (idMatch && idMatch[1]) { 
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                } 
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
+            }
+
+            const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
+            const lotCode = (item.LOTCODE || '').trim().toUpperCase();
+            const hasPriority = parseFloat(item.PRIORITY) > 0;
+            
+            let statusClass = 'status-default'; 
+
+            if (hsCode === 'S') {
+                statusClass = 'status-red';
+            } else if (hsCode === 'H' && hasPriority) {
+                statusClass = 'status-yellow';
+            } else if (lotCode === 'U1') {
+                statusClass = 'status-blue';
+            } else if (lotCode === 'U2') {
+                statusClass = 'status-purple';
+            } else if (lotCode === 'U3') {
+                statusClass = 'status-orange';
+            } else if (lotCode === 'X') {
+                statusClass = 'status-black';
+            } else if (!hsCode && hasPriority) {
+                statusClass = 'status-green';
+            }
+
+            let isChecked = "";
+            let isSelecting = "";
+            
+            if (selectedIdx.includes(idx)) {
+                isChecked = "checked";
+                isSelecting = "selecting";
+            }
+
+            let requestInfo = "";
+            if (item.UNIQUE_ID.includes("-")) { 
+                 if (item.QTY) {
+                     requestInfo += `<span class="bg-blue-100 text-blue-800 text-[10px] px-1 rounded mr-1">Req: ${item.QTY}</span>`;
+                 }
+                 if (item.SHIPDATE) {
+                     requestInfo += `<span class="bg-gray-100 text-gray-800 text-[10px] px-1 rounded">Ship: ${item.SHIPDATE}</span>`;
+                 }
+            }
+
+            return `
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
+                <div class="inv-card flex-grow flex items-center ${isSelecting} ${statusClass}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
+                        <div class="mt-1">${requestInfo}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        function startLongPress() { 
+            longPressTimer = setTimeout(() => { 
+                if (!isBatch) {
+                    toggleBatch(); 
+                }
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+        
+        function toggleBatch() { 
+            isBatch = !isBatch; 
+            
+            if (isBatch) {
+                document.body.classList.add('batch-mode');
+                document.getElementById('batch-indicator').style.display = 'block';
+            } else {
+                document.body.classList.remove('batch-mode');
+                document.getElementById('batch-indicator').style.display = 'none';
+            }
+            
+            if (!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+                selectedIdx = []; 
+                
+                const checkboxes = document.querySelectorAll('.select-check');
+                for (let i = 0; i < checkboxes.length; i++) {
+                    checkboxes[i].checked = false;
+                }
+                
+                const cards = document.querySelectorAll('.inv-card');
+                for (let i = 0; i < cards.length; i++) {
+                    cards[i].classList.remove('selecting');
+                }
+            } else {
+                if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+                if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+                if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+                if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+                if (!document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
+                if (!document.getElementById('view-review').classList.contains('hidden')) renderReviewContent();
+                if (!document.getElementById('view-salesoffice').classList.contains('hidden')) renderSalesOffice();
+                if (!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
+                
+                updateSelected();
+            }
+        }
+    </script>
+</body>
+</html>
