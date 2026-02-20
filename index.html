@@ -1441,7 +1441,9 @@
 
         function selectUser(name) { 
             const userObj = SYSTEM_USERS.find(u => u.name === name);
-            if (!userObj) return;
+            if (!userObj) {
+                return;
+            }
 
             targetLoginUser = userObj;
             document.getElementById('login-buttons').classList.add('hidden'); 
@@ -1620,7 +1622,9 @@
         let currentSocTab = 'reps';
 
         function normalizeRepName(name) {
-            if (!name) return "";
+            if (!name) {
+                return "";
+            }
             name = name.trim();
             if (name.includes(",")) {
                 let parts = name.split(",");
@@ -1632,7 +1636,9 @@
         }
 
         function getLocPrefix(loc) {
-            if (!loc) return "No Loc";
+            if (!loc) {
+                return "No Loc";
+            }
             let parts = loc.split('.');
             if (parts.length >= 3) {
                 return parts[0] + '.' + parts[1]; 
@@ -1686,7 +1692,9 @@
             const loading = document.getElementById('cust-loading');
             
             custList.innerHTML = "";
-            if (!repName) return;
+            if (!repName) {
+                return;
+            }
 
             loading.classList.remove('hidden');
 
@@ -1723,7 +1731,9 @@
             const sizeSelect = document.getElementById('req-size');
             
             sizeSelect.innerHTML = '<option value="">-- Select Size --</option>';
-            if (!itemName) return;
+            if (!itemName) {
+                return;
+            }
 
             const matchingItems = fullInventory.filter(i => i.COMMONNAME === itemName);
             
@@ -1827,7 +1837,9 @@
             const rep = document.getElementById('req-rep').value;
             const custInput = document.getElementById('req-cust').value.toUpperCase().trim();
             
-            if (pendingRequestItems.length === 0) return;
+            if (pendingRequestItems.length === 0) {
+                return;
+            }
 
             // PAUSE SYNC FOR 60 SECONDS TO PREVENT VANISHING ITEMS
             syncPauseUntil = new Date().getTime() + 60000; 
@@ -1909,7 +1921,9 @@
         // ==========================================
 
         function approveAndSendToRep(item) {
-            if (!confirm("Approve this request and email the Sales Rep?")) return;
+            if (!confirm("Approve this request and email the Sales Rep?")) {
+                return;
+            }
 
             const repEntry = STATIC_DIRECTORY.find(d => d.name === item.SALESREP);
             const repEmail = repEntry ? repEntry.email : "dylan_collyge@greenleafnursery.com"; 
@@ -2272,7 +2286,9 @@
         }
 
         function markRequestComplete() {
-            if (!activeItem) return;
+            if (!activeItem) {
+                return;
+            }
             
             syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
@@ -2549,7 +2565,9 @@
         }
 
         function deletePhoto(index) {
-            if (!confirm("Are you sure you want to delete this photo?")) return;
+            if (!confirm("Are you sure you want to delete this photo?")) {
+                return;
+            }
             
             if (autoSyncTimer) clearInterval(autoSyncTimer);
             
