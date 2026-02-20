@@ -45,20 +45,6 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; 
             max-width: 360px; text-align: center; 
         }
-        .user-btn { 
-            width: 100%; padding: 12px; margin-bottom: 10px; 
-            border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; 
-            color: #374151; background: white; display: flex; 
-            align-items: center; gap: 10px; transition: all 0.2s; 
-        }
-        .user-btn:hover { 
-            border-color: var(--brand-gold); background-color: #fffbeb; 
-        }
-        .pin-input { 
-            width: 100%; padding: 14px; font-size: 24px; text-align: center; 
-            letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; 
-            margin-bottom: 20px; outline: none; display: none; 
-        }
         
         #toast-notification { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
@@ -465,12 +451,10 @@
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
             
-            <div id="login-buttons" class="hidden"></div>
-            
-            <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input tracking-widest" placeholder="ENTER PASSWORD">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
-                <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
+            <div id="login-container" class="hidden mt-4">
+                <input type="text" id="login-username" class="w-full p-3 font-bold border-2 border-gray-200 rounded-lg mb-3 outline-none focus:border-[#007a4d]" placeholder="Username">
+                <input type="password" id="login-password" class="w-full p-3 font-bold tracking-widest border-2 border-gray-200 rounded-lg mb-4 outline-none focus:border-[#007a4d]" placeholder="Password">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md" onclick="handleLogin()">LOGIN</button>
             </div>
 
             <div id="reset-password-container" class="hidden mt-4 w-full">
@@ -481,9 +465,9 @@
                 <button class="text-gray-400 text-xs mt-3 underline w-full text-center" onclick="resetLogin()">Cancel</button>
             </div>
             
-            <div id="loading-spinner" class="flex flex-col items-center">
-                <i class="ph-bold ph-spinner animate-spin text-3xl text-gray-400 mb-2"></i>
-                <div id="loading-text" class="text-gray-500 font-bold text-sm text-center">Loading Data...</div>
+            <div id="loading-spinner" class="flex flex-col items-center mt-6">
+                <i class="ph-bold ph-spinner animate-spin text-3xl text-[#007a4d] mb-2"></i>
+                <div id="loading-text" class="text-gray-500 font-bold text-sm text-center">Loading System...</div>
             </div>
         </div>
     </div>
@@ -987,67 +971,49 @@
                     if (data.status === 'success' && data.data && data.data.length > 0) {
                         SYSTEM_USERS = data.data;
                     }
-                    buildLoginButtons();
+                    showLoginForm();
                 })
                 .catch(err => {
-                    buildLoginButtons();
+                    showLoginForm();
                 });
         }
 
-        function buildLoginButtons() {
+        function showLoginForm() {
             document.getElementById('loading-spinner').classList.add('hidden');
-            const btnContainer = document.getElementById('login-buttons');
-            btnContainer.classList.remove('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
+        }
+
+        function handleLogin() { 
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const passwordInput = document.getElementById('login-password').value;
             
-            let html = "";
-            SYSTEM_USERS.forEach(u => {
-                const isAdminLabel = u.role === "Admin" ? " (Admin)" : "";
-                const bgColor = `bg-${u.color}-100`;
-                const textColor = `text-${u.color}-600`;
+            if(!usernameInput || !passwordInput) {
+                showToast("Error", "Please enter username and password", true);
+                return;
+            }
+
+            const userObj = SYSTEM_USERS.find(u => u.name.toLowerCase() === usernameInput.toLowerCase());
+
+            if (userObj && passwordInput === userObj.pin) { 
+                targetLoginUser = userObj; 
                 
-                html += `
-                <button class="user-btn" onclick="selectUser('${u.name}')">
-                    <div class="w-8 h-8 rounded-full ${bgColor} flex items-center justify-center ${textColor} font-bold">${u.initial}</div>
-                    ${u.name}${isAdminLabel}
-                </button>`;
-            });
-            btnContainer.innerHTML = html;
-        }
-
-        function selectUser(name) { 
-            const userObj = SYSTEM_USERS.find(u => u.name === name);
-            if (!userObj) return;
-
-            targetLoginUser = userObj;
-            document.getElementById('login-buttons').classList.add('hidden'); 
-            document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; 
-            document.getElementById('pin-code').focus(); 
-        }
-        
-        function verifyPin() { 
-            const entered = document.getElementById('pin-code').value;
-            
-            if (entered === targetLoginUser.pin) { 
-                // Check if they need to reset their password
                 if (targetLoginUser.resetRequired) {
-                    document.getElementById('pin-container').classList.add('hidden');
+                    document.getElementById('login-container').classList.add('hidden');
                     document.getElementById('reset-password-container').classList.remove('hidden');
                     document.getElementById('new-password').focus();
                     return;
                 }
 
-                // Standard Login Proceed
                 currentUser = targetLoginUser.name;
                 isAdmin = (targetLoginUser.role === "Admin");
                 
-                document.getElementById('pin-container').classList.add('hidden'); 
+                document.getElementById('login-container').classList.add('hidden'); 
                 document.getElementById('loading-spinner').classList.remove('hidden'); 
                 document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
                 
                 fetchData(); 
             } else { 
-                showToast("Error", "Incorrect Password", true); 
+                showToast("Error", "Invalid Username or Password", true); 
             } 
         }
 
@@ -1068,7 +1034,6 @@
             document.getElementById('loading-spinner').classList.remove('hidden');
             document.getElementById('loading-text').innerText = "Updating Credentials...";
 
-            // Send new password to Google Sheets
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify({
@@ -1081,7 +1046,6 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Update local object so they don't get trapped in a loop
                     targetLoginUser.pin = pass1;
                     targetLoginUser.resetRequired = false;
                     
@@ -1090,7 +1054,7 @@
                     
                     document.getElementById('loading-text').innerText = "Syncing Cloud Data...";
                     showToast("Success", "Password updated successfully!");
-                    fetchData(); // Boot up the app
+                    fetchData(); 
                 } else {
                     showToast("Error", data.message, true);
                     resetLogin();
@@ -1103,11 +1067,11 @@
         }
         
         function resetLogin() { 
-            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-container').classList.remove('hidden'); 
             document.getElementById('reset-password-container').classList.add('hidden');
-            document.getElementById('login-buttons').classList.remove('hidden'); 
             document.getElementById('loading-spinner').classList.add('hidden'); 
-            document.getElementById('pin-code').value = "";
+            document.getElementById('login-username').value = "";
+            document.getElementById('login-password').value = "";
             document.getElementById('new-password').value = "";
             document.getElementById('confirm-password').value = "";
             targetLoginUser = null;
