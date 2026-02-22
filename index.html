@@ -3079,4 +3079,1560 @@
                 h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
             }
             if (activeItem.SAVED_PICK) {
-                h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK
+                h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
+            }
+            if (activeItem.SAVED_NOTE) {
+                h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
+            }
+            
+            if (activeItem.SAVED_PHOTO_LINK) {
+                photoDiv.classList.remove('hidden'); 
+                const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
+                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                let phHtml = "";
+                
+                for (let i = 0; i < urls.length; i++) {
+                    const url = urls[i];
+                    const dispName = names[i] || `Photo ${i+1}`; 
+                    let thumbUrl = url; 
+                    const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if (idMatch && idMatch[1]) { 
+                        thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                    }
+                    
+                    let deleteBtn = ""; 
+                    if (isAdmin) { 
+                        deleteBtn = `
+                        <div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer">
+                            <i class="ph-bold ph-trash text-xl"></i>
+                        </div>`; 
+                    }
+                    
+                    phHtml += `
+                    <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50">
+                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                            <img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy">
+                            <div class="flex-grow min-w-0">
+                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                <div class="text-[10px] text-gray-400">Tap to view full size</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                        </a>
+                        ${deleteBtn}
+                    </div>`;
+                }
+                
+                photoList.innerHTML = phHtml; 
+                h += `
+                <div class="overview-card full-width">
+                    <div class="overview-label">Photos</div>
+                    <div class="overview-val">${urls.length} Attached</div>
+                </div>`;
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
+            
+            if (h) { 
+                grid.innerHTML = h; 
+                box.classList.remove('hidden'); 
+            } else { 
+                box.classList.add('hidden'); 
+            }
+        }
+
+        // ==========================================
+        // BATCH SELECTION LOGIC
+        // ==========================================
+
+        function updateSelected() { 
+            if (selectedIdx.length > 0) { 
+                document.getElementById('action-bar').classList.add('visible'); 
+            } else { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+            } 
+        }
+
+        function handleCardClick(idx, source) {
+            if (isBatch) {
+                toggleSelect(idx); 
+                return;
+            }
+            openDetail(idx, source);
+        }
+
+        function toggleSelect(idx) {
+            const indexInArray = selectedIdx.indexOf(idx);
+            
+            if (indexInArray > -1) {
+                selectedIdx.splice(indexInArray, 1); 
+            } else {
+                selectedIdx.push(idx); 
+            }
+
+            const row = document.getElementById('row-' + idx);
+            const cb = document.getElementById('cb-' + idx);
+            
+            if (row && cb) {
+                const isSelected = selectedIdx.includes(idx);
+                cb.checked = isSelected;
+                if (isSelected) {
+                    row.classList.add('selecting');
+                } else {
+                    row.classList.remove('selecting');
+                }
+            }
+            
+            updateSelected(); 
+        }
+        
+        function openAssignModal() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            } 
+            
+            document.getElementById('assign-count').innerText = selectedIdx.length + " Items";
+            document.getElementById('flyer-options-box').classList.add('hidden');
+            document.querySelector('input[name="assign_type"][value="requests"]').checked = true; 
+            document.getElementById('assign-note').value = "";
+            
+            const checkContainer = document.getElementById('assign-checkboxes');
+            let checkHtml = "";
+            
+            for (let i = 0; i < SYSTEM_USERS.length; i++) {
+                let user = SYSTEM_USERS[i];
+                checkHtml += `
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-assign-${user.name}" value="${user.name}" class="assign-user-checkbox w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full bg-${user.color}-100 flex items-center justify-center text-${user.color}-600 font-bold text-xs">${user.initial}</div>
+                    <span class="font-bold text-sm">${user.name}</span>
+                </label>`;
+            }
+            checkContainer.innerHTML = checkHtml;
+
+            document.getElementById('assign-modal').style.display = 'flex'; 
+        }
+
+        // ==========================================
+        // BATCH TEXT & EMAIL GENERATORS
+        // ==========================================
+        
+        function getBatchHtml() {
+            let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
+            
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx];
+                
+                html += `
+                <div style="margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                    <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                    <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
+                
+                if (item.SAVED_MATCH) {
+                    html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                }
+                if (item.SAVED_PICK) {
+                    html += `Pick: ${item.SAVED_PICK}<br>`;
+                }
+                if (item.SAVED_SALES_DESC) {
+                    html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
+                }
+                if (item.SAVED_NOTE) {
+                    html += `Note: ${item.SAVED_NOTE}<br>`;
+                }
+                
+                if (item.SAVED_PHOTO_LINK) {
+                    html += `<div style="margin-top: 5px;"><strong>Photos:</strong><br>`;
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    
+                    for (let u = 0; u < urls.length; u++) {
+                        const url = urls[u];
+                        const name = names[u] || `Photo ${u+1}`; 
+                        html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
+                    }
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+            return html + "</div>";
+        }
+
+        function getBatchText() {
+            let text = "";
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx];
+                
+                text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}\n`;
+                
+                if (item.SAVED_MATCH) {
+                    text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                }
+                if (item.SAVED_PICK) {
+                    text += `Pick: ${item.SAVED_PICK}\n`;
+                }
+                if (item.SAVED_SALES_DESC) {
+                    text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
+                }
+                if (item.SAVED_NOTE) {
+                    text += `Note: ${item.SAVED_NOTE}\n`;
+                }
+                
+                if (item.SAVED_PHOTO_LINK) {
+                    text += `Photos:\n`; 
+                    const urls = item.SAVED_PHOTO_LINK.split(','); 
+                    const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
+                    
+                    for (let u = 0; u < urls.length; u++) {
+                        const url = urls[u];
+                        const name = names[u] || `Photo ${u+1}`; 
+                        text += `• ${name} (${url})\n`; 
+                    }
+                }
+                text += `\n`;
+            }
+            return text;
+        }
+
+        function batchText() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            window.location.href = "sms:?body=" + encodeURIComponent(getBatchText()); 
+        }
+        
+        function batchEmail() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Ready to paste into your email app."); 
+                    setTimeout(() => { 
+                        window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                    }, 1500); 
+                    isBatch = false; 
+                    toggleBatch();
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                    window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+                });
+            } else { 
+                fallbackCopy(html); 
+                window.location.href = `mailto:?subject=Greenleaf%20Report`; 
+            }
+        }
+        
+        function copyBatchData() { 
+            if (selectedIdx.length === 0) { 
+                showToast("Warning", "No items selected.", true); 
+                return; 
+            }
+            
+            const html = getBatchHtml(); 
+            const text = getBatchText();
+            const blobHtml = new Blob([html], { type: "text/html" }); 
+            const blobText = new Blob([text], { type: "text/plain" });
+            
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const data = [new ClipboardItem({ ["text/html"]: blobHtml, ["text/plain"]: blobText })];
+                navigator.clipboard.write(data).then(() => { 
+                    showToast("Copied!", "Data copied to clipboard."); 
+                    isBatch = false; 
+                    toggleBatch(); 
+                }).catch(err => { 
+                    fallbackCopy(html); 
+                });
+            } else { 
+                fallbackCopy(html); 
+            }
+        }
+
+        function fallbackCopy(html) {
+            const tempDiv = document.createElement("div"); 
+            tempDiv.innerHTML = html; 
+            tempDiv.style.position = "fixed"; 
+            tempDiv.style.left = "-9999px"; 
+            document.body.appendChild(tempDiv);
+            
+            const range = document.createRange(); 
+            range.selectNodeContents(tempDiv); 
+            const sel = window.getSelection(); 
+            sel.removeAllRanges(); 
+            sel.addRange(range); 
+            
+            document.execCommand('copy'); 
+            document.body.removeChild(tempDiv);
+            
+            showToast("Copied!", "Data copied (Legacy Mode)."); 
+            isBatch = false; 
+            toggleBatch();
+        }
+
+        function batchAssign() {
+            const assignType = document.querySelector('input[name="assign_type"]:checked').value;
+            const noteText = document.getElementById('assign-note').value;
+            
+            let selectedUsers = []; 
+            const checkInputs = document.querySelectorAll('.assign-user-checkbox');
+            for (let i = 0; i < checkInputs.length; i++) {
+                if (checkInputs[i].checked) {
+                    selectedUsers.push(checkInputs[i].value);
+                }
+            }
+
+            if (selectedUsers.length === 0) { 
+                showToast("Warning", "Select at least one person.", true); 
+                return; 
+            }
+            
+            let assignStr = selectedUsers.join(" & ");
+            let taskTab = assignType; 
+            let projectName = "";
+
+            if (assignType === 'flyer') {
+                const flyerCat = document.querySelector('input[name="flyer_cat"]:checked').value;
+                const projName = document.getElementById('flyer-project-name').value;
+                if (!projName) { 
+                    showToast("Warning", "Project Name required for Flyer.", true); 
+                    return; 
+                }
+                taskTab = flyerCat; 
+                assignStr = projName; 
+                projectName = projName;
+            }
+
+            const updates = [];
+            for (let i = 0; i < selectedIdx.length; i++) {
+                let idx = selectedIdx[i];
+                let item = fullInventory[idx]; 
+                
+                let newItemNote = item.SAVED_NOTE || "";
+                if (noteText) {
+                    if (newItemNote) {
+                        newItemNote = newItemNote + " | Directions: " + noteText;
+                    } else {
+                        newItemNote = "Directions: " + noteText;
+                    }
+                }
+
+                item.REQUEST_ASSIGNED_TO = assignStr; 
+                item.TASK_TAB = taskTab; 
+                item.SAVED_NOTE = newItemNote;
+                item.TIMESTAMP = new Date().toISOString(); 
+
+                updates.push({ 
+                    id: item.UNIQUE_ID, 
+                    requestAssignedTo: item.REQUEST_ASSIGNED_TO, 
+                    taskTab: item.TASK_TAB, 
+                    note: item.SAVED_NOTE, 
+                    user: currentUser 
+                }); 
+            }
+
+            let assignTitle = `New Tasks Assigned by ${currentUser}`;
+            if (assignType === 'flyer') {
+                assignTitle = `New Flyer Project: ${projectName}`;
+            }
+
+            const itemsForEmail = [];
+            for (let i = 0; i < selectedIdx.length; i++) {
+                itemsForEmail.push(fullInventory[selectedIdx[i]]);
+            }
+            
+            const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
+
+            // --- FIXED EMAIL RECIPIENT LOGIC ---
+            let recipients = [...MANAGERS_EMAILS];
+            selectedUsers.forEach(uName => {
+                const email = getRepEmail(uName);
+                if (email) recipients.push(email);
+            });
+            
+            const senderEmail = getRepEmail(currentUser);
+            if (senderEmail) recipients.push(senderEmail);
+            
+            recipients = [...new Set(recipients)];
+
+            const payload = {
+                type: "batch_update", 
+                updates: updates,
+                emailData: recipients.length > 0 ? {
+                    to: recipients.join(','),
+                    subject: assignTitle,
+                    htmlBody: emailBody
+                } : null
+            };
+
+            document.getElementById('assign-modal').style.display = 'none'; 
+            toggleBatch(); 
+            showToast("Saving", "Assigned & Email Sent...");
+
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if (data.status === 'success') { 
+                    fetchData(true); 
+                } else { 
+                    showToast("Error", data.message, true); 
+                } 
+            })
+            .catch(err => { 
+                showToast("Network Error", "Saved offline.", true); 
+            });
+        }
+
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            
+            if (item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if (idMatch && idMatch[1]) { 
+                    thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; 
+                } 
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
+            }
+
+            const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
+            const lotCode = (item.LOTCODE || '').trim().toUpperCase();
+            const hasPriority = parseFloat(item.PRIORITY) > 0;
+            
+            let statusClass = 'status-default'; 
+
+            if (hsCode === 'S') {
+                statusClass = 'status-red';
+            } else if (hsCode === 'H' && hasPriority) {
+                statusClass = 'status-yellow';
+            } else if (lotCode === 'U1') {
+                statusClass = 'status-blue';
+            } else if (lotCode === 'U2') {
+                statusClass = 'status-purple';
+            } else if (lotCode === 'U3') {
+                statusClass = 'status-orange';
+            } else if (lotCode === 'X') {
+                statusClass = 'status-black';
+            } else if (!hsCode && hasPriority) {
+                statusClass = 'status-green';
+            }
+
+            let isChecked = "";
+            let isSelecting = "";
+            
+            if (selectedIdx.includes(idx)) {
+                isChecked = "checked";
+                isSelecting = "selecting";
+            }
+
+            let requestInfo = "";
+            if (item.UNIQUE_ID.includes("-")) { 
+                 if (item.QTY) {
+                     requestInfo += `<span class="bg-blue-100 text-blue-800 text-[10px] px-1 rounded mr-1">Req: ${item.QTY}</span>`;
+                 }
+                 if (item.SHIPDATE) {
+                     requestInfo += `<span class="bg-gray-100 text-gray-800 text-[10px] px-1 rounded">Ship: ${item.SHIPDATE}</span>`;
+                 }
+            }
+
+            return `
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
+                <div class="inv-card flex-grow flex items-center ${isSelecting} ${statusClass}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
+                        <div class="mt-1">${requestInfo}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        function startLongPress() { 
+            longPressTimer = setTimeout(() => { 
+                if (!isBatch) {
+                    toggleBatch(); 
+                }
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+        
+        function toggleBatch() { 
+            isBatch = !isBatch; 
+            
+            if (isBatch) {
+                document.body.classList.add('batch-mode');
+                document.getElementById('batch-indicator').style.display = 'block';
+            } else {
+                document.body.classList.remove('batch-mode');
+                document.getElementById('batch-indicator').style.display = 'none';
+            }
+            
+            if (!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+                selectedIdx = []; 
+                
+                const checkboxes = document.querySelectorAll('.select-check');
+                for (let i = 0; i < checkboxes.length; i++) {
+                    checkboxes[i].checked = false;
+                }
+                
+                const cards = document.querySelectorAll('.inv-card');
+                for (let i = 0; i < cards.length; i++) {
+                    cards[i].classList.remove('selecting');
+                }
+            } else {
+                if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+                if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
+                if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
+                if (!document.getElementById('view-viewer').classList.contains('hidden')) renderViewerNames();
+                if (!document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
+                if (!document.getElementById('view-review').classList.contains('hidden')) renderReviewContent();
+                if (!document.getElementById('view-salesoffice').classList.contains('hidden')) renderSalesOffice();
+                if (!document.getElementById('view-production').classList.contains('hidden')) renderProductionView();
+                
+                updateSelected();
+            }
+        }
+
+        // ==========================================
+        // PHOTO CAPTURE & EDITING
+        // ==========================================
+
+        function handlePhotoUpload(input) {
+            if (!input.files || input.files.length === 0) return;
+            currentFile = input.files[0];
+            
+            editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-pro').classList.add('active');
+            
+            document.getElementById('view-photo-editor').style.display = 'flex';
+            processAndRenderImage();
+            input.value = ""; 
+        }
+
+        function toggleEdit(type) {
+            const btn = document.getElementById('btn-' + type);
+            if (type === 'pro' || type === 'logo' || type === 'dirt') {
+                editSettings[type] = !editSettings[type];
+                if (editSettings[type]) btn.classList.add('active');
+                else btn.classList.remove('active');
+            } else {
+                editSettings.bg = type;
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    if (b.id.startsWith('btn-bg')) b.classList.remove('active');
+                });
+                btn.classList.add('active');
+            }
+            processAndRenderImage();
+        }
+
+        function closePhotoEditor() {
+            document.getElementById('view-photo-editor').style.display = 'none';
+            currentFile = null;
+        }
+
+        function processAndRenderImage() {
+            if (!currentFile) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('photo-canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const MAX_SIZE = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    if (editSettings.bg !== 'none') {
+                        if (editSettings.bg === 'bg-lav') ctx.fillStyle = '#f3e8ff';
+                        if (editSettings.bg === 'bg-grn') ctx.fillStyle = '#dcfce7';
+                        if (editSettings.bg === 'bg-gry') ctx.fillStyle = '#f3f4f6';
+                        ctx.fillRect(0, 0, width, height);
+                    }
+
+                    ctx.filter = 'none';
+                    if (editSettings.pro) {
+                        ctx.filter = 'contrast(1.1) saturate(1.1) brightness(1.05)';
+                    }
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    ctx.filter = 'none';
+
+                    if (editSettings.dirt) {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                        ctx.fillRect(0, height - (height * 0.15), width, height * 0.15);
+                    }
+
+                    if (editSettings.logo) {
+                        const logoImg = new Image();
+                        logoImg.onload = function() {
+                            const logoWidth = width * 0.25;
+                            const logoHeight = logoImg.height * (logoWidth / logoImg.width);
+                            ctx.drawImage(logoImg, width - logoWidth - 20, 20, logoWidth, logoHeight);
+                            updatePreview(canvas);
+                        };
+                        logoImg.src = 'GNC LOGO.png'; 
+                    } else {
+                        updatePreview(canvas);
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(currentFile);
+        }
+
+        function updatePreview(canvas) {
+            document.getElementById('editor-preview').src = canvas.toDataURL('image/jpeg', 0.85);
+        }
+
+        function finalizeUpload() {
+            if (!activeItem) return;
+            const canvas = document.getElementById('photo-canvas');
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const base64Data = dataUrl.split(",")[1];
+
+            const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+            
+            // Build the dynamic filename
+            let baseName = activeItem.COMMONNAME.replace(/[^a-zA-Z0-9]/g, '');
+            if (activeItem.CONTSIZE) baseName += "_" + activeItem.CONTSIZE.replace(/[^a-zA-Z0-9]/g, '');
+            
+            const filename = `${baseName}_${todayStr}_${Math.floor(Math.random() * 1000)}.jpg`;
+
+            showToast("Uploading...", "Saving photo to Drive.");
+            document.getElementById('view-photo-editor').style.display = 'none';
+
+            let photoType = "General";
+            if (currentOriginView === 'tasks' && activeItem.TASK_TAB === 'requests') {
+                photoType = "Request";
+            } else if (currentOriginView === 'tasks' && activeItem.TASK_TAB === 'location') {
+                photoType = "Location";
+            } else if (currentOriginView === 'tasks' && activeItem.TASK_TAB === 'season') {
+                photoType = "Season";
+            }
+
+            const reqBody = {
+                type: "image",
+                filename: filename,
+                mimeType: "image/jpeg",
+                image: base64Data,
+                photoType: photoType,
+                taskTab: activeItem.TASK_TAB || "",
+                salesRep: activeItem.SALESREP || "",
+                customerName: activeItem.CUSTOMERNAME || "",
+                consigneeName: activeItem.CONSIGNEENAME || ""
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(reqBody)
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    let oldLinks = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
+                    oldLinks.push(data.url);
+                    activeItem.SAVED_PHOTO_LINK = oldLinks.join(',');
+
+                    let oldNames = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                    oldNames.push(filename);
+                    activeItem.SAVED_PHOTO_NAME = oldNames.join(',');
+
+                    saveData(true); 
+                    showToast("Success", "Photo uploaded and saved.");
+                } else {
+                    showToast("Error", data.message, true);
+                }
+            }).catch(err => {
+                showToast("Network Error", "Photo upload failed.", true);
+            });
+        }
+
+        function deletePhoto(index) {
+            if (!confirm("Remove this photo from the item?")) return;
+            
+            let links = activeItem.SAVED_PHOTO_LINK.split(',');
+            let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+            
+            links.splice(index, 1);
+            names.splice(index, 1);
+            
+            activeItem.SAVED_PHOTO_LINK = links.join(',');
+            activeItem.SAVED_PHOTO_NAME = names.join(',');
+            
+            saveData(true);
+        }
+
+        // ==========================================
+        // FILTERS AND MENUS
+        // ==========================================
+
+        function toggleMs(id) {
+            document.querySelectorAll('.ms-options').forEach(el => {
+                if (el.id !== id) el.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.ms-container')) {
+                document.querySelectorAll('.ms-options').forEach(el => el.classList.remove('show'));
+            }
+        });
+
+        function buildMultiSelect(id, items, stateArray, callback) {
+            const container = document.getElementById(id);
+            let html = "";
+            items.forEach(item => {
+                const isSelected = stateArray.includes(item);
+                html += `
+                <label class="ms-option ${isSelected ? 'selected' : ''}">
+                    <input type="checkbox" value="${item}" ${isSelected ? 'checked' : ''} onchange="${callback}('${item}', this.checked, '${id}')">
+                    <span>${item}</span>
+                </label>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function initDriveFilters() {
+            const allGroups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || 'N/A'))].sort();
+            buildMultiSelect('ms-group', allGroups, driveFilterState.groups, 'handleDriveFilterChange');
+            
+            const allSeasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || '0'))].sort((a,b) => parseFloat(a) - parseFloat(b));
+            buildMultiSelect('ms-season', allSeasons, driveFilterState.seasons, 'handleDriveFilterChange');
+
+            const allLots = [...new Set(fullInventory.map(i => i.LOTCODE || 'N/A'))].sort();
+            buildMultiSelect('ms-lot', allLots, driveFilterState.lots, 'handleDriveFilterChange');
+        }
+
+        function handleDriveFilterChange(val, isChecked, type) {
+            let targetArray;
+            let labelId;
+            if (type === 'ms-group') { targetArray = driveFilterState.groups; labelId = 'lbl-group'; }
+            if (type === 'ms-season') { targetArray = driveFilterState.seasons; labelId = 'lbl-season'; }
+            if (type === 'ms-lot') { targetArray = driveFilterState.lots; labelId = 'lbl-lot'; }
+
+            if (isChecked) {
+                targetArray.push(val);
+            } else {
+                const idx = targetArray.indexOf(val);
+                if (idx > -1) targetArray.splice(idx, 1);
+            }
+
+            const lbl = document.getElementById(labelId);
+            if (targetArray.length === 0) {
+                lbl.innerText = type.replace('ms-', '').charAt(0).toUpperCase() + type.replace('ms-', '').slice(1);
+                lbl.classList.remove('text-blue-600');
+            } else {
+                lbl.innerText = `${targetArray.length} Selected`;
+                lbl.classList.add('text-blue-600');
+            }
+
+            const container = document.getElementById(type);
+            const checkboxes = container.querySelectorAll('input');
+            checkboxes.forEach(cb => {
+                if (cb.value === val) {
+                    if (isChecked) cb.closest('.ms-option').classList.add('selected');
+                    else cb.closest('.ms-option').classList.remove('selected');
+                }
+            });
+
+            renderDriveView();
+        }
+
+        function resetDriveFilters() {
+            driveFilterState.groups = [];
+            driveFilterState.seasons = [];
+            driveFilterState.lots = [];
+            document.getElementById('lts-value').value = '';
+            
+            document.getElementById('lbl-group').innerText = 'Group';
+            document.getElementById('lbl-group').classList.remove('text-blue-600');
+            document.getElementById('lbl-season').innerText = 'Season';
+            document.getElementById('lbl-season').classList.remove('text-blue-600');
+            document.getElementById('lbl-lot').innerText = 'Lot';
+            document.getElementById('lbl-lot').classList.remove('text-blue-600');
+            
+            document.getElementById('drive-search').value = '';
+            driveSearchTerm = '';
+            
+            initDriveFilters();
+            renderDriveView();
+        }
+
+        // ==========================================
+        // DRIVE MODE
+        // ==========================================
+
+        function handleDriveSearch(val) {
+            driveSearchTerm = val.toLowerCase();
+            renderDriveView();
+        }
+
+        function renderDriveNames() {
+            driveViewLevel = 0;
+            selectedDriveName = null;
+            selectedDriveSize = null;
+            document.getElementById('drive-crumb').innerText = '';
+            renderDriveView();
+        }
+
+        function renderDriveSizes(name) {
+            driveViewLevel = 1;
+            selectedDriveName = name;
+            selectedDriveSize = null;
+            document.getElementById('drive-crumb').innerText = name;
+            renderDriveView();
+        }
+
+        function renderDriveItems(size) {
+            driveViewLevel = 2;
+            selectedDriveSize = size;
+            document.getElementById('drive-crumb').innerText = selectedDriveName + " - " + size;
+            renderDriveView();
+        }
+
+        function renderDriveView() {
+            const container = document.getElementById('drive-content');
+            
+            let filtered = fullInventory;
+            if (driveFilterState.groups.length > 0) filtered = filtered.filter(i => driveFilterState.groups.includes(i.PLANTGROUPCODE || 'N/A'));
+            if (driveFilterState.seasons.length > 0) filtered = filtered.filter(i => driveFilterState.seasons.includes(String(i.SEASONSUPPLY || '0')));
+            if (driveFilterState.lots.length > 0) filtered = filtered.filter(i => driveFilterState.lots.includes(i.LOTCODE || 'N/A'));
+            
+            const ltsVal = document.getElementById('lts-value').value;
+            const ltsOp = document.getElementById('lts-operator').value;
+            if (ltsVal !== '') {
+                const v = parseFloat(ltsVal);
+                filtered = filtered.filter(i => {
+                    const lts = parseFloat(i.S_LTS || i.SLTS || 0);
+                    if (ltsOp === 'gt') return lts > v;
+                    if (ltsOp === 'lt') return lts < v;
+                    return true;
+                });
+            }
+
+            if (driveSearchTerm) {
+                filtered = filtered.filter(i => {
+                    const common = (i.COMMONNAME || "").toLowerCase();
+                    const loc = (i.LOCATIONCODE || "").toLowerCase();
+                    return common.includes(driveSearchTerm) || loc.includes(driveSearchTerm);
+                });
+            }
+
+            if (driveViewLevel === 0) {
+                const names = [...new Set(filtered.map(i => i.COMMONNAME))].sort();
+                let html = "";
+                for (let i = 0; i < names.length; i++) {
+                    const count = filtered.filter(item => item.COMMONNAME === names[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="renderDriveSizes('${names[i].replace(/'/g, "\\'")}')">
+                        <span class="font-bold text-lg">${names[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count} items</span>
+                    </div>`;
+                }
+                if (names.length === 0) html = `<div class="p-8 text-center text-gray-400">No items match filters.</div>`;
+                container.innerHTML = html;
+
+            } else if (driveViewLevel === 1) {
+                let html = `
+                <div class="back-btn" onclick="renderDriveNames()">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Names
+                </div>`;
+                
+                const sizes = [...new Set(filtered.filter(i => i.COMMONNAME === selectedDriveName).map(i => i.CONTSIZE))].sort();
+                for (let i = 0; i < sizes.length; i++) {
+                    const count = filtered.filter(item => item.COMMONNAME === selectedDriveName && item.CONTSIZE === sizes[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="renderDriveItems('${sizes[i]}')">
+                        <span class="font-bold text-lg">${sizes[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count} items</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+
+            } else if (driveViewLevel === 2) {
+                let html = `
+                <div class="back-btn" onclick="renderDriveSizes('${selectedDriveName.replace(/'/g, "\\'")}')">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
+                </div>`;
+                
+                const items = filtered.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
+                for (let i = 0; i < items.length; i++) {
+                    html += createRowHtml(items[i], fullInventory.indexOf(items[i]), 'drive');
+                }
+                container.innerHTML = html;
+            }
+        }
+
+        // ==========================================
+        // INVENTORY MODE
+        // ==========================================
+
+        function handleInventorySearch(val) {
+            inventorySearchTerm = val.toLowerCase();
+            renderInventoryView();
+        }
+
+        function toggleInventorySeason(season, el) {
+            document.querySelectorAll('#inv-season-bar .season-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            inventorySelectedSeasons = [season];
+            inventoryViewLevel = 0;
+            renderInventoryView();
+        }
+
+        function renderInventoryNames() {
+            inventoryViewLevel = 0;
+            selectedInventoryName = null;
+            selectedInventorySize = null;
+            document.getElementById('inventory-crumb').innerText = '';
+            renderInventoryView();
+        }
+
+        function renderInventorySizes(name) {
+            inventoryViewLevel = 1;
+            selectedInventoryName = name;
+            selectedInventorySize = null;
+            document.getElementById('inventory-crumb').innerText = name;
+            renderInventoryView();
+        }
+
+        function renderInventoryItems(size) {
+            inventoryViewLevel = 2;
+            selectedInventorySize = size;
+            document.getElementById('inventory-crumb').innerText = selectedInventoryName + " - " + size;
+            renderInventoryView();
+        }
+
+        function renderInventoryView() {
+            const container = document.getElementById('inventory-content');
+            
+            let filtered = fullInventory;
+            
+            if (!inventorySelectedSeasons.includes('ALL')) {
+                filtered = filtered.filter(i => inventorySelectedSeasons.includes(i.LOTCODE));
+            }
+
+            if (inventorySearchTerm) {
+                filtered = filtered.filter(i => {
+                    const common = (i.COMMONNAME || "").toLowerCase();
+                    const loc = (i.LOCATIONCODE || "").toLowerCase();
+                    const code = (i.ITEMCODE || "").toLowerCase();
+                    return common.includes(inventorySearchTerm) || loc.includes(inventorySearchTerm) || code.includes(inventorySearchTerm);
+                });
+            }
+
+            if (inventoryViewLevel === 0) {
+                const names = [...new Set(filtered.map(i => i.COMMONNAME))].sort();
+                let html = "";
+                for (let i = 0; i < names.length; i++) {
+                    const count = filtered.filter(item => item.COMMONNAME === names[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="renderInventorySizes('${names[i].replace(/'/g, "\\'")}')">
+                        <span class="font-bold text-lg">${names[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                if (names.length === 0) html = `<div class="p-8 text-center text-gray-400">No inventory found.</div>`;
+                container.innerHTML = html;
+
+            } else if (inventoryViewLevel === 1) {
+                let html = `
+                <div class="back-btn" onclick="renderInventoryNames()">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Names
+                </div>`;
+                
+                const sizes = [...new Set(filtered.filter(i => i.COMMONNAME === selectedInventoryName).map(i => i.CONTSIZE))].sort();
+                for (let i = 0; i < sizes.length; i++) {
+                    const count = filtered.filter(item => item.COMMONNAME === selectedInventoryName && item.CONTSIZE === sizes[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="renderInventoryItems('${sizes[i]}')">
+                        <span class="font-bold text-lg">${sizes[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+
+            } else if (inventoryViewLevel === 2) {
+                let html = `
+                <div class="back-btn" onclick="renderInventorySizes('${selectedInventoryName.replace(/'/g, "\\'")}')">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
+                </div>`;
+                
+                const items = filtered.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize);
+                for (let i = 0; i < items.length; i++) {
+                    html += createRowHtml(items[i], fullInventory.indexOf(items[i]), 'inventory');
+                }
+                container.innerHTML = html;
+            }
+        }
+
+        // ==========================================
+        // PRODUCTION MODE
+        // ==========================================
+
+        function handleProductionSearch(val) {
+            productionSearchTerm = val.toLowerCase();
+            renderProductionView();
+        }
+
+        function toggleProductionSeason(season, el) {
+            document.querySelectorAll('#prod-season-bar .season-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            productionSelectedSeasons = [season];
+            productionViewLevel = 0;
+            renderProductionView();
+        }
+
+        function renderProductionNames() {
+            productionViewLevel = 0;
+            selectedProductionName = null;
+            selectedProductionSize = null;
+            document.getElementById('production-crumb').innerText = '';
+            renderProductionView();
+        }
+
+        function renderProductionSizes(name) {
+            productionViewLevel = 1;
+            selectedProductionName = name;
+            selectedProductionSize = null;
+            document.getElementById('production-crumb').innerText = name;
+            renderProductionView();
+        }
+
+        function renderProductionItems(size) {
+            productionViewLevel = 2;
+            selectedProductionSize = size;
+            document.getElementById('production-crumb').innerText = selectedProductionName + " - " + size;
+            renderProductionView();
+        }
+
+        function renderProductionView() {
+            const container = document.getElementById('production-content');
+            
+            let filtered = fullInventory;
+            
+            if (!productionSelectedSeasons.includes('ALL')) {
+                filtered = filtered.filter(i => productionSelectedSeasons.includes(i.LOTCODE));
+            }
+
+            if (productionSearchTerm) {
+                filtered = filtered.filter(i => {
+                    const common = (i.COMMONNAME || "").toLowerCase();
+                    const loc = (i.LOCATIONCODE || "").toLowerCase();
+                    const code = (i.ITEMCODE || "").toLowerCase();
+                    return common.includes(productionSearchTerm) || loc.includes(productionSearchTerm) || code.includes(productionSearchTerm);
+                });
+            }
+
+            if (productionViewLevel === 0) {
+                const names = [...new Set(filtered.map(i => i.COMMONNAME))].sort();
+                let html = "";
+                for (let i = 0; i < names.length; i++) {
+                    const myItems = filtered.filter(item => item.COMMONNAME === names[i]);
+                    const count = myItems.length;
+                    const evalCount = myItems.filter(item => item.GROWER_EVAL).length;
+                    
+                    let badge = "";
+                    if (evalCount > 0) {
+                        badge = `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded ml-2 font-bold">${evalCount} Evals</span>`;
+                    }
+
+                    html += `
+                    <div class="drill-item" onclick="renderProductionSizes('${names[i].replace(/'/g, "\\'")}')">
+                        <div class="flex items-center">
+                            <span class="font-bold text-lg">${names[i]}</span>
+                            ${badge}
+                        </div>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                if (names.length === 0) html = `<div class="p-8 text-center text-gray-400">No production items found.</div>`;
+                container.innerHTML = html;
+
+            } else if (productionViewLevel === 1) {
+                let html = `
+                <div class="back-btn" onclick="renderProductionNames()">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Names
+                </div>`;
+                
+                const sizes = [...new Set(filtered.filter(i => i.COMMONNAME === selectedProductionName).map(i => i.CONTSIZE))].sort();
+                for (let i = 0; i < sizes.length; i++) {
+                    const count = filtered.filter(item => item.COMMONNAME === selectedProductionName && item.CONTSIZE === sizes[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="renderProductionItems('${sizes[i]}')">
+                        <span class="font-bold text-lg">${sizes[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+
+            } else if (productionViewLevel === 2) {
+                let html = `
+                <div class="back-btn" onclick="renderProductionSizes('${selectedProductionName.replace(/'/g, "\\'")}')">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Sizes
+                </div>`;
+                
+                const items = filtered.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize);
+                for (let i = 0; i < items.length; i++) {
+                    html += createRowHtml(items[i], fullInventory.indexOf(items[i]), 'production');
+                }
+                container.innerHTML = html;
+            }
+        }
+
+        // ==========================================
+        // SOC & DIRECTORY
+        // ==========================================
+
+        function renderDirectoryView() {
+            const container = document.getElementById('directory-content');
+            const term = document.getElementById('directory-search').value.toLowerCase();
+            
+            let sortedReps = STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name));
+            
+            if (term) {
+                sortedReps = sortedReps.filter(r => r.name.toLowerCase().includes(term));
+            }
+            
+            if (sortedReps.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No Reps Found</div>`;
+                return;
+            }
+            
+            let html = "";
+            sortedReps.forEach(r => {
+                html += `
+                <div class="bg-white p-4 rounded-xl border border-gray-200 mb-3 flex justify-between items-center shadow-sm">
+                    <div>
+                        <div class="font-bold text-lg text-indigo-700">${r.name}</div>
+                        <div class="text-xs text-gray-500 font-bold mt-1">${r.email || 'No Email'}</div>
+                        <div class="text-xs text-gray-500 font-bold">${r.phone || 'No Phone'}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="tel:${r.phone}" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-lg"><i class="ph-fill ph-phone"></i></a>
+                        <a href="sms:${r.phone}" class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-lg"><i class="ph-fill ph-chat-circle"></i></a>
+                        <a href="mailto:${r.email}" class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-lg"><i class="ph-fill ph-envelope"></i></a>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function switchSocTab(tab) {
+            currentSocTab = tab;
+            socViewLevel = 0;
+            selectedSocRep = null;
+            selectedSocCust = null;
+            selectedSocCommon = null;
+            selectedSocSize = null;
+            
+            document.getElementById('st-reps').classList.remove('active');
+            document.getElementById('st-item').classList.remove('active');
+            document.getElementById('st-docks').classList.remove('active');
+            
+            document.getElementById('st-' + tab).classList.add('active');
+            
+            document.getElementById('soc-search').value = "";
+            document.getElementById('soc-status').innerText = "";
+            socData = []; 
+            renderSocView();
+        }
+
+        function fetchRepData(repName) {
+            document.getElementById('soc-content').innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8">
+                    <i class="ph-bold ph-spinner animate-spin text-4xl text-[#007a4d] mb-4"></i>
+                    <div class="text-gray-500 font-bold">Syncing ${repName}...</div>
+                </div>
+            `;
+            document.getElementById('soc-status').innerText = "Downloading live data...";
+            
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') { 
+                    socData = data.data; 
+                    selectedSocRep = repName;
+                    socViewLevel = 1;
+                    document.getElementById('soc-status').innerText = data.data.length + " rows loaded.";
+                    renderSocView();
+                } else { 
+                    showToast("Error", "Could not load data.", true);
+                    document.getElementById('soc-status').innerText = "";
+                    renderSocView();
+                }
+            })
+            .catch(err => {
+                showToast("Error", "Connection failed.", true);
+                document.getElementById('soc-status').innerText = "";
+                renderSocView();
+            });
+        }
+
+        function renderSocView() {
+            const container = document.getElementById('soc-content');
+            const term = document.getElementById('soc-search').value.toLowerCase();
+            
+            if (currentSocTab === 'reps') {
+                if (socViewLevel === 0) {
+                    let sortedReps = STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name));
+                    if (term) {
+                        sortedReps = sortedReps.filter(r => r.name.toLowerCase().includes(term));
+                    }
+                    let html = "";
+                    for (let r = 0; r < sortedReps.length; r++) {
+                        let rep = sortedReps[r];
+                        html += `
+                        <div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')">
+                            <div class="flex items-center gap-3">
+                                <i class="ph-fill ph-user text-[#007a4d] text-2xl"></i>
+                                <span class="font-bold text-lg">${rep.name}</span>
+                            </div>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                } else if (socViewLevel === 1) {
+                    let customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort();
+                    if (term) customers = customers.filter(c => c.toLowerCase().includes(term));
+                    
+                    let html = `
+                    <div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
+                    <h3 class="font-bold text-[#007a4d] mb-4 text-xl border-b pb-2">${selectedSocRep}</h3>
+                    `;
+                    for (let c = 0; c < customers.length; c++) {
+                        html += `
+                        <div class="drill-item" onclick="selectedSocCust='${customers[c].replace(/'/g, "\\'")}'; socViewLevel=2; renderSocView()">
+                            <span class="font-bold">${customers[c]}</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                } else if (socViewLevel === 2) {
+                    let html = `
+                    <div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
+                    <h3 class="font-bold text-[#007a4d] mb-4 text-xl border-b pb-2">${selectedSocCust}</h3>
+                    `;
+                    const items = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                    items.forEach(i => {
+                        html += `
+                        <div class="bg-white p-3 rounded border mb-2 shadow-sm">
+                            <div class="font-bold text-gray-800">${i.COMMONNAME} (${i.CONTSIZE})</div>
+                            <div class="text-xs text-gray-500 mt-1">Qty: ${i.QTYORDERED || i.QTY || 0} | Ship: ${i.SHIPDATE ? String(i.SHIPDATE).substring(0,10) : '-'}</div>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                }
+            } else if (currentSocTab === 'item') {
+                if (term.length < 3) {
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">Type at least 3 letters to search all reps globally.</div>`;
+                    return;
+                }
+                
+                if (socData.length === 0) {
+                     if (document.getElementById('soc-status').innerText.includes("failed")) {
+                         container.innerHTML = `<div class="p-8 text-center text-red-400">Search Failed. Try again.</div>`;
+                     } else {
+                         container.innerHTML = ``; 
+                     }
+                     return;
+                }
+
+                if (socViewLevel === 0) {
+                    const uniqueCommons = [...new Set(socData.map(i => i.COMMONNAME))].sort();
+                    let html = "";
+                    uniqueCommons.forEach(c => {
+                        const count = socData.filter(i => i.COMMONNAME === c).length;
+                        html += `
+                        <div class="drill-item" onclick="selectedSocCommon='${c.replace(/'/g, "\\'")}'; socViewLevel=1; renderSocView()">
+                            <span class="font-bold">${c} <span class="text-xs text-gray-400">(${count} orders)</span></span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                } else if (socViewLevel === 1) {
+                    let html = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div>`;
+                    const items = socData.filter(i => i.COMMONNAME === selectedSocCommon);
+                    items.forEach(i => {
+                        html += `
+                        <div class="bg-white p-3 rounded border mb-2 shadow-sm">
+                            <div class="font-bold text-gray-800">${i.CUSTOMERNAME || 'Unknown'} - ${i.SALESREP || 'Unknown'}</div>
+                            <div class="text-xs text-gray-500 mt-1">Size: ${i.CONTSIZE} | Qty: ${i.QTYORDERED || i.QTY || 0} | Ship: ${i.SHIPDATE ? String(i.SHIPDATE).substring(0,10) : '-'}</div>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                }
+            } else if (currentSocTab === 'docks') {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">Docks view is syncing from backend...</div>`;
+            }
+        }
+
+        // ==========================================
+        // TASKS MODE
+        // ==========================================
+
+        function renderTeamSelector() {
+            document.getElementById('task-tabs-container').classList.add('hidden');
+            document.getElementById('flyer-sub-tabs').classList.add('hidden');
+            document.getElementById('task-crumb').innerText = "Team View";
+            document.getElementById('task-search').classList.add('hidden');
+            
+            const container = document.getElementById('team-selector');
+            container.classList.remove('hidden');
+            
+            let html = "";
+            for (let i = 0; i < SYSTEM_USERS.length; i++) {
+                const u = SYSTEM_USERS[i];
+                html += `
+                <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm hover:border-[#007a4d]" onclick="selectTaskUser('${u.name}')">
+                    <div class="w-12 h-12 rounded-full bg-${u.color}-100 text-${u.color}-600 flex items-center justify-center font-bold text-xl">${u.initial}</div>
+                    <div class="font-bold text-gray-700">${u.name}</div>
+                </div>`;
+            }
+            container.innerHTML = html;
+            document.getElementById('task-content').innerHTML = "";
+        }
+
+        function selectTaskUser(uName) {
+            taskViewTargetUser = uName;
+            taskViewLevel = 1;
+            document.getElementById('team-selector').classList.add('hidden');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
+            document.getElementById('task-search').classList.remove('hidden');
+            document.getElementById('task-crumb').innerText = uName + "'s Tasks";
+            
+            // Add a Back to Team button if Admin
+            if (isAdmin) {
+                let backHtml = `<div class="back-btn mb-2" onclick="renderTeamSelector()"><i class="ph-bold ph-arrow-left"></i> Back to Team</div>`;
+                document.getElementById('task-content').innerHTML = backHtml;
+            }
+            
+            renderTasks();
+        }
+
+        function setTaskTab(tab) {
+            currentTab = tab;
+            taskViewLevel = 1;
+            selectedTaskBlock = null;
+            selectedTaskLoc = null;
+            
+            document.getElementById('ttab-requests').classList.remove('active', 'alert');
+            document.getElementById('ttab-season').classList.remove('active', 'alert');
+            document.getElementById('ttab-location').classList.remove('active', 'alert');
+            document.getElementById('ttab-flyer').classList.remove('active', 'alert');
+            
+            document.getElementById('ttab-' + tab).classList.add('active');
+            if (tab === 'requests') {
+                document.getElementById('ttab-requests').classList.add('alert');
+            }
+            
+            if (tab === 'flyer') {
+                document.getElementById('flyer-sub-tabs').classList.remove('hidden');
+            } else {
+                document.getElementById('flyer-sub-tabs').classList.add('hidden');
+            }
+            
+            document.getElementById('task-search').value = "";
+            renderTasks();
+        }
+
+        function setFlyerSubTab(sub) {
+            currentFlyerTab = sub;
+            document.getElementById('fst-crop').classList.remove('active');
+            document.getElementById('fst-endcap').classList.remove('active');
+            document.getElementById('fst-spot').classList.remove('active');
+            
+            if (sub === 'flyer_crop') document.getElementById('fst-crop').classList.add('active');
+            if (sub === 'flyer_endcap') document.getElementById('fst-endcap').classList.add('active');
+            if (sub === 'flyer_spot') document.getElementById('fst-spot').classList.add('active');
+            
+            taskViewLevel = 1;
+            selectedTaskBlock = null;
+            selectedTaskLoc = null;
+            renderTasks();
+        }
+
+        function renderTasks() {
+            if (isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) {
+                renderTeamSelector();
+                return;
+            }
+
+            const targetUser = isAdmin ? taskViewTargetUser : currentUser;
+            const container = document.getElementById('task-content');
+            const term = document.getElementById('task-search').value.toLowerCase();
+            
+            // Re-inject Back to Team button at the top for admins looking at others
+            let baseHtml = "";
+            if (isAdmin && targetUser !== currentUser) {
+                baseHtml = `<div class="back-btn mb-2" onclick="renderTeamSelector()"><i class="ph-bold ph-users"></i> Back to Team</div>`;
+            }
+
+            let userItems = fullInventory.filter(i => {
+                const assigned = i.ASSIGNEDTO || "";
+                const reqAssigned = i.REQUEST_ASSIGNED_TO || "";
+                return assigned === targetUser || reqAssigned.includes(targetUser) || reqAssigned.includes("ALL");
+            });
+
+            if (currentTab === 'flyer') {
+                userItems = userItems.filter(i => i.TASK_TAB === currentFlyerTab);
+            } else {
+                userItems = userItems.filter(i => i.TASK_TAB === currentTab);
+            }
+
+            if (term) {
+                userItems = userItems.filter(i => {
+                    const common = (i.COMMONNAME || "").toLowerCase();
+                    const loc = (i.LOCATIONCODE || "").toLowerCase();
+                    const proj = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                    return common.includes(term) || loc.includes(term) || proj.includes(term);
+                });
+            }
+
+            if (currentTab === 'requests') {
+                document.getElementById('task-crumb').innerText = isAdmin ? `${targetUser} > Requests` : "Requests";
+                
+                if (userItems.length === 0) {
+                    container.innerHTML = baseHtml + `<div class="p-8 text-center text-gray-400">No pending requests.</div>`;
+                    return;
+                }
+
+                let html = baseHtml;
+                for (let i = 0; i < userItems.length; i++) {
+                    html += createRowHtml(userItems[i], fullInventory.indexOf(userItems[i]), 'tasks');
+                }
+                container.innerHTML = html;
+                return;
+            }
+            
+            if (currentTab === 'flyer') {
+                if (taskViewLevel === 1) {
+                    document.getElementById('task-crumb').innerText = isAdmin ? `${targetUser} > Flyer` : "Flyer Projects";
+                    const projects = [...new Set(userItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
+                    
+                    if (projects.length === 0) {
+                        container.innerHTML = baseHtml + `<div class="p-8 text-center text-gray-400">No flyer projects assigned.</div>`;
+                        return;
+                    }
+
+                    let html = baseHtml;
+                    for (let i = 0; i < projects.length; i++) {
+                        const count = userItems.filter(item => (item.REQUEST_ASSIGNED_TO || "Unassigned") === projects[i]).length;
+                        html += `
+                        <div class="drill-item" onclick="selectedFlyerProject='${projects[i].replace(/'/g, "\\'")}' ; taskViewLevel=2; renderTasks()">
+                            <div class="flex items-center gap-3">
+                                <i class="ph-fill ph-image text-purple-500 text-2xl"></i>
+                                <span class="font-bold text-lg">${projects[i]}</span>
+                            </div>
+                            <span class="text-gray-400 font-bold text-sm bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                    return;
+                } else if (taskViewLevel === 2) {
+                    document.getElementById('task-crumb').innerText = selectedFlyerProject;
+                    let html = baseHtml + `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Projects</div>`;
+                    const pItems = userItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
+                    for (let i = 0; i < pItems.length; i++) {
+                        html += createRowHtml(pItems[i], fullInventory.indexOf(pItems[i]), 'tasks');
+                    }
+                    container.innerHTML = html;
+                    return;
+                }
+            }
+
+            if (taskViewLevel === 1) {
+                document.getElementById('task-crumb').innerText = isAdmin ? `${targetUser} > Blocks` : "Blocks";
+                
+                const blocks = [...new Set(userItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort();
+                
+                if (blocks.length === 0) {
+                    container.innerHTML = baseHtml + `<div class="p-8 text-center text-gray-400">No tasks in this category.</div>`;
+                    return;
+                }
+
+                let html = baseHtml;
+                for (let i = 0; i < blocks.length; i++) {
+                    const count = userItems.filter(item => getLocPrefix(item.LOCATIONCODE) === blocks[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="selectedTaskBlock='${blocks[i].replace(/'/g, "\\'")}' ; taskViewLevel=2; renderTasks()">
+                        <span class="font-bold text-lg">${blocks[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+            } 
+            else if (taskViewLevel === 2) {
+                document.getElementById('task-crumb').innerText = selectedTaskBlock;
+                let html = baseHtml + `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>`;
+                
+                const blockItems = userItems.filter(i => getLocPrefix(i.LOCATIONCODE) === selectedTaskBlock);
+                const locs = [...new Set(blockItems.map(i => i.LOCATIONCODE || 'No Loc'))].sort();
+                
+                for (let i = 0; i < locs.length; i++) {
+                    const count = blockItems.filter(item => (item.LOCATIONCODE || 'No Loc') === locs[i]).length;
+                    html += `
+                    <div class="drill-item" onclick="selectedTaskLoc='${locs[i].replace(/'/g, "\\'")}' ; taskViewLevel=3; renderTasks()">
+                        <span class="font-bold text-lg">${locs[i]}</span>
+                        <span class="text-xs text-gray-400 font-bold bg-gray-100 px-2 py-1 rounded-full">${count}</span>
+                    </div>`;
+                }
+                container.innerHTML = html;
+            }
+            else if (taskViewLevel === 3) {
+                document.getElementById('task-crumb').innerText = selectedTaskLoc;
+                let html = baseHtml + `<div class="back-btn" onclick="taskViewLevel=2; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to ${selectedTaskBlock}</div>`;
+                
+                const locItems = userItems.filter(i => (i.LOCATIONCODE || 'No Loc') === selectedTaskLoc);
+                for (let i = 0; i < locItems.length; i++) {
+                    html += createRowHtml(locItems[i], fullInventory.indexOf(locItems[i]), 'tasks');
+                }
+                container.innerHTML = html;
+            }
+        }
+
+        window.onload = function() {
+            fetchAppUsers();
+        };
+    </script>
+</body>
+</html>
