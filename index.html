@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO 01</title>
+    <title>GNC PRO 1000000</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -300,12 +300,10 @@
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
+            
             <div id="login-buttons">
-                <button class="user-btn" onclick="selectUser('Dylan')"><div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">D</div> Dylan (Admin)</button>
-                <button class="user-btn" onclick="selectUser('Kayla')"><div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">K</div> Kayla</button>
-                <button class="user-btn" onclick="selectUser('Morgan')"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">M</div> Morgan</button>
-                <button class="user-btn" onclick="selectUser('J.D.')"><div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold">J</div> J.D. (Admin)</button>
-            </div>
+                </div>
+            
             <div id="pin-container" class="hidden mt-4">
                 <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
@@ -788,7 +786,7 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTx_I1siA7TzhN8buUFOvpyBrKRQiPdY4_GnrbY5oUZzHnLnvnA1bQbElgqejPYEWc/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymOrR36x4WCu1plgPQIc_pv2It7U_vUZMSYQSzf2rfeA1cAGxwPZ4b3K4ZWefRfQW4/exec"; 
         
         const ADMINS = ["Dylan", "J.D.", "Kayla", "Morgan"];
         const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
@@ -1268,6 +1266,83 @@
             showToast("Sent", "Rep emailed and request closed.");
         }
 
+        // --- DYNAMIC LOGIN LOGIC ---
+        let appUsers = []; // Stores users fetched from the Google Sheet
+
+        // Fetch users from the spreadsheet when the app loads
+        window.onload = function() {
+            const loginButtons = document.getElementById('login-buttons');
+            loginButtons.innerHTML = '<div class="text-center text-gray-500 text-sm py-4 animate-pulse">Loading users...</div>';
+            
+            fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data.length > 0) {
+                        appUsers = data.data;
+                        renderLoginButtons();
+                    } else {
+                        loginButtons.innerHTML = '<div class="text-red-500 text-sm">No users found. Run setupSystem() in Apps Script.</div>';
+                    }
+                })
+                .catch(err => {
+                    loginButtons.innerHTML = '<div class="text-red-500 text-sm">Failed to connect to server. Check URL.</div>';
+                });
+        };
+
+        // Generate the buttons dynamically based on spreadsheet data
+        function renderLoginButtons() {
+            const container = document.getElementById('login-buttons');
+            container.innerHTML = appUsers.map(u => {
+                // Determine CSS colors based on the color string in the spreadsheet
+                let bgCol = "bg-gray-100", textCol = "text-gray-600";
+                if(u.color === 'blue') { bgCol = 'bg-blue-100'; textCol = 'text-blue-600'; }
+                if(u.color === 'pink') { bgCol = 'bg-pink-100'; textCol = 'text-pink-600'; }
+                if(u.color === 'purple') { bgCol = 'bg-purple-100'; textCol = 'text-purple-600'; }
+                if(u.color === 'green') { bgCol = 'bg-green-100'; textCol = 'text-green-700'; }
+
+                return `<button class="user-btn" onclick="selectUser('${u.name}')">
+                            <div class="w-8 h-8 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold">${u.initial}</div> 
+                            ${u.name} ${u.role === 'Admin' ? '(Admin)' : ''}
+                        </button>`;
+            }).join('');
+        }
+
+        function selectUser(u) { 
+            currentUser = u; 
+            
+            // Check if the selected user is an Admin based on spreadsheet data
+            const selectedUserData = appUsers.find(user => user.name === currentUser);
+            isAdmin = selectedUserData && selectedUserData.role === 'Admin';
+            
+            taskViewTargetUser = u; 
+            document.getElementById('login-buttons').classList.add('hidden'); 
+            document.getElementById('pin-container').classList.remove('hidden'); 
+            document.getElementById('pin-code').style.display = 'block'; 
+            document.getElementById('pin-code').focus(); 
+        }
+        
+        function verifyPin() { 
+            const enteredPin = document.getElementById('pin-code').value;
+            const selectedUserData = appUsers.find(u => u.name === currentUser);
+
+            // Compare entered PIN against the specific user's PIN from the spreadsheet
+            if (selectedUserData && enteredPin === String(selectedUserData.pin)) { 
+                document.getElementById('pin-container').classList.add('hidden'); 
+                document.getElementById('loading-spinner').classList.remove('hidden'); 
+                fetchData(); 
+            } else { 
+                showToast("Error", "Incorrect PIN", true); 
+                document.getElementById('pin-code').value = ""; // Clear input on fail
+            } 
+        }
+        
+        function resetLogin() { 
+            document.getElementById('pin-container').classList.add('hidden'); 
+            document.getElementById('login-buttons').classList.remove('hidden'); 
+            document.getElementById('loading-spinner').classList.add('hidden'); 
+            document.getElementById('pin-code').value = ""; // Clear input
+        }
+
         // --- SEARCH & RENDER LOGIC ---
 
         function handleSearchDebounced(val, type) {
@@ -1362,32 +1437,6 @@
             ptrCurrentY = 0;
         });
 
-        function selectUser(u) { 
-            currentUser = u; 
-            isAdmin = ADMINS.includes(u); 
-            taskViewTargetUser = u; 
-            document.getElementById('login-buttons').classList.add('hidden'); 
-            document.getElementById('pin-container').classList.remove('hidden'); 
-            document.getElementById('pin-code').style.display = 'block'; 
-            document.getElementById('pin-code').focus(); 
-        }
-        
-        function verifyPin() { 
-            if (document.getElementById('pin-code').value === '1234') { 
-                document.getElementById('pin-container').classList.add('hidden'); 
-                document.getElementById('loading-spinner').classList.remove('hidden'); 
-                fetchData(); 
-            } else { 
-                showToast("Error", "Incorrect PIN", true); 
-            } 
-        }
-        
-        function resetLogin() { 
-            document.getElementById('pin-container').classList.add('hidden'); 
-            document.getElementById('login-buttons').classList.remove('hidden'); 
-            document.getElementById('loading-spinner').classList.add('hidden'); 
-        }
-        
         async function manualSync() { 
             await fetchData(); 
         } 
