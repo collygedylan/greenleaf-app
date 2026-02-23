@@ -506,11 +506,7 @@
                 </div>
                 <input type="text" id="task-search" class="input-field mb-4" placeholder="Search tasks..." onkeyup="renderTasks()">
                 <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
-                    <div class="p-3 border rounded text-center font-bold bg-blue-50 text-blue-700 cursor-pointer" onclick="setTaskUser('Dylan')">Dylan</div>
-                    <div class="p-3 border rounded text-center font-bold bg-pink-50 text-pink-700 cursor-pointer" onclick="setTaskUser('Kayla')">Kayla</div>
-                    <div class="p-3 border rounded text-center font-bold bg-purple-50 text-purple-700 cursor-pointer" onclick="setTaskUser('Morgan')">Morgan</div>
-                    <div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer" onclick="setTaskUser('ASSIST')">Assist Team (K & M)</div>
-                </div>
+                    </div>
                 <div id="task-tabs-container" class="task-tabs hidden">
                     <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
                     <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
@@ -769,23 +765,8 @@
             <textarea id="assign-note" class="w-full p-3 border rounded-lg text-sm mb-4 h-20 bg-gray-50 focus:bg-white focus:border-[#007a4d] outline-none" placeholder="What needs to be done? e.g. Check for mites, get new photo..."></textarea>
 
             <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
-            <div class="space-y-2 mb-6">
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" id="chk-dylan" class="w-5 h-5 accent-[#007a4d]">
-                    <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">D</div>
-                    <span class="font-bold text-sm">Dylan</span>
-                </label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" id="chk-kayla" class="w-5 h-5 accent-[#007a4d]">
-                    <div class="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-xs">K</div>
-                    <span class="font-bold text-sm">Kayla</span>
-                </label>
-                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" id="chk-morgan" class="w-5 h-5 accent-[#007a4d]">
-                    <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs">M</div>
-                    <span class="font-bold text-sm">Morgan</span>
-                </label>
-            </div>
+            <div class="space-y-2 mb-6" id="assign-user-checkboxes">
+                </div>
             
             <div class="flex gap-3">
                 <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
@@ -799,21 +780,11 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymOrR36x4WCu1plgPQIc_pv2It7U_vUZMSYQSzf2rfeA1cAGxwPZ4b3K4ZWefRfQW4/exec"; 
         
-        const ADMINS = ["Dylan", "J.D.", "Kayla", "Morgan"];
-        const FLYER_AUTH = ["Dylan", "J.D.", "Kayla", "Morgan"];
-
-        // --- EMAIL CONFIGURATION (UPDATED) ---
-        const USER_EMAILS = {
-            "Dylan": "dylan_collyge@greenleafnursery.com",
-            "Kayla": "kayla_knepp@greenleafnursery.com", 
-            "Morgan": "morgan_anderson@greenleafnursery.com",
-            "J.D.": "jd_lauger@greenleafnursery.com",
-            "Admin": "dylan_collyge@greenleafnursery.com" 
-        };
-
         // Generic function to send email via backend
         function sendEmailNotification(toUser, subject, htmlContent) {
-            const email = USER_EMAILS[toUser] || USER_EMAILS["Admin"];
+            // Find email dynamically from directory, default to Admin email if not found
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === toUser);
+            const email = dirEntry ? dirEntry.email : "dylan_collyge@greenleafnursery.com";
             
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
@@ -885,7 +856,7 @@
 
         window.lastLocalUpdate = 0;
 
-        // DRIVE MODE STATE & FILTERS (REFACTORED)
+        // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
@@ -913,10 +884,10 @@
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
-        // MANAGER REVIEW STATE (Updated to Deep Folders)
-        let currentReviewFolder = null; // 'pending', 'completed', 'item_review'
-        let currentReviewRep = null; // Filter for Rep Level
-        let currentReviewCustomer = null; // Filter for Customer Level
+        // MANAGER REVIEW STATE
+        let currentReviewFolder = null;
+        let currentReviewRep = null;
+        let currentReviewCustomer = null;
         let reviewViewLevel = 0;
         let selectedReviewName = null;
         let selectedReviewSize = null;
@@ -972,7 +943,6 @@
 
         let currentSocTab = 'reps';
 
-        // HELPER TO NORMALIZE NAMES
         function normalizeRepName(name) {
             if (!name) return "";
             name = name.trim();
@@ -994,12 +964,11 @@
             return loc;
         }
 
-        // --- UPDATED REQUEST SYSTEM LOGIC ---
+        // --- REQUEST SYSTEM LOGIC ---
 
         let pendingRequestItems = []; 
 
         function openRequestForm() {
-            // Populate Reps
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
             STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
@@ -1009,7 +978,6 @@
                 repSelect.appendChild(opt);
             });
             
-            // Populate Items Datalist (From Drive Inventory)
             const itemList = document.getElementById('req-item-list');
             itemList.innerHTML = "";
             allCommonNames.forEach(name => {
@@ -1018,12 +986,10 @@
                 itemList.appendChild(opt);
             });
 
-            // Clear Fields
             document.getElementById('req-cust').value = "";
             document.getElementById('req-cust-list').innerHTML = "";
             document.getElementById('cust-loading').classList.add('hidden');
             
-            // Reset List
             pendingRequestItems = [];
             renderRequestList();
             
@@ -1036,26 +1002,21 @@
             document.getElementById('request-form-modal').style.display = 'none';
         }
 
-        // --- AUTOCOMPLETE LOGIC ---
-
         function handleRepChange() {
             const repName = document.getElementById('req-rep').value;
             const custList = document.getElementById('req-cust-list');
             const loading = document.getElementById('cust-loading');
             
             custList.innerHTML = "";
-            
             if(!repName) return;
 
             loading.classList.remove('hidden');
 
-            // Fetch SOC Data for this rep to populate customers
             fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
             .then(res => res.json())
             .then(data => {
                 loading.classList.add('hidden');
                 if(data.status === 'success' && data.data.length > 0) {
-                    // Extract Unique Customers
                     const uniqueCusts = [...new Set(data.data.map(i => {
                         const c = i.CUSTOMERNAME || "General";
                         const co = i.CONSIGNEENAME || "";
@@ -1081,10 +1042,8 @@
             const sizeSelect = document.getElementById('req-size');
             
             sizeSelect.innerHTML = '<option value="">-- Select Size --</option>';
-            
             if(!itemName) return;
 
-            // Filter fullInventory for this name
             const matchingItems = fullInventory.filter(i => i.COMMONNAME === itemName);
             
             if(matchingItems.length > 0) {
@@ -1109,7 +1068,7 @@
 
         function addItemToRequestList() {
             const rep = document.getElementById('req-rep').value;
-            const cust = document.getElementById('req-cust').value.trim(); // Allow free text if not in list
+            const cust = document.getElementById('req-cust').value.trim();
 
             if(!rep || !cust) {
                 showToast("Error", "Select Rep and Customer first.", true);
@@ -1117,7 +1076,7 @@
             }
 
             const item = document.getElementById('req-item').value.trim();
-            const size = document.getElementById('req-size').value; // Value from select
+            const size = document.getElementById('req-size').value;
             const qty = document.getElementById('req-qty').value;
             const date = document.getElementById('req-date').value;
             const use = document.getElementById('req-use').value;
@@ -1127,13 +1086,7 @@
                 return;
             }
 
-            const tempObj = {
-                item: item,
-                size: size,
-                qty: qty,
-                date: date,
-                use: use
-            };
+            const tempObj = { item: item, size: size, qty: qty, date: date, use: use };
 
             pendingRequestItems.push(tempObj);
             renderRequestList();
@@ -1179,10 +1132,8 @@
             
             if(pendingRequestItems.length === 0) return;
 
-            // *** FIX START: PAUSE AUTO-SYNC FOR 60 SECONDS ***
             syncPauseUntil = new Date().getTime() + 60000; 
             window.lastLocalUpdate = new Date().getTime();
-            // *** FIX END ***
 
             showToast("Sending...", `Submitting ${pendingRequestItems.length} items...`);
 
@@ -1196,7 +1147,6 @@
                     UNIQUE_ID: reqId,
                     COMMONNAME: obj.item,
                     CONTSIZE: obj.size,
-                    // Store Customer string in both fields to ensure grouping logic works immediately
                     CUSTOMERNAME: custInput,
                     CONSIGNEENAME: custInput, 
                     SALESREP: rep,
@@ -1278,9 +1228,8 @@
         }
 
         // --- DYNAMIC LOGIN LOGIC ---
-        let appUsers = []; // Stores users fetched from the Google Sheet
+        let appUsers = []; 
 
-        // Fetch users from the spreadsheet when the app loads
         window.onload = function() {
             const loginButtons = document.getElementById('login-buttons');
             loginButtons.innerHTML = '<div class="text-center text-gray-500 text-sm py-4 animate-pulse">Loading users...</div>';
@@ -1291,8 +1240,9 @@
                     if (data.status === 'success' && data.data.length > 0) {
                         appUsers = data.data;
                         renderLoginButtons();
+                        renderDynamicAssignUsers(); // Set up the checkboxes
                     } else {
-                        loginButtons.innerHTML = '<div class="text-red-500 text-sm">No users found. Ensure your new sheet has users!</div>';
+                        loginButtons.innerHTML = '<div class="text-red-500 text-sm">No users found. Ensure your APP_USERS sheet is set up!</div>';
                     }
                 })
                 .catch(err => {
@@ -1300,11 +1250,9 @@
                 });
         };
 
-        // Generate the buttons dynamically based on spreadsheet data
         function renderLoginButtons() {
             const container = document.getElementById('login-buttons');
             container.innerHTML = appUsers.map(u => {
-                // Determine CSS colors based on the color string in the spreadsheet
                 let bgCol = "bg-gray-100", textCol = "text-gray-600";
                 if(u.color === 'blue') { bgCol = 'bg-blue-100'; textCol = 'text-blue-600'; }
                 if(u.color === 'pink') { bgCol = 'bg-pink-100'; textCol = 'text-pink-600'; }
@@ -1317,11 +1265,45 @@
                         </button>`;
             }).join('');
         }
+        
+        function renderDynamicAssignUsers() {
+            // Build the team selector for Tasks view dynamically
+            const teamContainer = document.getElementById('team-selector');
+            let teamHtml = "";
+            appUsers.forEach(u => {
+                let bgCol = "bg-gray-100 text-gray-700";
+                if(u.color === 'blue') bgCol = 'bg-blue-50 text-blue-700';
+                if(u.color === 'pink') bgCol = 'bg-pink-50 text-pink-700';
+                if(u.color === 'purple') bgCol = 'bg-purple-50 text-purple-700';
+                if(u.color === 'green') bgCol = 'bg-green-50 text-green-700';
+                
+                teamHtml += `<div class="p-3 border rounded text-center font-bold ${bgCol} cursor-pointer" onclick="setTaskUser('${u.name.replace(/'/g, "\\'")}')">${u.name}</div>`;
+            });
+            teamHtml += `<div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer col-span-2" onclick="setTaskUser('ASSIST')">Assist Team View</div>`;
+            teamContainer.innerHTML = teamHtml;
+
+            // Build the assignment checkboxes for the assignment modal dynamically
+            const assignContainer = document.getElementById('assign-user-checkboxes');
+            let assignHtml = "";
+            appUsers.forEach(u => {
+                let bgCol = "bg-gray-100", textCol = "text-gray-600";
+                if(u.color === 'blue') { bgCol = 'bg-blue-100'; textCol = 'text-blue-600'; }
+                if(u.color === 'pink') { bgCol = 'bg-pink-100'; textCol = 'text-pink-600'; }
+                if(u.color === 'purple') { bgCol = 'bg-purple-100'; textCol = 'text-purple-600'; }
+                if(u.color === 'green') { bgCol = 'bg-green-100'; textCol = 'text-green-700'; }
+
+                assignHtml += `
+                <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" id="chk-${u.name}" class="w-5 h-5 accent-[#007a4d]">
+                    <div class="w-6 h-6 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold text-xs">${u.initial}</div>
+                    <span class="font-bold text-sm">${u.name}</span>
+                </label>`;
+            });
+            assignContainer.innerHTML = assignHtml;
+        }
 
         function selectUser(u) { 
             currentUser = u; 
-            
-            // Check if the selected user is an Admin based on spreadsheet data
             const selectedUserData = appUsers.find(user => user.name === currentUser);
             isAdmin = selectedUserData && selectedUserData.role === 'Admin';
             
@@ -1336,15 +1318,12 @@
             const enteredPin = document.getElementById('pin-code').value;
             const selectedUserData = appUsers.find(u => u.name === currentUser);
 
-            // Compare entered PIN against the specific user's PIN from the spreadsheet
             if (selectedUserData && enteredPin === String(selectedUserData.pin)) { 
                 
                 if (selectedUserData.resetRequired) {
-                    // Show Reset Password Screen
                     document.getElementById('view-login').style.display = 'none';
                     document.getElementById('view-reset-password').classList.remove('hidden');
                 } else {
-                    // Normal Login
                     document.getElementById('pin-container').classList.add('hidden'); 
                     document.getElementById('loading-spinner').classList.remove('hidden'); 
                     fetchData(); 
@@ -1352,7 +1331,7 @@
 
             } else { 
                 showToast("Error", "Incorrect Password", true); 
-                document.getElementById('pin-code').value = ""; // Clear input on fail
+                document.getElementById('pin-code').value = "";
             } 
         }
 
@@ -1383,14 +1362,12 @@
             .then(data => {
                 if(data.status === 'success') {
                     showToast("Success", "Password updated!");
-                    // Update local data so it doesn't loop
                     const selectedUserData = appUsers.find(u => u.name === currentUser);
                     if(selectedUserData) {
                         selectedUserData.pin = newPass;
                         selectedUserData.resetRequired = false;
                     }
                     
-                    // Route to dashboard
                     document.getElementById('view-reset-password').classList.add('hidden');
                     document.getElementById('view-login').style.display = 'flex';
                     document.getElementById('pin-container').classList.add('hidden');
@@ -1413,7 +1390,7 @@
             document.getElementById('pin-container').classList.add('hidden'); 
             document.getElementById('login-buttons').classList.remove('hidden'); 
             document.getElementById('loading-spinner').classList.add('hidden'); 
-            document.getElementById('pin-code').value = ""; // Clear input
+            document.getElementById('pin-code').value = ""; 
             document.getElementById('new-password').value = ""; 
             document.getElementById('confirm-password').value = ""; 
         }
@@ -1856,7 +1833,6 @@
             const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
             closePhotoEditor();
             
-            // *** SYNC FIX: Pause Sync on Photo Upload ***
             syncPauseUntil = new Date().getTime() + 15000;
             window.lastLocalUpdate = new Date().getTime();
             
@@ -1956,7 +1932,6 @@
                 return;
             }
 
-            // HIERARCHY VIEW (Rep -> Customer -> Common -> Size -> Cards)
             if(socViewLevel === 0) { 
                 let html = '';
                 STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
@@ -2146,7 +2121,6 @@
                 return; 
             }
             
-            // 2. LEVEL 0: LIST COMMON NAMES
             if(driveViewLevel === 0) {
                 crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
@@ -2158,7 +2132,6 @@
                             </div>`;
                 }).join('');
             }
-            // 3. LEVEL 1: LIST SIZES for Selected Name
             else if (driveViewLevel === 1) {
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
@@ -2173,7 +2146,6 @@
                             </div>`;
                 }).join('');
             }
-            // 4. LEVEL 2: LIST ROWS (CARDS)
             else if (driveViewLevel === 2) {
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
                 
@@ -2381,7 +2353,7 @@
                     }
 
                     let completeBtn = '';
-                    if(ADMINS.includes(currentUser)) {
+                    if(isAdmin) {
                         completeBtn = `<div class="p-4 bg-white border-b border-gray-100">
                             <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
                                 <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
@@ -2522,18 +2494,15 @@
 
         function resetReviewFolders() {
             if(currentReviewCustomer) {
-                // Back to Rep's Customer List
                 currentReviewCustomer = null;
                 renderReviewContent();
                 return;
             }
             if(currentReviewRep) {
-                // Back to Rep List
                 currentReviewRep = null;
                 renderReviewContent();
                 return;
             }
-            // Back to Main Manager Menu
             currentReviewFolder = null;
             renderManagerFolders();
         }
@@ -2552,7 +2521,6 @@
 
             let folderTaskTab = (currentReviewFolder === 'pending') ? 'requests' : 'review';
             
-            // --- NO WINNER FOLDER (Simple List) ---
             if(currentReviewFolder === 'item_review') {
                 let filteredItems = fullInventory.filter(i => {
                     const pri = parseFloat(i.PRIORITY);
@@ -2571,10 +2539,7 @@
                 container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
                 return;
             }
-
-            // --- PENDING & COMPLETED FOLDERS (Rep -> Customer -> Items) ---
             
-            // LEVEL 1: LIST SALES REPS
             if(!currentReviewRep) {
                 document.getElementById('review-folder-title').innerText = currentReviewFolder === 'pending' ? "Pending Requests" : "Completed Requests";
                 document.getElementById('review-back-label').innerText = "Back to Folders";
@@ -2595,14 +2560,12 @@
                 return;
             }
 
-            // LEVEL 2: LIST CUSTOMERS FOR SELECTED REP
             if(!currentReviewCustomer) {
                 document.getElementById('review-folder-title').innerText = currentReviewRep;
                 document.getElementById('review-back-label').innerText = "Back to Reps";
                 
                 const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
                 
-                // *** FIXED: Combine Customer and Consignee for Folder Name ***
                 const customers = [...new Set(repItems.map(i => {
                     const c = i.CUSTOMERNAME || "General";
                     const co = i.CONSIGNEENAME || "";
@@ -2611,7 +2574,6 @@
                 }))].sort();
 
                 container.innerHTML = customers.map(cust => {
-                    // We need to count items that match this "combined" name logic
                     const count = repItems.filter(i => {
                         const c = i.CUSTOMERNAME || "General";
                         const co = i.CONSIGNEENAME || "";
@@ -2631,11 +2593,9 @@
                 return;
             }
 
-            // LEVEL 3: SHOW ITEMS FOR CUSTOMER
             document.getElementById('review-folder-title').innerText = currentReviewCustomer;
             document.getElementById('review-back-label').innerText = "Back to Customers";
             
-            // *** FIXED: Filter by combined name logic ***
             let finalItems = fullInventory.filter(i => {
                 if (i.TASK_TAB !== folderTaskTab) return false;
                 if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
@@ -2655,7 +2615,7 @@
                 let html = "";
                 finalItems.forEach(item => {
                     let approveBtn = "";
-                    if(folderTaskTab === 'requests') { // Changed from 'review' to show only on Pending
+                    if(folderTaskTab === 'requests') {
                          approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
                     }
                     let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
@@ -2768,7 +2728,6 @@
             document.getElementById('view-detail').classList.remove('hidden'); 
             document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
             
-            // SHOW CUSTOMER NAME IN DETAIL VIEW
             document.getElementById('ov-customer').innerText = activeItem.CUSTOMERNAME || activeItem.CONSIGNEENAME || "Unknown Customer";
             document.getElementById('ov-slts').innerText = activeItem.S_LTS || activeItem.SLTS || "--";
 
@@ -2777,7 +2736,6 @@
             const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
             if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
             
-            // SHOW/HIDE DIRECTIONS BANNER
             const banner = document.getElementById('directions-banner');
             const txt = document.getElementById('directions-text');
             if(activeItem.SAVED_NOTE && activeItem.SAVED_NOTE.includes("| Directions:")) {
@@ -2801,7 +2759,6 @@
             const btnComplete = document.getElementById('request-complete-container'); const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP); const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
             let canEditText = false; if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { canEditText = true; }
             
-            // UPDATE: Everyone can see complete button if it is a request assigned to them
             if (activeItem.TASK_TAB === 'requests' || (activeItem.TASK_TAB||"").startsWith("flyer_")) { 
                 btnComplete.classList.remove('hidden'); 
             } else { 
@@ -2972,9 +2929,7 @@
             document.getElementById('flyer-options-box').classList.add('hidden');
             document.querySelector('input[name="assign_type"][value="requests"]').checked = true; 
             document.getElementById('assign-note').value = "";
-            document.getElementById('chk-dylan').checked = false;
-            document.getElementById('chk-kayla').checked = false;
-            document.getElementById('chk-morgan').checked = false;
+            document.querySelectorAll('#assign-user-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
 
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
@@ -3107,14 +3062,13 @@
             const assignType = document.querySelector('input[name="assign_type"]:checked').value;
             const noteText = document.getElementById('assign-note').value;
             
-            const d = document.getElementById('chk-dylan').checked; 
-            const k = document.getElementById('chk-kayla').checked; 
-            const m = document.getElementById('chk-morgan').checked; 
-            
             let selected = []; 
-            if(d) selected.push("Dylan"); 
-            if(k) selected.push("Kayla"); 
-            if(m) selected.push("Morgan");
+            document.querySelectorAll('#assign-user-checkboxes input[type="checkbox"]').forEach(cb => {
+                if(cb.checked) {
+                    // Extract name from the ID (e.g., 'chk-Dylan' -> 'Dylan')
+                    selected.push(cb.id.replace('chk-', ''));
+                }
+            });
 
             if(selected.length === 0) { 
                 showToast("Warning", "Select at least one person.", true); 
