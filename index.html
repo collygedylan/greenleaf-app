@@ -431,7 +431,6 @@
                 <input type="text" id="directory-search" class="input-field mb-4" placeholder="Search Rep Name..." onkeyup="renderDirectoryView()">
                 <div id="directory-content"></div>
             </div>
-
             <div id="view-drive" class="hidden">
                 <h2 class="text-sm font-bold text-blue-600 uppercase mb-2">Drive Mode</h2>
                 
@@ -780,7 +779,6 @@
             </div>
         </div>
     </div>
-
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
@@ -1259,23 +1257,28 @@
                 };
             });
 
+            // Add them instantly to local inventory for immediate UI feedback
             newInventoryItems.forEach(item => fullInventory.unshift(item));
 
-            let processed = 0;
-            newInventoryItems.forEach(item => {
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        type: "create_request",
-                        item: item,
-                        user: currentUser
-                    })
-                }).then(() => {
-                    processed++;
-                    if(processed === newInventoryItems.length) {
-                        showToast("Success", "All items requested!");
-                    }
-                });
+            // Fix: Use the bulk batch endpoint instead of looping single requests
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "create_requests_batch",
+                    items: newInventoryItems,
+                    user: currentUser
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast("Success", "All items requested!");
+                } else {
+                    showToast("Error", data.message, true);
+                }
+            })
+            .catch(err => {
+                showToast("Network Error", "Saved offline.", true);
             });
 
             closeRequestForm();
@@ -1333,13 +1336,12 @@
         window.onload = function() {
             const statusMsg = document.getElementById('status-msg');
             
-            // Allow users to type immediately, but fetch the user DB in the background to validate against
             fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
                         appUsers = data.data;
-                        renderDynamicAssignUsers(); // Set up checkboxes for later use
+                        renderDynamicAssignUsers(); 
                     } else {
                         statusMsg.innerText = 'No users found. Ensure APP_USERS sheet is set up!';
                         statusMsg.classList.remove('hidden');
@@ -1360,10 +1362,8 @@
                 return;
             }
 
-            // Convert what they typed into the "firstname_lastname" format for matching
             const formattedUser = rawUser.toLowerCase().replace(/\s+/g, '_');
             
-            // Find the user in our database (case-insensitive check)
             const selectedUserData = appUsers.find(u => 
                 u.name.toLowerCase() === formattedUser || 
                 u.name.toLowerCase() === rawUser.toLowerCase()
@@ -1380,7 +1380,6 @@
                 return;
             }
 
-            // Success! Set the exact name from the database as the active user
             currentUser = selectedUserData.name; 
             isAdmin = selectedUserData.role === 'Admin';
             taskViewTargetUser = currentUser;
@@ -1396,7 +1395,6 @@
         }
         
         function renderDynamicAssignUsers() {
-            // Build the team selector for Tasks view dynamically
             const teamContainer = document.getElementById('team-selector');
             let teamHtml = "";
             appUsers.forEach(u => {
@@ -1413,7 +1411,6 @@
             teamHtml += `<div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer col-span-2" onclick="setTaskUser('ASSIST')">Assist Team View</div>`;
             teamContainer.innerHTML = teamHtml;
 
-            // Build the assignment checkboxes for the assignment modal dynamically
             const assignContainer = document.getElementById('assign-user-checkboxes');
             let assignHtml = "";
             appUsers.forEach(u => {
@@ -1449,7 +1446,6 @@
                 return;
             }
 
-            // Show loading state on the button
             btn.innerText = "UPDATING...";
             btn.disabled = true;
 
@@ -1756,7 +1752,13 @@
             activeItem.SAVED_NOTE = note;
             activeItem.SAVED_SALES_DESC = salesDesc;
             
-            activeItem.SO_STATUS = "PENDING"; 
+            // ISOLATE REQUESTS: Only trigger Sales Office if it is NOT a request
+            const isRequest = activeItem.TASK_TAB === 'requests' || activeItem.TASK_TAB === 'review';
+            let newSoStatus = activeItem.SO_STATUS;
+            if (!isRequest) {
+                newSoStatus = "PENDING";
+                activeItem.SO_STATUS = "PENDING"; 
+            }
             
             activeItem.GROWER_EVAL = growerEval;
             activeItem.GROWER_SHEAR = growerShear;
@@ -1779,7 +1781,7 @@
                 pick: pick, 
                 note: note, 
                 salesDesc: salesDesc,
-                soStatus: "PENDING", 
+                soStatus: newSoStatus, 
                 growerEval: growerEval,
                 growerShear: growerShear,
                 growerWater: growerWater,
@@ -1792,7 +1794,11 @@
             
             if(!silent) { 
                 goBackFromDetail(); 
-                showToast("Saved", "Sent to Sales Office (Sync Paused).", false); 
+                if(!isRequest) {
+                    showToast("Saved", "Sent to Sales Office (Sync Paused).", false); 
+                } else {
+                    showToast("Saved", "Request Updated Locally.", false); 
+                }
             } else { 
                 renderOverviewData(); 
             }
@@ -1833,6 +1839,10 @@
             activeItem.SAVED_SALES_DESC = salesDesc;
             activeItem.REQUEST_ASSIGNED_TO = ""; 
             activeItem.TASK_TAB = "review"; 
+            
+            // Explicitly ensure SO_STATUS doesn't flip on requests
+            let currentSoStatus = activeItem.SO_STATUS || "";
+
             activeItem.TIMESTAMP = new Date().toISOString(); 
 
             // --- EMAIL LOGIC ---
@@ -1853,6 +1863,7 @@
                 pick: pick, 
                 note: note, 
                 salesDesc: salesDesc, 
+                soStatus: currentSoStatus, // Preserve existing, do not trigger PENDING
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "", 
                 user: currentUser 
@@ -1885,7 +1896,6 @@
                 openPhotoEditor();
             }
         }
-
         function openPhotoEditor() {
             const modal = document.getElementById('view-photo-editor');
             const preview = document.getElementById('editor-preview');
@@ -1964,7 +1974,29 @@
                     const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
                     if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; activeItem = fullInventory[masterIdx]; }
                     renderOverviewData(); 
-                    const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser, growerEval: activeItem.GROWER_EVAL || "", growerNote: activeItem.GROWER_NOTE || "" };
+                    
+                    // Maintain SO_STATUS isolation for requests during photo upload as well
+                    let currentSoStatus = activeItem.SO_STATUS || "";
+                    if(activeItem.TASK_TAB !== 'requests' && activeItem.TASK_TAB !== 'review') {
+                        currentSoStatus = "PENDING";
+                        activeItem.SO_STATUS = "PENDING";
+                    }
+
+                    const payload = { 
+                        type: "update", 
+                        id: activeItem.UNIQUE_ID, 
+                        match: activeItem.SAVED_MATCH || "", 
+                        spec: activeItem.SAVED_SPEC || "", 
+                        pick: activeItem.SAVED_PICK || "", 
+                        note: activeItem.SAVED_NOTE || "", 
+                        salesDesc: activeItem.SAVED_SALES_DESC || "", 
+                        soStatus: currentSoStatus,
+                        photoLink: activeItem.SAVED_PHOTO_LINK, 
+                        photoName: activeItem.SAVED_PHOTO_NAME, 
+                        user: currentUser, 
+                        growerEval: activeItem.GROWER_EVAL || "", 
+                        growerNote: activeItem.GROWER_NOTE || "" 
+                    };
                     fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
                     showToast("Success", "Photo saved & Text preserved."); 
                 } else { showToast("Upload Error", data.message, true); }
@@ -2363,6 +2395,8 @@
         function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
         function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
 
+        function getLocPrefix(loc) { if(!loc) return "Unassigned"; const match = loc.match(/^[A-Z]+/i); return match ? match[0].toUpperCase() : "Unassigned"; }
+
         function renderTasks() {
             const container = document.getElementById('task-content'); 
             const crumb = document.getElementById('task-crumb');
@@ -2373,7 +2407,6 @@
             let myItems = []; 
             const now = new Date().getTime();
             
-            // SMART FILTER: Extracts "dylan" from "dylan_collyge" to match database assignments
             const targetFirstName = taskViewTargetUser.toLowerCase().split('_')[0];
             const targetFullName = taskViewTargetUser.toLowerCase();
 
@@ -2514,7 +2547,6 @@
                 }
             }
         }
-        
         function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
         function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
         
@@ -3007,6 +3039,7 @@
             links.splice(index, 1); if(index < names.length) names.splice(index, 1);
             activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(','); activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
             renderOverviewData(); showToast("Deleting...", "Removing photo from cloud...");
+            
             const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser };
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Photo permanently deleted."); setTimeout(() => { fetchData(true); startAutoSync(); }, 2500); } else { showToast("Error", "Could not delete: " + data.message, true); startAutoSync(); } }).catch(err => { showToast("Network Error", "Saved deletion offline.", true); logFailedSave(payload); startAutoSync(); });
         }
@@ -3080,7 +3113,6 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
-                        // HTML Link: Clickable Name
                         html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
                     });
                     html += `</div>`;
@@ -3107,7 +3139,6 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
-                        // SMS Link: Name + Raw URL
                         text += `• ${name} (${url})\n`; 
                     });
                 }
@@ -3191,7 +3222,6 @@
             let selected = []; 
             document.querySelectorAll('#assign-user-checkboxes input[type="checkbox"]').forEach(cb => {
                 if(cb.checked) {
-                    // Extract name from the ID (e.g., 'chk-Dylan' -> 'Dylan')
                     selected.push(cb.id.replace('chk-', ''));
                 }
             });
@@ -3326,7 +3356,6 @@
         }
         
         function startLongPress() { 
-            // Allow everyone to batch select
             longPressTimer = setTimeout(() => { 
                 if(!isBatch) toggleBatch(); 
                 navigator.vibrate(100); 
@@ -3343,13 +3372,11 @@
             document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
             
             if(!isBatch) { 
-                // Exiting Batch Mode: Clear everything
                 document.getElementById('action-bar').classList.remove('visible'); 
                 selectedIdx = []; 
                 document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
                 document.querySelectorAll('.inv-card').forEach(card => card.classList.remove('selecting'));
             } else {
-                // Entering Batch Mode: Just refresh the CURRENT view to show checkboxes
                 if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
                 if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
                 if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
