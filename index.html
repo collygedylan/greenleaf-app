@@ -1581,7 +1581,14 @@
         }
 
         function checkForRequests() {
-            const myRequests = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(currentUser) && i.TASK_TAB === 'requests');
+            const targetFirstName = currentUser.toLowerCase().split('_')[0];
+            const targetFullName = currentUser.toLowerCase();
+
+            const myRequests = fullInventory.filter(i => {
+                const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                return (reqAssign.includes(targetFirstName) || reqAssign.includes(targetFullName)) && i.TASK_TAB === 'requests';
+            });
+            
             if(myRequests.length > 0) {
                 showToast("New Requests!", "Managers have assigned you urgent items.", true);
             }
@@ -1728,7 +1735,7 @@
 
             // --- EMAIL LOGIC ---
             const emailRecipient = "Admin"; 
-            const completionTitle = `Task Completed by ${currentUser}`;
+            const completionTitle = `Task Completed by ${currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`;
             const emailBody = generateHtmlForItems([activeItem], completionTitle);
             
             sendEmailNotification(emailRecipient, `Task Completed: ${activeItem.COMMONNAME}`, emailBody);
@@ -2264,14 +2271,21 @@
             let myItems = []; 
             const now = new Date().getTime();
             
+            // SMART FILTER: Extracts "dylan" from "dylan_collyge" to match database assignments
+            const targetFirstName = taskViewTargetUser.toLowerCase().split('_')[0];
+            const targetFullName = taskViewTargetUser.toLowerCase();
+
             const taskFilter = (i) => {
+                const assignee = (i.ASSIGNEDTO || "").toLowerCase();
+                
                 if (taskViewTargetUser === 'ASSIST') {
-                    const assignee = (i.ASSIGNEDTO || "");
-                    if (!assignee.includes("Kayla") && !assignee.includes("Morgan")) return false;
+                    if (!assignee.includes("kayla") && !assignee.includes("morgan")) return false;
                 } else {
-                    if (!(i.ASSIGNEDTO || "").includes(taskViewTargetUser)) return false;
+                    if (!assignee.includes(targetFirstName) && !assignee.includes(targetFullName)) return false;
                 }
+                
                 if (i.TASK_TAB !== currentTab) return false;
+                
                 if (i.TIMESTAMP) {
                     const saveTime = new Date(i.TIMESTAMP).getTime(); 
                     const daysOld = (now - saveTime) / (1000 * 3600 * 24);
@@ -2285,10 +2299,16 @@
             
             if(currentTab === 'requests') {
                  if (taskViewTargetUser === 'ASSIST') {
-                        myItems = fullInventory.filter(i => ((i.REQUEST_ASSIGNED_TO || "").includes("Kayla") || (i.REQUEST_ASSIGNED_TO || "").includes("Morgan")) && i.TASK_TAB === 'requests');
+                        myItems = fullInventory.filter(i => {
+                            const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                            return (reqAssign.includes("kayla") || reqAssign.includes("morgan")) && i.TASK_TAB === 'requests';
+                        });
                         crumb.innerText = `Kayla & Morgan / Urgent Requests`;
                  } else {
-                        myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
+                        myItems = fullInventory.filter(i => {
+                            const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                            return (reqAssign.includes(targetFirstName) || reqAssign.includes(targetFullName)) && i.TASK_TAB === 'requests';
+                        }); 
                         crumb.innerText = `${taskViewTargetUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} / Urgent Requests`;
                  }
             } else if (currentTab === 'flyer') {
@@ -2314,11 +2334,8 @@
                 
                 if(taskViewLevel === 0) {
                     crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
-                    
                     if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; return; }
-
                     const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
-                    
                     container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + 
                     projects.map(p => {
                         const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
@@ -2345,9 +2362,7 @@
                     if(projNote) {
                         instructionBanner = `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-2 mx-2 rounded shadow-sm">
                             <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="ph-fill ph-info text-yellow-500"></i>
-                                </div>
+                                <div class="flex-shrink-0"><i class="ph-fill ph-info text-yellow-500"></i></div>
                                 <div class="ml-3">
                                     <p class="text-sm text-yellow-700 font-bold uppercase">Project Instructions</p>
                                     <p class="text-sm text-yellow-800 mt-1">${projNote}</p>
@@ -2367,9 +2382,7 @@
                     }
 
                     container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Projects</div>` + 
-                                          instructionBanner +
-                                          completeBtn + 
-                                          projectItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                                          instructionBanner + completeBtn + projectItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
                 }
                 return;
             }
