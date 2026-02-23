@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO INV V_001</title>
+    <title>GNC Command</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
-        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
         .pin-input { width: 100%; padding: 14px; font-size: 20px; text-align: center; letter-spacing: 2px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         
@@ -307,7 +307,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO INV V_001
+                GNC Command
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -333,7 +333,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO INV V_001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC Command <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -371,7 +371,7 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">GNC-PRO INV V_001</h1>
+                    <h1 class="text-2xl font-bold">GNC Command</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -2696,7 +2696,7 @@
                     const count = repItems.filter(i => {
                         const c = i.CUSTOMERNAME || "General";
                         const co = i.CONSIGNEENAME || "";
-                        const combined = (co && co !== c) ? `${c} / ${co}` : c;
+                        const combined = (co && co !== cust) ? `${c} / ${co}` : c;
                         return combined === cust;
                     }).length;
 
@@ -3069,7 +3069,8 @@
                             <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
                             <span style="color: #555;">Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | Supply: <strong>${item.SEASONSUPPLY || 0}</strong> | Lot: ${item.LOTCODE || '-'}</span><br>`;
                 
-                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}<br>`;
+                if(item.SAVED_MATCH) html += `Match: ${item.SAVED_MATCH}%<br>`;
+                if(item.SAVED_SPEC) html += `Spec: ${item.SAVED_SPEC}<br>`;
                 if(item.SAVED_PICK) html += `Pick: ${item.SAVED_PICK}<br>`;
                 if(item.SAVED_SALES_DESC) html += `Sales Desc: <strong>${item.SAVED_SALES_DESC}</strong><br>`;
                 if(item.SAVED_NOTE) html += `Note: ${item.SAVED_NOTE}<br>`;
@@ -3096,7 +3097,8 @@
                 let item = fullInventory[idx];
                 text += `${item.COMMONNAME} (${item.CONTSIZE})\nLoc: ${item.LOCATIONCODE || '-'} | Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Lot: ${item.LOTCODE || '-'}\n`;
                 
-                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}% | Spec: ${item.SAVED_SPEC || '-'}\n`;
+                if(item.SAVED_MATCH) text += `Match: ${item.SAVED_MATCH}%\n`;
+                if(item.SAVED_SPEC) text += `Spec: ${item.SAVED_SPEC}\n`;
                 if(item.SAVED_PICK) text += `Pick: ${item.SAVED_PICK}\n`;
                 if(item.SAVED_SALES_DESC) text += `Sales Desc: ${item.SAVED_SALES_DESC}\n`;
                 if(item.SAVED_NOTE) text += `Note: ${item.SAVED_NOTE}\n`;
