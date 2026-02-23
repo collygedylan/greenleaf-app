@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC SALES</title>
+    <title>GNC-PRO INV V_001</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -54,16 +54,16 @@
         }
         
         /* --- DYNAMIC COLOR CLASSES --- */
-        .status-green { border-left-color: #22c55e; } 
-        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } 
-        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } 
+        .status-green { border-left-color: #22c55e; } /* PRIORITY + AVAIL */
+        .status-yellow { border-left-color: #eab308; background-color: #fffbeb; } /* PRIORITY + HOLD */
+        .status-red { border-left-color: #ef4444; background-color: #fef2f2; } /* STOP (S) */
         
-        .status-blue { border-left-color: #3b82f6; background-color: #eff6ff; } 
-        .status-purple { border-left-color: #a855f7; background-color: #f3e8ff; } 
-        .status-orange { border-left-color: #f97316; background-color: #fff7ed; } 
-        .status-black { border-left-color: #1f2937; background-color: #f9fafb; } 
+        .status-blue { border-left-color: #3b82f6; background-color: #eff6ff; } /* U1 */
+        .status-purple { border-left-color: #a855f7; background-color: #f3e8ff; } /* U2 */
+        .status-orange { border-left-color: #f97316; background-color: #fff7ed; } /* U3 */
+        .status-black { border-left-color: #1f2937; background-color: #f9fafb; } /* X */
         
-        .status-default { border-left-color: #e5e7eb; } 
+        .status-default { border-left-color: #e5e7eb; } /* No Priority */
 
         /* BATCH MODE STYLES */
         .batch-mode .select-check { display: block !important; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
@@ -246,7 +246,7 @@
                         Customer Name
                         <span id="cust-loading" class="text-green-600 hidden animate-pulse">Loading Customers...</span>
                     </label>
-                    <input type="text" id="req-cust" list="req-cust-list" class="input-field mb-0" placeholder="Select Rep First..." autocomplete="off">
+                    <input type="text" id="req-cust" list="req-cust-list" class="input-field mb-0" placeholder="Type to search SOC..." autocomplete="off">
                     <datalist id="req-cust-list"></datalist>
                 </div>
             </div>
@@ -307,7 +307,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC SALES
+                GNC-PRO INV V_001
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -324,6 +324,7 @@
             </div>
         </div>
     </div>
+
     <div id="app-wrapper" class="hidden h-full flex flex-col">
         
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
@@ -332,7 +333,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC SALES <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO INV V_001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -345,23 +346,21 @@
 
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
         <div id="side-drawer">
-            <div class="drawer-header">Menu</div>
+            <div class="drawer-header">Greenleaf Menu</div>
             <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
             <div class="drawer-item" onclick="openRequestForm(); toggleMenu();"><i class="ph-bold ph-plus-circle text-green-600"></i> New Request</div>
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-            <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car text-blue-600"></i> Drive Mode</div>
-            <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square text-purple-600"></i> SOC / Orders</div>
-            <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye text-gray-500"></i> Data Viewer</div>
-            
-            <div id="nav-drawer-directory" class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
-            <div id="nav-drawer-inventory" class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
-            <div id="nav-drawer-production" class="drawer-item" onclick="switchView('production'); toggleMenu();"><i class="ph-bold ph-plant"></i> Production</div>
-            <div id="nav-drawer-tasks" class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-            <div id="nav-drawer-salesreps" class="drawer-item font-bold text-purple-600" onclick="switchView('salesreps'); toggleMenu();"><i class="ph-bold ph-users text-xl"></i> Sales Reps</div>
-            <div id="nav-drawer-salesoffice" class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
-            <div id="nav-drawer-tracking" class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Tracking Module</div>
-            <div id="nav-drawer-review" class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
-            
+            <div class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
+            <div class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
+            <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
+            <div class="drawer-item" onclick="switchView('production'); toggleMenu();"><i class="ph-bold ph-plant"></i> Production</div>
+            <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            <div class="drawer-item font-bold text-purple-600" onclick="switchView('salesreps'); toggleMenu();"><i class="ph-bold ph-users text-xl"></i> Sales Reps</div>
+            <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
+            <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
+            <div class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Tracking Module</div>
+            <div class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
+            <div class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
         </div>
@@ -372,8 +371,8 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">GNC SALES</h1>
-                    <p class="opacity-80 text-sm">Inventory & Order Management</p>
+                    <h1 class="text-2xl font-bold">GNC-PRO INV V_001</h1>
+                    <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
                 <div class="bg-white p-4 rounded-2xl mb-6 shadow-lg border border-gray-100">
@@ -396,17 +395,16 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
+                    <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    <div id="btn-home-soc" onclick="switchView('soc')" class="home-btn"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
-                    
-                    <div id="btn-home-tasks" onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div id="btn-home-production" onclick="switchView('production')" class="home-btn"><i class="ph-bold ph-plant home-icon text-production"></i><span class="font-bold">Production</span></div>
-                    <div id="btn-home-inventory" onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
-                    <div id="btn-home-salesreps" onclick="switchView('salesreps')" class="home-btn"><i class="ph-bold ph-users home-icon text-purple-500"></i><span class="font-bold">Sales Reps</span></div>
-                    <div id="btn-home-directory" onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
-                    <div id="btn-home-salesoffice" onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
-                    <div id="btn-home-tracking" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="btn-home-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
+                    <div onclick="switchView('production')" class="home-btn"><i class="ph-bold ph-plant home-icon text-production"></i><span class="font-bold">Production</span></div>
+                    <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
+                    <div onclick="switchView('salesreps')" class="home-btn"><i class="ph-bold ph-users home-icon text-purple-500"></i><span class="font-bold">Sales Reps</span></div>
+                    <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
+                    <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
+                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
+                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
             </div>
 
@@ -486,7 +484,7 @@
                 <div id="production-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="production-content"></div>
             </div>
-            
+
             <div id="view-inventory" class="hidden">
                 <h2 class="text-sm font-bold text-teal-600 uppercase mb-4">Inventory Lookup</h2>
                 
@@ -513,7 +511,8 @@
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
                 <input type="text" id="task-search" class="input-field mb-4" placeholder="Search tasks..." onkeyup="renderTasks()">
-                <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2"></div>
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
+                    </div>
                 <div id="task-tabs-container" class="task-tabs hidden">
                     <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
                     <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
@@ -529,15 +528,15 @@
             </div>
 
             <div id="view-soc" class="hidden">
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC / Orders</h2>
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">SOC (Drive Sync)</h2>
                 
-                <div class="task-tabs mb-4" id="soc-tabs-container">
+                <div class="task-tabs mb-4">
                     <div id="st-reps" class="task-tab active" onclick="switchSocTab('reps')">Sales Reps</div>
                     <div id="st-item" class="task-tab" onclick="switchSocTab('item')">Item Lookup</div>
                     <div id="st-docks" class="task-tab" onclick="switchSocTab('docks')">Docks</div>
                 </div>
 
-                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search Customers or Items..." onkeyup="handleSearchDebounced(this.value, 'soc')">
+                <input type="text" id="soc-search" class="input-field mb-4" placeholder="Search..." onkeyup="handleSearchDebounced(this.value, 'soc')">
                 <div id="soc-status" class="mb-4 text-xs font-bold text-[#007a4d] flex items-center gap-2"></div>
                 <div id="soc-content"></div>
             </div>
@@ -719,8 +718,8 @@
         <nav class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
             <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
-            <div id="nav-bottom-tasks" onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
-            <div id="nav-bottom-viewer" onclick="switchView('viewer')"><i class="ph-bold ph-eye text-2xl text-gray-400"></i></div>
+            <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
+            <div onclick="switchView('viewer')"><i class="ph-bold ph-eye text-2xl text-gray-400"></i></div>
         </nav>
     </div>
 
@@ -772,7 +771,8 @@
             <textarea id="assign-note" class="w-full p-3 border rounded-lg text-sm mb-4 h-20 bg-gray-50 focus:bg-white focus:border-[#007a4d] outline-none" placeholder="What needs to be done? e.g. Check for mites, get new photo..."></textarea>
 
             <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
-            <div class="space-y-2 mb-6" id="assign-user-checkboxes"></div>
+            <div class="space-y-2 mb-6" id="assign-user-checkboxes">
+                </div>
             
             <div class="flex gap-3">
                 <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
@@ -782,9 +782,53 @@
     </div>
 
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
+
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFORfJYO5ohPERxkfQfQ-nbuUV-J2HP7VhBsdO6PoW3WzJWDVsQCB2c6ygpADELHwS/exec"; 
         
+        // Generic function to send email via backend
+        function sendEmailNotification(toUser, subject, htmlContent) {
+            // Find email dynamically from directory, default to Admin email if not found
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === toUser);
+            const email = dirEntry ? dirEntry.email : "dylan_collyge@greenleafnursery.com";
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "send_email",
+                    to: email,
+                    subject: subject,
+                    htmlBody: htmlContent
+                })
+            }).catch(err => console.error("Email failed slightly:", err)); 
+        }
+
+        // Helper to make the email look nice
+        function generateHtmlForItems(items, title, directions) {
+            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
+                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
+            
+            if(directions) {
+                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
+                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
+                         </div>`;
+            }
+
+            items.forEach(item => {
+                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
+                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
+                            <span style="color: #555; font-size: 12px;">
+                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
+                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
+                                Item: ${item.ITEMCODE}
+                            </span>`;
+                if(item.SAVED_NOTE) html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
+                html += `</div>`;
+            });
+            return html + "</div>";
+        }
+
         // --- GLOBAL VARIABLES ---
         let fullInventory = []; 
         let noteTemplates = []; 
@@ -793,11 +837,8 @@
         let socReps = []; 
         let socData = []; 
         let activeItem = null; 
-        
         let currentUser = null; 
         let isAdmin = false; 
-        let isRep = false; 
-        
         let taskViewTargetUser = null; 
         let currentTab = 'season'; 
         let currentFlyerTab = 'flyer_crop'; 
@@ -819,6 +860,7 @@
         let debounceTimer; 
         let syncPauseUntil = 0; 
 
+        // SALES REPS TAB VARIABLES
         let liveRepFolders = [];
         let liveRepData = [];
         let srViewLevel = 0; 
@@ -827,6 +869,7 @@
 
         window.lastLocalUpdate = 0;
 
+        // DRIVE MODE STATE & FILTERS
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
@@ -840,18 +883,21 @@
             ltsVal: ''
         };
 
+        // INVENTORY MODE STATE
         let inventoryViewLevel = 0;
         let selectedInventoryName = null;
         let selectedInventorySize = null;
         let inventorySearchTerm = '';
         let inventorySelectedSeasons = ['ALL'];
 
+        // PRODUCTION MODE STATE
         let productionViewLevel = 0;
         let selectedProductionName = null;
         let selectedProductionSize = null;
         let productionSearchTerm = '';
         let productionSelectedSeasons = ['ALL'];
 
+        // MANAGER REVIEW STATE
         let currentReviewFolder = null;
         let currentReviewRep = null;
         let currentReviewCustomer = null;
@@ -859,6 +905,7 @@
         let selectedReviewName = null;
         let selectedReviewSize = null;
 
+        // PHOTO EDITOR STATE
         let currentFile = null;
         let editSettings = { pro: true, logo: false, dirt: false, bg: 'none' };
 
@@ -907,46 +954,7 @@
             { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" }
         ];
 
-        function sendEmailNotification(toUser, subject, htmlContent) {
-            const dirEntry = STATIC_DIRECTORY.find(d => d.name === toUser);
-            const email = dirEntry ? dirEntry.email : "dylan_collyge@greenleafnursery.com";
-            
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    type: "send_email",
-                    to: email,
-                    subject: subject,
-                    htmlBody: htmlContent
-                })
-            }).catch(err => console.error("Email failed slightly:", err)); 
-        }
-
-        function generateHtmlForItems(items, title, directions) {
-            let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
-                        <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
-            
-            if(directions) {
-                html += `<div style="background-color: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
-                            <strong style="color: #b45309; text-transform: uppercase; font-size: 11px;">Directions:</strong><br>
-                            <span style="font-size: 14px; color: #1f2937;">${directions}</span>
-                         </div>`;
-            }
-
-            items.forEach(item => {
-                html += `<div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007a4d;">
-                            <strong style="font-size: 16px;">${item.COMMONNAME} (${item.CONTSIZE})</strong><br>
-                            <span style="color: #555; font-size: 12px;">
-                                Loc: <strong>${item.LOCATIONCODE || '-'}</strong> | 
-                                Qty: <strong>${item.PTRAVAILABLE || 0}</strong> | 
-                                Item: ${item.ITEMCODE}
-                            </span>`;
-                if(item.SAVED_NOTE) html += `<div style="margin-top:4px; font-style:italic;">Note: ${item.SAVED_NOTE}</div>`;
-                html += `</div>`;
-            });
-            return html + "</div>";
-        }
-
+        // --- NEW SALES REPS TAB LOGIC ---
         function loadSalesRepsInit() {
             srViewLevel = 0;
             document.getElementById('sr-status').innerText = "Connecting to Google Drive...";
@@ -1056,46 +1064,19 @@
             renderSalesReps();
         }
 
+        // --- REQUEST SYSTEM LOGIC ---
+
         let pendingRequestItems = []; 
 
         function openRequestForm() {
             const repSelect = document.getElementById('req-rep');
             repSelect.innerHTML = '<option value="">-- Select Rep --</option>';
-            const custList = document.getElementById('req-cust-list');
-            custList.innerHTML = "";
-            document.getElementById('req-cust').value = "";
-
-            if (isRep) {
+            STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
                 const opt = document.createElement('option');
-                opt.value = currentUser;
-                opt.text = currentUser;
+                opt.value = r.name;
+                opt.text = r.name;
                 repSelect.appendChild(opt);
-                repSelect.value = currentUser;
-                repSelect.disabled = true; 
-
-                if(socData && socData.length > 0) {
-                    const uniqueCusts = [...new Set(socData.map(i => {
-                        const c = i.CUSTOMERNAME || "General";
-                        const co = i.CONSIGNEENAME || "";
-                        if(co && co !== c) return `${c} / ${co}`;
-                        return c;
-                    }))].sort();
-
-                    uniqueCusts.forEach(c => {
-                        const o = document.createElement('option');
-                        o.value = c;
-                        custList.appendChild(o);
-                    });
-                }
-            } else {
-                repSelect.disabled = false;
-                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
-                    const opt = document.createElement('option');
-                    opt.value = r.name;
-                    opt.text = r.name;
-                    repSelect.appendChild(opt);
-                });
-            }
+            });
             
             const itemList = document.getElementById('req-item-list');
             itemList.innerHTML = "";
@@ -1105,10 +1086,13 @@
                 itemList.appendChild(opt);
             });
 
+            document.getElementById('req-cust').value = "";
+            document.getElementById('req-cust-list').innerHTML = "";
             document.getElementById('cust-loading').classList.add('hidden');
             
             pendingRequestItems = [];
             renderRequestList();
+            
             clearRequestInputs();
 
             document.getElementById('request-form-modal').style.display = 'flex';
@@ -1119,7 +1103,6 @@
         }
 
         function handleRepChange() {
-            if (isRep) return; 
             const repName = document.getElementById('req-rep').value;
             const custList = document.getElementById('req-cust-list');
             const loading = document.getElementById('cust-loading');
@@ -1278,34 +1261,29 @@
 
             newInventoryItems.forEach(item => fullInventory.unshift(item));
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    type: "create_requests_batch",
-                    items: newInventoryItems,
-                    user: currentUser
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast("Success", "All items requested!");
-                } else {
-                    showToast("Error", data.message, true);
-                }
-            })
-            .catch(err => {
-                showToast("Network Error", "Saved offline.", true);
+            let processed = 0;
+            newInventoryItems.forEach(item => {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        type: "create_request",
+                        item: item,
+                        user: currentUser
+                    })
+                }).then(() => {
+                    processed++;
+                    if(processed === newInventoryItems.length) {
+                        showToast("Success", "All items requested!");
+                    }
+                });
             });
 
             closeRequestForm();
             
-            if(isRep) {
-                switchView('home');
-            } else {
-                switchView('review');
-                setTimeout(() => openReviewFolder('pending'), 300);
-            }
+            switchView('review');
+            setTimeout(() => {
+                openReviewFolder('pending');
+            }, 300);
         }
 
         function approveAndSendToRep(item) {
@@ -1349,17 +1327,19 @@
             showToast("Sent", "Rep emailed and request closed.");
         }
 
+        // --- DYNAMIC LOGIN LOGIC ---
         let appUsers = []; 
 
         window.onload = function() {
             const statusMsg = document.getElementById('status-msg');
             
+            // Allow users to type immediately, but fetch the user DB in the background to validate against
             fetch(GOOGLE_SCRIPT_URL + "?action=getUsers")
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
                         appUsers = data.data;
-                        renderDynamicAssignUsers(); 
+                        renderDynamicAssignUsers(); // Set up checkboxes for later use
                     } else {
                         statusMsg.innerText = 'No users found. Ensure APP_USERS sheet is set up!';
                         statusMsg.classList.remove('hidden');
@@ -1380,8 +1360,10 @@
                 return;
             }
 
+            // Convert what they typed into the "firstname_lastname" format for matching
             const formattedUser = rawUser.toLowerCase().replace(/\s+/g, '_');
             
+            // Find the user in our database (case-insensitive check)
             const selectedUserData = appUsers.find(u => 
                 u.name.toLowerCase() === formattedUser || 
                 u.name.toLowerCase() === rawUser.toLowerCase()
@@ -1398,9 +1380,9 @@
                 return;
             }
 
+            // Success! Set the exact name from the database as the active user
             currentUser = selectedUserData.name; 
             isAdmin = selectedUserData.role === 'Admin';
-            isRep = selectedUserData.role === 'Rep';
             taskViewTargetUser = currentUser;
 
             if (selectedUserData.resetRequired) {
@@ -1409,32 +1391,12 @@
             } else {
                 document.getElementById('login-inputs').classList.add('hidden'); 
                 document.getElementById('loading-spinner').classList.remove('hidden'); 
-                
-                if (isRep) {
-                    fetchRepDataSilently(currentUser);
-                }
-                
                 fetchData(); 
             }
         }
         
-        function fetchRepDataSilently(repIdentifier) {
-            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
-            const queryParam = dirEntry ? dirEntry.name : repIdentifier;
-            
-            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    socData = data.data;
-                    selectedSocRep = queryParam;
-                    console.log("Background SOC Load Complete for", queryParam);
-                }
-            })
-            .catch(e => console.error("Silent SOC Load Error", e));
-        }
-
         function renderDynamicAssignUsers() {
+            // Build the team selector for Tasks view dynamically
             const teamContainer = document.getElementById('team-selector');
             let teamHtml = "";
             appUsers.forEach(u => {
@@ -1451,6 +1413,7 @@
             teamHtml += `<div class="p-3 border rounded text-center font-bold bg-orange-50 text-orange-700 cursor-pointer col-span-2" onclick="setTaskUser('ASSIST')">Assist Team View</div>`;
             teamContainer.innerHTML = teamHtml;
 
+            // Build the assignment checkboxes for the assignment modal dynamically
             const assignContainer = document.getElementById('assign-user-checkboxes');
             let assignHtml = "";
             appUsers.forEach(u => {
@@ -1486,6 +1449,7 @@
                 return;
             }
 
+            // Show loading state on the button
             btn.innerText = "UPDATING...";
             btn.disabled = true;
 
@@ -1536,75 +1500,110 @@
             document.getElementById('new-password').value = ""; 
             document.getElementById('confirm-password').value = ""; 
         }
-        // --- ADDED MISSING FUNCTIONS & SAFE STUBS TO FIX APP CRASHING ---
-        function showToast(title, msg, isError = false) {
-            const toast = document.getElementById('toast-notification');
-            if(!toast) return;
-            toast.innerHTML = `<strong>${title}</strong>: ${msg}`;
-            toast.style.backgroundColor = isError ? '#ef4444' : '#16a34a';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+
+        // --- SEARCH & RENDER LOGIC ---
+
+        function handleSearchDebounced(val, type) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if(type === 'drive') handleDriveSearch(val);
+                if(type === 'inventory') handleInventorySearch(val);
+                if(type === 'production') handleProductionSearch(val);
+                if(type === 'soc') {
+                    if (currentSocTab === 'item') {
+                         if(val.length > 2) {
+                             document.getElementById('soc-status').innerText = "Searching Global Database...";
+                             fetch(GOOGLE_SCRIPT_URL + "?action=searchSoc&term=" + encodeURIComponent(val))
+                             .then(res => res.json())
+                             .then(data => {
+                                 if(data.status === 'success') {
+                                     socData = data.data;
+                                     socViewLevel = 0; 
+                                     renderSocView();
+                                     document.getElementById('soc-status').innerText = data.data.length + " matches found.";
+                                 } else {
+                                     document.getElementById('soc-status').innerText = "Search failed.";
+                                 }
+                             });
+                          }
+                    } else {
+                         renderSocView(); 
+                    }
+                }
+            }, 500); 
         }
 
-        function startAutoSync() {
-            if(autoSyncTimer) clearInterval(autoSyncTimer);
-            autoSyncTimer = setInterval(() => fetchData(true), 60000);
+        function showToast(title, message, isAlert = false) {
+            const toast = document.getElementById('toast-notification');
+            toast.style.background = isAlert ? '#ef4444' : '#16a34a';
+            toast.innerHTML = `
+                <div class="bg-white ${isAlert ? 'text-red-500' : 'text-green-600'} rounded-full p-2 flex items-center justify-center">
+                    <i class="ph-fill ${isAlert ? 'ph-warning-circle' : 'ph-check-circle'} text-xl"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-sm">${title}</div>
+                    <div class="text-xs opacity-90">${message}</div>
+                </div>
+            `;
+            toast.classList.add('show'); 
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
         function toggleMenu() {
-            const drawer = document.getElementById('side-drawer');
-            const overlay = document.getElementById('drawer-overlay');
-            if (drawer.classList.contains('open')) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                drawer.classList.add('open');
-                overlay.classList.add('open');
-            }
+            document.getElementById('side-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
         }
 
-        function applyAssignments() { console.log("applyAssignments: Auto-Assignment Logic goes here."); }
-        function initDriveFilters() { console.log("initDriveFilters: Filter Setup Logic goes here."); }
+        let ptrStartY = 0, ptrCurrentY = 0, ptrDragging = false;
+        const scrollArea = document.getElementById('main-scroll-area'); 
+        const spinner = document.getElementById('ptr-spinner');
         
-        function renderDriveNames() { renderDriveView(); }
-        function renderDriveView() { console.log("renderDriveView: Rendering Drive List"); }
-        function renderInventoryView() { console.log("renderInventoryView: Rendering Inventory List"); }
-        function renderProductionView() { console.log("renderProductionView: Rendering Production List"); }
-        function renderDirectoryView() { console.log("renderDirectoryView: Rendering Directory"); }
-        function renderTasks() { console.log("renderTasks: Rendering Tasks List"); }
-        function renderTeamSelector() { console.log("renderTeamSelector: Rendering Selector"); }
-        function renderViewerNames() { console.log("renderViewerNames: Rendering Viewer"); }
-        function renderManagerFolders() { console.log("renderManagerFolders: Rendering Folders"); }
-        function renderReviewContent() { console.log("renderReviewContent: Rendering Reviews"); }
-        function renderSalesOffice() { console.log("renderSalesOffice: Rendering Sales Office List"); }
-        function renderSocView() { console.log("renderSocView: Rendering SOC"); }
-        function openReviewFolder(f) { console.log("openReviewFolder:", f); }
-        function setTaskUser(u) { console.log("setTaskUser:", u); }
-        function setTaskTab(t) { console.log("setTaskTab:", t); }
-        function setFlyerSubTab(t) { console.log("setFlyerSubTab:", t); }
-        function switchSocTab(t) { console.log("switchSocTab:", t); }
-        function handleSearchDebounced(t, v) { console.log("Search:", t, v); }
-        function handleDriveSearch(v) { console.log("Drive Search:", v); }
-        function handleProductionSearch(v) { console.log("Production Search:", v); }
-        function handleInventorySearch(v) { console.log("Inventory Search:", v); }
-        function toggleProductionSeason(v, e) { console.log("Toggle Prod Season:", v); }
-        function toggleInventorySeason(v, e) { console.log("Toggle Inv Season:", v); }
-        function toggleMs(id) { document.getElementById(id).classList.toggle('show'); }
-        function resetDriveFilters() { console.log("Reset Drive Filters"); }
-        function closePhotoEditor() { document.getElementById('view-photo-editor').style.display = 'none'; }
-        function toggleEdit(t) { console.log("Toggle Edit:", t); }
-        function finalizeUpload() { console.log("Finalize Upload"); }
-        function handlePhotoUpload(el) { console.log("Photo Uploaded"); }
-        function markRequestComplete() { console.log("Mark Request Complete"); }
-        function saveData() { console.log("Save Data Hit"); }
-        function resetReviewFolders() { console.log("Reset Review Folders"); }
-        function logFailedSave(p) { console.log("Failed Save Logged:", p); }
-        function toggleFlyerOptions(show) { 
-            const box = document.getElementById('flyer-options-box');
-            if (box) box.style.display = show ? 'block' : 'none'; 
+        scrollArea.addEventListener('touchstart', (e) => { 
+            if (scrollArea.scrollTop === 0) { 
+                ptrStartY = e.touches[0].clientY; 
+                ptrDragging = true; 
+            } 
+        }, { passive: true });
+        
+        scrollArea.addEventListener('touchmove', (e) => {
+            if (!ptrDragging) return; 
+            const y = e.touches[0].clientY; 
+            const diff = y - ptrStartY;
+            if (diff > 0 && scrollArea.scrollTop === 0) { 
+                ptrCurrentY = diff; 
+                const move = Math.min(diff * 0.5, 80); 
+                spinner.style.top = (move - 40) + 'px'; 
+                spinner.style.transform = `translateX(-50%) rotate(${move * 5}deg)`; 
+            } else { 
+                ptrDragging = false; 
+            }
+        }, { passive: true });
+        
+        scrollArea.addEventListener('touchend', () => {
+            if (!ptrDragging) return; 
+            ptrDragging = false;
+            if (ptrCurrentY > 60) { 
+                spinner.style.top = '20px'; 
+                spinner.classList.add('loading'); 
+                manualSync().then(() => { 
+                    spinner.classList.remove('loading'); 
+                    spinner.style.top = '-40px'; 
+                }); 
+            } else { 
+                spinner.style.top = '-40px'; 
+            } 
+            ptrCurrentY = 0;
+        });
+
+        async function manualSync() { 
+            await fetchData(); 
+        } 
+
+        function startAutoSync() { 
+            if(autoSyncTimer) clearInterval(autoSyncTimer); 
+            autoSyncTimer = setInterval(() => { fetchData(true); }, 15000); 
         }
 
-        // --- CORE APP INIT & DATA FETCHING ---
         async function fetchData(isSilent = false) {
             if (new Date().getTime() < syncPauseUntil) {
                 console.log("Skipping Auto-Sync: Pause Active");
@@ -1650,8 +1649,7 @@
                              }
                         } else if(!document.getElementById('view-tasks').classList.contains('hidden')) { 
                             renderTasks(); 
-                            // checkForRequests(); -> Another missing function you didn't define. Stubbed below:
-                            console.log("checkForRequests stub");
+                            checkForRequests(); 
                         } else if(!document.getElementById('view-salesoffice').classList.contains('hidden')) { 
                             renderSalesOffice();
                         } else if(!document.getElementById('view-drive').classList.contains('hidden')) { 
@@ -1666,52 +1664,10 @@
             } catch (e) { 
                 console.error("Fetch Data Error:", e); 
                 if(!isSilent) { 
-                    document.getElementById('ptr-spinner').classList.remove('loading');
-                    const textEl = document.getElementById('loading-text');
-                    textEl.style.color = "#ef4444"; 
-                    textEl.innerHTML = "<b>Load Failed:</b><br>" + e.message; 
+                    document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
+                    setTimeout(resetLogin, 4000); 
                 } 
             }
-        }
-        
-        function launchApp() { 
-            document.getElementById('view-login').style.display = 'none'; 
-            document.getElementById('app-wrapper').classList.remove('hidden'); 
-            document.getElementById('header-user').innerText = currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); 
-            
-            if (isRep) {
-                document.getElementById('btn-home-tasks').classList.add('hidden');
-                document.getElementById('btn-home-production').classList.add('hidden');
-                document.getElementById('btn-home-inventory').classList.add('hidden');
-                document.getElementById('btn-home-salesreps').classList.add('hidden');
-                document.getElementById('btn-home-directory').classList.add('hidden');
-                document.getElementById('btn-home-salesoffice').classList.add('hidden');
-                document.getElementById('btn-home-tracking').classList.add('hidden');
-                document.getElementById('btn-home-review').classList.add('hidden');
-
-                document.getElementById('nav-drawer-directory').classList.add('hidden');
-                document.getElementById('nav-drawer-inventory').classList.add('hidden');
-                document.getElementById('nav-drawer-production').classList.add('hidden');
-                document.getElementById('nav-drawer-tasks').classList.add('hidden');
-                document.getElementById('nav-drawer-salesreps').classList.add('hidden');
-                document.getElementById('nav-drawer-salesoffice').classList.add('hidden');
-                document.getElementById('nav-drawer-tracking').classList.add('hidden');
-                document.getElementById('nav-drawer-review').classList.add('hidden');
-
-                document.getElementById('nav-bottom-tasks').classList.add('hidden');
-                document.getElementById('nav-bottom-viewer').classList.add('hidden');
-
-                document.getElementById('st-reps').style.display = 'none'; 
-                currentSocTab = 'item'; 
-            } else {
-                if(isAdmin) { 
-                    document.getElementById('btn-home-soc').classList.remove('hidden'); 
-                    document.getElementById('btn-home-tracking').classList.remove('hidden'); 
-                    document.getElementById('btn-home-review').classList.remove('hidden'); 
-                }
-            }
-            
-            switchView('home'); 
         }
 
         function restoreSession() {
@@ -1725,12 +1681,1154 @@
                 }
             }
         }
+
+        function checkForRequests() {
+            const targetFirstName = currentUser.toLowerCase().split('_')[0];
+            const targetFullName = currentUser.toLowerCase();
+
+            const myRequests = fullInventory.filter(i => {
+                const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                return (reqAssign.includes(targetFirstName) || reqAssign.includes(targetFullName)) && i.TASK_TAB === 'requests';
+            });
+            
+            if(myRequests.length > 0) {
+                showToast("New Requests!", "Managers have assigned you urgent items.", true);
+            }
+        }
+
+        function logFailedSave(payload) {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            failed = failed.filter(f => f.id !== payload.id); 
+            failed.push(payload);
+            localStorage.setItem('greenleaf_failed_saves', JSON.stringify(failed));
+        }
+
+        function retryFailedSaves() {
+            let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+            if(failed.length === 0) return;
+            
+            showToast("Syncing...", "Attempting to send offline updates.");
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "batch_update", updates: failed }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    localStorage.removeItem('greenleaf_failed_saves'); 
+                    showToast("Success", "Offline data synced."); 
+                    fetchData(true);
+                } else { 
+                    showToast("Sync Failed", data.message, true); 
+                }
+            })
+            .catch(err => showToast("Network Error", "Still offline.", true));
+        }
+
+        function saveData(silent = false) {
+            if(!isAdmin && currentOriginView !== 'tasks' && currentOriginView !== 'production') return;
+            
+            syncPauseUntil = new Date().getTime() + 15000; 
+            window.lastLocalUpdate = new Date().getTime();
+
+            const matchEl = document.getElementById('in-match'); 
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick'); 
+            const noteEl = document.getElementById('in-note'); 
+            const salesDescEl = document.getElementById('in-sales-desc');
+
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || ""); 
+
+            const growerEval = document.getElementById('in-grower-eval') ? document.getElementById('in-grower-eval').value : (activeItem.GROWER_EVAL || "");
+            const growerShear = document.getElementById('in-grower-shear') ? document.getElementById('in-grower-shear').value : (activeItem.GROWER_SHEAR || "");
+            const growerWater = document.getElementById('in-grower-water') ? document.getElementById('in-grower-water').value : (activeItem.GROWER_WATER || "");
+            const growerRoot = document.getElementById('in-grower-root') ? document.getElementById('in-grower-root').value : (activeItem.GROWER_ROOT || "");
+            const growerNote = document.getElementById('in-grower-note') ? document.getElementById('in-grower-note').value : (activeItem.GROWER_NOTE || "");
+
+            activeItem.SAVED_MATCH = match;
+            activeItem.SAVED_SPEC = spec;
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note;
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            
+            activeItem.SO_STATUS = "PENDING"; 
+            
+            activeItem.GROWER_EVAL = growerEval;
+            activeItem.GROWER_SHEAR = growerShear;
+            activeItem.GROWER_WATER = growerWater;
+            activeItem.GROWER_ROOT = growerRoot;
+            activeItem.GROWER_NOTE = growerNote;
+
+            activeItem.TIMESTAMP = new Date().toISOString();
+
+            const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+            if(masterIdx > -1) {
+                fullInventory[masterIdx] = activeItem;
+            }
+
+            const payload = { 
+                type: "update", 
+                id: activeItem.UNIQUE_ID, 
+                match: match, 
+                spec: spec, 
+                pick: pick, 
+                note: note, 
+                salesDesc: salesDesc,
+                soStatus: "PENDING", 
+                growerEval: growerEval,
+                growerShear: growerShear,
+                growerWater: growerWater,
+                growerRoot: growerRoot,
+                growerNote: growerNote,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
+                user: currentUser 
+            };
+            
+            if(!silent) { 
+                goBackFromDetail(); 
+                showToast("Saved", "Sent to Sales Office (Sync Paused).", false); 
+            } else { 
+                renderOverviewData(); 
+            }
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status !== 'success') logFailedSave(payload); 
+            })
+            .catch(err => logFailedSave(payload));
+        }
+
+        function markRequestComplete() {
+            if(!activeItem) return;
+            
+            syncPauseUntil = new Date().getTime() + 15000;
+            window.lastLocalUpdate = new Date().getTime();
+            
+            const matchEl = document.getElementById('in-match'); 
+            const specEl = document.getElementById('in-spec');
+            const pickEl = document.getElementById('in-pick'); 
+            const noteEl = document.getElementById('in-note'); 
+            const salesDescEl = document.getElementById('in-sales-desc');
+
+            const match = matchEl ? matchEl.value : (activeItem.SAVED_MATCH || ""); 
+            const spec = specEl ? specEl.value : (activeItem.SAVED_SPEC || "");
+            const pick = pickEl ? pickEl.value : (activeItem.SAVED_PICK || ""); 
+            const note = noteEl ? noteEl.value : (activeItem.SAVED_NOTE || "");
+            const salesDesc = salesDescEl ? salesDescEl.value : (activeItem.SAVED_SALES_DESC || "");
+
+            activeItem.SAVED_MATCH = match; 
+            activeItem.SAVED_SPEC = spec; 
+            activeItem.SAVED_PICK = pick;
+            activeItem.SAVED_NOTE = note; 
+            activeItem.SAVED_SALES_DESC = salesDesc;
+            activeItem.REQUEST_ASSIGNED_TO = ""; 
+            activeItem.TASK_TAB = "review"; 
+            activeItem.TIMESTAMP = new Date().toISOString(); 
+
+            // --- EMAIL LOGIC ---
+            const emailRecipient = "Admin"; 
+            const completionTitle = `Task Completed by ${currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`;
+            const emailBody = generateHtmlForItems([activeItem], completionTitle);
+            
+            sendEmailNotification(emailRecipient, `Task Completed: ${activeItem.COMMONNAME}`, emailBody);
+            // -----------------------
+
+            const payload = { 
+                type: "update", 
+                id: activeItem.UNIQUE_ID, 
+                requestAssignedTo: "", 
+                taskTab: "review", 
+                match: match, 
+                spec: spec, 
+                pick: pick, 
+                note: note, 
+                salesDesc: salesDesc, 
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", 
+                user: currentUser 
+            };
+            
+            goBackFromDetail();
+            showToast("Success", "Marked Complete (Sync Paused)");
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => { 
+                if(data.status !== 'success') logFailedSave(payload); 
+            })
+            .catch(err => logFailedSave(payload));
+        }
+
+        function handlePhotoUpload(input) {
+            if(input.files && input.files[0]) {
+                currentFile = input.files[0];
+                if(document.getElementById('in-match')) activeItem.SAVED_MATCH = document.getElementById('in-match').value;
+                if(document.getElementById('in-spec')) activeItem.SAVED_SPEC = document.getElementById('in-spec').value;
+                if(document.getElementById('in-pick')) activeItem.SAVED_PICK = document.getElementById('in-pick').value;
+                if(document.getElementById('in-note')) activeItem.SAVED_NOTE = document.getElementById('in-note').value;
+                if(document.getElementById('in-sales-desc')) activeItem.SAVED_SALES_DESC = document.getElementById('in-sales-desc').value;
+                if(document.getElementById('in-grower-eval')) activeItem.GROWER_EVAL = document.getElementById('in-grower-eval').value;
+                if(document.getElementById('in-grower-note')) activeItem.GROWER_NOTE = document.getElementById('in-grower-note').value;
+                openPhotoEditor();
+            }
+        }
+
+        function openPhotoEditor() {
+            const modal = document.getElementById('view-photo-editor');
+            const preview = document.getElementById('editor-preview');
+            modal.style.display = 'flex';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                processCanvasPreview(); 
+            }
+            reader.readAsDataURL(currentFile);
+        }
+
+        function closePhotoEditor() {
+            document.getElementById('view-photo-editor').style.display = 'none';
+            document.getElementById('photo-canvas').classList.add('hidden');
+            document.getElementById('editor-preview').classList.remove('hidden');
+            currentFile = null;
+        }
+
+        function toggleEdit(type) {
+            const btn = document.getElementById('btn-' + type);
+            editSettings[type] = !editSettings[type];
+            btn.classList.toggle('active', editSettings[type]);
+            processCanvasPreview();
+        }
+
+        function processCanvasPreview() {
+            const preview = document.getElementById('editor-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const ctx = canvas.getContext('2d');
+            preview.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            const img = new Image();
+            img.src = preview.src;
+            img.onload = function() {
+                const MAX_WIDTH = 1024;
+                const scale = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scale;
+                if(editSettings.pro) { ctx.filter = 'contrast(1.15) brightness(1.05) saturate(1.1)'; } else { ctx.filter = 'none'; }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none'; 
+                if(editSettings.dirt) {
+                    const potHeight = canvas.height * 0.25;
+                    const potY = canvas.height - potHeight;
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, potY, canvas.width, potHeight); ctx.clip(); ctx.filter = 'blur(4px)'; ctx.drawImage(canvas, 0, 0); ctx.restore(); ctx.filter = 'none';
+                }
+            }
+        }
+
+        function finalizeUpload() {
+            const canvas = document.getElementById('photo-canvas');
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const base64Data = dataUrl.split(',')[1];
+            const currentCount = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',').length : 0;
+            const seqSuffix = currentCount > 0 ? ` (${currentCount + 1})` : ` (1)`;
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${activeItem.LOCATIONCODE}_${activeItem.LOTCODE}_${dateStr}${seqSuffix}.jpg`.replace(/[\/\s,]/g, '_');
+            closePhotoEditor();
+            
+            syncPauseUntil = new Date().getTime() + 15000;
+            window.lastLocalUpdate = new Date().getTime();
+            
+            showToast("Uploading...", "Pro photo processing...", false);
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { 
+                    let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; 
+                    let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                    links.push(data.url); names.push(filename); 
+                    activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    const masterIdx = fullInventory.findIndex(i => i.UNIQUE_ID === activeItem.UNIQUE_ID);
+                    if(masterIdx > -1) { fullInventory[masterIdx] = activeItem; activeItem = fullInventory[masterIdx]; }
+                    renderOverviewData(); 
+                    const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser, growerEval: activeItem.GROWER_EVAL || "", growerNote: activeItem.GROWER_NOTE || "" };
+                    fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).catch(err => logFailedSave(payload));
+                    showToast("Success", "Photo saved & Text preserved."); 
+                } else { showToast("Upload Error", data.message, true); }
+            })
+            .catch(err => showToast("Network Error", "Could not upload photo.", true));
+        }
+
+        function renderDirectoryView() {
+            const container = document.getElementById('directory-content');
+            const term = document.getElementById('directory-search').value.toLowerCase();
+            let displayList = STATIC_DIRECTORY;
+            if(term) { displayList = displayList.filter(r => r.name.toLowerCase().includes(term)); }
+            container.innerHTML = displayList.map(rep => {
+                let btns = '';
+                if(rep.phone) btns += `<a href="tel:${rep.phone}" class="contact-btn btn-call"><i class="ph-fill ph-phone"></i> Call</a>`;
+                if(rep.email) btns += `<a href="mailto:${rep.email}" class="contact-btn btn-mail"><i class="ph-fill ph-envelope"></i> Email</a>`;
+                return `<div class="rep-card"><div class="flex justify-between items-start mb-2" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><div><div class="rep-name">${rep.name}</div><div class="rep-id">${rep.id ? 'ID: '+rep.id : 'Sales Rep'}</div></div><i class="ph-bold ph-caret-right text-gray-300 mt-1"></i></div>${btns ? `<div class="contact-row">${btns}</div>` : ''}<div class="text-[10px] text-gray-400 text-right italic">Tap name to view items</div></div>`;
+            }).join('');
+        }
+
+        function switchSocTab(tab) {
+            currentSocTab = tab;
+            document.getElementById('st-reps').classList.toggle('active', tab === 'reps');
+            document.getElementById('st-item').classList.toggle('active', tab === 'item');
+            document.getElementById('st-docks').classList.toggle('active', tab === 'docks');
+            socViewLevel = 0;
+            renderSocView();
+        }
+
+        function fetchRepData(repIdentifier) {
+            if(!document.getElementById('view-directory').classList.contains('hidden')) { switchView('soc'); }
+            const dirEntry = STATIC_DIRECTORY.find(d => d.name === repIdentifier || d.id === repIdentifier);
+            const queryParam = dirEntry ? dirEntry.name : repIdentifier;
+            document.getElementById('soc-status').innerText = "Loading " + queryParam + "...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(queryParam))
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { socData = data.data; socViewLevel = 1; selectedSocRep = queryParam; renderSocView(); document.getElementById('soc-status').innerText = ""; } 
+                else { 
+                    if(dirEntry && queryParam !== dirEntry.id) {
+                         fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(dirEntry.id)).then(res2 => res2.json()).then(data2 => {
+                             if(data2.status === 'success') { socData = data2.data; socViewLevel = 1; selectedSocRep = dirEntry.id; renderSocView(); document.getElementById('soc-status').innerText = ""; } else { document.getElementById('soc-status').innerText = "Not found"; }
+                          });
+                    } else { document.getElementById('soc-status').innerText = "Error: Rep sheet not found."; }
+                }
+            }).catch(e => { document.getElementById('soc-status').innerText = "Connection Error"; });
+        }
+
+        function renderSocView() {
+            const container = document.getElementById('soc-content'); 
+            const term = document.getElementById('soc-search').value.toLowerCase();
+            
+            if (term && socData.length > 0) { 
+                const matched = socData.filter(i => (i.CUSTOMERNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.SALESREP||"").toLowerCase().includes(term) || (i.COMMONNAME||"").toLowerCase().includes(term)); 
+                container.innerHTML = `<div class="mb-4 text-xs font-bold text-gray-500">Search Results inside loaded data</div>` + matched.map(i => `<div class="inv-card"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="text-xs font-bold text-gray-500 mb-1">Rep: ${i.SALESREP || '-'} | Cust: ${i.CUSTOMERNAME || 'Unknown'}</div><div class="text-sm">Qty: ${i.QTYORDERED || i.QTY || 0} | Order: ${i.ORDERNO || '-'}</div></div>`).join(''); return; 
+            }
+
+            if (currentSocTab === 'docks') {
+                let html = '<div class="grid grid-cols-2 gap-2">';
+                for(let i=1; i<=56; i++) { html += `<div class="drill-item flex justify-center font-bold text-gray-600" style="border:1px solid #e5e7eb; border-radius:8px;">Dock ${i}</div>`; }
+                html += '</div>'; container.innerHTML = html; return;
+            }
+
+            if (currentSocTab === 'item') {
+                if(socData.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Load a Sales Rep first to browse their items, or use global search. <br><br> (Note: Full database search requires Loading all Reps which is coming in v260)</div>`; return; }
+
+                if (socViewLevel === 0) {
+                    const names = [...new Set(socData.map(i => i.COMMONNAME || "Unknown"))].sort();
+                    container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectSocCommonName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 1) {
+                    const namedItems = socData.filter(i => i.COMMONNAME === selectedSocCommon);
+                    const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                    container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
+                    sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+                } else if (socViewLevel === 2) {
+                    renderSocItemDetail(selectedSocCommon, selectedSocSize);
+                }
+                return;
+            }
+
+            if(socViewLevel === 0) { 
+                let html = '';
+                STATIC_DIRECTORY.sort((a,b) => a.name.localeCompare(b.name)).forEach(rep => { const disp = `${rep.name} - ${rep.id}`; html += `<div class="drill-item" onclick="fetchRepData('${rep.name.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${disp}</span><i class="ph-bold ph-caret-right"></i></div>`; });
+                container.innerHTML = html;
+            } else if(socViewLevel === 1) { 
+                const customers = [...new Set(socData.map(i => i.CUSTOMERNAME || "Unknown"))].sort(); 
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=0; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sales Reps</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocRep}</div>${customers.map(c => `<div class="drill-item" onclick="selectSocCust('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-sm">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('')}`;
+            } else if(socViewLevel === 2) { 
+                const custItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust);
+                const commons = [...new Set(custItems.map(i => i.COMMONNAME))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCust}</div>` + 
+                commons.map(c => `<div class="drill-item" onclick="selectSocCommonName('${c.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${c}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (socViewLevel === 3) {
+                const namedItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=2; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedSocCommon}</div>` + 
+                sizes.map(s => `<div class="drill-item" onclick="selectSocSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (socViewLevel === 4) {
+                const finalItems = socData.filter(i => (i.CUSTOMERNAME || "Unknown") === selectedSocCust && i.COMMONNAME === selectedSocCommon && i.CONTSIZE === selectedSocSize);
+                container.innerHTML = `<div class="back-btn" onclick="socViewLevel=3; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="font-bold text-[#007a4d] mb-2 px-2 text-sm">${selectedSocCommon} - ${selectedSocSize}</div>` + 
+                finalItems.map(i => `<div class="inv-card"><div class="flex justify-between"><div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div><div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div></div><div class="text-xs font-bold text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? i.SHIPDATE.substring(0,10) : '-'}</div></div>`).join(''); 
+            }
+        }
+        
+        function renderSocItemDetail(common, size) {
+            const container = document.getElementById('soc-content');
+            
+            const invMatches = fullInventory.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
+            invMatches.sort((a, b) => {
+                 const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
+                 const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
+                 return pA - pB;
+            });
+            
+            const bestInv = invMatches.length > 0 ? invMatches[0] : null;
+            const orders = socData.filter(i => i.COMMONNAME === common && i.CONTSIZE === size);
+            
+            let headerHtml = `<div class="bg-white p-4 rounded-lg shadow mb-4 border border-gray-200">
+                <div class="font-bold text-xl text-[#007a4d] mb-2">${common}</div>
+                <div class="text-sm font-bold text-gray-600 mb-2">${size}</div>`;
+                
+            if(bestInv) {
+                headerHtml += `<div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div class="bg-gray-50 p-2 rounded"><strong>Loc:</strong> ${bestInv.LOCATIONCODE || '-'}</div>
+                    <div class="bg-gray-50 p-2 rounded"><strong>Avail:</strong> ${bestInv.PTRAVAILABLE || '0'}</div>
+                </div>`;
+                if(bestInv.SAVED_NOTE) headerHtml += `<div class="text-xs italic text-gray-500 mb-2">Note: ${bestInv.SAVED_NOTE}</div>`;
+                
+                if(bestInv.SAVED_PHOTO_LINK) {
+                    const firstLink = bestInv.SAVED_PHOTO_LINK.split(',')[0];
+                    let thumbUrl = firstLink;
+                    const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
+                    headerHtml += `<img src="${thumbUrl}" class="w-full h-48 object-cover rounded mb-2">`;
+                }
+            } else {
+                headerHtml += `<div class="text-xs text-red-500 italic mb-2">No matching inventory data found in Drive.</div>`;
+            }
+            
+            headerHtml += `<button onclick='emailAllRepsForItem(${JSON.stringify(bestInv || {COMMONNAME: common, CONTSIZE: size})}, ${JSON.stringify(orders)})' class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 mb-2"><i class="ph-bold ph-envelope"></i> EMAIL ALL REPS</button>`;
+            
+            headerHtml += `</div>`;
+            
+            let listHtml = `<div class="font-bold text-gray-500 text-xs uppercase mb-2">Customer Orders (${orders.length})</div>`;
+            listHtml += orders.map(o => `
+                <div class="inv-card">
+                    <div class="flex justify-between">
+                        <div class="font-bold text-gray-800 text-sm truncate w-2/3">${o.CUSTOMERNAME}</div>
+                        <div class="font-bold text-black">${o.QTYORDERED || o.QTY || 0}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Rep: <strong>${o.SALESREP}</strong> | Order: ${o.ORDERNO}</div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `<div class="back-btn" onclick="socViewLevel=1; renderSocView()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + headerHtml + listHtml;
+        }
+        
+        function emailAllRepsForItem(invItem, orders) {
+            const uniqueReps = [...new Set(orders.map(o => o.SALESREP))];
+            
+            let emails = [];
+            uniqueReps.forEach(repName => {
+                const dirEntry = STATIC_DIRECTORY.find(d => d.name === repName);
+                if(dirEntry && dirEntry.email) emails.push(dirEntry.email);
+            });
+            
+            if(emails.length === 0) {
+                alert("No emails found for these reps in directory.");
+                return;
+            }
+            
+            const subject = `${invItem.COMMONNAME} - ${invItem.CONTSIZE}`;
+            
+            let body = `Team,\n\nHere is the current data for:\n${invItem.COMMONNAME} (${invItem.CONTSIZE})\n\n`;
+            body += `Location: ${invItem.LOCATIONCODE || 'N/A'}\n`;
+            body += `Qty Available: ${invItem.PTRAVAILABLE || '0'}\n`;
+            body += `Notes: ${invItem.SAVED_NOTE || 'None'}\n\n`;
+            
+            if(invItem.SAVED_PHOTO_LINK) {
+                body += `Photos:\n${invItem.SAVED_PHOTO_LINK.replace(/,/g, '\n')}\n\n`;
+            }
+            
+            body += `Total Orders on this list: ${orders.length}\n`;
+            
+            const mailtoLink = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+        }
+        
+        function selectSocCust(c) { selectedSocCust = c; socViewLevel = 2; renderSocView(); }
+        function selectSocCommonName(n) { selectedSocCommon = n; socViewLevel = (currentSocTab === 'reps') ? 3 : 1; renderSocView(); }
+        function selectSocSize(s) { selectedSocSize = s; socViewLevel = (currentSocTab === 'reps') ? 4 : 2; renderSocView(); }
+
+        function initDriveFilters() {
+            const groups = [...new Set(fullInventory.map(i => i.PLANTGROUPCODE || "Unknown"))].sort();
+            const grpDiv = document.getElementById('ms-group');
+            grpDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('groups')"><strong>Select All</strong></div>` + groups.map(g => `<label class="ms-option"><input type="checkbox" value="${g}" onchange="updateDriveFilterState('groups')"> ${g}</label>`).join('');
+            const seasons = [...new Set(fullInventory.map(i => i.SEASONSUPPLY || "Unknown"))].sort();
+            const seaDiv = document.getElementById('ms-season');
+            seaDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('seasons')"><strong>Select All</strong></div>` + seasons.map(s => `<label class="ms-option"><input type="checkbox" value="${s}" onchange="updateDriveFilterState('seasons')"> ${s}</label>`).join('');
+            const lots = [...new Set(fullInventory.map(i => i.LOTCODE || "Unknown"))].sort();
+            const lotDiv = document.getElementById('ms-lot');
+            lotDiv.innerHTML = `<div class="ms-option" onclick="toggleAllDrive('lots')"><strong>Select All</strong></div>` + lots.map(l => `<label class="ms-option"><input type="checkbox" value="${l}" onchange="updateDriveFilterState('lots')"> ${l}</label>`).join('');
+        }
+
+        function toggleMs(id) { const el = document.getElementById(id); ['ms-group', 'ms-season', 'ms-lot'].forEach(mid => { if(mid !== id) document.getElementById(mid).classList.remove('show'); }); el.classList.toggle('show'); }
+        function updateDriveFilterState(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const checks = div.querySelectorAll('input[type="checkbox"]:checked');
+            const values = Array.from(checks).map(c => c.value);
+            driveFilterState[type] = values;
+            const lblMap = { groups: 'lbl-group', seasons: 'lbl-season', lots: 'lbl-lot' };
+            const defMap = { groups: 'Group', seasons: 'Season', lots: 'Lot' };
+            const count = values.length;
+            document.getElementById(lblMap[type]).innerText = count > 0 ? `${defMap[type]} (${count})` : defMap[type];
+            renderDriveView();
+        }
+        function toggleAllDrive(type) {
+            const div = document.getElementById(type === 'groups' ? 'ms-group' : type === 'seasons' ? 'ms-season' : 'ms-lot');
+            const allChecks = div.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(allChecks).every(c => c.checked);
+            allChecks.forEach(c => c.checked = !allChecked);
+            updateDriveFilterState(type);
+        }
+        function resetDriveFilters() {
+            driveFilterState = { groups: [], seasons: [], lots: [], ltsOp: 'gt', ltsVal: '' };
+            document.querySelectorAll('.ms-options input').forEach(c => c.checked = false);
+            document.getElementById('lbl-group').innerText = 'Group'; document.getElementById('lbl-season').innerText = 'Season'; document.getElementById('lbl-lot').innerText = 'Lot';
+            document.getElementById('lts-value').value = ''; document.getElementById('lts-operator').value = 'gt'; document.getElementById('drive-search').value = '';
+            driveSearchTerm = ''; driveViewLevel = 0; renderDriveView();
+        }
+        
+        function handleDriveSearch(term) { 
+            driveSearchTerm = term.toLowerCase(); 
+            if(driveSearchTerm.length > 0) {
+                driveViewLevel = 0;
+            }
+            renderDriveView(); 
+        }
+
+        function getFilteredDriveItems() {
+            const op = document.getElementById('lts-operator').value; const val = parseFloat(document.getElementById('lts-value').value); const hasLtsFilter = !isNaN(val);
+            return fullInventory.filter(i => {
+                if (driveFilterState.groups.length > 0 && !driveFilterState.groups.includes(i.PLANTGROUPCODE)) return false;
+                if (driveFilterState.seasons.length > 0 && !driveFilterState.seasons.includes(i.SEASONSUPPLY)) return false;
+                if (driveFilterState.lots.length > 0 && !driveFilterState.lots.includes(i.LOTCODE)) return false;
+                if (hasLtsFilter) { const itemVal = parseFloat(i.SLTS || i.S_LTS || 0); if (op === 'gt' && !(itemVal > val)) return false; if (op === 'lt' && !(itemVal < val)) return false; }
+                if(driveSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(driveSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(driveSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(driveSearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        
+        function renderDriveNames() { 
+            driveViewLevel = 0; 
+            selectedDriveName = null; 
+            selectedDriveSize = null; 
+            renderDriveView(); 
+        } 
+
+        function renderDriveView() {
+            const container = document.getElementById('drive-content'); 
+            const crumb = document.getElementById('drive-crumb'); 
+            const filteredItems = getFilteredDriveItems();
+            
+            if (filteredItems.length === 0) { 
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; 
+                crumb.innerText = "No Results"; 
+                return; 
+            }
+            
+            if(driveViewLevel === 0) {
+                crumb.innerText = `Select Plant (${filteredItems.length} items)`; 
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                
+                container.innerHTML = names.map(n => {
+                    return `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
+                                <span class="font-bold text-lg">${n}</span>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            else if (driveViewLevel === 1) {
+                crumb.innerText = selectedDriveName;
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                container.innerHTML = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + 
+                sizes.map(s => {
+                    const count = namedItems.filter(i => i.CONTSIZE === s).length;
+                    return `<div class="drill-item" onclick="selectDriveSize('${s}')">
+                                <span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                <i class="ph-bold ph-caret-right"></i>
+                            </div>`;
+                }).join('');
+            }
+            else if (driveViewLevel === 2) {
+                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`; 
+                
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
+                
+                finalItems.sort((a, b) => {
+                     const pA = (parseFloat(a.PRIORITY) > 0) ? parseFloat(a.PRIORITY) : 999999;
+                     const pB = (parseFloat(b.PRIORITY) > 0) ? parseFloat(b.PRIORITY) : 999999;
+                     if (pA !== pB) return pA - pB;
+                     return (a.LOCATIONCODE || "").localeCompare(b.LOCATIONCODE || "", undefined, {numeric: true});
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + 
+                finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'drive')).join('');
+            }
+        }
+        
+        function selectDriveName(n) { selectedDriveName = n; driveViewLevel = 1; renderDriveView(); }
+        function selectDriveSize(s) { selectedDriveSize = s; driveViewLevel = 2; renderDriveView(); }
+        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDriveView(); }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; renderDriveView(); }
+
+        function toggleProductionSeason(season, el) {
+            if(season === 'ALL') { productionSelectedSeasons = ['ALL']; } else {
+                if(productionSelectedSeasons.includes('ALL')) productionSelectedSeasons = [];
+                if(productionSelectedSeasons.includes(season)) { productionSelectedSeasons = productionSelectedSeasons.filter(s => s !== season); } else { productionSelectedSeasons.push(season); }
+                if(productionSelectedSeasons.length === 0) productionSelectedSeasons = ['ALL'];
+            }
+            document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
+            renderProductionView();
+        }
+        function handleProductionSearch(term) { 
+            productionSearchTerm = term.toLowerCase(); 
+            if(productionSearchTerm.length > 0) {
+                productionViewLevel = 0;
+            }
+            renderProductionView(); 
+        }
+        function getFilteredProductionItems() {
+            return fullInventory.filter(i => {
+                if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
+                if(productionSearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(productionSearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(productionSearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(productionSearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        function renderProductionView() {
+            const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb');
+            if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
+            const filteredItems = getFilteredProductionItems();
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+            if(productionViewLevel === 0) {
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (productionViewLevel === 1) {
+                crumb.innerText = selectedProductionName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetProductionView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectProductionSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else {
+                crumb.innerText = `${selectedProductionName} / ${selectedProductionSize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedProductionName && i.CONTSIZE === selectedProductionSize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToProductionSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'production')).join('');
+            }
+        }
+        function selectProductionName(n) { selectedProductionName = n; productionViewLevel = 1; renderProductionView(); }
+        function selectProductionSize(s) { selectedProductionSize = s; productionViewLevel = 2; renderProductionView(); }
+        function backToProductionSizes() { productionViewLevel = 1; selectedProductionSize = null; renderProductionView(); }
+        function resetProductionView() { productionViewLevel = 0; selectedProductionName = null; selectedProductionSize = null; renderProductionView(); }
+
+        function toggleInventorySeason(season, el) {
+            if(season === 'ALL') { inventorySelectedSeasons = ['ALL']; } else {
+                if(inventorySelectedSeasons.includes('ALL')) inventorySelectedSeasons = [];
+                if(inventorySelectedSeasons.includes(season)) { inventorySelectedSeasons = inventorySelectedSeasons.filter(s => s !== season); } else { inventorySelectedSeasons.push(season); }
+                if(inventorySelectedSeasons.length === 0) inventorySelectedSeasons = ['ALL'];
+            }
+            document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
+            renderInventoryView();
+        }
+        function handleInventorySearch(term) { 
+            inventorySearchTerm = term.toLowerCase(); 
+            if(inventorySearchTerm.length > 0) {
+                inventoryViewLevel = 0;
+            }
+            renderInventoryView(); 
+        }
+        function getFilteredInventoryItems() {
+            return fullInventory.filter(i => {
+                if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
+                if(inventorySearchTerm) { const match = (i.COMMONNAME||"").toLowerCase().includes(inventorySearchTerm) || (i.ITEMCODE||"").toLowerCase().includes(inventorySearchTerm) || (i.LOCATIONCODE||"").toLowerCase().includes(inventorySearchTerm); if(!match) return false; }
+                return true;
+            });
+        }
+        function renderInventoryView() {
+            const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb');
+            if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
+            const filteredItems = getFilteredInventoryItems();
+            if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found matching filters.</div>`; crumb.innerText = "No Results"; return; }
+            if(inventoryViewLevel === 0) {
+                crumb.innerText = `All Items (${filteredItems.length})`; const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort(); container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else if (inventoryViewLevel === 1) {
+                crumb.innerText = selectedInventoryName; const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName); const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort(); container.innerHTML = `<div class="back-btn" onclick="resetInventoryView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectInventorySize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+            } else {
+                crumb.innerText = `${selectedInventoryName} / ${selectedInventorySize}`; let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedInventoryName && i.CONTSIZE === selectedInventorySize); finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true})); container.innerHTML = `<div class="back-btn" onclick="backToInventorySizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'inventory')).join('');
+            }
+        }
+        function selectInventoryName(n) { selectedInventoryName = n; inventoryViewLevel = 1; renderInventoryView(); }
+        function selectInventorySize(s) { selectedInventorySize = s; inventoryViewLevel = 2; renderInventoryView(); }
+        function backToInventorySizes() { inventoryViewLevel = 1; selectedInventorySize = null; renderInventoryView(); }
+        function resetInventoryView() { inventoryViewLevel = 0; selectedInventoryName = null; selectedInventorySize = null; renderInventoryView(); }
+
+        function renderTasks() {
+            const container = document.getElementById('task-content'); 
+            const crumb = document.getElementById('task-crumb');
+            document.getElementById('task-tabs-container').classList.remove('hidden');
+            
+            if(currentTab === 'flyer') { document.getElementById('flyer-sub-tabs').classList.remove('hidden'); } else { document.getElementById('flyer-sub-tabs').classList.add('hidden'); }
+
+            let myItems = []; 
+            const now = new Date().getTime();
+            
+            // SMART FILTER: Extracts "dylan" from "dylan_collyge" to match database assignments
+            const targetFirstName = taskViewTargetUser.toLowerCase().split('_')[0];
+            const targetFullName = taskViewTargetUser.toLowerCase();
+
+            const taskFilter = (i) => {
+                const assignee = (i.ASSIGNEDTO || "").toLowerCase();
+                
+                if (taskViewTargetUser === 'ASSIST') {
+                    if (!assignee.includes("kayla") && !assignee.includes("morgan")) return false;
+                } else {
+                    if (!assignee.includes(targetFirstName) && !assignee.includes(targetFullName)) return false;
+                }
+                
+                if (i.TASK_TAB !== currentTab) return false;
+                
+                if (i.TIMESTAMP) {
+                    const saveTime = new Date(i.TIMESTAMP).getTime(); 
+                    const daysOld = (now - saveTime) / (1000 * 3600 * 24);
+                    const ptr = parseFloat(i.PTRAVAILABLE) || 0; 
+                    const ss = parseFloat(i.SEASONSUPPLY) || 0; 
+                    const isLowStock = ss > 0 && ptr < (ss * 0.10);
+                    if (daysOld < 10 && !isLowStock) return false; 
+                }
+                return true;
+            };
+            
+            if(currentTab === 'requests') {
+                 if (taskViewTargetUser === 'ASSIST') {
+                        myItems = fullInventory.filter(i => {
+                            const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                            return (reqAssign.includes("kayla") || reqAssign.includes("morgan")) && i.TASK_TAB === 'requests';
+                        });
+                        crumb.innerText = `Kayla & Morgan / Urgent Requests`;
+                 } else {
+                        myItems = fullInventory.filter(i => {
+                            const reqAssign = (i.REQUEST_ASSIGNED_TO || "").toLowerCase();
+                            return (reqAssign.includes(targetFirstName) || reqAssign.includes(targetFullName)) && i.TASK_TAB === 'requests';
+                        }); 
+                        crumb.innerText = `${taskViewTargetUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} / Urgent Requests`;
+                 }
+            } else if (currentTab === 'flyer') {
+                myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
+            } else { 
+                myItems = fullInventory.filter(taskFilter); 
+            }
+
+            const term = document.getElementById('task-search').value.toLowerCase();
+            if (term) { 
+                const matched = myItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); 
+                container.innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); 
+                return; 
+            }
+
+            if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
+            if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
+
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            if(currentTab === 'flyer') {
+                const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
+                
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `Marketing Flyer / ${mapName[currentFlyerTab]}`;
+                    if(myItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No active projects.</div>`; return; }
+                    const projects = [...new Set(myItems.map(i => i.REQUEST_ASSIGNED_TO || "Unassigned"))].sort();
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + 
+                    projects.map(p => {
+                        const count = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === p).length;
+                        return `<div class="drill-item" onclick="openFlyerProject('${p.replace(/'/g, "\\'")}')">
+                                        <div class="flex items-center gap-3">
+                                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                            <span class="font-bold text-lg">${p} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                                        </div>
+                                        <i class="ph-bold ph-caret-right"></i>
+                                    </div>`;
+                    }).join('');
+                }
+                else if (taskViewLevel === 1) {
+                    crumb.innerText = `Flyer / ${selectedFlyerProject}`;
+                    const projectItems = myItems.filter(i => (i.REQUEST_ASSIGNED_TO || "Unassigned") === selectedFlyerProject);
+                    
+                    let projNote = "";
+                    if(projectItems.length > 0 && projectItems[0].SAVED_NOTE) {
+                        let parts = projectItems[0].SAVED_NOTE.split(" | ");
+                        projNote = parts[parts.length - 1]; 
+                    }
+
+                    let instructionBanner = "";
+                    if(projNote) {
+                        instructionBanner = `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-2 mx-2 rounded shadow-sm">
+                            <div class="flex">
+                                <div class="flex-shrink-0"><i class="ph-fill ph-info text-yellow-500"></i></div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700 font-bold uppercase">Project Instructions</p>
+                                    <p class="text-sm text-yellow-800 mt-1">${projNote}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+
+                    let completeBtn = '';
+                    if(isAdmin) {
+                        completeBtn = `<div class="p-4 bg-white border-b border-gray-100">
+                            <button onclick="markProjectComplete('${selectedFlyerProject.replace(/'/g, "\\'")}')" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-check-circle text-xl"></i> COMPLETE PROJECT
+                            </button>
+                            <p class="text-xs text-center text-gray-400 mt-2">Removes items from this folder.</p>
+                        </div>`;
+                    }
+
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Projects</div>` + 
+                                          instructionBanner + completeBtn + projectItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
+                return;
+            }
+
+            if(currentTab === 'season' || currentTab === 'location') {
+                if(taskViewLevel === 0) {
+                    crumb.innerText = `${displayUser} / ${currentTab === 'season' ? 'Season' : 'Location'} / Blocks`; 
+                    const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
+                    if(blocks.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; return; }
+                    container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + blocks.map(b => {
+                        const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
+                        return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                } else if (taskViewLevel === 1) {
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
+                    const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
+                    const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                    container.innerHTML = `<div class="back-btn" onclick="resetTaskView()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + locs.map(l => {
+                        const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
+                        return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    }).join('');
+                } else {
+                    crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
+                    let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
+                    items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                    container.innerHTML = `<div class="back-btn" onclick="backToTaskLocs()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join('');
+                }
+            }
+        }
+        
+        function renderTeamSelector() { document.getElementById('team-selector').classList.remove('hidden'); document.getElementById('task-tabs-container').classList.add('hidden'); document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their tasks.</div>`; document.getElementById('task-crumb').innerText = "Team View"; }
+        function setTaskUser(user) { taskViewTargetUser = user; document.getElementById('team-selector').classList.add('hidden'); document.getElementById('task-tabs-container').classList.remove('hidden'); taskViewLevel = 0; renderTasks(); }
+        
+        function setTaskTab(t) { 
+            currentTab = t; 
+            document.getElementById('ttab-season').classList.toggle('active', t === 'season'); 
+            document.getElementById('ttab-location').classList.toggle('active', t === 'location'); 
+            document.getElementById('ttab-requests').classList.toggle('active', t === 'requests'); 
+            document.getElementById('ttab-requests').classList.toggle('alert', t === 'requests'); 
+            document.getElementById('ttab-flyer').classList.toggle('active', t === 'flyer');
+            taskViewLevel = 0; 
+            renderTasks(); 
+        }
+
+        function setFlyerSubTab(sub) {
+            currentFlyerTab = sub;
+            document.getElementById('fst-crop').classList.toggle('active', sub === 'flyer_crop');
+            document.getElementById('fst-endcap').classList.toggle('active', sub === 'flyer_endcap');
+            document.getElementById('fst-spot').classList.toggle('active', sub === 'flyer_spot');
+            taskViewLevel = 0;
+            renderTasks();
+        }
+        
+        function openFlyerProject(projName) { selectedFlyerProject = projName; taskViewLevel = 1; renderTasks(); }
+        function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
+        function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
+        function backToTaskLocs() { taskViewLevel = 1; selectedTaskLoc = null; renderTasks(); }
+        function resetTaskView() { taskViewLevel = 0; selectedTaskBlock = null; selectedTaskLoc = null; renderTasks(); }
+
+        function renderViewerNames() {
+            const term = document.getElementById('viewer-search').value.toLowerCase();
+            if(term) { const matched = fullInventory.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); document.getElementById('viewer-content').innerHTML = matched.map(item => createRowHtml(item, fullInventory.indexOf(item), 'viewer')).join(''); return; }
+            document.getElementById('viewer-content').innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectViewerName('${n.replace(/'/g, "\\'")}')"><span>${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join('');
+        }
+        function selectViewerName(name) { const sizes = [...new Set(fullInventory.filter(i => i.COMMONNAME === name).map(i => i.CONTSIZE || "N/A"))].sort(); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="renderViewerNames()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>` + sizes.map(s => `<div class="drill-item" onclick="selectViewerSize('${name.replace(/'/g, "\\'")}', '${s}')"><span>${s}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); }
+        function selectViewerSize(name, size) { const items = fullInventory.filter(i => i.COMMONNAME === name && (i.CONTSIZE || "N/A") === size); document.getElementById('viewer-content').innerHTML = `<div class="back-btn" onclick="selectViewerName('${name.replace(/'/g, "\\")}')"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + items.map(item => { const idx = fullInventory.indexOf(item); return createRowHtml(item, idx, 'viewer'); }).join(''); }
+
+        function renderManagerFolders() {
+            document.getElementById('review-root-folders').classList.remove('hidden');
+            document.getElementById('review-folder-view').classList.add('hidden');
+            
+            // Calculate Counts
+            const pendingCount = fullInventory.filter(i => i.TASK_TAB === 'requests').length;
+            const completedCount = fullInventory.filter(i => i.TASK_TAB === 'review').length;
+            const noWinnerCount = fullInventory.filter(i => {
+                const pri = parseFloat(i.PRIORITY);
+                const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                return (pri > 0 && pri < 9999) && (qty <= 0);
+            }).length;
+
+            const html = `
+                <div class="space-y-2">
+                    <div class="drill-item" onclick="openReviewFolder('pending')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Pending Requests <span class="text-gray-400 text-sm font-normal">(${pendingCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('completed')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Completed Requests <span class="text-gray-400 text-sm font-normal">(${completedCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                    <div class="drill-item" onclick="openReviewFolder('item_review')">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-fill ph-folder text-orange-500 text-2xl"></i>
+                            <span class="font-bold text-lg">Item Review (No Winner) <span class="text-gray-400 text-sm font-normal">(${noWinnerCount})</span></span>
+                        </div>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                </div>
+            `;
+            document.getElementById('review-root-folders').innerHTML = html;
+        }
+
+        function openReviewFolder(folderType) {
+            currentReviewFolder = folderType;
+            currentReviewRep = null;
+            currentReviewCustomer = null;
+            document.getElementById('review-root-folders').classList.add('hidden');
+            document.getElementById('review-folder-view').classList.remove('hidden');
+            
+            let title = "Folder";
+            if(folderType === 'pending') title = "Pending Requests";
+            if(folderType === 'completed') title = "Completed Requests";
+            if(folderType === 'item_review') title = "Item Review (No Winner)";
+            
+            document.getElementById('review-folder-title').innerText = title;
+            document.getElementById('review-back-label').innerText = "Back to Folders";
+            reviewViewLevel = 0;
+            renderReviewContent();
+        }
+
+        function resetReviewFolders() {
+            if(currentReviewCustomer) {
+                currentReviewCustomer = null;
+                renderReviewContent();
+                return;
+            }
+            if(currentReviewRep) {
+                currentReviewRep = null;
+                renderReviewContent();
+                return;
+            }
+            currentReviewFolder = null;
+            renderManagerFolders();
+        }
+
+        function renderReviewContent() {
+            const container = document.getElementById('review-content');
+            const term = document.getElementById('review-search').value.toLowerCase();
+            const failContainer = document.getElementById('failed-saves-container');
+            
+            if(currentReviewFolder === 'completed') {
+                let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
+                if (failed.length > 0) { failContainer.innerHTML = `<div class="failed-sync-banner"><div><i class="ph-bold ph-warning"></i> ${failed.length} Offline Saves Pending</div><button onclick="retryFailedSaves()" class="bg-red-600 text-white px-3 py-1 rounded text-xs">RETRY</button></div>`; } else { failContainer.innerHTML = ''; }
+            } else {
+                failContainer.innerHTML = '';
+            }
+
+            let folderTaskTab = (currentReviewFolder === 'pending') ? 'requests' : 'review';
+            
+            if(currentReviewFolder === 'item_review') {
+                let filteredItems = fullInventory.filter(i => {
+                    const pri = parseFloat(i.PRIORITY);
+                    const qty = parseFloat(i.PTRAVAILABLE) || 0;
+                    return (pri > 0 && pri < 9999) && (qty <= 0);
+                });
+                
+                if(term) { 
+                    filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.ITEMCODE||"").toLowerCase().includes(term)); 
+                    container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                    return;
+                }
+
+                if(filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">Empty.</div>`; return; }
+
+                container.innerHTML = filteredItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'review')).join(''); 
+                return;
+            }
+            
+            if(!currentReviewRep) {
+                document.getElementById('review-folder-title').innerText = currentReviewFolder === 'pending' ? "Pending Requests" : "Completed Requests";
+                document.getElementById('review-back-label').innerText = "Back to Folders";
+                
+                const activeReps = [...new Set(fullInventory.filter(i => i.TASK_TAB === folderTaskTab).map(i => i.SALESREP || "Unknown"))];
+                
+                container.innerHTML = activeReps.sort().map(repName => {
+                    const count = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === repName).length;
+                    return `<div class="drill-item" onclick="selectReviewRep('${repName.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-folder text-blue-600 text-2xl"></i>
+                                    <span class="font-bold text-lg">${repName}</span>
+                                </div>
+                                <span class="text-gray-400 font-bold text-sm">(${count})</span>
+                                <i class="ph-bold ph-caret-right ml-2"></i>
+                            </div>`;
+                }).join('');
+                return;
+            }
+
+            if(!currentReviewCustomer) {
+                document.getElementById('review-folder-title').innerText = currentReviewRep;
+                document.getElementById('review-back-label').innerText = "Back to Reps";
+                
+                const repItems = fullInventory.filter(i => i.TASK_TAB === folderTaskTab && (i.SALESREP || "Unknown") === currentReviewRep);
+                
+                const customers = [...new Set(repItems.map(i => {
+                    const c = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    if(co && co !== c) return `${c} / ${co}`;
+                    return c;
+                }))].sort();
+
+                container.innerHTML = customers.map(cust => {
+                    const count = repItems.filter(i => {
+                        const c = i.CUSTOMERNAME || "General";
+                        const co = i.CONSIGNEENAME || "";
+                        const combined = (co && co !== c) ? `${c} / ${co}` : c;
+                        return combined === cust;
+                    }).length;
+
+                    return `<div class="drill-item" onclick="selectReviewCustomer('${cust.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-folder text-yellow-500 text-2xl"></i>
+                                    <span class="font-bold text-sm">${cust}</span>
+                                </div>
+                                <span class="text-gray-400 font-bold text-xs">(${count})</span>
+                                <i class="ph-bold ph-caret-right ml-2"></i>
+                            </div>`;
+                }).join('');
+                return;
+            }
+
+            document.getElementById('review-folder-title').innerText = currentReviewCustomer;
+            document.getElementById('review-back-label').innerText = "Back to Customers";
+            
+            let finalItems = fullInventory.filter(i => {
+                if (i.TASK_TAB !== folderTaskTab) return false;
+                if ((i.SALESREP || "Unknown") !== currentReviewRep) return false;
+                
+                const c = i.CUSTOMERNAME || "General";
+                const co = i.CONSIGNEENAME || "";
+                const combined = (co && co !== c) ? `${c} / ${co}` : c;
+                
+                return combined === currentReviewCustomer;
+            });
+
+            if(term) finalItems = finalItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term));
+
+            if(finalItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items.</div>`;
+            } else {
+                let html = "";
+                finalItems.forEach(item => {
+                    let approveBtn = "";
+                    if(folderTaskTab === 'requests') {
+                         approveBtn = `<button onclick='approveAndSendToRep(${JSON.stringify(item)})' class="w-full mt-2 bg-green-600 text-white font-bold py-2 rounded text-xs"><i class="ph-bold ph-paper-plane-right"></i> APPROVE & SEND TO REP</button>`;
+                    }
+                    let cardHtml = createRowHtml(item, fullInventory.indexOf(item), 'review');
+                    html += `<div class="bg-white rounded-lg p-1 mb-2 border border-gray-200">${cardHtml}<div class="px-2 pb-2">${approveBtn}</div></div>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+        
+        function selectReviewRep(repName) {
+            currentReviewRep = repName;
+            renderReviewContent();
+        }
+
+        function selectReviewCustomer(custName) {
+            currentReviewCustomer = custName;
+            renderReviewContent();
+        }
+        
+        function selectReviewName(n) { selectedReviewName = n; reviewViewLevel = 1; renderReviewContent(); }
+        function selectReviewSize(s) { selectedReviewSize = s; reviewViewLevel = 2; renderReviewContent(); }
+
+        function renderSalesOffice() {
+            const container = document.getElementById('salesoffice-content'); 
+            const searchInput = document.getElementById('salesoffice-search'); 
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const salesItems = fullInventory.filter(i => { 
+                if(!i.SAVED_SALES_DESC || i.SAVED_SALES_DESC.trim() === "") return false; 
+                if(term && !(i.COMMONNAME||"").toLowerCase().includes(term) && !(i.ITEMCODE||"").toLowerCase().includes(term)) return false; 
+                return true; 
+            });
+            
+            if(salesItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No published sales descriptions found.</div>`; return; }
+            
+            salesItems.sort((a,b) => (a.COMMONNAME || "").localeCompare(b.COMMONNAME || ""));
+            
+            container.innerHTML = salesItems.map(item => {
+                const isApproved = item.SO_STATUS === 'APPROVED';
+                const statusColor = isApproved ? 'bg-green-100 border-green-300' : 'bg-white border-gray-200';
+                const btnHtml = isApproved 
+                    ? `<div class="mt-2 text-xs font-bold text-green-700 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Approved</div>`
+                    : `<button onclick="approveSalesItem('${item.UNIQUE_ID}')" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded shadow text-xs flex items-center justify-center gap-2"><i class="ph-bold ph-check"></i> APPROVE & PUBLISH</button>`;
+
+                return `<div class="inv-card mb-3 !p-4 border ${statusColor}">
+                            <div class="font-bold text-lg text-[#007a4d] leading-tight">${item.COMMONNAME}</div>
+                            <div class="text-xs font-bold text-gray-500 mb-3 mt-1">Size: <span class="text-gray-800">${item.CONTSIZE || '-'}</span> <span class="mx-2 text-gray-300">|</span> Code: <span class="text-gray-800">${item.ITEMCODE || '-'}</span></div>
+                            <div class="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-800 font-semibold italic">"${item.SAVED_SALES_DESC}"</div>
+                            ${btnHtml}
+                        </div>`;
+            }).join('');
+        }
+
+        function approveSalesItem(id) {
+            const itemIdx = fullInventory.findIndex(i => i.UNIQUE_ID === id);
+            if (itemIdx === -1) return;
+            
+            const item = fullInventory[itemIdx];
+            item.SO_STATUS = "APPROVED";
+            item.TIMESTAMP = new Date().toISOString(); 
+            
+            renderSalesOffice();
+            showToast("Approved", "10-day timer started for field team.");
+            
+            const payload = { 
+                type: "update", 
+                id: item.UNIQUE_ID, 
+                soStatus: "APPROVED",
+                match: item.SAVED_MATCH||"", 
+                spec: item.SAVED_SPEC||"", 
+                pick: item.SAVED_PICK||"", 
+                note: item.SAVED_NOTE||"", 
+                salesDesc: item.SAVED_SALES_DESC||"",
+                photoLink: item.SAVED_PHOTO_LINK||"",
+                photoName: item.SAVED_PHOTO_NAME||"",
+                user: currentUser
+            };
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            }).catch(err => logFailedSave(payload));
+        }
+
+        function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
+        
+        function applyAssignments() { 
+            let i = 0; fullInventory.forEach(item => { if(!item.ASSIGNEDTO) { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } } }); 
+        }
         
         function switchView(v) { 
             localStorage.setItem('gl_last_view', v);
             ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production', 'view-salesreps'].forEach(id => { document.getElementById(id).classList.add('hidden'); }); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
-            
             if(v === 'drive') renderDriveNames(); 
             if(v === 'inventory') renderInventoryView(); 
             if(v === 'production') renderProductionView(); 
@@ -1739,51 +2837,22 @@
             if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
             if(v === 'viewer') renderViewerNames(); 
             if(v === 'review') { renderManagerFolders(); } 
+            if(v === 'soc') { renderSocView(); } 
             if(v === 'salesoffice') { renderSalesOffice(); } 
-            
-            if(v === 'soc') { 
-                if(isRep && socData.length > 0) {
-                    socViewLevel = 1;
-                    renderSocView(); 
-                } else {
-                    renderSocView(); 
-                }
-            } 
-        }
-
-        function switchDetailTab(tab) { 
-            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); 
-            document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); 
-            document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
-            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); 
-            document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); 
-            document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
         }
         
-        function goBackFromDetail() { 
-            localStorage.removeItem('gl_active_item'); 
-            document.getElementById('view-detail').classList.add('hidden'); 
-            document.getElementById('view-' + lastView).classList.remove('hidden'); 
-            if(lastView === 'tasks') renderTasks(); 
-            if(lastView === 'drive') renderDriveNames(); 
-            if(lastView === 'inventory') renderInventoryView(); 
-            if(lastView === 'production') renderProductionView(); 
+        function switchDetailTab(tab) { 
+            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
+            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
         }
+        
+        function goBackFromDetail() { localStorage.removeItem('gl_active_item'); document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); if(lastView === 'tasks') renderTasks(); if(lastView === 'drive') renderDriveNames(); if(lastView === 'inventory') renderInventoryView(); if(lastView === 'production') renderProductionView(); }
 
         function openDetail(idx, originView) {
             lastView = originView; currentOriginView = originView; activeItem = fullInventory[idx]; localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
             ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
             document.getElementById('view-detail').classList.remove('hidden'); 
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME; 
-            document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; 
-            document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; 
-            document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; 
-            document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; 
-            document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; 
-            document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; 
-            document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; 
-            document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; 
-            document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
+            document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
             
             document.getElementById('ov-customer').innerText = activeItem.CUSTOMERNAME || activeItem.CONSIGNEENAME || "Unknown Customer";
             document.getElementById('ov-slts').innerText = activeItem.S_LTS || activeItem.SLTS || "--";
@@ -1851,6 +2920,7 @@
             document.getElementById('readonly-lock-banner').classList.add('hidden');
             
             const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
+            
             const cName = String(activeItem.COMMONNAME || "").toUpperCase();
             const noteOptions = salesNoteMap[cName] || [];
             
@@ -1937,23 +3007,34 @@
             links.splice(index, 1); if(index < names.length) names.splice(index, 1);
             activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(','); activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
             renderOverviewData(); showToast("Deleting...", "Removing photo from cloud...");
-            
             const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser };
             fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Photo permanently deleted."); setTimeout(() => { fetchData(true); startAutoSync(); }, 2500); } else { showToast("Error", "Could not delete: " + data.message, true); startAutoSync(); } }).catch(err => { showToast("Network Error", "Saved deletion offline.", true); logFailedSave(payload); startAutoSync(); });
         }
 
+        // --- BATCH SELECTION LOGIC ---
         function updateSelected() { 
-            if (selectedIdx.length > 0) { document.getElementById('action-bar').classList.add('visible'); } else { document.getElementById('action-bar').classList.remove('visible'); } 
+            if (selectedIdx.length > 0) { 
+                document.getElementById('action-bar').classList.add('visible'); 
+            } else { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+            } 
         }
 
         function handleCardClick(idx, source) {
-            if(isBatch) { toggleSelect(idx); return; }
+            if(isBatch) {
+                toggleSelect(idx); 
+                return;
+            }
             openDetail(idx, source);
         }
 
         function toggleSelect(idx) {
             const indexInArray = selectedIdx.indexOf(idx);
-            if (indexInArray > -1) { selectedIdx.splice(indexInArray, 1); } else { selectedIdx.push(idx); }
+            if (indexInArray > -1) {
+                selectedIdx.splice(indexInArray, 1); 
+            } else {
+                selectedIdx.push(idx); 
+            }
 
             const row = document.getElementById('row-' + idx);
             const cb = document.getElementById('cb-' + idx);
@@ -1963,6 +3044,7 @@
                 if(isSelected) row.classList.add('selecting');
                 else row.classList.remove('selecting');
             }
+            
             updateSelected(); 
         }
         
@@ -1978,6 +3060,7 @@
             document.getElementById('assign-modal').style.display = 'flex'; 
         }
 
+        // --- BATCH TEXT & EMAIL GENERATORS ---
         function getBatchHtml() {
             let html = "<div style='font-family: Arial, sans-serif;'><h3 style='color: #007a4d; margin-bottom: 15px;'>Greenleaf Inventory Report</h3>";
             selectedIdx.forEach(idx => {
@@ -1997,6 +3080,7 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
+                        // HTML Link: Clickable Name
                         html += `• <a href="${url}" style="color: #2563eb; text-decoration: none;">${name}</a><br>`; 
                     });
                     html += `</div>`;
@@ -2023,6 +3107,7 @@
                     const names = item.SAVED_PHOTO_NAME ? item.SAVED_PHOTO_NAME.split(',') : [];
                     urls.forEach((url, i) => { 
                         const name = names[i] || `Photo ${i+1}`; 
+                        // SMS Link: Name + Raw URL
                         text += `• ${name} (${url})\n`; 
                     });
                 }
@@ -2106,6 +3191,7 @@
             let selected = []; 
             document.querySelectorAll('#assign-user-checkboxes input[type="checkbox"]').forEach(cb => {
                 if(cb.checked) {
+                    // Extract name from the ID (e.g., 'chk-Dylan' -> 'Dylan')
                     selected.push(cb.id.replace('chk-', ''));
                 }
             });
@@ -2180,25 +3266,46 @@
                 thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
+            // --- COLOR HIERARCHY LOGIC ---
             const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
             const lotCode = (item.LOTCODE || '').trim().toUpperCase();
             const hasPriority = parseFloat(item.PRIORITY) > 0;
             
             let statusClass = 'status-default'; 
 
-            if (hsCode === 'S') { statusClass = 'status-red'; } 
-            else if (hsCode === 'H' && hasPriority) { statusClass = 'status-yellow'; }
-            else if (lotCode === 'U1') { statusClass = 'status-blue'; }
-            else if (lotCode === 'U2') { statusClass = 'status-purple'; }
-            else if (lotCode === 'U3') { statusClass = 'status-orange'; }
-            else if (lotCode === 'X') { statusClass = 'status-black'; }
-            else if (!hsCode && hasPriority) { statusClass = 'status-green'; }
+            // 1. RED - STOP (S) - Highest Priority
+            if (hsCode === 'S') {
+                statusClass = 'status-red';
+            } 
+            // 2. YELLOW - HOLD (H) - Only if has Priority
+            else if (hsCode === 'H' && hasPriority) {
+                statusClass = 'status-yellow';
+            }
+            // 3. LOT COLORS
+            else if (lotCode === 'U1') {
+                statusClass = 'status-blue';
+            }
+            else if (lotCode === 'U2') {
+                statusClass = 'status-purple';
+            }
+            else if (lotCode === 'U3') {
+                statusClass = 'status-orange';
+            }
+            else if (lotCode === 'X') {
+                statusClass = 'status-black';
+            }
+            // 4. GREEN - Blank/Null HS + Priority
+            else if (!hsCode && hasPriority) {
+                statusClass = 'status-green';
+            }
+            // -----------------------------
 
             let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
             let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
 
+            // Add Request Data display if it's a request
             let requestInfo = "";
-            if(item.UNIQUE_ID.includes("-")) { 
+            if(item.UNIQUE_ID.includes("-")) { // Simple check for generated ID
                  if(item.QTY) requestInfo += `<span class="bg-blue-100 text-blue-800 text-[10px] px-1 rounded mr-1">Req: ${item.QTY}</span>`;
                  if(item.SHIPDATE) requestInfo += `<span class="bg-gray-100 text-gray-800 text-[10px] px-1 rounded">Ship: ${item.SHIPDATE}</span>`;
             }
@@ -2219,13 +3326,16 @@
         }
         
         function startLongPress() { 
+            // Allow everyone to batch select
             longPressTimer = setTimeout(() => { 
                 if(!isBatch) toggleBatch(); 
                 navigator.vibrate(100); 
             }, 1500); 
         }
         
-        function cancelLongPress() { clearTimeout(longPressTimer); }
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
         
         function toggleBatch() { 
             isBatch = !isBatch; 
@@ -2233,11 +3343,13 @@
             document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
             
             if(!isBatch) { 
+                // Exiting Batch Mode: Clear everything
                 document.getElementById('action-bar').classList.remove('visible'); 
                 selectedIdx = []; 
                 document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
                 document.querySelectorAll('.inv-card').forEach(card => card.classList.remove('selecting'));
             } else {
+                // Entering Batch Mode: Just refresh the CURRENT view to show checkboxes
                 if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
                 if (!document.getElementById('view-inventory').classList.contains('hidden')) renderInventoryView();
                 if (!document.getElementById('view-tasks').classList.contains('hidden')) renderTasks();
