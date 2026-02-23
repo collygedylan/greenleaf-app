@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC-PRO INV V_001</title>
+    <title>GREENLEAF 0004</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -15,28 +15,176 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <style>
-        :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
-        .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
+        :root { 
+            --brand-green: #007a4d; 
+            --brand-gold: #e3a000; 
+            --text-main: #111827; 
+        }
         
-        #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
-        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
-        .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 20px; text-align: center; letter-spacing: 2px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
+        body { 
+            font-family: "Amazon Ember", Arial, sans-serif; 
+            background-color: white; 
+            color: var(--text-main); 
+            overscroll-behavior-y: contain; 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
         
-        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 11000; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
-        #toast-notification.show { top: 20px; }
+        .nav-header { 
+            background: var(--brand-green); 
+            color: white; 
+            padding-top: max(10px, env(safe-area-inset-top)); 
+        }
         
-        #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
-        #side-drawer.open { left: 0; }
-        #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
-        #drawer-overlay.open { display: block; }
-        .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
-        .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
+        #view-login { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: var(--brand-green); 
+            z-index: 9999; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        
+        .login-card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+        }
+        
+        .user-btn { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            color: #374151; 
+            background: white; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            transition: all 0.2s; 
+        }
+        
+        .user-btn:hover { 
+            border-color: var(--brand-gold); 
+            background-color: #fffbeb; 
+        }
+        
+        .pin-input { 
+            width: 100%; 
+            padding: 14px; 
+            font-size: 20px; 
+            text-align: center; 
+            letter-spacing: 2px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            outline: none; 
+            display: none; 
+        }
+        
+        #toast-notification { 
+            position: fixed; 
+            top: -100px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: #16a34a; 
+            color: white; 
+            padding: 16px 24px; 
+            border-radius: 50px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); 
+            z-index: 11000; 
+            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            width: 90%; 
+            max-width: 400px; 
+            pointer-events: none; 
+        }
+        
+        #toast-notification.show { 
+            top: 20px; 
+        }
+        
+        #side-drawer { 
+            position: fixed; 
+            top: 0; 
+            left: -280px; 
+            width: 280px; 
+            height: 100%; 
+            background: white; 
+            z-index: 2000; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2); 
+            transition: left 0.3s ease-in-out; 
+        }
+        
+        #side-drawer.open { 
+            left: 0; 
+        }
+        
+        #drawer-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1999; 
+            display: none; 
+        }
+        
+        #drawer-overlay.open { 
+            display: block; 
+        }
+        
+        .drawer-header { 
+            background: var(--brand-green); 
+            color: white; 
+            padding: 20px; 
+            font-weight: bold; 
+            font-size: 18px; 
+        }
+        
+        .drawer-item { 
+            padding: 16px 20px; 
+            border-bottom: 1px solid #f3f4f6; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            color: #374151; 
+            font-weight: 500; 
+        }
 
-        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; content-visibility: auto; contain-intrinsic-size: 50px; }
-        .drill-item:active { background: #f3f4f6; }
+        .drill-item { 
+            border-bottom: 1px solid #e5e7eb; 
+            padding: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            background: white; 
+            transition: background 0.1s; 
+            user-select: none; 
+            content-visibility: auto; 
+            contain-intrinsic-size: 50px; 
+        }
+        
+        .drill-item:active { 
+            background: #f3f4f6; 
+        }
         
         /* CARD STYLES */
         .inv-card { 
@@ -66,52 +214,321 @@
         .status-default { border-left-color: #e5e7eb; } /* No Priority */
 
         /* BATCH MODE STYLES */
-        .batch-mode .select-check { display: block !important; width: 24px; height: 24px; margin-right: 12px; accent-color: var(--brand-green); flex-shrink: 0; }
-        .select-check { display: none; } 
-        .inv-card.selecting { background-color: #f0fdf4 !important; border-color: #15803d !important; transform: scale(0.98); }
+        .batch-mode .select-check { 
+            display: block !important; 
+            width: 24px; 
+            height: 24px; 
+            margin-right: 12px; 
+            accent-color: var(--brand-green); 
+            flex-shrink: 0; 
+        }
         
-        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
+        .select-check { 
+            display: none; 
+        } 
         
-        .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
-        .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        .task-tab.alert { color: #ef4444; border-bottom-color: #ef4444; background: #fef2f2; }
+        .inv-card.selecting { 
+            background-color: #f0fdf4 !important; 
+            border-color: #15803d !important; 
+            transform: scale(0.98); 
+        }
         
-        .flyer-sub-tabs { display: flex; padding: 8px; gap: 8px; background: #fff; overflow-x: auto; border-bottom: 1px solid #f3f4f6; }
-        .flyer-pill { white-space: nowrap; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; flex: 1; text-align: center; }
-        .flyer-pill.active { background: #007a4d; color: white; border-color: #007a4d; }
+        .back-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: #6b7280; 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            cursor: pointer; 
+            padding: 10px 0; 
+        }
+        
+        .task-tabs { 
+            display: flex; 
+            border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; 
+            margin-bottom: 10px; 
+        }
+        
+        .task-tab { 
+            flex: 1; 
+            text-align: center; 
+            padding: 12px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            text-transform: uppercase; 
+        }
+        
+        .task-tab.active { 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
+            background: white; 
+        }
+        
+        .task-tab.alert { 
+            color: #ef4444; 
+            border-bottom-color: #ef4444; 
+            background: #fef2f2; 
+        }
+        
+        .flyer-sub-tabs { 
+            display: flex; 
+            padding: 8px; 
+            gap: 8px; 
+            background: #fff; 
+            overflow-x: auto; 
+            border-bottom: 1px solid #f3f4f6; 
+        }
+        
+        .flyer-pill { 
+            white-space: nowrap; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #4b5563; 
+            background: #f3f4f6; 
+            border: 1px solid #e5e7eb; 
+            cursor: pointer; 
+            flex: 1; 
+            text-align: center; 
+        }
+        
+        .flyer-pill.active { 
+            background: #007a4d; 
+            color: white; 
+            border-color: #007a4d; 
+        }
 
-        #action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #e5e7eb; padding: 12px; box-shadow: 0 -4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; z-index: 4000; transition: transform 0.3s; transform: translateY(100%); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-        #action-bar.visible { transform: translateY(0); }
-        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 8px; font-size: 10px; font-weight: 700; color: white; cursor: pointer; text-align: center; }
+        #action-bar { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: white; 
+            border-top: 1px solid #e5e7eb; 
+            padding: 12px; 
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.05); 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr; 
+            gap: 8px; 
+            z-index: 4000; 
+            transition: transform 0.3s; 
+            transform: translateY(100%); 
+            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
+        }
         
-        .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-        .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        .home-icon { font-size: 32px; margin-bottom: 4px; }
+        #action-bar.visible { 
+            transform: translateY(0); 
+        }
+        
+        .action-btn { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 2px; 
+            padding: 8px; 
+            border-radius: 8px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            color: white; 
+            cursor: pointer; 
+            text-align: center; 
+        }
+        
+        .home-btn { 
+            background: white; 
+            padding: 24px; 
+            border-radius: 12px; 
+            border: 1px solid #e5e7eb; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        
+        .home-btn:active { 
+            background-color: #f9fafb; 
+            transform: scale(0.98); 
+        }
+        
+        .home-icon { 
+            font-size: 32px; 
+            margin-bottom: 4px; 
+        }
 
-        .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
-        .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
-        .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
+        .detail-tabs { 
+            display: flex; 
+            border-bottom: 1px solid #e5e7eb; 
+            background: #f9fafb; 
+            margin-bottom: 10px; 
+        }
         
-        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
-        .full-width { grid-column: span 2; }
+        .detail-tab { 
+            flex: 1; 
+            text-align: center; 
+            padding: 14px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+        }
         
-        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
-        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; }
-        .expanded .expand-content { display: block; }
-        .dynamic-stack { margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
-        .readonly-field { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-weight: 600; }
+        .detail-tab.active { 
+            color: var(--brand-green); 
+            border-bottom-color: var(--brand-green); 
+            background: white; 
+        }
         
-        .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .camera-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; color: #15803d; cursor: pointer; }
-        .lib-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 20px; background-color: #eff6ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #2563eb; cursor: pointer; }
+        .overview-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 16px; 
+        }
+        
+        .overview-card { 
+            background: #f8fafc; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #e2e8f0; 
+        }
+        
+        .overview-label { 
+            font-size: 9px; 
+            font-weight: 800; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            margin-bottom: 2px; 
+        }
+        
+        .overview-val { 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #0f172a; 
+            word-break: break-all; 
+        }
+        
+        .full-width { 
+            grid-column: span 2; 
+        }
+        
+        .expand-trigger { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px; 
+            background: #f9fafb; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px; 
+            border: 1px solid #e5e7eb; 
+        }
+        
+        .expand-content { 
+            display: none; 
+            margin-top: 12px; 
+            padding: 12px; 
+            background: #f9fafb; 
+            border-radius: 6px; 
+        }
+        
+        .expanded .expand-content { 
+            display: block; 
+        }
+        
+        .dynamic-stack { 
+            margin-bottom: 12px; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding-bottom: 8px; 
+        }
+        
+        .input-field { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            margin-bottom: 12px; 
+        }
+        
+        .readonly-field { 
+            background: #f3f4f6; 
+            color: #374151; 
+            border: 1px solid #e5e7eb; 
+            font-weight: 600; 
+        }
+        
+        .cam-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 16px; 
+        }
+        
+        .camera-btn { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            padding: 20px; 
+            background-color: #f0fdf4; 
+            border: 2px dashed #16a34a; 
+            border-radius: 8px; 
+            color: #15803d; 
+            cursor: pointer; 
+        }
+        
+        .lib-btn { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            padding: 20px; 
+            background-color: #eff6ff; 
+            border: 2px dashed #3b82f6; 
+            border-radius: 8px; 
+            color: #2563eb; 
+            cursor: pointer; 
+        }
 
-        #assign-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        #assign-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 5000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        
+        .modal-card { 
+            background: white; 
+            width: 100%; 
+            max-width: 400px; 
+            border-radius: 12px; 
+            padding: 24px; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
         
         #batch-indicator { 
             display: none; 
@@ -125,49 +542,240 @@
             cursor: pointer; 
         }
         
-        #install-btn { display: none; color: #007a4d; font-weight: bold; cursor: pointer; }
+        #install-btn { 
+            display: none; 
+            color: #007a4d; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
         
-        .filter-row-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px 0; align-items: center; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        .filter-row-container::-webkit-scrollbar { display: none; }
-        .filter-row-container { -ms-overflow-style: none; scrollbar-width: none; }
+        .filter-row-container { 
+            display: flex; 
+            gap: 8px; 
+            overflow-x: auto; 
+            padding: 4px 0 12px 0; 
+            align-items: center; 
+            white-space: nowrap; 
+            -webkit-overflow-scrolling: touch; 
+        }
         
-        .ms-container { position: relative; }
-        .ms-btn { background: white; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; text-align: left; font-size: 12px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; }
-        .ms-options { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border: 1px solid #d1d5db; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); margin-top: 4px; }
-        .ms-options.show { display: block; }
-        .ms-option { padding: 10px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; color: #1f2937; white-space: normal; }
-        .ms-option:hover { background: #f9fafb; }
-        .ms-option input { width: 16px; height: 16px; accent-color: var(--brand-green); flex-shrink: 0; }
-        .ms-option.selected { background-color: #f0fdf4; }
+        .filter-row-container::-webkit-scrollbar { 
+            display: none; 
+        }
+        
+        .filter-row-container { 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+        }
+        
+        .ms-container { 
+            position: relative; 
+        }
+        
+        .ms-btn { 
+            background: white; 
+            border: 1px solid #d1d5db; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            text-align: left; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #4b5563; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            white-space: nowrap; 
+        }
+        
+        .ms-options { 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            min-width: 200px; 
+            background: white; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            z-index: 100; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+            margin-top: 4px; 
+        }
+        
+        .ms-options.show { 
+            display: block; 
+        }
+        
+        .ms-option { 
+            padding: 10px; 
+            border-bottom: 1px solid #f3f4f6; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 12px; 
+            cursor: pointer; 
+            color: #1f2937; 
+            white-space: normal; 
+        }
+        
+        .ms-option:hover { 
+            background: #f9fafb; 
+        }
+        
+        .ms-option input { 
+            width: 16px; 
+            height: 16px; 
+            accent-color: var(--brand-green); 
+            flex-shrink: 0; 
+        }
+        
+        .ms-option.selected { 
+            background-color: #f0fdf4; 
+        }
 
-        #view-photo-editor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 6000; display: none; flex-direction: column; }
-        .editor-canvas-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
-        .editor-canvas-container img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .editor-controls { background: #1f2937; padding: 20px; border-top: 1px solid #374151; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
-        .filter-btn { flex: 0 0 auto; background: #374151; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #4b5563; }
-        .filter-btn.active { background: #007a4d; border-color: #007a4d; }
+        #view-photo-editor { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #111827; 
+            z-index: 6000; 
+            display: none; 
+            flex-direction: column; 
+        }
+        
+        .editor-canvas-container { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            padding: 20px; 
+        }
+        
+        .editor-canvas-container img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+        }
+        
+        .editor-controls { 
+            background: #1f2937; 
+            padding: 20px; 
+            border-top: 1px solid #374151; 
+            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+        }
+        
+        .filter-scroll { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        
+        .filter-btn { 
+            flex: 0 0 auto; 
+            background: #374151; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: 1px solid #4b5563; 
+        }
+        
+        .filter-btn.active { 
+            background: #007a4d; 
+            border-color: #007a4d; 
+        }
         
         .filter-btn.bg-lav { background: #e9d5ff; color: #6b21a8; }
         .filter-btn.bg-grn { background: #dcfce7; color: #166534; }
         .filter-btn.bg-gry { background: #f3f4f6; color: #374151; }
 
-        #ptr-spinner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 10; transition: top 0.2s; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        #ptr-spinner i { color: var(--brand-green); font-size: 18px; }
-        #ptr-spinner.loading i { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        #ptr-spinner { 
+            position: absolute; 
+            top: -40px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 10; 
+            transition: top 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 30px; 
+            height: 30px; 
+            background: white; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
         
-        .failed-sync-banner { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #ptr-spinner i { 
+            color: var(--brand-green); 
+            font-size: 18px; 
+        }
         
-        .data-badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; margin-top: 4px; }
+        #ptr-spinner.loading i { 
+            animation: spin 1s linear infinite; 
+        }
+        
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        @keyframes pulse { 
+            0% { opacity: 1; } 
+            50% { opacity: 0.7; } 
+            100% { opacity: 1; } 
+        }
+        
+        .failed-sync-banner { 
+            background: #fee2e2; 
+            border: 1px solid #ef4444; 
+            color: #b91c1c; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 16px; 
+            font-weight: bold; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .data-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-right: 4px; 
+            margin-top: 4px; 
+        }
+        
         .badge-match { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-spec { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-note { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
         .text-production { color: #d97706; }
 
         /* Request Form Styles & List Item */
-        #request-form-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: none; flex-direction: column; }
+        #request-form-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: white; 
+            z-index: 6000; 
+            display: none; 
+            flex-direction: column; 
+        }
         
         .req-list-item {
             background: #f0fdf4;
@@ -179,11 +787,13 @@
             justify-content: space-between;
             align-items: center;
         }
+        
         .req-list-details {
             font-size: 12px;
             color: #166534;
             line-height: 1.4;
         }
+        
         .req-remove-btn {
             color: #ef4444;
             padding: 8px;
@@ -307,25 +917,9 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO INV V_001
+                GREENLEAF 0004
             </div>
-            
-            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
-            
-            <div id="login-inputs">
-                <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME" autocomplete="username">
-                <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD" autocomplete="current-password">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800" onclick="handleLogin()">LOGIN</button>
-            </div>
-            
-            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
-                <div class="spinner"></div>
-                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="app-wrapper" class="hidden h-full flex flex-col">
+            <div id="app-wrapper" class="hidden h-full flex flex-col">
         
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
@@ -333,7 +927,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO INV V_001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GREENLEAF 0004 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -347,22 +941,52 @@
         <div id="drawer-overlay" onclick="toggleMenu()"></div>
         <div id="side-drawer">
             <div class="drawer-header">Greenleaf Menu</div>
-            <div id="install-btn" class="drawer-item" onclick="installPWA()"><i class="ph-bold ph-download-simple"></i> Install App</div>
-            <div id="drawer-newrequest" class="drawer-item" onclick="openRequestForm(); toggleMenu();"><i class="ph-bold ph-plus-circle text-green-600"></i> New Request</div>
-            <div id="drawer-home" class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
-            <div id="drawer-directory" class="drawer-item" onclick="switchView('directory'); toggleMenu();"><i class="ph-bold ph-address-book"></i> Directory</div>
-            <div id="drawer-inventory" class="drawer-item" onclick="switchView('inventory'); toggleMenu();"><i class="ph-bold ph-warehouse"></i> Inventory</div>
-            <div id="drawer-drive" class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
-            <div id="drawer-production" class="drawer-item" onclick="switchView('production'); toggleMenu();"><i class="ph-bold ph-plant"></i> Production</div>
-            <div id="drawer-tasks" class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
-            <div id="drawer-salesreps" class="drawer-item font-bold text-purple-600" onclick="switchView('salesreps'); toggleMenu();"><i class="ph-bold ph-users text-xl"></i> Sales Reps</div>
-            <div id="drawer-salesoffice" class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
-            <div id="drawer-soc" class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
-            <div id="drawer-tracking" class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Tracking Module</div>
-            <div id="drawer-review" class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
-            <div id="drawer-viewer" class="drawer-item" onclick="switchView('viewer'); toggleMenu();"><i class="ph-bold ph-eye"></i> Data Viewer</div>
+            <div id="install-btn" class="drawer-item" onclick="installPWA()">
+                <i class="ph-bold ph-download-simple"></i> Install App
+            </div>
+            <div id="drawer-newrequest" class="drawer-item" onclick="openRequestForm(); toggleMenu();">
+                <i class="ph-bold ph-plus-circle text-green-600"></i> New Request
+            </div>
+            <div id="drawer-home" class="drawer-item" onclick="switchView('home'); toggleMenu();">
+                <i class="ph-bold ph-house"></i> Home
+            </div>
+            <div id="drawer-directory" class="drawer-item" onclick="switchView('directory'); toggleMenu();">
+                <i class="ph-bold ph-address-book"></i> Directory
+            </div>
+            <div id="drawer-inventory" class="drawer-item" onclick="switchView('inventory'); toggleMenu();">
+                <i class="ph-bold ph-warehouse"></i> Inventory
+            </div>
+            <div id="drawer-drive" class="drawer-item" onclick="switchView('drive'); toggleMenu();">
+                <i class="ph-bold ph-car"></i> Drive Mode
+            </div>
+            <div id="drawer-production" class="drawer-item" onclick="switchView('production'); toggleMenu();">
+                <i class="ph-bold ph-plant"></i> Production
+            </div>
+            <div id="drawer-tasks" class="drawer-item" onclick="switchView('tasks'); toggleMenu();">
+                <i class="ph-bold ph-clipboard-text"></i> My Tasks
+            </div>
+            <div id="drawer-salesreps" class="drawer-item font-bold text-purple-600" onclick="switchView('salesreps'); toggleMenu();">
+                <i class="ph-bold ph-users text-xl"></i> Sales Reps
+            </div>
+            <div id="drawer-salesoffice" class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();">
+                <i class="ph-bold ph-storefront text-xl"></i> Sales Office
+            </div>
+            <div id="drawer-soc" class="drawer-item" onclick="switchView('soc'); toggleMenu();">
+                <i class="ph-bold ph-check-square"></i> SOC
+            </div>
+            <div id="drawer-tracking" class="drawer-item" onclick="switchView('tracking'); toggleMenu();">
+                <i class="ph-bold ph-chart-line-up"></i> Tracking Module
+            </div>
+            <div id="drawer-review" class="drawer-item text-red-600 font-bold" onclick="switchView('review'); toggleMenu();">
+                <i class="ph-bold ph-warning-circle"></i> Manager Review
+            </div>
+            <div id="drawer-viewer" class="drawer-item" onclick="switchView('viewer'); toggleMenu();">
+                <i class="ph-bold ph-eye"></i> Data Viewer
+            </div>
             <hr class="my-2">
-            <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
+            <div class="drawer-item text-red-600" onclick="location.reload()">
+                <i class="ph-bold ph-sign-out"></i> Logout
+            </div>
         </div>
 
         <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-32 relative">
@@ -371,16 +995,22 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">GNC-PRO INV V_001</h1>
+                    <h1 class="text-2xl font-bold">GREENLEAF 0004</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
                 <div class="bg-white p-4 rounded-2xl mb-6 shadow-lg border border-gray-100">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 mb-3"><i class="ph-fill ph-cloud-sun text-xl text-blue-500"></i> Local Weather</h2>
-                    <a class="weatherwidget-io" href="https://forecast7.com/en/35d76n94d97/park-hill/" data-label_1="PARK HILL, OK" data-label_2="WEATHER" data-theme="pure" >PARK HILL WEATHER</a>
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2 mb-3">
+                        <i class="ph-fill ph-cloud-sun text-xl text-blue-500"></i> Local Weather
+                    </h2>
+                    <a class="weatherwidget-io" href="https://forecast7.com/en/35d76n94d97/park-hill/" data-label_1="PARK HILL, OK" data-label_2="WEATHER" data-theme="pure">PARK HILL WEATHER</a>
                     <div class="grid grid-cols-2 gap-3 mt-4">
-                        <button onclick="window.open('https://weather.com/weather/hourbyhour/l/35.7615,-94.9663', '_blank')" class="bg-blue-50 text-blue-700 font-bold py-2 rounded-lg border border-blue-100 text-xs flex justify-center items-center gap-1"><i class="ph-bold ph-clock"></i> Hourly</button>
-                        <button onclick="window.open('https://weather.com/weather/radar/interactive/l/35.7615,-94.9663', '_blank')" class="bg-indigo-50 text-indigo-700 font-bold py-2 rounded-lg border border-indigo-100 text-xs flex justify-center items-center gap-1"><i class="ph-bold ph-radar"></i> Live Radar</button>
+                        <button onclick="window.open('https://weather.com/weather/hourbyhour/l/35.7615,-94.9663', '_blank')" class="bg-blue-50 text-blue-700 font-bold py-2 rounded-lg border border-blue-100 text-xs flex justify-center items-center gap-1">
+                            <i class="ph-bold ph-clock"></i> Hourly
+                        </button>
+                        <button onclick="window.open('https://weather.com/weather/radar/interactive/l/35.7615,-94.9663', '_blank')" class="bg-indigo-50 text-indigo-700 font-bold py-2 rounded-lg border border-indigo-100 text-xs flex justify-center items-center gap-1">
+                            <i class="ph-bold ph-radar"></i> Live Radar
+                        </button>
                     </div>
                 </div>
 
@@ -395,27 +1025,61 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div id="home-btn-tasks" onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
-                    <div id="home-btn-drive" onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    <div id="home-btn-production" onclick="switchView('production')" class="home-btn"><i class="ph-bold ph-plant home-icon text-production"></i><span class="font-bold">Production</span></div>
-                    <div id="home-btn-inventory" onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
-                    <div id="home-btn-salesreps" onclick="switchView('salesreps')" class="home-btn"><i class="ph-bold ph-users home-icon text-purple-500"></i><span class="font-bold">Sales Reps</span></div>
-                    <div id="home-btn-directory" onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
-                    <div id="home-btn-salesoffice" onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
-                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
-                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
-                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
+                    <div id="home-btn-tasks" onclick="switchView('tasks')" class="home-btn">
+                        <i class="ph-bold ph-clipboard-text home-icon text-[#007a4d]"></i>
+                        <span class="font-bold">Tasks</span>
+                    </div>
+                    <div id="home-btn-drive" onclick="switchView('drive')" class="home-btn">
+                        <i class="ph-bold ph-car home-icon text-blue-600"></i>
+                        <span class="font-bold">Drive Mode</span>
+                    </div>
+                    <div id="home-btn-production" onclick="switchView('production')" class="home-btn">
+                        <i class="ph-bold ph-plant home-icon text-production"></i>
+                        <span class="font-bold">Production</span>
+                    </div>
+                    <div id="home-btn-inventory" onclick="switchView('inventory')" class="home-btn">
+                        <i class="ph-bold ph-warehouse home-icon text-teal-600"></i>
+                        <span class="font-bold">Inventory</span>
+                    </div>
+                    <div id="home-btn-salesreps" onclick="switchView('salesreps')" class="home-btn">
+                        <i class="ph-bold ph-users home-icon text-purple-500"></i>
+                        <span class="font-bold">Sales Reps</span>
+                    </div>
+                    <div id="home-btn-directory" onclick="switchView('directory')" class="home-btn">
+                        <i class="ph-bold ph-address-book home-icon text-indigo-600"></i>
+                        <span class="font-bold">Directory</span>
+                    </div>
+                    <div id="home-btn-salesoffice" onclick="switchView('salesoffice')" class="home-btn">
+                        <i class="ph-bold ph-storefront home-icon text-green-600"></i>
+                        <span class="font-bold">Sales Office</span>
+                    </div>
+                    <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden">
+                        <i class="ph-bold ph-check-square home-icon text-purple-600"></i>
+                        <span class="font-bold">SOC</span>
+                    </div>
+                    <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden">
+                        <i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i>
+                        <span class="font-bold">Tracking</span>
+                    </div>
+                    <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50">
+                        <i class="ph-bold ph-warning-circle home-icon"></i>
+                        <span class="font-bold">Manager Review</span>
+                    </div>
                 </div>
             </div>
 
             <div id="view-salesreps" class="hidden">
-                <h2 class="text-sm font-bold text-purple-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-users text-xl"></i> Sales Reps</h2>
+                <h2 class="text-sm font-bold text-purple-600 uppercase mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-users text-xl"></i> Sales Reps
+                </h2>
                 <div id="sr-status" class="text-xs text-gray-500 font-bold mb-4 animate-pulse"></div>
                 <div id="sr-content"></div>
             </div>
 
             <div id="view-salesoffice" class="hidden">
-                <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes</h2>
+                <h2 class="text-sm font-bold text-green-700 uppercase mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-storefront text-xl"></i> Sales Office Notes
+                </h2>
                 <div class="text-xs text-gray-500 mb-4 bg-green-50 p-2 rounded border border-green-100">
                     <strong>Published Descriptions:</strong> Tap "Approve" to start 10-day timer for field.
                 </div>
@@ -424,7 +1088,9 @@
             </div>
 
             <div id="view-directory" class="hidden">
-                <h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-address-book text-xl"></i> Company Directory</h2>
+                <h2 class="text-sm font-bold text-indigo-600 uppercase mb-4 flex items-center gap-2">
+                    <i class="ph-bold ph-address-book text-xl"></i> Company Directory
+                </h2>
                 <div class="task-tabs mb-4">
                     <div class="task-tab active">Sales Reps</div>
                 </div>
@@ -437,15 +1103,21 @@
                 
                 <div class="filter-row-container">
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')"><span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-group')">
+                            <span id="lbl-group">Group</span> <i class="ph-bold ph-caret-down"></i>
+                        </button>
                         <div id="ms-group" class="ms-options"></div>
                     </div>
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')"><span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-season')">
+                            <span id="lbl-season">Season</span> <i class="ph-bold ph-caret-down"></i>
+                        </button>
                         <div id="ms-season" class="ms-options"></div>
                     </div>
                     <div class="ms-container filter-item">
-                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')"><span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i></button>
+                        <button class="ms-btn w-full" onclick="toggleMs('ms-lot')">
+                            <span id="lbl-lot">Lot</span> <i class="ph-bold ph-caret-down"></i>
+                        </button>
                         <div id="ms-lot" class="ms-options"></div>
                     </div>
                     
@@ -512,7 +1184,7 @@
                 </div>
                 <input type="text" id="task-search" class="input-field mb-4" placeholder="Search tasks..." onkeyup="renderTasks()">
                 <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
-                    </div>
+                </div>
                 <div id="task-tabs-container" class="task-tabs hidden">
                     <div id="ttab-requests" class="task-tab" onclick="setTaskTab('requests')">Requests</div>
                     <div id="ttab-season" class="task-tab active" onclick="setTaskTab('season')">Season</div>
@@ -553,7 +1225,9 @@
                 <div id="review-root-folders"></div>
                 
                 <div id="review-folder-view" class="hidden">
-                    <div class="back-btn" onclick="resetReviewFolders()"><i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span></div>
+                    <div class="back-btn" onclick="resetReviewFolders()">
+                        <i class="ph-bold ph-arrow-left"></i> <span id="review-back-label">Back</span>
+                    </div>
                     <h3 id="review-folder-title" class="font-bold text-lg mb-2 text-gray-800"></h3>
                     <div id="failed-saves-container"></div>
                     <input type="text" id="review-search" class="input-field mb-4" placeholder="Search..." onkeyup="renderReviewContent()">
@@ -568,7 +1242,9 @@
             </div>
 
             <div id="view-detail" class="hidden pt-safe">
-                <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
+                <div class="back-btn" onclick="goBackFromDetail()">
+                    <i class="ph-bold ph-arrow-left"></i> Back
+                </div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
                 
@@ -595,18 +1271,50 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div class="task-info-grid">
-                        <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Qty Avail</div><div id="ov-avail" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Item Code</div><div id="ov-item" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
-                        <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Excel Sales Note</div><div id="ov-sales" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Source File</div><div id="ov-source" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Customer</div><div id="ov-customer" class="overview-val text-blue-600 font-bold">--</div></div>
-                        <div class="overview-card"><div class="overview-label">S_LTS</div><div id="ov-slts" class="overview-val">--</div></div>
+                        <div class="overview-card">
+                            <div class="overview-label">Location</div>
+                            <div id="ov-loc" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Qty Avail</div>
+                            <div id="ov-avail" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Item Code</div>
+                            <div id="ov-item" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Lot</div>
+                            <div id="ov-lot" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Season Supply</div>
+                            <div id="ov-season" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Priority</div>
+                            <div id="ov-prior" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card full-width">
+                            <div class="overview-label">Excel Sales Note</div>
+                            <div id="ov-sales" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card full-width">
+                            <div class="overview-label">Source File</div>
+                            <div id="ov-source" class="overview-val">--</div>
+                        </div>
+                        <div class="overview-card full-width">
+                            <div class="overview-label">Customer</div>
+                            <div id="ov-customer" class="overview-val text-blue-600 font-bold">--</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">S_LTS</div>
+                            <div id="ov-slts" class="overview-val">--</div>
+                        </div>
                     </div>
+                    
                     <div id="expand-section" class="mt-6">
                         <div class="expand-trigger" onclick="toggleExpand()">
                             <span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i>
@@ -655,7 +1363,9 @@
                         <p class="text-xs text-center text-gray-400 mt-2">Admin override.</p>
                     </div>
 
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">SAVE & LOCK DATA</button>
+                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4 hidden" onclick="saveData()">
+                        SAVE & LOCK DATA
+                    </button>
                 </div>
 
                 <div id="det-grower-content" class="hidden py-4">
@@ -703,16 +1413,26 @@
                         </div>
                     </div>
 
-                    <button class="w-full bg-amber-600 text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE GROWER DATA</button>
+                    <button class="w-full bg-amber-600 text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">
+                        SAVE GROWER DATA
+                    </button>
                 </div>
             </div>
         </div>
 
         <div id="action-bar">
-            <div class="action-btn bg-blue-600" onclick="batchText()"><i class="ph-bold ph-chat-text text-xl"></i> Text</div>
-            <div class="action-btn bg-purple-600" onclick="batchEmail()"><i class="ph-bold ph-envelope text-xl"></i> Email</div>
-            <div class="action-btn bg-gray-700" onclick="copyBatchData()"><i class="ph-bold ph-copy text-xl"></i> Copy</div>
-            <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()"><i class="ph-bold ph-user-plus text-xl"></i> Assign</div>
+            <div class="action-btn bg-blue-600" onclick="batchText()">
+                <i class="ph-bold ph-chat-text text-xl"></i> Text
+            </div>
+            <div class="action-btn bg-purple-600" onclick="batchEmail()">
+                <i class="ph-bold ph-envelope text-xl"></i> Email
+            </div>
+            <div class="action-btn bg-gray-700" onclick="copyBatchData()">
+                <i class="ph-bold ph-copy text-xl"></i> Copy
+            </div>
+            <div class="action-btn bg-[#e3a000]" onclick="openAssignModal()">
+                <i class="ph-bold ph-user-plus text-xl"></i> Assign
+            </div>
         </div>
 
         <nav id="bottom-nav" class="fixed bottom-0 w-full bg-white border-t flex justify-around py-3 shadow-2xl z-50">
@@ -761,9 +1481,18 @@
                     <datalist id="dl-projects"></datalist>
                 </div>
                 <div class="space-y-2">
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_crop" checked class="accent-[#007a4d]"> <span class="text-xs font-bold">Crop Update</span></label>
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_endcap" class="accent-[#007a4d]"> <span class="text-xs font-bold">End Cap</span></label>
-                    <label class="flex items-center gap-2"><input type="radio" name="flyer_cat" value="flyer_spot" class="accent-[#007a4d]"> <span class="text-xs font-bold">Spotlight</span></label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="flyer_cat" value="flyer_crop" checked class="accent-[#007a4d]"> 
+                        <span class="text-xs font-bold">Crop Update</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="flyer_cat" value="flyer_endcap" class="accent-[#007a4d]"> 
+                        <span class="text-xs font-bold">End Cap</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="flyer_cat" value="flyer_spot" class="accent-[#007a4d]"> 
+                        <span class="text-xs font-bold">Spotlight</span>
+                    </label>
                 </div>
             </div>
 
@@ -772,7 +1501,7 @@
 
             <h3 class="text-xs font-bold text-[#007a4d] uppercase mb-2">3. Assign To</h3>
             <div class="space-y-2 mb-6" id="assign-user-checkboxes">
-                </div>
+            </div>
             
             <div class="flex gap-3">
                 <button class="flex-1 py-3 text-gray-500 font-bold bg-gray-100 rounded-lg" onclick="document.getElementById('assign-modal').style.display='none'">Cancel</button>
@@ -780,12 +1509,10 @@
             </div>
         </div>
     </div>
-
-    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
-    <script>
+            <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFORfJYO5ohPERxkfQfQ-nbuUV-J2HP7VhBsdO6PoW3WzJWDVsQCB2c6ygpADELHwS/exec"; 
         
-        // Generic function to send email via backend
+        // --- EMAIL HELPERS ---
         function sendEmailNotification(toUser, subject, htmlContent) {
             const dirEntry = STATIC_DIRECTORY.find(d => d.name === toUser);
             const email = dirEntry ? dirEntry.email : "dylan_collyge@greenleafnursery.com";
@@ -801,7 +1528,6 @@
             }).catch(err => console.error("Email failed slightly:", err)); 
         }
 
-        // Helper to make the email look nice
         function generateHtmlForItems(items, title, directions) {
             let html = `<div style='font-family: Arial, sans-serif; color: #333;'>
                         <h3 style='color: #007a4d; border-bottom: 2px solid #007a4d; padding-bottom: 10px;'>${title}</h3>`;
@@ -1244,11 +1970,17 @@
                 document.getElementById('home-btn-soc').classList.remove('hidden');
                 document.getElementById('home-btn-track').classList.remove('hidden');
                 document.getElementById('home-btn-review').classList.remove('hidden');
+                if(document.getElementById('drawer-soc')) document.getElementById('drawer-soc').classList.remove('hidden');
+                if(document.getElementById('drawer-tracking')) document.getElementById('drawer-tracking').classList.remove('hidden');
+                if(document.getElementById('drawer-review')) document.getElementById('drawer-review').classList.remove('hidden');
             } else if (userRole === 'Sales') {
                 // HIDE EVERYTHING EXCEPT DRIVE, SOC, AND REQUESTS
                 document.getElementById('home-btn-soc').classList.remove('hidden'); 
                 document.getElementById('home-btn-track').classList.add('hidden');
                 document.getElementById('home-btn-review').classList.add('hidden');
+                if(document.getElementById('drawer-soc')) document.getElementById('drawer-soc').classList.remove('hidden');
+                if(document.getElementById('drawer-tracking')) document.getElementById('drawer-tracking').classList.add('hidden');
+                if(document.getElementById('drawer-review')) document.getElementById('drawer-review').classList.add('hidden');
                 
                 // Hide specific home buttons
                 if(document.getElementById('home-btn-tasks')) document.getElementById('home-btn-tasks').classList.add('hidden');
@@ -1265,8 +1997,6 @@
                 if(document.getElementById('drawer-salesreps')) document.getElementById('drawer-salesreps').classList.add('hidden');
                 if(document.getElementById('drawer-directory')) document.getElementById('drawer-directory').classList.add('hidden');
                 if(document.getElementById('drawer-salesoffice')) document.getElementById('drawer-salesoffice').classList.add('hidden');
-                if(document.getElementById('drawer-tracking')) document.getElementById('drawer-tracking').classList.add('hidden');
-                if(document.getElementById('drawer-review')) document.getElementById('drawer-review').classList.add('hidden');
                 
                 // Hide bottom navigation items (Tasks and Viewer)
                 const nav = document.getElementById('bottom-nav');
@@ -1279,6 +2009,9 @@
                 document.getElementById('home-btn-soc').classList.add('hidden');
                 document.getElementById('home-btn-track').classList.add('hidden');
                 document.getElementById('home-btn-review').classList.add('hidden');
+                if(document.getElementById('drawer-soc')) document.getElementById('drawer-soc').classList.add('hidden');
+                if(document.getElementById('drawer-tracking')) document.getElementById('drawer-tracking').classList.add('hidden');
+                if(document.getElementById('drawer-review')) document.getElementById('drawer-review').classList.add('hidden');
             }
 
             switchView('home'); 
@@ -1496,6 +2229,8 @@
                 showToast("New Requests!", "Managers have assigned you urgent items.", true);
             }
         }
+
+        // --- DATA SAVING LOGIC ---
         function logFailedSave(payload) {
             let failed = JSON.parse(localStorage.getItem('greenleaf_failed_saves') || '[]');
             failed = failed.filter(f => f.id !== payload.id); 
@@ -1670,6 +2405,7 @@
             .catch(err => logFailedSave(payload));
         }
 
+        // --- PHOTO EDITOR & UPLOAD LOGIC ---
         function handlePhotoUpload(input) {
             if(input.files && input.files[0]) {
                 currentFile = input.files[0];
@@ -1748,9 +2484,18 @@
             window.lastLocalUpdate = new Date().getTime();
             
             showToast("Uploading...", "Pro photo processing...", false);
+            
+            // SEND SOURCE & TASK TAB FOR ROUTING
             fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
-                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename }) 
+                body: JSON.stringify({ 
+                    type: "image", 
+                    image: base64Data, 
+                    mimeType: "image/jpeg", 
+                    filename: filename,
+                    source: currentOriginView, 
+                    taskTab: activeItem.TASK_TAB 
+                }) 
             })
             .then(res => res.json())
             .then(data => {
@@ -1770,6 +2515,7 @@
             .catch(err => showToast("Network Error", "Could not upload photo.", true));
         }
 
+        // --- DIRECTORY LOGIC ---
         function renderDirectoryView() {
             const container = document.getElementById('directory-content');
             const term = document.getElementById('directory-search').value.toLowerCase();
@@ -2288,11 +3034,13 @@
             document.querySelectorAll('#prod-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(productionSelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderProductionView();
         }
+        
         function handleProductionSearch(term) { 
             productionSearchTerm = term.toLowerCase(); 
             if(productionSearchTerm.length > 0) { productionViewLevel = 0; }
             renderProductionView(); 
         }
+        
         function getFilteredProductionItems() {
             return fullInventory.filter(i => {
                 if(!productionSelectedSeasons.includes('ALL')) { if(!productionSelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
@@ -2300,6 +3048,7 @@
                 return true;
             });
         }
+        
         function renderProductionView() {
             const container = document.getElementById('production-content'); const crumb = document.getElementById('production-crumb');
             if(!productionSearchTerm && productionSelectedSeasons.includes('ALL') && productionViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectProductionName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
@@ -2328,11 +3077,13 @@
             document.querySelectorAll('#inv-season-bar .season-chip').forEach(chip => { const s = chip.innerText; if(inventorySelectedSeasons.includes(s)) chip.classList.add('active'); else chip.classList.remove('active'); });
             renderInventoryView();
         }
+        
         function handleInventorySearch(term) { 
             inventorySearchTerm = term.toLowerCase(); 
             if(inventorySearchTerm.length > 0) { inventoryViewLevel = 0; }
             renderInventoryView(); 
         }
+        
         function getFilteredInventoryItems() {
             return fullInventory.filter(i => {
                 if(!inventorySelectedSeasons.includes('ALL')) { if(!inventorySelectedSeasons.includes(i.SEASONSUPPLY)) return false; }
@@ -2340,6 +3091,7 @@
                 return true;
             });
         }
+        
         function renderInventoryView() {
             const container = document.getElementById('inventory-content'); const crumb = document.getElementById('inventory-crumb');
             if(!inventorySearchTerm && inventorySelectedSeasons.includes('ALL') && inventoryViewLevel === 0) { crumb.innerText = `All Items (${allCommonNames.length})`; container.innerHTML = allCommonNames.map(n => `<div class="drill-item" onclick="selectInventoryName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right"></i></div>`).join(''); return; }
@@ -2812,175 +3564,117 @@
             }).catch(err => logFailedSave(payload));
         }
 
-        // --- DETAILS / ACTIONS ---
-        function switchDetailTab(tab) { 
-            document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); document.getElementById('dtab-grower').classList.toggle('active', tab === 'grower');
-            document.getElementById('det-overview-content').classList.toggle('hidden', tab !== 'overview'); document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions'); document.getElementById('det-grower-content').classList.toggle('hidden', tab !== 'grower');
-        }
-        
-        function goBackFromDetail() { localStorage.removeItem('gl_active_item'); document.getElementById('view-detail').classList.add('hidden'); document.getElementById('view-' + lastView).classList.remove('hidden'); if(lastView === 'tasks') renderTasks(); if(lastView === 'drive') renderDriveNames(); if(lastView === 'inventory') renderInventoryView(); if(lastView === 'production') renderProductionView(); }
-
-        function openDetail(idx, originView) {
-            lastView = originView; currentOriginView = originView; activeItem = fullInventory[idx]; localStorage.setItem('gl_active_item', activeItem.UNIQUE_ID); 
-            ['view-drive','view-tasks','view-viewer','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(v => { document.getElementById(v).classList.add('hidden'); });
-            document.getElementById('view-detail').classList.remove('hidden'); 
-            document.getElementById('det-common').innerText = activeItem.COMMONNAME; document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--"; document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--"; document.getElementById('ov-avail').innerText = activeItem.PTRAVAILABLE || "0"; document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--"; document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--"; document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--"; document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--"; document.getElementById('ov-sales').innerText = activeItem.SALESNOTE || "N/A"; document.getElementById('ov-source').innerText = activeItem.SOURCE_FILENAME || "--";
-            
-            document.getElementById('ov-customer').innerText = activeItem.CUSTOMERNAME || activeItem.CONSIGNEENAME || "Unknown Customer";
-            document.getElementById('ov-slts').innerText = activeItem.S_LTS || activeItem.SLTS || "--";
-
-            document.getElementById('expand-section').classList.remove('expanded'); document.getElementById('expand-content').innerHTML = ''; 
-            if (originView === 'viewer') { document.getElementById('expand-section').classList.add('hidden'); } else { document.getElementById('expand-section').classList.remove('hidden'); }
-            const tabActions = document.getElementById('dtab-actions'); const tabGrower = document.getElementById('dtab-grower');
-            if (originView === 'production') { tabActions.classList.add('hidden'); tabGrower.classList.remove('hidden'); document.getElementById('in-grower-eval').value = activeItem.GROWER_EVAL || ""; document.getElementById('in-grower-shear').value = activeItem.GROWER_SHEAR || ""; document.getElementById('in-grower-water').value = activeItem.GROWER_WATER || ""; document.getElementById('in-grower-root').value = activeItem.GROWER_ROOT || ""; document.getElementById('in-grower-note').value = activeItem.GROWER_NOTE || ""; } else { tabActions.classList.remove('hidden'); tabGrower.classList.add('hidden'); }
-            
-            const banner = document.getElementById('directions-banner');
-            const txt = document.getElementById('directions-text');
-            if(activeItem.SAVED_NOTE && activeItem.SAVED_NOTE.includes("| Directions:")) {
-                 let parts = activeItem.SAVED_NOTE.split("| Directions:");
-                 if(parts.length > 1) {
-                     banner.classList.remove('hidden');
-                     txt.innerText = parts[1].trim();
-                 } else {
-                     banner.classList.add('hidden');
-                 }
-            } else {
-                 banner.classList.add('hidden');
+        // --- ROW HTML RENDERER ---
+        function createRowHtml(item, idx, source) {
+            let thumbHtml = '';
+            if(item.SAVED_PHOTO_LINK) {
+                const firstLink = item.SAVED_PHOTO_LINK.split(',')[0]; 
+                let thumbUrl = firstLink; 
+                const idMatch = firstLink.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+                if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; } 
+                thumbHtml = `<img src="${thumbUrl}" class="w-12 h-12 object-cover rounded mr-3 bg-gray-200" loading="lazy" onerror="this.style.display='none'">`;
             }
 
-            renderOverviewData(); renderActionsTab(); switchDetailTab('overview');
-        }
-
-        function toggleExpand() { const section = document.getElementById('expand-section'); if (!section.classList.contains('expanded')) { renderAllFields(); } section.classList.toggle('expanded'); }
-
-        function renderActionsTab() {
-            const btnComplete = document.getElementById('request-complete-container'); const hasData = !!(activeItem.SAVED_MATCH || activeItem.SAVED_SPEC || activeItem.SAVED_PICK || activeItem.SAVED_NOTE || activeItem.SAVED_SALES_DESC || activeItem.SAVED_PHOTO_LINK || activeItem.TIMESTAMP); const isMyRequest = activeItem.TASK_TAB === 'requests' && (activeItem.REQUEST_ASSIGNED_TO || "").includes(currentUser);
-            let canEditText = false; if (isAdmin && ['tasks', 'drive', 'review'].includes(currentOriginView)) { canEditText = true; }
+            const hsCode = (item.HOLDSTOPCODE || '').trim().toUpperCase();
+            const lotCode = (item.LOTCODE || '').trim().toUpperCase();
+            const hasPriority = parseFloat(item.PRIORITY) > 0;
             
-            if (activeItem.TASK_TAB === 'requests' || (activeItem.TASK_TAB||"").startsWith("flyer_")) { 
-                btnComplete.classList.remove('hidden'); 
-            } else { 
-                btnComplete.classList.add('hidden'); 
+            let statusClass = 'status-default'; 
+
+            if (hsCode === 'S') { statusClass = 'status-red'; } 
+            else if (hsCode === 'H' && hasPriority) { statusClass = 'status-yellow'; }
+            else if (lotCode === 'U1') { statusClass = 'status-blue'; }
+            else if (lotCode === 'U2') { statusClass = 'status-purple'; }
+            else if (lotCode === 'U3') { statusClass = 'status-orange'; }
+            else if (lotCode === 'X') { statusClass = 'status-black'; }
+            else if (!hsCode && hasPriority) { statusClass = 'status-green'; }
+
+            let isChecked = selectedIdx.includes(idx) ? 'checked' : '';
+            let isSelecting = selectedIdx.includes(idx) ? 'selecting' : '';
+
+            let requestInfo = "";
+            if(item.UNIQUE_ID.includes("-")) { 
+                 if(item.QTY) requestInfo += `<span class="bg-blue-100 text-blue-800 text-[10px] px-1 rounded mr-1">Req: ${item.QTY}</span>`;
+                 if(item.SHIPDATE) requestInfo += `<span class="bg-gray-100 text-gray-800 text-[10px] px-1 rounded">Ship: ${item.SHIPDATE}</span>`;
             }
-            
-            if (canEditText && !hasData) { showEditMode(); } else { showReadonlyMode(canEditText, hasData); }
-        }
 
-        function handleSmartFill(el) {
-            if(el.id === 'in-match') activeItem.SAVED_MATCH = el.value;
-            if(el.id === 'in-spec') activeItem.SAVED_SPEC = el.value;
-            if(el.id === 'in-pick') activeItem.SAVED_PICK = el.value;
-            if(el.id === 'in-note') activeItem.SAVED_NOTE = el.value;
-            if(el.id === 'in-sales-desc') activeItem.SAVED_SALES_DESC = el.value;
-            
-            const specVal = document.getElementById('in-spec').value;
-            const salesEl = document.getElementById('in-sales-desc');
-            let salesVal = salesEl.value;
-
-            if (specVal && salesVal.toUpperCase().includes("SPEC")) {
-                const newVal = salesVal.replace(/SPEC/gi, specVal);
-                salesEl.value = newVal;
-                activeItem.SAVED_SALES_DESC = newVal; 
-                showToast("Smart Fill", "Replaced 'SPEC' with " + specVal);
-            }
-        }
-
-        function showEditMode() {
-            document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            document.getElementById('btn-save').classList.remove('hidden'); 
-            document.getElementById('btn-edit-container').classList.add('hidden'); 
-            document.getElementById('readonly-lock-banner').classList.add('hidden');
-            
-            const myItemCode = String(activeItem.ITEMCODE || "").toUpperCase().replace(/\s/g,''); 
-            
-            const cName = String(activeItem.COMMONNAME || "").toUpperCase();
-            const noteOptions = salesNoteMap[cName] || [];
-            
-            let dlHtml = `<datalist id="dl-notes">`; 
-            dlHtml += `<option value="Nice Full Plants / SPEC">`; 
-            dlHtml += `<option value="Consistent Grade / SPEC">`; 
-            
-            noteOptions.forEach(n => { dlHtml += `<option value="${n}">`; }); 
-            const validNotes = noteTemplates.filter(n => n.itemCode === myItemCode);
-            validNotes.forEach(n => { dlHtml += `<option value="${n.note}">`; });
-            dlHtml += `</datalist>`;
-            
-            const pHolder = (noteOptions.length > 0 || validNotes.length > 0) ? "Tap for templates or type 'SPEC'..." : "Type 'SPEC' to pull from column above..."; 
-            const cont = document.getElementById('input-container');
-            
-            cont.innerHTML = `
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
-                <input type="number" id="in-match" class="input-field" placeholder="e.g. 95" value="${activeItem.SAVED_MATCH||''}" oninput="handleSmartFill(this)">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label>
-                <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch" value="${activeItem.SAVED_SPEC||''}" oninput="handleSmartFill(this)">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description <i class="ph-bold ph-caret-down inline-block ml-1"></i></label>
-                <input type="text" id="in-sales-desc" list="dl-notes" class="input-field border-green-500 bg-green-50" placeholder="${pHolder}" value="${activeItem.SAVED_SALES_DESC||''}" oninput="this.value = this.value.toUpperCase(); handleSmartFill(this)" onchange="handleSmartFill(this)">
-                ${dlHtml}
-                <div class="text-[9px] text-green-600 font-bold text-right mt-[-8px] mb-2">Tip: Type "SPEC" to auto-fill size</div>
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
-                <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing" value="${activeItem.SAVED_PICK||''}" oninput="handleSmartFill(this)">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase">General Observation</label>
-                <textarea id="in-note" class="input-field h-24" placeholder="Any other notes..." oninput="handleSmartFill(this)">${activeItem.SAVED_NOTE||''}</textarea>
+            return `
+            <div class="batch-row" ontouchstart="startLongPress()" ontouchend="cancelLongPress()" onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()">
+                <input type="checkbox" id="cb-${idx}" class="select-check" value="${idx}" ${isChecked}>
+                <div class="inv-card flex-grow flex items-center ${isSelecting} ${statusClass}" id="row-${idx}" onclick="handleCardClick(${idx}, '${source}')">
+                    ${thumbHtml}
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-[#007a4d] truncate">${item.LOCATIONCODE || 'No Loc'} <span class="text-black text-sm font-normal">• ${item.COMMONNAME}</span></div>
+                        <div class="text-sm text-gray-600 truncate">Qty: ${item.PTRAVAILABLE || 0} | Supply: ${item.SEASONSUPPLY || 0} | Size: ${item.CONTSIZE} | Lot: ${item.LOTCODE || '-'}</div>
+                        <div class="text-xs font-bold text-gray-500 mt-1">Quality: ${item.QUALITYCODE || 'N/A'} <span class="mx-2 text-gray-300">|</span> PRI: ${item.PRIORITY || '0'} <span class="mx-2 text-gray-300">|</span> Tag Color: ${item.FIELDTAGCOLOR || 'N/A'}</div>
+                        <div class="mt-1">${requestInfo}</div>
+                    </div>
+                </div>
             </div>`;
         }
 
-        function showReadonlyMode(canEditThisView, hasData) {
-            document.getElementById('btn-cam-container').classList.remove('hidden'); 
-            if (canEditThisView) { document.getElementById('btn-save').classList.remove('hidden'); document.getElementById('btn-save').classList.add('hidden'); } else { document.getElementById('btn-save').classList.add('hidden'); }
-            if(hasData) { document.getElementById('readonly-lock-banner').classList.remove('hidden'); } else { document.getElementById('readonly-lock-banner').classList.add('hidden'); }
-            const cont = document.getElementById('input-container');
-            cont.innerHTML = `<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Match %</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_MATCH||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Spec</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_SPEC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-green-700 uppercase">Sales Description</div><div class="readonly-field bg-green-50 border-green-200 p-3 rounded">${activeItem.SAVED_SALES_DESC||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_PICK||'-'}</div></div><div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase">General Observation</div><div class="readonly-field p-3 rounded">${activeItem.SAVED_NOTE||'-'}</div></div>`;
-            if (canEditThisView) { document.getElementById('btn-edit-container').classList.remove('hidden'); } else { document.getElementById('btn-edit-container').classList.add('hidden'); }
+        // --- BATCH SELECTION LOGIC ---
+        function updateSelected() { 
+            if (selectedIdx.length > 0) { 
+                document.getElementById('action-bar').classList.add('visible'); 
+            } else { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+            } 
         }
 
-        function renderAllFields() {
-            if(!activeItem) return;
-            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'SOURCE_FILENAME', 'SOURCEFILE', 'TASK_TAB', 'TASKSTATUS', 'ASSIGNEDTO', 'REQUEST_ASSIGNED_TO', 'REQUESTASSIGNEDTO', 'SAVED_MATCH', 'MATCHPCT', 'SAVED_SPEC', 'SPEC', 'SAVED_PICK', 'PICKNOTE', 'SAVED_NOTE', 'GENNOTE', 'SAVED_SALES_DESC', 'SALESDESC', 'SAVED_PHOTO_LINK', 'PHOTOLINK', 'SAVED_PHOTO_NAME', 'PHOTONAME', 'UPDATEDBY', 'TIMESTAMP'];
-            let html = '<div class="grid grid-cols-1 gap-2">';
-            for (const [key, value] of Object.entries(activeItem)) { if(hiddenKeys.includes(key)) continue; html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; }
-            html += '</div>'; document.getElementById('expand-content').innerHTML = html;
+        function handleCardClick(idx, source) {
+            if(isBatch) {
+                toggleSelect(idx); 
+                return;
+            }
+            openDetail(idx, source);
         }
 
-        function renderOverviewData() {
-            const box = document.getElementById('user-data-box'); const grid = document.getElementById('dynamic-user-grid'); const photoDiv = document.getElementById('photo-preview'); const photoList = document.getElementById('photo-list-container');
-            let h = "";
-            if(currentOriginView === 'inventory' && activeItem.LOCATIONNOTE) { h += `<div class="overview-card full-width" style="border-color: #fca5a5; background-color: #fef2f2;"><div class="overview-label text-red-600">Location Note</div><div class="overview-val text-red-700">${activeItem.LOCATIONNOTE}</div></div>`; }
-            if(activeItem.SAVED_MATCH) h += `<div class="overview-card"><div class="overview-label">Match %</div><div class="overview-val">${activeItem.SAVED_MATCH}%</div></div>`;
-            if(activeItem.SAVED_SPEC) h += `<div class="overview-card"><div class="overview-label">Spec</div><div class="overview-val">${activeItem.SAVED_SPEC}</div></div>`;
-            if(activeItem.SAVED_SALES_DESC) h += `<div class="overview-card full-width"><div class="overview-label text-green-700">Sales Desc</div><div class="overview-val font-bold">${activeItem.SAVED_SALES_DESC}</div></div>`;
-            if(activeItem.SAVED_PICK) h += `<div class="overview-card full-width"><div class="overview-label">Pick Note</div><div class="overview-val">${activeItem.SAVED_PICK}</div></div>`;
-            if(activeItem.SAVED_NOTE) h += `<div class="overview-card full-width"><div class="overview-label">Gen Note</div><div class="overview-val">${activeItem.SAVED_NOTE}</div></div>`;
-            if(activeItem.SAVED_PHOTO_LINK) {
-                photoDiv.classList.remove('hidden'); const urls = activeItem.SAVED_PHOTO_LINK.split(','); const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; let phHtml = "";
-                urls.forEach((url, i) => {
-                    const dispName = names[i] || `Photo ${i+1}`; let thumbUrl = url; const idMatch = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
-                    if(idMatch && idMatch[1]) { thumbUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w512-h512`; }
-                    let deleteBtn = ""; if(isAdmin) { deleteBtn = `<div onclick="event.preventDefault(); deletePhoto(${i})" class="p-2 text-red-500 cursor-pointer"><i class="ph-bold ph-trash text-xl"></i></div>`; }
-                    phHtml += `<div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 mb-2 shadow-sm hover:bg-gray-50"><a href="${url}" target="_blank" class="flex-grow flex items-center gap-3"><img src="${thumbUrl}" class="w-16 h-16 object-cover rounded bg-gray-200" loading="lazy"><div class="flex-grow min-w-0"><div class="text-xs font-bold text-blue-600 truncate">${dispName}</div><div class="text-[10px] text-gray-400">Tap to view full size</div></div><i class="ph-bold ph-arrow-square-out text-gray-300"></i></a>${deleteBtn}</div>`;
-                });
-                photoList.innerHTML = phHtml; h += `<div class="overview-card full-width"><div class="overview-label">Photos</div><div class="overview-val">${urls.length} Attached</div></div>`;
-            } else { photoDiv.classList.add('hidden'); }
-            if(h) { grid.innerHTML = h; box.classList.remove('hidden'); } else { box.classList.add('hidden'); }
+        function toggleSelect(idx) {
+            const indexInArray = selectedIdx.indexOf(idx);
+            if (indexInArray > -1) {
+                selectedIdx.splice(indexInArray, 1); 
+            } else {
+                selectedIdx.push(idx); 
+            }
+
+            const row = document.getElementById('row-' + idx);
+            const cb = document.getElementById('cb-' + idx);
+            if(row && cb) {
+                const isSelected = selectedIdx.includes(idx);
+                cb.checked = isSelected;
+                if(isSelected) row.classList.add('selecting');
+                else row.classList.remove('selecting');
+            }
+            updateSelected(); 
         }
 
-        function deletePhoto(index) {
-            if(!confirm("Are you sure you want to delete this photo?")) return;
-            if(autoSyncTimer) clearInterval(autoSyncTimer);
-            let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : []; let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-            links.splice(index, 1); if(index < names.length) names.splice(index, 1);
-            activeItem.SAVED_PHOTO_LINK = links.filter(l => l).join(','); activeItem.SAVED_PHOTO_NAME = names.filter(n => n).join(',');
-            renderOverviewData(); showToast("Deleting...", "Removing photo from cloud...");
-            const payload = { type: "update", id: activeItem.UNIQUE_ID, match: activeItem.SAVED_MATCH || "", spec: activeItem.SAVED_SPEC || "", pick: activeItem.SAVED_PICK || "", note: activeItem.SAVED_NOTE || "", salesDesc: activeItem.SAVED_SALES_DESC || "", photoLink: activeItem.SAVED_PHOTO_LINK, photoName: activeItem.SAVED_PHOTO_NAME, user: currentUser };
-            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => { if(data.status === 'success') { showToast("Success", "Photo permanently deleted."); setTimeout(() => { fetchData(true); startAutoSync(); }, 2500); } else { showToast("Error", "Could not delete: " + data.message, true); startAutoSync(); } }).catch(err => { showToast("Network Error", "Saved deletion offline.", true); logFailedSave(payload); startAutoSync(); });
+        function startLongPress() { 
+            longPressTimer = setTimeout(() => { 
+                if(!isBatch) toggleBatch(); 
+                navigator.vibrate(100); 
+            }, 1500); 
+        }
+        
+        function cancelLongPress() { 
+            clearTimeout(longPressTimer); 
+        }
+
+        function toggleBatch() { 
+            isBatch = !isBatch; 
+            document.body.classList.toggle('batch-mode', isBatch); 
+            document.getElementById('batch-indicator').style.display = isBatch ? 'block' : 'none'; 
+            
+            if(!isBatch) { 
+                document.getElementById('action-bar').classList.remove('visible'); 
+                selectedIdx = []; 
+                document.querySelectorAll('.select-check').forEach(cb => cb.checked = false); 
+                document.querySelectorAll('.inv-card').forEach(card => card.classList.remove('selecting'));
+            } else {
+                if (!document.getElementById('view-drive').classList.contains('hidden')) renderDriveView();
+                if (!document.getElementById('view-soc').classList.contains('hidden')) renderSocView();
+                updateSelected();
+            }
         }
 
         // --- EMAIL / TEXT BATCH LOGIC ---
@@ -3190,3 +3884,18 @@
     </script>
 </body>
 </html>
+            
+            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
+            
+            <div id="login-inputs">
+                <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME" autocomplete="username">
+                <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD" autocomplete="current-password">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800" onclick="handleLogin()">LOGIN</button>
+            </div>
+            
+            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
+                <div class="spinner"></div>
+                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
+            </div>
+        </div>
+    </div>
