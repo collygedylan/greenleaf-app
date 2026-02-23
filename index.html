@@ -23,7 +23,7 @@
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
         .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
-        .pin-input { width: 100%; padding: 14px; font-size: 24px; text-align: center; letter-spacing: 4px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
+        .pin-input { width: 100%; padding: 14px; font-size: 20px; text-align: center; letter-spacing: 2px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
@@ -217,6 +217,17 @@
         </div>
     </div>
 
+    <div id="view-reset-password" class="hidden fixed top-0 left-0 w-full h-full bg-[#007a4d] z-[10000] flex flex-col items-center justify-center p-5">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Password Reset Required</h2>
+            <p class="text-sm text-gray-500 mb-6">Please choose a new password to continue.</p>
+            <input type="password" id="new-password" class="input-field mb-4 text-center" placeholder="New Password">
+            <input type="password" id="confirm-password" class="input-field mb-6 text-center" placeholder="Confirm Password">
+            <button onclick="submitNewPassword()" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800">SAVE & LOGIN</button>
+            <button onclick="resetLogin()" class="mt-4 text-sm text-gray-400 underline">Cancel</button>
+        </div>
+    </div>
+
     <div id="request-form-modal" class="pt-safe">
         <div class="bg-[#007a4d] text-white p-4 flex justify-between items-center shadow-md">
             <div class="font-bold text-lg">New Request</div>
@@ -296,7 +307,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC-PRO 01
+                GNC PRO 1000000
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -305,7 +316,7 @@
                 </div>
             
             <div id="pin-container" class="hidden mt-4">
-                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PIN" maxlength="4" inputmode="numeric">
+                <input type="password" id="pin-code" class="pin-input" placeholder="ENTER PASSWORD">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg" onclick="verifyPin()">ENTER</button>
                 <button class="text-gray-400 text-xs mt-3 underline" onclick="resetLogin()">Cancel</button>
             </div>
@@ -324,7 +335,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC-PRO 01 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC PRO 1000000 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -361,7 +372,7 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">Greenleaf Pro</h1>
+                    <h1 class="text-2xl font-bold">GNC PRO 1000000</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -1281,7 +1292,7 @@
                         appUsers = data.data;
                         renderLoginButtons();
                     } else {
-                        loginButtons.innerHTML = '<div class="text-red-500 text-sm">No users found. Run setupSystem() in Apps Script.</div>';
+                        loginButtons.innerHTML = '<div class="text-red-500 text-sm">No users found. Ensure your new sheet has users!</div>';
                     }
                 })
                 .catch(err => {
@@ -1300,7 +1311,7 @@
                 if(u.color === 'purple') { bgCol = 'bg-purple-100'; textCol = 'text-purple-600'; }
                 if(u.color === 'green') { bgCol = 'bg-green-100'; textCol = 'text-green-700'; }
 
-                return `<button class="user-btn" onclick="selectUser('${u.name}')">
+                return `<button class="user-btn" onclick="selectUser('${u.name.replace(/'/g, "\\'")}')">
                             <div class="w-8 h-8 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold">${u.initial}</div> 
                             ${u.name} ${u.role === 'Admin' ? '(Admin)' : ''}
                         </button>`;
@@ -1327,20 +1338,84 @@
 
             // Compare entered PIN against the specific user's PIN from the spreadsheet
             if (selectedUserData && enteredPin === String(selectedUserData.pin)) { 
-                document.getElementById('pin-container').classList.add('hidden'); 
-                document.getElementById('loading-spinner').classList.remove('hidden'); 
-                fetchData(); 
+                
+                if (selectedUserData.resetRequired) {
+                    // Show Reset Password Screen
+                    document.getElementById('view-login').style.display = 'none';
+                    document.getElementById('view-reset-password').classList.remove('hidden');
+                } else {
+                    // Normal Login
+                    document.getElementById('pin-container').classList.add('hidden'); 
+                    document.getElementById('loading-spinner').classList.remove('hidden'); 
+                    fetchData(); 
+                }
+
             } else { 
-                showToast("Error", "Incorrect PIN", true); 
+                showToast("Error", "Incorrect Password", true); 
                 document.getElementById('pin-code').value = ""; // Clear input on fail
             } 
         }
+
+        function submitNewPassword() {
+            const newPass = document.getElementById('new-password').value;
+            const confirmPass = document.getElementById('confirm-password').value;
+
+            if (!newPass || newPass.length < 4) {
+                showToast("Error", "Password must be at least 4 characters.", true);
+                return;
+            }
+            if (newPass !== confirmPass) {
+                showToast("Error", "Passwords do not match.", true);
+                return;
+            }
+
+            document.getElementById('view-reset-password').innerHTML = '<div class="text-white font-bold text-xl animate-pulse">Updating Password...</div>';
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    type: "change_password",
+                    username: currentUser,
+                    newPassword: newPass
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast("Success", "Password updated!");
+                    // Update local data so it doesn't loop
+                    const selectedUserData = appUsers.find(u => u.name === currentUser);
+                    if(selectedUserData) {
+                        selectedUserData.pin = newPass;
+                        selectedUserData.resetRequired = false;
+                    }
+                    
+                    // Route to dashboard
+                    document.getElementById('view-reset-password').classList.add('hidden');
+                    document.getElementById('view-login').style.display = 'flex';
+                    document.getElementById('pin-container').classList.add('hidden');
+                    document.getElementById('loading-spinner').classList.remove('hidden');
+                    fetchData();
+                } else {
+                    showToast("Error", data.message, true);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            })
+            .catch(err => {
+                showToast("Error", "Network connection failed.", true);
+                setTimeout(() => location.reload(), 2000);
+            });
+        }
         
         function resetLogin() { 
+            document.getElementById('view-reset-password').classList.add('hidden');
+            document.getElementById('view-login').style.display = 'flex';
             document.getElementById('pin-container').classList.add('hidden'); 
             document.getElementById('login-buttons').classList.remove('hidden'); 
             document.getElementById('loading-spinner').classList.add('hidden'); 
             document.getElementById('pin-code').value = ""; // Clear input
+            document.getElementById('new-password').value = ""; 
+            document.getElementById('confirm-password').value = ""; 
         }
 
         // --- SEARCH & RENDER LOGIC ---
