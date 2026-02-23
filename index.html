@@ -1616,24 +1616,18 @@
             } catch (e) { 
                 console.error("Fetch Data Error:", e); 
                 if(!isSilent) { 
-                    document.getElementById('loading-text').innerText = "Load Failed: " + e.message; 
-                    setTimeout(resetLogin, 4000); 
+                    // 1. Stop the loading spinner
+                    document.getElementById('ptr-spinner').classList.remove('loading');
+                    
+                    // 2. Turn the text red and freeze the exact error on the screen!
+                    const textEl = document.getElementById('loading-text');
+                    textEl.style.color = "#ef4444"; 
+                    textEl.innerHTML = "<b>Load Failed:</b><br>" + e.message; 
+                    
+                    // (I removed the setTimeout reset entirely, so it stays on screen forever)
                 } 
             }
         }
-
-        function restoreSession() {
-            const savedView = localStorage.getItem('gl_last_view');
-            const savedId = localStorage.getItem('gl_active_item');
-            
-            if (savedId) {
-                const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId);
-                if (itemIndex > -1) {
-                    openDetail(itemIndex, savedView || 'drive');
-                }
-            }
-        }
-
         // --- CORE UI & RBAC ROUTING ---
         function launchApp() { 
             document.getElementById('view-login').style.display = 'none'; 
@@ -1681,6 +1675,18 @@
             
             switchView('home'); 
         }
+
+        function restoreSession() {
+            const savedView = localStorage.getItem('gl_last_view');
+            const savedId = localStorage.getItem('gl_active_item');
+            
+            if (savedId) {
+                const itemIndex = fullInventory.findIndex(i => i.UNIQUE_ID === savedId);
+                if (itemIndex > -1) {
+                    openDetail(itemIndex, savedView || 'drive');
+                }
+            }
+        }
         
         function switchView(v) { 
             localStorage.setItem('gl_last_view', v);
@@ -1708,36 +1714,7 @@
             } 
         }
 
-        // --- SEARCH ROUTER & DEBOUNCE ---
-        function handleSearchDebounced(val, type) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                if(type === 'drive') handleDriveSearch(val);
-                if(type === 'inventory') handleInventorySearch(val);
-                if(type === 'production') handleProductionSearch(val);
-                if(type === 'soc') {
-                    if (currentSocTab === 'item') {
-                         if(val.length > 2) {
-                             document.getElementById('soc-status').innerText = "Searching Global Database...";
-                             fetch(GOOGLE_SCRIPT_URL + "?action=searchSoc&term=" + encodeURIComponent(val))
-                             .then(res => res.json())
-                             .then(data => {
-                                 if(data.status === 'success') {
-                                     socData = data.data;
-                                     socViewLevel = 0; 
-                                     renderSocView();
-                                     document.getElementById('soc-status').innerText = data.data.length + " matches found.";
-                                 } else {
-                                     document.getElementById('soc-status').innerText = "Search failed.";
-                                 }
-                             });
-                          }
-                    } else {
-                         renderSocView(); 
-                    }
-                }
-            }, 500); 
-        }
+        // --- DETAIL VIEWS & EDITING ---
         function switchDetailTab(tab) { 
             document.getElementById('dtab-overview').classList.toggle('active', tab === 'overview'); 
             document.getElementById('dtab-actions').classList.toggle('active', tab === 'actions'); 
