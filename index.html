@@ -21,8 +21,11 @@
         
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
+        .user-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-weight: 700; color: #374151; background: white; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .user-btn:hover { border-color: var(--brand-gold); background-color: #fffbeb; }
+        .pin-input { width: 100%; padding: 14px; font-size: 20px; text-align: center; letter-spacing: 2px; border: 2px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px; outline: none; display: none; }
         
-        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 9999; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
+        #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 11000; transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
         
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s ease-in-out; }
@@ -218,9 +221,9 @@
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-xl font-bold text-gray-800 mb-2">Password Reset Required</h2>
             <p class="text-sm text-gray-500 mb-6">Please choose a new password to continue.</p>
-            <input type="password" id="new-password" class="input-field mb-4 text-center" placeholder="New Password">
-            <input type="password" id="confirm-password" class="input-field mb-6 text-center" placeholder="Confirm Password">
-            <button onclick="submitNewPassword()" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800">SAVE & LOGIN</button>
+            <input type="password" id="new-password" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="New Password">
+            <input type="password" id="confirm-password" class="input-field mb-6 text-center border-2 tracking-widest" placeholder="Confirm Password">
+            <button id="btn-submit-reset" onclick="submitNewPassword()" class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800 transition-colors">SAVE & LOGIN</button>
             <button onclick="resetLogin()" class="mt-4 text-sm text-gray-400 underline">Cancel</button>
         </div>
     </div>
@@ -1333,17 +1336,20 @@
         function submitNewPassword() {
             const newPass = document.getElementById('new-password').value;
             const confirmPass = document.getElementById('confirm-password').value;
+            const btn = document.getElementById('btn-submit-reset');
 
             if (!newPass || newPass.length < 4) {
                 showToast("Error", "Password must be at least 4 characters.", true);
                 return;
             }
             if (newPass !== confirmPass) {
-                showToast("Error", "Passwords do not match.", true);
+                showToast("Error", "Passwords do not match. Try again.", true);
                 return;
             }
 
-            document.getElementById('view-reset-password').innerHTML = '<div class="text-white font-bold text-xl animate-pulse">Updating Password...</div>';
+            // Show loading state on the button
+            btn.innerText = "UPDATING...";
+            btn.disabled = true;
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
@@ -1355,6 +1361,9 @@
             })
             .then(res => res.json())
             .then(data => {
+                btn.innerText = "SAVE & LOGIN";
+                btn.disabled = false;
+                
                 if(data.status === 'success') {
                     showToast("Success", "Password updated!");
                     const selectedUserData = appUsers.find(u => u.name === currentUser);
@@ -1370,12 +1379,12 @@
                     fetchData();
                 } else {
                     showToast("Error", data.message, true);
-                    setTimeout(() => location.reload(), 2000);
                 }
             })
             .catch(err => {
+                btn.innerText = "SAVE & LOGIN";
+                btn.disabled = false;
                 showToast("Error", "Network connection failed.", true);
-                setTimeout(() => location.reload(), 2000);
             });
         }
         
@@ -2280,7 +2289,7 @@
                         crumb.innerText = `Kayla & Morgan / Urgent Requests`;
                  } else {
                         myItems = fullInventory.filter(i => (i.REQUEST_ASSIGNED_TO || "").includes(taskViewTargetUser) && i.TASK_TAB === 'requests'); 
-                        crumb.innerText = `${taskViewTargetUser} / Urgent Requests`;
+                        crumb.innerText = `${taskViewTargetUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} / Urgent Requests`;
                  }
             } else if (currentTab === 'flyer') {
                 myItems = fullInventory.filter(i => i.TASK_TAB === currentFlyerTab);
@@ -2298,7 +2307,7 @@
             if(myItems.length === 0 && currentTab === 'requests') { container.innerHTML = `<div class="p-8 text-center text-gray-400">No requests pending.</div>`; return; }
             if(currentTab === 'requests') { container.innerHTML = `<div class="back-btn" onclick="if(isAdmin){renderTeamSelector()}else{showToast('Info', 'Root Directory', false)}"><i class="ph-bold ph-arrow-left"></i> Change User</div>` + myItems.map(item => createRowHtml(item, fullInventory.indexOf(item), 'tasks')).join(''); return; }
 
-            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser;
+            const displayUser = taskViewTargetUser === 'ASSIST' ? 'Kayla & Morgan' : taskViewTargetUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
             if(currentTab === 'flyer') {
                 const mapName = { 'flyer_crop': 'Crop Update', 'flyer_endcap': 'End Cap', 'flyer_spot': 'Spotlight' };
