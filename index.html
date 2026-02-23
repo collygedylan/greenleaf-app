@@ -919,7 +919,22 @@
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
                 GREENLEAF 0004
             </div>
-            <div id="app-wrapper" class="hidden h-full flex flex-col">
+            
+            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
+            
+            <div id="login-inputs">
+                <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME" autocomplete="username">
+                <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD" autocomplete="current-password">
+                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800" onclick="handleLogin()">LOGIN</button>
+            </div>
+            
+            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
+                <div class="spinner"></div>
+                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
+            </div>
+        </div>
+    </div>
+    <div id="app-wrapper" class="hidden h-full flex flex-col">
         
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
@@ -1509,7 +1524,7 @@
             </div>
         </div>
     </div>
-            <script>
+    <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFORfJYO5ohPERxkfQfQ-nbuUV-J2HP7VhBsdO6PoW3WzJWDVsQCB2c6ygpADELHwS/exec"; 
         
         // --- EMAIL HELPERS ---
@@ -2202,6 +2217,25 @@
                     setTimeout(resetLogin, 4000); 
                 } 
             }
+        }
+
+        // --- MISSING ASSIGNMENT FIX ---
+        function applyAssignments() { 
+            let i = 0; 
+            fullInventory.forEach(item => { 
+                if(!item.ASSIGNEDTO) { 
+                    const group = (item.PLANTGROUPCODE || "").toString(); 
+                    if(group.includes("230") || group.includes("140")) { 
+                        item.ASSIGNEDTO = "Dylan"; 
+                    } else if(group.includes("330") || group.includes("300")) { 
+                        item.ASSIGNEDTO = "Kayla"; 
+                    } else { 
+                        const weight = i % 5; 
+                        item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); 
+                        i++; 
+                    } 
+                } 
+            }); 
         }
 
         function restoreSession() {
@@ -3884,18 +3918,3 @@
     </script>
 </body>
 </html>
-            
-            <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
-            
-            <div id="login-inputs">
-                <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME" autocomplete="username">
-                <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD" autocomplete="current-password">
-                <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-800" onclick="handleLogin()">LOGIN</button>
-            </div>
-            
-            <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
-                <div class="spinner"></div>
-                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Cloud Data...</div>
-            </div>
-        </div>
-    </div>
