@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC PRO 1000000</title>
+    <title>GNC-PRO INV V_001</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -307,7 +307,7 @@
         <div class="login-card">
             <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
                 <img src="GNC LOGO.png" alt="Company Logo" class="h-16 w-auto object-contain">
-                GNC PRO 1000000
+                GNC-PRO INV V_001
             </div>
             
             <div id="status-msg" class="mb-4 text-xs font-bold text-white bg-red-400 p-2 rounded hidden"></div>
@@ -335,7 +335,7 @@
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
                     <div class="text-[10px] opacity-80 leading-tight flex items-center gap-1">
-                        GNC PRO 1000000 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
+                        GNC-PRO INV V_001 <span id="auto-sync-badge" class="w-2 h-2 rounded-full bg-green-300 animate-pulse"></span>
                     </div>
                 </div>
             </div>
@@ -372,7 +372,7 @@
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg flex flex-col items-center justify-center text-center">
                     <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md">
-                    <h1 class="text-2xl font-bold">GNC PRO 1000000</h1>
+                    <h1 class="text-2xl font-bold">GNC-PRO INV V_001</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -1259,9 +1259,12 @@
                 if(u.color === 'purple') { bgCol = 'bg-purple-100'; textCol = 'text-purple-600'; }
                 if(u.color === 'green') { bgCol = 'bg-green-100'; textCol = 'text-green-700'; }
 
+                // Clean up the display name (e.g., "dylan_collyge" -> "Dylan Collyge")
+                const displayName = u.name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+
                 return `<button class="user-btn" onclick="selectUser('${u.name.replace(/'/g, "\\'")}')">
-                            <div class="w-8 h-8 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold">${u.initial}</div> 
-                            ${u.name} ${u.role === 'Admin' ? '(Admin)' : ''}
+                            <div class="w-8 h-8 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold">${u.initial.toUpperCase()}</div> 
+                            ${displayName} ${u.role === 'Admin' ? '(Admin)' : ''}
                         </button>`;
             }).join('');
         }
@@ -1295,7 +1298,7 @@
                 assignHtml += `
                 <label class="flex items-center gap-3 p-3 border rounded-lg active:bg-gray-50 cursor-pointer">
                     <input type="checkbox" id="chk-${u.name}" class="w-5 h-5 accent-[#007a4d]">
-                    <div class="w-6 h-6 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold text-xs">${u.initial}</div>
+                    <div class="w-6 h-6 rounded-full ${bgCol} flex items-center justify-center ${textCol} font-bold text-xs">${u.initial.toUpperCase()}</div>
                     <span class="font-bold text-sm">${u.name}</span>
                 </label>`;
             });
@@ -2700,7 +2703,7 @@
             }).catch(err => logFailedSave(payload));
         }
 
-        function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser; if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
+        function launchApp() { document.getElementById('view-login').style.display = 'none'; document.getElementById('app-wrapper').classList.remove('hidden'); document.getElementById('header-user').innerText = currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); if(isAdmin) { document.getElementById('home-btn-soc').classList.remove('hidden'); document.getElementById('home-btn-track').classList.remove('hidden'); document.getElementById('home-btn-review').classList.remove('hidden'); } else { document.getElementById('home-btn-soc').classList.add('hidden'); document.getElementById('home-btn-track').classList.add('hidden'); document.getElementById('home-btn-review').classList.add('hidden'); } switchView('home'); }
         
         function applyAssignments() { 
             let i = 0; fullInventory.forEach(item => { if(!item.ASSIGNEDTO) { const group = (item.PLANTGROUPCODE || "").toString(); if(group.includes("230") || group.includes("140")) { item.ASSIGNEDTO = "Dylan"; } else if(group.includes("330") || group.includes("300")) { item.ASSIGNEDTO = "Kayla"; } else { const weight = i % 5; item.ASSIGNEDTO = weight < 3 ? "Dylan" : (weight === 3 ? "Kayla" : "Morgan"); i++; } } }); 
@@ -3111,7 +3114,7 @@
 
             const assignTitle = assignType === 'flyer' 
                 ? `New Flyer Project: ${projectName}` 
-                : `New Tasks Assigned by ${currentUser}`;
+                : `New Tasks Assigned by ${currentUser.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`;
 
             const itemsForEmail = selectedIdx.map(idx => fullInventory[idx]);
             const emailBody = generateHtmlForItems(itemsForEmail, assignTitle, noteText); 
