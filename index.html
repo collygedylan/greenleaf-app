@@ -355,6 +355,7 @@
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('production'); toggleMenu();"><i class="ph-bold ph-plant"></i> Production</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            <div class="drawer-item font-bold text-purple-600" onclick="switchView('salesreps'); toggleMenu();"><i class="ph-bold ph-users text-xl"></i> Sales Reps</div>
             <div class="drawer-item font-bold text-green-700" onclick="switchView('salesoffice'); toggleMenu();"><i class="ph-bold ph-storefront text-xl"></i> Sales Office</div>
             <div class="drawer-item" onclick="switchView('soc'); toggleMenu();"><i class="ph-bold ph-check-square"></i> SOC</div>
             <div class="drawer-item" onclick="switchView('tracking'); toggleMenu();"><i class="ph-bold ph-chart-line-up"></i> Tracking Module</div>
@@ -398,12 +399,19 @@
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car home-icon text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
                     <div onclick="switchView('production')" class="home-btn"><i class="ph-bold ph-plant home-icon text-production"></i><span class="font-bold">Production</span></div>
                     <div onclick="switchView('inventory')" class="home-btn"><i class="ph-bold ph-warehouse home-icon text-teal-600"></i><span class="font-bold">Inventory</span></div>
+                    <div onclick="switchView('salesreps')" class="home-btn"><i class="ph-bold ph-users home-icon text-purple-500"></i><span class="font-bold">Sales Reps</span></div>
                     <div onclick="switchView('directory')" class="home-btn"><i class="ph-bold ph-address-book home-icon text-indigo-600"></i><span class="font-bold">Directory</span></div>
                     <div onclick="switchView('salesoffice')" class="home-btn"><i class="ph-bold ph-storefront home-icon text-green-600"></i><span class="font-bold">Sales Office</span></div>
                     <div id="home-btn-soc" onclick="switchView('soc')" class="home-btn hidden"><i class="ph-bold ph-check-square home-icon text-purple-600"></i><span class="font-bold">SOC</span></div>
                     <div id="home-btn-track" onclick="switchView('tracking')" class="home-btn hidden"><i class="ph-bold ph-chart-line-up home-icon text-orange-500"></i><span class="font-bold">Tracking</span></div>
                     <div id="home-btn-review" onclick="switchView('review')" class="home-btn hidden col-span-2 text-red-600 border-red-200 bg-red-50"><i class="ph-bold ph-warning-circle home-icon"></i><span class="font-bold">Manager Review</span></div>
                 </div>
+            </div>
+
+            <div id="view-salesreps" class="hidden">
+                <h2 class="text-sm font-bold text-purple-600 uppercase mb-4 flex items-center gap-2"><i class="ph-bold ph-users text-xl"></i> Sales Reps</h2>
+                <div id="sr-status" class="text-xs text-gray-500 font-bold mb-4 animate-pulse"></div>
+                <div id="sr-content"></div>
             </div>
 
             <div id="view-salesoffice" class="hidden">
@@ -852,6 +860,13 @@
         let debounceTimer; 
         let syncPauseUntil = 0; 
 
+        // SALES REPS TAB VARIABLES
+        let liveRepFolders = [];
+        let liveRepData = [];
+        let srViewLevel = 0; 
+        let srSelectedRep = null;
+        let srSelectedCust = null;
+
         window.lastLocalUpdate = 0;
 
         // DRIVE MODE STATE & FILTERS
@@ -939,27 +954,114 @@
             { name: "Wes Lugas", id: "S04", phone: "(316)371-9548", email: "wes_lugas@greenleafnursery.com" }
         ];
 
-        let currentSocTab = 'reps';
-
-        function normalizeRepName(name) {
-            if (!name) return "";
-            name = name.trim();
-            if (name.includes(",")) {
-                let parts = name.split(",");
-                if (parts.length === 2) {
-                    return parts[1].trim() + " " + parts[0].trim(); 
+        // --- NEW SALES REPS TAB LOGIC ---
+        function loadSalesRepsInit() {
+            srViewLevel = 0;
+            document.getElementById('sr-status').innerText = "Connecting to Google Drive...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepList")
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    liveRepFolders = data.data; 
+                    document.getElementById('sr-status').innerText = "";
+                    renderSalesReps();
+                } else {
+                    document.getElementById('sr-status').innerText = "Failed to load reps.";
                 }
-            }
-            return name;
+            }).catch(e => {
+                document.getElementById('sr-status').innerText = "Connection error.";
+            });
         }
 
-        function getLocPrefix(loc) {
-            if (!loc) return "No Loc";
-            let parts = loc.split('.');
-            if (parts.length >= 3) {
-                return parts[0] + '.' + parts[1]; 
+        function renderSalesReps() {
+            const container = document.getElementById('sr-content');
+            
+            if (srViewLevel === 0) {
+                container.innerHTML = liveRepFolders.map(rep => {
+                    return `<div class="drill-item" onclick="fetchLiveRepData('${rep.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-folder text-blue-500 text-2xl"></i>
+                                    <span class="font-bold text-lg">${rep}</span>
+                                </div>
+                                <i class="ph-bold ph-caret-right text-gray-300"></i>
+                            </div>`;
+                }).join('');
+            } 
+            else if (srViewLevel === 1) {
+                const customers = [...new Set(liveRepData.map(i => {
+                    const c = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    if(co && co !== c) return `${c} / ${co}`;
+                    return c;
+                }))].sort();
+
+                container.innerHTML = `<div class="back-btn" onclick="srViewLevel=0; renderSalesReps()"><i class="ph-bold ph-arrow-left"></i> Back to Reps</div>
+                                       <div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${srSelectedRep}</div>` + 
+                customers.map(c => {
+                    const count = liveRepData.filter(i => {
+                        const cust = i.CUSTOMERNAME || "General";
+                        const co = i.CONSIGNEENAME || "";
+                        const combined = (co && co !== cust) ? `${cust} / ${co}` : cust;
+                        return combined === c;
+                    }).length;
+
+                    return `<div class="drill-item" onclick="selectSrCust('${c.replace(/'/g, "\\'")}')">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-fill ph-file-text text-green-600 text-2xl"></i>
+                                    <span class="font-bold text-sm">${c}</span>
+                                </div>
+                                <span class="text-gray-400 font-bold text-xs">(${count})</span>
+                                <i class="ph-bold ph-caret-right ml-2 text-gray-300"></i>
+                            </div>`;
+                }).join('');
+            } 
+            else if (srViewLevel === 2) {
+                const items = liveRepData.filter(i => {
+                    const cust = i.CUSTOMERNAME || "General";
+                    const co = i.CONSIGNEENAME || "";
+                    const combined = (co && co !== cust) ? `${cust} / ${co}` : cust;
+                    return combined === srSelectedCust;
+                });
+
+                container.innerHTML = `<div class="back-btn" onclick="srViewLevel=1; renderSalesReps()"><i class="ph-bold ph-arrow-left"></i> Back to Customers</div>
+                                       <div class="font-bold text-[#007a4d] mb-4 px-2 text-lg border-b pb-2">${srSelectedCust}</div>` + 
+                items.map(i => {
+                    return `<div class="inv-card">
+                                <div class="flex justify-between">
+                                    <div class="font-bold text-[#007a4d]">${i.ITEMCODE || 'No Code'}</div>
+                                    <div class="font-bold text-black">${i.QTYORDERED || i.QTY || 0}</div>
+                                </div>
+                                <div class="text-sm font-bold text-gray-800 mt-1">${i.COMMONNAME} - ${i.CONTSIZE}</div>
+                                <div class="text-xs text-gray-500 mt-1">Order: ${i.ORDERNO || '-'} | Date: ${i.SHIPDATE ? String(i.SHIPDATE).substring(0,10) : '-'}</div>
+                            </div>`;
+                }).join('');
             }
-            return loc;
+        }
+
+        function fetchLiveRepData(repName) {
+            srSelectedRep = repName;
+            document.getElementById('sr-status').innerText = "Loading data for " + repName + "...";
+            fetch(GOOGLE_SCRIPT_URL + "?action=getRepData&rep=" + encodeURIComponent(repName))
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('sr-status').innerText = "";
+                if(data.status === 'success') {
+                    liveRepData = data.data;
+                    srViewLevel = 1;
+                    renderSalesReps();
+                } else {
+                    document.getElementById('sr-status').innerText = "Failed to load rep data.";
+                }
+            })
+            .catch(e => {
+                document.getElementById('sr-status').innerText = "Connection error.";
+            });
+        }
+
+        function selectSrCust(cust) {
+            srSelectedCust = cust;
+            srViewLevel = 2;
+            renderSalesReps();
         }
 
         // --- REQUEST SYSTEM LOGIC ---
@@ -2725,11 +2827,18 @@
         
         function switchView(v) { 
             localStorage.setItem('gl_last_view', v);
-            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production'].forEach(id => { document.getElementById(id).classList.add('hidden'); }); 
+            ['view-home','view-drive','view-tasks','view-viewer','view-detail','view-review','view-soc','view-tracking', 'view-salesoffice', 'view-directory', 'view-inventory', 'view-production', 'view-salesreps'].forEach(id => { document.getElementById(id).classList.add('hidden'); }); 
             document.getElementById('view-'+v).classList.remove('hidden'); 
-            if(v === 'drive') renderDriveNames(); if(v === 'inventory') renderInventoryView(); if(v === 'production') renderProductionView(); if(v === 'directory') renderDirectoryView(); 
+            if(v === 'drive') renderDriveNames(); 
+            if(v === 'inventory') renderInventoryView(); 
+            if(v === 'production') renderProductionView(); 
+            if(v === 'directory') renderDirectoryView(); 
+            if(v === 'salesreps') loadSalesRepsInit();
             if(v === 'tasks') { if(isAdmin && taskViewTargetUser === currentUser && taskViewLevel === 0) { renderTeamSelector(); } else { renderTasks(); } } 
-            if(v === 'viewer') renderViewerNames(); if(v === 'review') { renderManagerFolders(); } if(v === 'soc') { renderSocView(); } if(v === 'salesoffice') { renderSalesOffice(); } 
+            if(v === 'viewer') renderViewerNames(); 
+            if(v === 'review') { renderManagerFolders(); } 
+            if(v === 'soc') { renderSocView(); } 
+            if(v === 'salesoffice') { renderSalesOffice(); } 
         }
         
         function switchDetailTab(tab) { 
