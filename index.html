@@ -16,16 +16,7 @@
     
     <style>
         :root { --brand-green: #007a4d; --text-main: #111827; }
-        body { 
-            font-family: "Amazon Ember", Arial, sans-serif; 
-            background-color: white; 
-            color: var(--text-main); 
-            overscroll-behavior-y: contain; 
-            user-select: none; 
-            -webkit-user-select: none; 
-            -webkit-touch-callout: none; 
-        }
-        
+        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
         
         /* LOGIN STYLES */
@@ -244,7 +235,8 @@
                         <div class="overview-card"><div class="overview-label">Lot</div><div id="ov-lot" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Quality Code</div><div id="ov-qual" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
-                        <div class="overview-card full-width"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Tag Color</div><div id="ov-tag" class="overview-val">--</div></div>
+                        <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                     </div>
 
                     <div id="expand-section" class="mt-6">
@@ -638,7 +630,7 @@
             }
         }
 
-        // --- GLOBAL CARD GENERATOR (WITH CHECKBOXES & QUALITY CODE) ---
+        // --- GLOBAL CARD GENERATOR (WITH CHECKBOXES & QUALITY CODE & TAG COLOR) ---
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
@@ -655,6 +647,7 @@
             }
 
             const isChecked = selectedItems.has(item.UNIQUE_ID) ? 'checked' : '';
+            const tagColor = item.FIELDTAGCOLOR || item['FIELD TAG COLOR'] || '-';
 
             // Add touch and mouse event listeners for the 2-second hold
             return `
@@ -678,11 +671,13 @@
                             <span class="text-[#007a4d] truncate pr-2">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
                             <span class="whitespace-nowrap">${item.CONTSIZE || '-'}</span>
                         </div>
-                        <div class="text-xs text-gray-500 truncate">
+                        <div class="text-[11px] text-gray-500 truncate mt-0.5">
                             <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | 
                             <span class="font-bold text-gray-800">QC: ${item.QUALITYCODE || '-'}</span> | 
-                            Qty: ${item.PTRAVAILABLE || '0'} | 
-                            Supply: ${item.SEASONSUPPLY || '0'}
+                            <span class="font-bold text-purple-600">Tag: ${tagColor}</span>
+                        </div>
+                        <div class="text-[11px] text-gray-500 truncate">
+                            Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'}
                         </div>
                     </div>
                     ${thumbHtml}
@@ -1113,6 +1108,7 @@
             document.getElementById('ov-item').innerText = activeItem.ITEMCODE || "--";
             document.getElementById('ov-lot').innerText = activeItem.LOTCODE || "--";
             document.getElementById('ov-qual').innerText = activeItem.QUALITYCODE || "--";
+            document.getElementById('ov-tag').innerText = activeItem.FIELDTAGCOLOR || activeItem['FIELD TAG COLOR'] || "--";
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
 
