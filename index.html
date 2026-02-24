@@ -96,6 +96,17 @@
         </div>
     </div>
 
+    <div id="tab-select-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <h3 class="font-bold text-lg mb-4 text-[#007a4d]">Which data to use?</h3>
+            <div class="grid grid-cols-1 gap-3 mb-4">
+                <button class="bg-green-50 text-green-700 font-bold p-4 rounded-lg border border-green-200 shadow-sm" onclick="processTabSelection('notes')">NOTES & ACTIONS</button>
+                <button class="bg-purple-50 text-purple-700 font-bold p-4 rounded-lg border border-purple-200 shadow-sm" onclick="processTabSelection('request')">REQUEST DATA</button>
+            </div>
+            <button class="text-gray-500 font-bold py-2 px-4" onclick="document.getElementById('tab-select-modal').classList.add('hidden')">Cancel</button>
+        </div>
+    </div>
+
     <div id="assign-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
             <h3 class="font-bold text-lg mb-4 text-[#007a4d]">Assign Selected Items To:</h3>
@@ -224,8 +235,8 @@
                 
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
-                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes</div>
-                    <div class="detail-tab" onclick="switchDetailTab('request')" id="dtab-request">Request</div>
+                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
+                    <div class="detail-tab" onclick="switchDetailTab('request')" id="dtab-request">Request Data</div>
                 </div>
                 
                 <div id="det-overview-content" class="py-4">
@@ -298,7 +309,7 @@
 
                 <div id="det-request-content" class="hidden py-4">
                     <div id="req-photo-preview" class="mb-4 hidden">
-                        <p class="text-[10px] font-bold text-purple-600 mb-2 uppercase">Photos on file</p>
+                        <p class="text-[10px] font-bold text-purple-600 mb-2 uppercase">Request Photos</p>
                         <div id="req-photo-list-container" class="space-y-2"></div>
                     </div>
 
@@ -339,8 +350,7 @@
                     </div>
 
                     <div class="flex gap-2 mt-4">
-                        <button id="req-btn-save-draft" class="w-1/3 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md" onclick="saveData(false)">SAVE DRAFT</button>
-                        <button id="req-btn-save-complete" class="w-2/3 bg-purple-600 text-white font-bold py-4 rounded-xl shadow-lg" onclick="saveData(true)">MARK COMPLETE</button>
+                        <button id="req-btn-save-draft" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl shadow-lg" onclick="saveData(false)">SAVE REQUEST DATA</button>
                     </div>
                 </div>
 
@@ -354,10 +364,10 @@
                 <span class="text-[10px] font-bold text-red-500 cursor-pointer bg-red-50 px-3 py-1 rounded-md uppercase" onclick="clearSelection()">Clear Selection</span>
             </div>
             <div class="flex gap-2">
-                <button onclick="batchAction('copy')" class="flex-1 bg-gray-100 text-gray-700 p-2 rounded-lg text-xs font-bold hover:bg-gray-200"><i class="ph-bold ph-copy block text-lg mb-1"></i> Copy</button>
-                <button onclick="batchAction('email')" class="flex-1 bg-blue-100 text-blue-700 p-2 rounded-lg text-xs font-bold hover:bg-blue-200"><i class="ph-bold ph-envelope block text-lg mb-1"></i> Email</button>
-                <button onclick="batchAction('text')" class="flex-1 bg-green-100 text-green-700 p-2 rounded-lg text-xs font-bold hover:bg-green-200"><i class="ph-bold ph-chat block text-lg mb-1"></i> Text</button>
-                <button onclick="openAssignModal()" class="flex-1 bg-purple-600 text-white p-2 rounded-lg text-xs font-bold shadow-md"><i class="ph-bold ph-user-plus block text-lg mb-1"></i> Assign</button>
+                <button onclick="initiateBatchAction('copy')" class="flex-1 bg-gray-100 text-gray-700 p-2 rounded-lg text-xs font-bold hover:bg-gray-200"><i class="ph-bold ph-copy block text-lg mb-1"></i> Copy</button>
+                <button onclick="initiateBatchAction('email')" class="flex-1 bg-blue-100 text-blue-700 p-2 rounded-lg text-xs font-bold hover:bg-blue-200"><i class="ph-bold ph-envelope block text-lg mb-1"></i> Email</button>
+                <button onclick="initiateBatchAction('text')" class="flex-1 bg-green-100 text-green-700 p-2 rounded-lg text-xs font-bold hover:bg-green-200"><i class="ph-bold ph-chat block text-lg mb-1"></i> Text</button>
+                <button onclick="initiateBatchAction('assign')" class="flex-1 bg-purple-600 text-white p-2 rounded-lg text-xs font-bold shadow-md"><i class="ph-bold ph-user-plus block text-lg mb-1"></i> Assign</button>
             </div>
         </div>
 
@@ -391,6 +401,9 @@
         let isLongPress = false;
         let touchStartX = 0;
         let touchStartY = 0;
+
+        let pendingAction = null;
+        let pendingTabType = null;
 
         // Drive Mode State Variables
         let driveViewLevel = 0;
@@ -699,7 +712,6 @@
             const isChecked = selectedItems.has(item.UNIQUE_ID) ? 'checked' : '';
             const tagColor = item.FIELDTAGCOLOR || item['FIELD TAG COLOR'] || '-';
 
-            // Add touch and mouse event listeners for the 2-second hold
             return `
             <div class="flex items-center w-full mb-2 item-row" data-id="${item.UNIQUE_ID}"
                  onmousedown="startPress(event, '${item.UNIQUE_ID}')" 
@@ -735,8 +747,25 @@
             </div>`;
         }
 
-        // Extracts all row-specific data and loops through multiple photos
-        function getSelectedItemsText() {
+        // --- GLOBAL BATCH ACTIONS WITH DATA SOURCE PROMPT ---
+        
+        function initiateBatchAction(action) {
+            pendingAction = action;
+            document.getElementById('tab-select-modal').classList.remove('hidden');
+        }
+
+        function processTabSelection(tab) {
+            pendingTabType = tab;
+            document.getElementById('tab-select-modal').classList.add('hidden');
+            
+            if (pendingAction === 'assign') {
+                openAssignModal();
+            } else {
+                executeBatchAction(pendingAction, pendingTabType);
+            }
+        }
+
+        function getSelectedItemsText(tabType) {
             let items = [];
             selectedItems.forEach(id => {
                 let found = fullInventory.find(i => i.UNIQUE_ID === id) || 
@@ -744,47 +773,53 @@
                 if (found) items.push(found);
             });
 
-            return items.map(i => {
-                let txt = `${i.COMMONNAME || 'Unknown'} (${i.CONTSIZE || '-'}) | Loc: ${i.LOCATIONCODE || 'No Loc'} | Qty: ${i.PTRAVAILABLE || '0'}`;
+            let headerTitle = tabType === 'request' ? "REQUEST DATA" : "SALES NOTES";
+            let returnText = `${headerTitle}\n\n`;
+
+            items.forEach(i => {
+                returnText += `▪ ${i.COMMONNAME || 'Unknown'} (${i.CONTSIZE || '-'}) | Loc: ${i.LOCATIONCODE || 'No Loc'}\n`;
                 
-                let match = i.MATCH || i.MATCHPCT;
-                if (match) txt += `\nMatch: ${match}%`;
+                let match = tabType === 'request' ? i.REQ_MATCH : (i.MATCH || i.MATCHPCT);
+                if (match) returnText += `  Match: ${match}%\n`;
                 
-                let spec = i.SPEC;
-                if (spec) txt += `\nSpec: ${spec}`;
+                let spec = tabType === 'request' ? i.REQ_SPEC : i.SPEC;
+                if (spec) returnText += `  Spec: ${spec}\n`;
                 
-                let caliper = i.CALIPER;
-                if (caliper) txt += `\nCaliper: ${caliper}`;
+                let caliper = tabType === 'request' ? i.REQ_CALIPER : i.CALIPER;
+                if (caliper) returnText += `  Caliper: ${caliper}\n`;
                 
-                let pick = i.PIC_NOTE || i.PICKNOTE || i.PICK;
-                if (pick) txt += `\nPick Note: ${pick}`;
+                let pick = tabType === 'request' ? i.REQ_PICK : (i.PIC_NOTE || i.PICKNOTE || i.PICK);
+                if (pick) returnText += `  Pick Note: ${pick}\n`;
                 
-                let sales = i.SALES_NOTE || i.SALESNOTE || i.SALESDESC;
-                if (sales) txt += `\nSales Note: ${sales}`;
+                let sales = tabType === 'request' ? i.REQ_SALES_NOTE : (i.SALES_NOTE || i.SALESNOTE || i.SALESDESC);
+                if (sales) returnText += `  Sales Note: ${sales}\n`;
                 
-                let photo = i.SAVED_PHOTO_LINK || i['PHOTO LINK'] || i.PHOTOLINK;
+                let photo = tabType === 'request' ? i.REQ_PHOTO_LINK : (i.SAVED_PHOTO_LINK || i['PHOTO LINK'] || i.PHOTOLINK);
                 if (photo && photo.trim() !== "") {
                     let urls = photo.split(',');
                     urls.forEach((url, idx) => {
                         let match = url.match(/"([^"]+)"/);
                         let cleanUrl = match ? match[1] : url.trim();
-                        if(cleanUrl) txt += `\nPhoto ${idx + 1}: ${cleanUrl}`;
+                        if(cleanUrl) returnText += `  Photo ${idx + 1}: ${cleanUrl}\n`;
                     });
                 }
+                returnText += `\n`;
+            });
 
-                return txt;
-            }).join('\n\n==========================\n\n');
+            return returnText;
         }
 
-        function batchAction(action) {
-            const text = getSelectedItemsText();
+        function executeBatchAction(action, tabType) {
+            const text = getSelectedItemsText(tabType);
+            
             if (action === 'copy') {
                 navigator.clipboard.writeText(text).then(() => {
                     showToast("Success", "Copied to clipboard!");
                     clearSelection();
                 });
             } else if (action === 'email') {
-                window.location.href = `mailto:?subject=Sales Notes & Actions&body=${encodeURIComponent(text)}`;
+                let sub = tabType === 'request' ? 'Request Data' : 'Sales Notes';
+                window.location.href = `mailto:?subject=${sub}&body=${encodeURIComponent(text)}`;
                 clearSelection();
             } else if (action === 'text') {
                 window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
@@ -802,7 +837,7 @@
             
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({ type: 'batch_assign', ids: ids, assignTo: user })
+                body: JSON.stringify({ type: 'batch_assign', ids: ids, assignTo: user, tabType: pendingTabType })
             }).then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -1144,11 +1179,9 @@
             ['view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-docks'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
-            // Sync current items with object dictionary
             activeItem.SAVED_PHOTO_LINK = activeItem['PHOTO LINK'] || activeItem.PHOTOLINK || activeItem.SAVED_PHOTO_LINK || "";
             activeItem.SAVED_PHOTO_NAME = activeItem['PHOTO NAME'] || activeItem.PHOTONAME || activeItem.SAVED_PHOTO_NAME || "";
 
-            // Populate Overview
             document.getElementById('det-common').innerText = activeItem.COMMONNAME || "--";
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -1160,25 +1193,22 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
 
-            // Populate Action Inputs
             document.getElementById('in-match').value = activeItem.MATCH || activeItem.MATCHPCT || "";
             document.getElementById('in-spec').value = activeItem.SPEC || "";
             document.getElementById('in-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
             document.getElementById('in-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
             
-            // Populate Request Inputs
-            document.getElementById('req-match').value = activeItem.MATCH || activeItem.MATCHPCT || "";
-            document.getElementById('req-spec').value = activeItem.SPEC || "";
-            document.getElementById('req-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
-            document.getElementById('req-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
+            document.getElementById('req-match').value = activeItem.REQ_MATCH || "";
+            document.getElementById('req-spec').value = activeItem.REQ_SPEC || "";
+            document.getElementById('req-pick').value = activeItem.REQ_PICK || "";
+            document.getElementById('req-sales-desc').value = activeItem.REQ_SALES_NOTE || "";
 
-            // Caliper Visibility Logic
             const caliperSizes = ["7DP", "#7", "#10", "#15", "#25", "#45"];
             if (caliperSizes.includes(activeItem.CONTSIZE)) {
                 document.getElementById('container-caliper').classList.remove('hidden');
                 document.getElementById('req-container-caliper').classList.remove('hidden');
                 document.getElementById('in-caliper').value = activeItem.CALIPER || "";
-                document.getElementById('req-caliper').value = activeItem.CALIPER || "";
+                document.getElementById('req-caliper').value = activeItem.REQ_CALIPER || "";
             } else {
                 document.getElementById('container-caliper').classList.add('hidden');
                 document.getElementById('req-container-caliper').classList.add('hidden');
@@ -1202,7 +1232,7 @@
             document.getElementById('det-actions-content').classList.toggle('hidden', tab !== 'actions');
             document.getElementById('det-request-content').classList.toggle('hidden', tab !== 'request');
             
-            activeDetailTab = tab; // Keep track for the Photo Context
+            activeDetailTab = tab; 
         }
 
         function goBackFromDetail() {
@@ -1270,7 +1300,7 @@
             btn.innerText = "UPLOADING...";
             btn.disabled = true;
 
-            let context = "drive"; // Default fallback
+            let context = "drive"; 
             
             if (activeDetailTab === 'request') {
                 context = "request";
@@ -1298,14 +1328,21 @@
                 btn.innerText = "MARK COMPLETE";
                 btn.disabled = false;
                 if(data.status === 'success') {
-                    let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
-                    let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                    
-                    links.push(data.url);
-                    names.push(filename);
-                    
-                    activeItem.SAVED_PHOTO_LINK = links.join(',');
-                    activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    if (activeDetailTab === 'request') {
+                        let links = activeItem.REQ_PHOTO_LINK ? activeItem.REQ_PHOTO_LINK.split(',') : [];
+                        let names = activeItem.REQ_PHOTO_NAME ? activeItem.REQ_PHOTO_NAME.split(',') : [];
+                        links.push(data.url);
+                        names.push(filename);
+                        activeItem.REQ_PHOTO_LINK = links.join(',');
+                        activeItem.REQ_PHOTO_NAME = names.join(',');
+                    } else {
+                        let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
+                        let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                        links.push(data.url);
+                        names.push(filename);
+                        activeItem.SAVED_PHOTO_LINK = links.join(',');
+                        activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    }
                     
                     renderPhotoPreview(); 
                     saveData(false); 
@@ -1326,12 +1363,11 @@
             const reqPhotoDiv = document.getElementById('req-photo-preview'); 
             const reqPhotoList = document.getElementById('req-photo-list-container');
             
+            // Notes & Actions Photos
             if (activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK !== "") {
                 photoDiv.classList.remove('hidden'); 
-                reqPhotoDiv.classList.remove('hidden'); 
                 const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
                 const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
-                
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     const dispName = names[i] || `Photo ${i+1}`; 
@@ -1348,28 +1384,63 @@
                     </div>`;
                 });
                 photoList.innerHTML = phHtml; 
-                reqPhotoList.innerHTML = phHtml; 
             } else { 
                 photoDiv.classList.add('hidden'); 
+            }
+
+            // Request Data Photos
+            if (activeItem.REQ_PHOTO_LINK && activeItem.REQ_PHOTO_LINK !== "") {
+                reqPhotoDiv.classList.remove('hidden'); 
+                const urls = activeItem.REQ_PHOTO_LINK.split(','); 
+                const names = activeItem.REQ_PHOTO_NAME ? activeItem.REQ_PHOTO_NAME.split(',') : []; 
+                let phHtml = "";
+                urls.forEach((url, i) => {
+                    const dispName = names[i] || `Req Photo ${i+1}`; 
+                    phHtml += `
+                    <div class="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">
+                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                            <i class="ph-fill ph-image text-2xl text-purple-600"></i>
+                            <div class="flex-grow min-w-0">
+                                <div class="text-xs font-bold text-purple-700 truncate">${dispName}</div>
+                                <div class="text-[10px] text-gray-500">Tap to view</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-square-out text-purple-400"></i>
+                        </a>
+                    </div>`;
+                });
+                reqPhotoList.innerHTML = phHtml; 
+            } else { 
                 reqPhotoDiv.classList.add('hidden'); 
             }
         }
 
         // --- 10. SAVE DATA LOGIC ---
         function saveData(isComplete = false) {
-            let prefix = (activeDetailTab === 'request') ? 'req-' : 'in-';
+            const btnDraft = document.getElementById('btn-save-draft');
+            const btnComp = document.getElementById('btn-save-complete');
+            const reqBtnDraft = document.getElementById('req-btn-save-draft');
+            const reqBtnComp = document.getElementById('req-btn-save-complete');
             
-            const btnDraft = document.getElementById(prefix + 'btn-save-draft');
-            const btnComp = document.getElementById(prefix + 'btn-save-complete');
+            if (isComplete) {
+                if(btnComp) btnComp.innerText = "SAVING..."; 
+                if(reqBtnComp) reqBtnComp.innerText = "SAVING..."; 
+            } else {
+                if(btnDraft) btnDraft.innerText = "SAVING..."; 
+                if(reqBtnDraft) reqBtnDraft.innerText = "SAVING..."; 
+            }
             
-            if (isComplete) btnComp.innerText = "SAVING..."; 
-            else btnDraft.innerText = "SAVING..."; 
-            
-            activeItem.MATCH = document.getElementById(prefix + 'match').value;
-            activeItem.SPEC = document.getElementById(prefix + 'spec').value;
-            activeItem.CALIPER = document.getElementById(prefix + 'caliper').value;
-            activeItem.PICK = document.getElementById(prefix + 'pick').value;
-            activeItem.SALES_NOTE = document.getElementById(prefix + 'sales-desc').value.toUpperCase();
+            // Sync current inputs to activeItem
+            activeItem.MATCH = document.getElementById('in-match').value;
+            activeItem.SPEC = document.getElementById('in-spec').value;
+            activeItem.CALIPER = document.getElementById('in-caliper').value;
+            activeItem.PICK = document.getElementById('in-pick').value;
+            activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value.toUpperCase();
+
+            activeItem.REQ_MATCH = document.getElementById('req-match').value;
+            activeItem.REQ_SPEC = document.getElementById('req-spec').value;
+            activeItem.REQ_CALIPER = document.getElementById('req-caliper').value;
+            activeItem.REQ_PICK = document.getElementById('req-pick').value;
+            activeItem.REQ_SALES_NOTE = document.getElementById('req-sales-desc').value.toUpperCase();
 
             const payload = {
                 type: "update",
@@ -1381,6 +1452,15 @@
                 salesDesc: activeItem.SALES_NOTE,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "",
+                
+                reqMatch: activeItem.REQ_MATCH,
+                reqSpec: activeItem.REQ_SPEC,
+                reqCaliper: activeItem.REQ_CALIPER,
+                reqPick: activeItem.REQ_PICK,
+                reqSalesDesc: activeItem.REQ_SALES_NOTE,
+                reqPhotoLink: activeItem.REQ_PHOTO_LINK || "",
+                reqPhotoName: activeItem.REQ_PHOTO_NAME || "",
+
                 isComplete: isComplete 
             };
 
@@ -1390,8 +1470,10 @@
             })
             .then(res => res.json())
             .then(data => {
-                btnDraft.innerText = "SAVE DRAFT";
-                btnComp.innerText = "MARK COMPLETE";
+                if(btnDraft) btnDraft.innerText = "SAVE DRAFT";
+                if(btnComp) btnComp.innerText = "MARK COMPLETE";
+                if(reqBtnDraft) reqBtnDraft.innerText = "SAVE REQUEST DATA";
+                if(reqBtnComp) reqBtnComp.innerText = "MARK COMPLETE";
                 
                 if(data.status === 'success') {
                     showToast("Success", isComplete ? "Task Completed!" : "Draft saved to Google Sheet.");
@@ -1405,8 +1487,10 @@
                 }
             })
             .catch(err => {
-                btnDraft.innerText = "SAVE DRAFT";
-                btnComp.innerText = "MARK COMPLETE";
+                if(btnDraft) btnDraft.innerText = "SAVE DRAFT";
+                if(btnComp) btnComp.innerText = "MARK COMPLETE";
+                if(reqBtnDraft) reqBtnDraft.innerText = "SAVE REQUEST DATA";
+                if(reqBtnComp) reqBtnComp.innerText = "MARK COMPLETE";
                 showToast("Network Error", "Could not reach server.", true);
             });
         }
