@@ -47,7 +47,7 @@
         .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer; flex-grow: 1;}
         .status-green { border-left-color: #22c55e; } 
         .status-purple { border-left-color: #9333ea; } 
-        .status-orange { border-left-color: #f97316; } /* Orange border for Docks */
+        .status-orange { border-left-color: #f97316; } 
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
@@ -316,7 +316,8 @@
 
         let appUsers = [];
         let fullInventory = []; 
-        let lowStockInventory = []; // Holds items strictly from Low Stock sheet
+        let lowStockInventory = []; 
+        let socInventory = []; // NEW: Cached SOC Data for instant loading
         
         let currentUser = "";
         let currentRole = "";
@@ -349,7 +350,19 @@
         // Docks State Variables
         let dockViewLevel = 0;
         let selectedDockNum = null;
-        let currentDockData = [];
+        let selectedDockName = null;
+        let selectedDockSize = null;
+
+        // --- Helper: Convert Drive Links to Tiny Thumbnails ---
+        function getDirectImageUrl(url) {
+            if (!url) return "";
+            let match = url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (!match) match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100`;
+            }
+            return url;
+        }
 
         // --- 1. INITIALIZATION ---
         window.onload = function() {
@@ -387,7 +400,8 @@
                 .then(res => {
                     if (res.status === 'success') {
                         fullInventory = res.data;
-                        lowStockInventory = res.lowStock || []; // Populate the specialized array
+                        lowStockInventory = res.lowStock || [];
+                        socInventory = res.socData || []; // Pre-load all Dock data instantly
                         applyRolePermissions();
                     } else {
                         showToast("Error", "Failed to load database.", true);
@@ -499,15 +513,32 @@
         }
 
         function generateCard(item, sourceView, colorClass = 'status-green') {
+            let thumbHtml = '';
+            let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
+            
+            if (photoLink) {
+                let firstUrl = photoLink.split(',')[0];
+                let urlMatch = firstUrl.match(/"([^"]+)"/);
+                let cleanUrl = urlMatch ? urlMatch[1] : firstUrl;
+                let thumbUrl = getDirectImageUrl(cleanUrl);
+                
+                if (thumbUrl.startsWith('http')) {
+                    thumbHtml = `<div class="ml-3 flex-shrink-0"><img src="${thumbUrl}" class="w-12 h-12 rounded-md object-cover border border-gray-200" loading="lazy"></div>`;
+                }
+            }
+
             return `
-            <div class="inv-card ${colorClass}" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
-                <div class="flex justify-between font-bold text-sm mb-1">
-                    <span class="text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
-                    <span>${item.CONTSIZE || '-'}</span>
+            <div class="inv-card ${colorClass} flex items-center justify-between" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
+                <div class="flex-grow min-w-0">
+                    <div class="flex justify-between font-bold text-sm mb-1">
+                        <span class="text-[#007a4d] truncate pr-2">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
+                        <span class="whitespace-nowrap">${item.CONTSIZE || '-'}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 truncate">
+                        <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'}
+                    </div>
                 </div>
-                <div class="text-xs text-gray-500">
-                    <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'} | Code: ${item.ITEMCODE || '-'}
-                </div>
+                ${thumbHtml}
             </div>`;
         }
 
@@ -515,9 +546,14 @@
         function resetDockView() {
             dockViewLevel = 0;
             selectedDockNum = null;
-            currentDockData = [];
+            selectedDockName = null;
+            selectedDockSize = null;
             renderDocks();
         }
+
+        function selectDockNum(num) { selectedDockNum = num; dockViewLevel = 1; renderDocks(); }
+        function selectDockName(name) { selectedDockName = name; dockViewLevel = 2; renderDocks(); }
+        function selectDockSize(size) { selectedDockSize = size; dockViewLevel = 3; renderDocks(); }
 
         function renderDocks() {
             const container = document.getElementById('docks-content');
@@ -525,75 +561,60 @@
             
             if (dockViewLevel === 0) {
                 crumb.innerText = "Select a Dock";
-                // 4-column layout for high density on mobile screens
                 let html = '<div class="grid grid-cols-4 gap-2">';
                 for(let i=1; i<=56; i++) {
                     html += `
-                    <div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDock(${i})">
+                    <div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDockNum(${i})">
                         <i class="ph-bold ph-truck text-2xl text-orange-500 mb-1"></i>
                         <div class="font-bold text-[10px] text-gray-700">DOCK ${i}</div>
                     </div>`;
                 }
                 html += '</div>';
                 container.innerHTML = html;
-            } else if (dockViewLevel === 1) {
-                crumb.innerText = `Viewing Dock ${selectedDockNum}`;
+            } 
+            else if (dockViewLevel === 1) {
+                crumb.innerText = `Dock ${selectedDockNum} > Plants`;
                 
-                if (currentDockData.length === 0) {
-                    container.innerHTML = `<div class="back-btn" onclick="resetDockView()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">This dock is currently empty.</div>`;
+                // Filter SOC inventory for this dock
+                const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum);
+                
+                if (dockItems.length === 0) {
+                    container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">Dock ${selectedDockNum} is currently empty.</div>`;
                     return;
                 }
-
-                let html = `<div class="back-btn" onclick="resetDockView()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 
-                currentDockData.forEach((item, index) => {
-                    // Smart fallbacks in case column headers change
-                    const name = item.COMMONNAME || item['PLANT NAME'] || item.DESC || item.DESCRIPTION || 'Unknown Item';
-                    const size = item.CONTSIZE || item.SIZE || item.CONTAINER || '-';
-                    const loc = item.LOCATIONCODE || item.LOC || item.LOCATION || 'No Loc';
-                    const qty = item.QTY || item.QUANTITY || item['ORDER QTY'] || '-';
-                    const customer = item.CUSTOMER || item['CUST NAME'] || item.CUST || '-';
-                    
-                    html += `
-                    <div class="inv-card status-orange mb-2" onclick="alert('Item: ${name}\\nSize: ${size}\\nLoc: ${loc}\\nQty: ${qty}\\nCustomer: ${customer}')">
-                        <div class="flex justify-between font-bold text-sm mb-1">
-                            <span class="text-orange-600 truncate pr-2">${name}</span>
-                            <span class="whitespace-nowrap">${size}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 flex justify-between">
-                            <span><span class="font-bold text-gray-700">Loc:</span> ${loc}</span>
-                            <span><span class="font-bold text-gray-700">Qty:</span> ${qty}</span>
-                        </div>
-                        <div class="text-[10px] text-gray-400 mt-1 uppercase truncate font-bold">Cust: ${customer}</div>
-                    </div>`;
-                });
+                // Extract unique names scheduled for this dock
+                const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
                 
+                let html = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
+                html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
             }
-        }
+            else if (dockViewLevel === 2) {
+                crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > Sizes`;
+                
+                // Filter by Dock and Name to get available sizes
+                const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum && (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown') === selectedDockName);
+                const sizes = [...new Set(dockItems.map(i => i.CONTSIZE || i.SIZE || i.CONTAINER || '-'))].sort();
 
-        function selectDock(num) {
-            selectedDockNum = num;
-            dockViewLevel = 1;
-            
-            const container = document.getElementById('docks-content');
-            container.innerHTML = `<div class="flex flex-col items-center justify-center p-10"><div class="spinner !border-orange-200 !border-t-orange-500"></div><div class="mt-4 text-xs font-bold text-gray-400">Fetching Dock ${num}...</div></div>`;
-            document.getElementById('docks-crumb').innerText = `Loading Dock ${num}...`;
-            
-            fetch(GOOGLE_SCRIPT_URL + "?action=getDockData&dock=Dock " + num)
-                .then(r => r.json())
-                .then(res => {
-                    if(res.status === 'success') {
-                        currentDockData = res.data;
-                        renderDocks();
-                    } else {
-                        showToast("Error", "Failed to load Dock data.", true);
-                        resetDockView();
-                    }
-                }).catch(err => {
-                    showToast("Error", "Network connection failed.", true);
-                    resetDockView();
-                });
+                let html = `<div class="back-btn" onclick="dockViewLevel=1; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-orange-600 mb-4 px-2 text-xl border-b border-orange-100 pb-2">${selectedDockName}</div>`;
+                html += sizes.map(s => `<div class="drill-item" onclick="selectDockSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
+                container.innerHTML = html;
+            }
+            else if (dockViewLevel === 3) {
+                crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > ${selectedDockSize}`;
+                
+                // Query the MASTER INVENTORY (Drive Mode) using the SOC filter criteria
+                let finalItems = fullInventory.filter(i => i.COMMONNAME === selectedDockName && i.CONTSIZE === selectedDockSize);
+                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+
+                if (finalItems.length === 0) {
+                     container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="p-8 text-center text-gray-400">This plant size was requested for the Dock, but no matching records exist in the Master Inventory.</div>`;
+                     return;
+                }
+
+                container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'docks', 'status-orange')).join('');
+            }
         }
 
 
@@ -1042,7 +1063,7 @@
 
             let context = "drive"; // Default fallback
             
-            if (lastView === 'drive') context = "drive";
+            if (lastView === 'drive' || lastView === 'docks') context = "drive";
             else if (lastView === 'tasks') {
                 if (activeTaskTab === 'season') context = "season";
                 if (activeTaskTab === 'location') context = "location";
