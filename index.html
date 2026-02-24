@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DC-01</title>
+    <title>DC-02</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="GNC LOGO.png">
+    <link rel="apple-touch-icon" href="GNC LOGO.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -74,7 +76,7 @@
 
     <div id="view-login">
         <div class="login-card">
-            <div class="text-3xl text-[#007a4d] font-bold mb-6">DC-01</div>
+            <div class="text-3xl text-[#007a4d] font-bold mb-6">DC-02</div>
             <div id="login-inputs">
                 <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME">
                 <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD">
@@ -93,7 +95,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">DC-01 Framework</div>
+                    <div class="text-[10px] opacity-80 leading-tight">DC-02 Framework</div>
                 </div>
             </div>
         </header>
@@ -113,7 +115,7 @@
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
-                    <h1 class="text-2xl font-bold">DC-01</h1>
+                    <h1 class="text-2xl font-bold">DC-02</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -176,6 +178,25 @@
                 </div>
                 
                 <div id="det-actions-content" class="hidden py-4">
+                    
+                    <div id="photo-preview" class="mb-4 hidden">
+                        <p class="text-[10px] font-bold text-blue-600 mb-2 uppercase">Photos on file</p>
+                        <div id="photo-list-container" class="space-y-2"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <label class="bg-green-50 border-2 border-dashed border-green-500 text-green-700 flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer">
+                            <i class="ph-fill ph-camera text-3xl mb-1"></i>
+                            <span class="text-[10px] font-bold">CAMERA</span>
+                            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(this)">
+                        </label>
+                        <label class="bg-blue-50 border-2 border-dashed border-blue-500 text-blue-700 flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer">
+                            <i class="ph-fill ph-image text-3xl mb-1"></i>
+                            <span class="text-[10px] font-bold">LIBRARY</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
+                        </label>
+                    </div>
+
                     <div id="input-container">
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
@@ -231,7 +252,7 @@
         // Tasks State Variables
         let activeTaskTab = "season";
         let taskViewTargetUser = null; 
-        let taskViewLevel = 0; // 0 = Blocks, 1 = Locs, 2 = Items
+        let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
 
@@ -325,7 +346,6 @@
             renderTasks();
         }
 
-        // --- 5. COMPONENT RENDERERS ---
         function getLocPrefix(loc) {
             if(!loc) return "Unassigned";
             const match = loc.match(/^[A-Za-z]+/);
@@ -391,14 +411,13 @@
             }
         }
 
-        // --- 7. TASKS MODE (With Admin Team Selector & Drill-down) ---
+        // --- 7. TASKS MODE ---
         function renderTeamSelector() {
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
             document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their assigned rows.</div>`;
             document.getElementById('task-crumb').innerText = "Admin Team View";
 
-            // Specifically explicitly requesting Dylan, Morgan, Kayla
             const targetNames = ["Dylan", "Morgan", "Kayla"];
             let teamHtml = "";
             targetNames.forEach(name => {
@@ -420,11 +439,8 @@
             const crumb = document.getElementById('task-crumb');
             
             let userToView = (currentRole === 'Admin') ? taskViewTargetUser : currentUser;
-            
-            // Filter 1: Assigned to the Target User
             let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(userToView.toLowerCase()));
 
-            // Filter 2: Season vs Location 
             myItems = myItems.filter(i => {
                 const pri = parseFloat(i.PRIORITY);
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
@@ -447,15 +463,12 @@
                 return;
             }
 
-            // LEVEL 0: Show Blocks (Accordion Root)
             if (taskViewLevel === 0) {
                 crumb.innerText = `${displayUser} / ${tabLabel} / Blocks`; 
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
                 
                 let html = "";
-                if(currentRole === 'Admin') {
-                    html += `<div class="back-btn" onclick="taskViewTargetUser=null; renderTeamSelector();"><i class="ph-bold ph-arrow-left"></i> Change User</div>`;
-                }
+                if(currentRole === 'Admin') { html += `<div class="back-btn" onclick="taskViewTargetUser=null; renderTeamSelector();"><i class="ph-bold ph-arrow-left"></i> Change User</div>`; }
 
                 html += blocks.map(b => {
                     const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
@@ -463,7 +476,6 @@
                 }).join('');
                 container.innerHTML = html;
             } 
-            // LEVEL 1: Show Locations (Accordion Branch)
             else if (taskViewLevel === 1) {
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
@@ -475,7 +487,6 @@
                     return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
             } 
-            // LEVEL 2: Show Items (Accordion Leaves)
             else if (taskViewLevel === 2) {
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
                 let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
@@ -495,9 +506,13 @@
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) return;
 
-            ['view-drive','view-tasks'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-review'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
+            // Sync current items with object dictionary
+            activeItem.SAVED_PHOTO_LINK = activeItem['PHOTO LINK'] || activeItem.PHOTOLINK || activeItem.SAVED_PHOTO_LINK || "";
+            activeItem.SAVED_PHOTO_NAME = activeItem['PHOTO NAME'] || activeItem.PHOTONAME || activeItem.SAVED_PHOTO_NAME || "";
+
             // Populate Overview
             document.getElementById('det-common').innerText = activeItem.COMMONNAME || "--";
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
@@ -514,10 +529,10 @@
             document.getElementById('in-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
             document.getElementById('in-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
             
-            // Close Accordion by default when opening a new item
             document.getElementById('expand-section').classList.remove('expanded');
             document.getElementById('expand-content').innerHTML = '';
 
+            renderPhotoPreview();
             switchDetailTab('overview');
         }
 
@@ -534,44 +549,160 @@
             activeItem = null;
         }
 
-        // --- ACCORDION LOGIC ---
         function toggleExpand() { 
             const section = document.getElementById('expand-section'); 
-            if (!section.classList.contains('expanded')) { 
-                renderAllFields(); 
-            } 
+            if (!section.classList.contains('expanded')) { renderAllFields(); } 
             section.classList.toggle('expanded'); 
         }
 
         function renderAllFields() {
             if(!activeItem) return;
-            // Hide specific columns from the massive list if needed
             const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'ASSIGNEDTO']; 
-            
             let html = '<div class="grid grid-cols-1 gap-2">';
             for (const [key, value] of Object.entries(activeItem)) { 
                 if(hiddenKeys.includes(key)) continue; 
-                html += `<div class="flex justify-between border-b border-gray-200 py-2">
-                            <span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span>
-                            <span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span>
-                         </div>`; 
+                html += `<div class="flex justify-between border-b border-gray-200 py-2"><span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span><span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span></div>`; 
             }
             html += '</div>'; 
             document.getElementById('expand-content').innerHTML = html;
         }
 
-        // --- SAVE DATA LOGIC ---
+        // --- 9. PHOTO UPLOAD COMPRESSION & SMART ROUTING LOGIC ---
+        function handlePhotoUpload(input) {
+            if(!input.files || input.files.length === 0) return;
+            
+            showToast("Processing...", "Compressing image...", false);
+            const file = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024; 
+                    const scale = img.width > MAX_WIDTH ? (MAX_WIDTH / img.width) : 1;
+                    
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const base64Data = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
+                    
+                    uploadPhotoToDrive(base64Data, filename);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function uploadPhotoToDrive(base64Data, filename) {
+            showToast("Uploading...", "Sending to Google Drive...", false);
+            const btn = document.getElementById('btn-save');
+            btn.innerText = "UPLOADING PHOTO...";
+            btn.disabled = true;
+
+            // SMART ROUTER: Figure out which screen we are currently inside of
+            let context = "drive"; // Default fallback
+            
+            if (lastView === 'drive') {
+                context = "drive";
+            } else if (lastView === 'tasks') {
+                if (activeTaskTab === 'season') context = "season";
+                if (activeTaskTab === 'location') context = "location";
+            } else if (lastView === 'review') {
+                context = "request";
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    type: "image", 
+                    image: base64Data, 
+                    mimeType: "image/jpeg", 
+                    filename: filename,
+                    folderContext: context  // <--- Tells Code.gs which folder to use!
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "SAVE DATA";
+                btn.disabled = false;
+                if(data.status === 'success') {
+                    let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
+                    let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
+                    
+                    links.push(data.url);
+                    names.push(filename);
+                    
+                    activeItem.SAVED_PHOTO_LINK = links.join(',');
+                    activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    
+                    renderPhotoPreview(); 
+                    saveData(); 
+                } else {
+                    showToast("Error", "Upload failed.", true);
+                }
+            })
+            .catch(err => {
+                btn.innerText = "SAVE DATA";
+                btn.disabled = false;
+                showToast("Error", "Network connection failed.", true);
+            });
+        }
+
+        function renderPhotoPreview() {
+            const photoDiv = document.getElementById('photo-preview'); 
+            const photoList = document.getElementById('photo-list-container');
+            
+            if (activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK !== "") {
+                photoDiv.classList.remove('hidden'); 
+                const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
+                const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
+                
+                let phHtml = "";
+                urls.forEach((url, i) => {
+                    const dispName = names[i] || `Photo ${i+1}`; 
+                    phHtml += `
+                    <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                            <i class="ph-fill ph-image text-2xl text-blue-500"></i>
+                            <div class="flex-grow min-w-0">
+                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                <div class="text-[10px] text-gray-400">Tap to view</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                        </a>
+                    </div>`;
+                });
+                photoList.innerHTML = phHtml; 
+            } else { 
+                photoDiv.classList.add('hidden'); 
+            }
+        }
+
+        // --- 10. SAVE DATA LOGIC ---
         function saveData() {
             const btn = document.getElementById('btn-save');
             btn.innerText = "SAVING...";
             
+            activeItem.MATCH = document.getElementById('in-match').value;
+            activeItem.SPEC = document.getElementById('in-spec').value;
+            activeItem.PICK = document.getElementById('in-pick').value;
+            activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value;
+
             const payload = {
                 type: "update",
                 id: activeItem.UNIQUE_ID,
-                match: document.getElementById('in-match').value,
-                spec: document.getElementById('in-spec').value,
-                pick: document.getElementById('in-pick').value,
-                salesDesc: document.getElementById('in-sales-desc').value
+                match: activeItem.MATCH,
+                spec: activeItem.SPEC,
+                pick: activeItem.PICK,
+                salesDesc: activeItem.SALES_NOTE,
+                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || ""
             };
 
             fetch(GOOGLE_SCRIPT_URL, {
@@ -583,7 +714,6 @@
                 btn.innerText = "SAVE DATA";
                 if(data.status === 'success') {
                     showToast("Success", "Data saved to Google Sheet.");
-                    goBackFromDetail();
                 } else {
                     showToast("Error", data.message, true);
                 }
