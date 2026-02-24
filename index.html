@@ -164,7 +164,7 @@
                 </div>
 
                 <div id="admin-files-section" class="hidden admin-only mt-8">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Recently Processed Sheets</h2>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Recently Processed Source Files</h2>
                     <div id="admin-files-list" class="space-y-2">
                         <div class="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs">
                             <div class="spinner !w-4 !h-4 !border-2 !border-gray-200 !border-t-[#007a4d]"></div>
@@ -179,6 +179,8 @@
                     <h2 class="text-sm font-bold text-orange-600 uppercase">Dock Loading</h2>
                     <span class="text-xs font-bold text-gray-400" id="docks-crumb">Select a Dock</span>
                 </div>
+                <input type="text" id="docks-search" class="input-field mb-2" placeholder="Search Plants..." onkeyup="handleDocksSearch()">
+                
                 <div id="docks-content"></div>
             </div>
 
@@ -235,8 +237,8 @@
                 
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
-                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes</div>
-                    <div class="detail-tab" onclick="switchDetailTab('request')" id="dtab-request">Request</div>
+                    <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
+                    <div class="detail-tab" onclick="switchDetailTab('request')" id="dtab-request">Request Data</div>
                 </div>
                 
                 <div id="det-overview-content" class="py-4">
@@ -874,26 +876,64 @@
         }
 
         // --- 4B. DOCKS VIEW ---
+        function handleDocksSearch() {
+            const term = document.getElementById('docks-search').value;
+            if (term.length > 0 && dockViewLevel > 1) { 
+                dockViewLevel = 1; 
+                selectedDockName = null; 
+                selectedDockSize = null; 
+            }
+            renderDocks();
+        }
+
         function resetDockView() {
             dockViewLevel = 0;
             selectedDockNum = null;
             selectedDockName = null;
             selectedDockSize = null;
+            document.getElementById('docks-search').value = "";
             renderDocks();
         }
 
-        function selectDockNum(num) { selectedDockNum = num; dockViewLevel = 1; renderDocks(); }
-        function selectDockName(name) { selectedDockName = name; dockViewLevel = 2; renderDocks(); }
-        function selectDockSize(size) { selectedDockSize = size; dockViewLevel = 3; renderDocks(); }
+        function selectDockNum(num) { 
+            selectedDockNum = num; 
+            dockViewLevel = 1; 
+            renderDocks(); 
+        }
+        
+        function selectDockName(name) { 
+            selectedDockName = name; 
+            dockViewLevel = 2; 
+            renderDocks(); 
+        }
+        
+        function selectDockSize(size) { 
+            selectedDockSize = size; 
+            dockViewLevel = 3; 
+            renderDocks(); 
+        }
 
         function renderDocks() {
             const container = document.getElementById('docks-content');
             const crumb = document.getElementById('docks-crumb');
+            const term = document.getElementById('docks-search').value.toLowerCase();
             
             if (dockViewLevel === 0) {
                 crumb.innerText = "Select a Dock";
+                
+                let activeDocks = new Set();
+                if (term) {
+                    socInventory.forEach(i => {
+                        let pName = (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown').toLowerCase();
+                        if (pName.includes(term)) activeDocks.add(i.DOCK_NUM);
+                    });
+                } else {
+                    for(let i=1; i<=56; i++) activeDocks.add(i);
+                }
+
                 let html = '<div class="grid grid-cols-4 gap-2">';
                 for(let i=1; i<=56; i++) {
+                    if (!activeDocks.has(i)) continue;
                     html += `
                     <div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDockNum(${i})">
                         <i class="ph-bold ph-truck text-2xl text-orange-500 mb-1"></i>
@@ -901,21 +941,33 @@
                     </div>`;
                 }
                 html += '</div>';
-                container.innerHTML = html;
+                
+                if (activeDocks.size === 0) {
+                    container.innerHTML = `<div class="p-8 text-center text-gray-400">No docks contain plants matching "${term}".</div>`;
+                } else {
+                    container.innerHTML = html;
+                }
             } 
             else if (dockViewLevel === 1) {
                 crumb.innerText = `Dock ${selectedDockNum} > Plants`;
                 
-                const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum);
+                let dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum);
+                
+                if (term) {
+                    dockItems = dockItems.filter(i => {
+                        let pName = (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown').toLowerCase();
+                        return pName.includes(term);
+                    });
+                }
                 
                 if (dockItems.length === 0) {
-                    container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">Dock ${selectedDockNum} is currently empty.</div>`;
+                    container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">No matching plants found.</div>`;
                     return;
                 }
                 
                 const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
                 
-                let html = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
+                let html = `<div class="back-btn" onclick="dockViewLevel=0; document.getElementById('docks-search').value=''; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
             }
@@ -1054,10 +1106,19 @@
             if (term.length > 0 && driveViewLevel > 0) { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; }
             renderDrive();
         }
-        function selectDriveName(name) { selectedDriveName = name; driveViewLevel = 1; document.getElementById('drive-search').value = ""; renderDrive(); }
+        
+        // Removed clearing of search box on drill-down so users can filter specific locations down to the cards!
+        function selectDriveName(name) { selectedDriveName = name; driveViewLevel = 1; renderDrive(); }
         function selectDriveSize(size) { selectedDriveSize = size; driveViewLevel = 2; renderDrive(); }
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDrive(); }
-        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; document.getElementById('drive-search').value = ""; renderDrive(); }
+        
+        function resetDriveView() { 
+            driveViewLevel = 0; 
+            selectedDriveName = null; 
+            selectedDriveSize = null; 
+            document.getElementById('drive-search').value = ""; 
+            renderDrive(); 
+        }
 
         function renderDrive() {
             const container = document.getElementById('drive-content');
