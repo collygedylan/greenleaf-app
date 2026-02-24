@@ -566,7 +566,11 @@
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            if(viewId === 'drive') resetDriveView(); 
+            // 🚨 THIS FIXES THE SEARCH CLEAR BUG - IT ONLY CLEARS WHEN SWITCHING TABS 🚨
+            if(viewId === 'drive') {
+                document.getElementById('drive-search').value = "";
+                resetDriveView(); 
+            }
             if(viewId === 'tasks') {
                 if (currentRole === 'Admin' && !taskViewTargetUser) renderTeamSelector();
                 else renderTasks();
@@ -574,7 +578,10 @@
             if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
             if(viewId === 'sales-office') { renderSalesOffice(); }
             if(viewId === 'low-stock') { resetLowStockView(); }
-            if(viewId === 'docks') { resetDockView(); }
+            if(viewId === 'docks') { 
+                document.getElementById('docks-search').value = "";
+                resetDockView(); 
+            }
         }
 
         function reRenderCurrentView() {
@@ -691,8 +698,6 @@
 
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
-            
-            // 🚨 ONLY USE NOTES & ACTIONS PHOTO FOR THUMBNAIL 🚨
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
             
             if (photoLink) {
@@ -881,7 +886,6 @@
             selectedDockNum = null;
             selectedDockName = null;
             selectedDockSize = null;
-            document.getElementById('docks-search').value = "";
             renderDocks();
         }
 
@@ -943,7 +947,7 @@
                 
                 const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
                 
-                let html = `<div class="back-btn" onclick="dockViewLevel=0; document.getElementById('docks-search').value=''; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
+                let html = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
             }
@@ -1065,22 +1069,41 @@
             renderReview();
         }
 
+        // 🚨 THIS IS THE SEARCH FIX: It never deletes your text while drilling down! 🚨
         function handleDriveSearch() {
             const term = document.getElementById('drive-search').value;
-            if (term.length > 0 && driveViewLevel > 0) { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; }
+            if (driveViewLevel > 0) { 
+                driveViewLevel = 0; 
+                selectedDriveName = null; 
+                selectedDriveSize = null; 
+            }
             renderDrive();
         }
         
         function selectDriveName(name) { 
             selectedDriveName = name; 
             driveViewLevel = 1; 
-            document.getElementById('drive-search').value = ""; 
             renderDrive(); 
         }
         
-        function selectDriveSize(size) { selectedDriveSize = size; driveViewLevel = 2; renderDrive(); }
-        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDrive(); }
-        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; document.getElementById('drive-search').value = ""; renderDrive(); }
+        function selectDriveSize(size) { 
+            selectedDriveSize = size; 
+            driveViewLevel = 2; 
+            renderDrive(); 
+        }
+        
+        function backToDriveSizes() { 
+            driveViewLevel = 1; 
+            selectedDriveSize = null; 
+            renderDrive(); 
+        }
+        
+        function resetDriveView() { 
+            driveViewLevel = 0; 
+            selectedDriveName = null; 
+            selectedDriveSize = null; 
+            renderDrive(); 
+        }
 
         function renderDrive() {
             const container = document.getElementById('drive-content');
