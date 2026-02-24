@@ -139,14 +139,21 @@
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
                 
-                <div id="team-selector" class="hidden mb-4 grid grid-cols-1 gap-3">
-                    </div>
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-1 gap-3"></div>
                 
                 <div id="task-tabs-container" class="task-tabs">
                     <div id="tab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Notes</div>
                     <div id="tab-location" class="task-tab" onclick="setTaskTab('location')">Location Sales Notes</div>
                 </div>
                 <div id="task-content"></div>
+            </div>
+            
+            <div id="view-review" class="hidden admin-only">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-red-500 uppercase">Manager Review</h2>
+                    <span id="review-crumb" class="text-xs font-bold text-[#007a4d]"></span>
+                </div>
+                <div id="review-content"></div>
             </div>
             
             <div id="view-detail" class="hidden">
@@ -206,6 +213,10 @@
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label>
                             <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch">
                         </div>
+                        <div id="container-caliper" class="hidden">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Caliper</label>
+                            <input type="text" id="in-caliper" class="input-field" placeholder="e.g. 2 inch">
+                        </div>
                         <div>
                             <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label>
                             <input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50" placeholder="Type notes here...">
@@ -221,11 +232,6 @@
                         <button id="btn-save-complete" class="w-2/3 bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg" onclick="saveData(true)">MARK COMPLETE</button>
                     </div>
                 </div>
-            </div>
-
-            <div id="view-review" class="hidden admin-only">
-                <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
-                <div id="review-content" class="text-gray-500 text-sm">Manager dashboard integration coming soon.</div>
             </div>
 
         </div>
@@ -259,6 +265,10 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
+
+        // Review State Variables
+        let reviewViewLevel = 0;
+        let selectedReviewUser = null;
 
         // --- 1. INITIALIZATION ---
         window.onload = function() {
@@ -340,6 +350,10 @@
                     renderTasks();
                 }
             }
+            if(viewId === 'review') {
+                reviewViewLevel = 0;
+                renderReview();
+            }
         }
 
         function setTaskTab(tab) {
@@ -367,6 +381,43 @@
                     <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'} | Code: ${item.ITEMCODE || '-'}
                 </div>
             </div>`;
+        }
+
+        // --- 5. MANAGER REVIEW ---
+        function renderReview() {
+            const container = document.getElementById('review-content');
+            const crumb = document.getElementById('review-crumb');
+            
+            let completedItems = fullInventory.filter(i => i.DATE_COMPLETED && i.DATE_COMPLETED !== "");
+            
+            if (completedItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed tasks to review.</div>`;
+                crumb.innerText = "All Caught Up";
+                return;
+            }
+
+            if (reviewViewLevel === 0) {
+                crumb.innerText = `Completed Tasks by User`;
+                const users = [...new Set(completedItems.map(i => i.ASSIGNEDTO || "Unassigned"))].sort();
+                
+                container.innerHTML = users.map(u => {
+                    const count = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === u).length;
+                    return `<div class="drill-item" onclick="selectReviewUser('${u}')"><span class="font-bold text-lg">${u} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
+                }).join('');
+            } else if (reviewViewLevel === 1) {
+                crumb.innerText = `Review / ${selectedReviewUser}`;
+                let userItems = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === selectedReviewUser);
+                userItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReview()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>` + 
+                userItems.map(i => generateCard(i, 'review')).join('');
+            }
+        }
+
+        function selectReviewUser(u) {
+            selectedReviewUser = u;
+            reviewViewLevel = 1;
+            renderReview();
         }
 
         // --- 6. DRIVE MODE ---
@@ -536,6 +587,16 @@
             document.getElementById('in-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
             document.getElementById('in-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
             
+            // Caliper Visibility Logic
+            const caliperSizes = ["7DP", "#7", "#10", "#15", "#25", "#45"];
+            if (caliperSizes.includes(activeItem.CONTSIZE)) {
+                document.getElementById('container-caliper').classList.remove('hidden');
+                document.getElementById('in-caliper').value = activeItem.CALIPER || "";
+            } else {
+                document.getElementById('container-caliper').classList.add('hidden');
+                document.getElementById('in-caliper').value = "";
+            }
+
             document.getElementById('expand-section').classList.remove('expanded');
             document.getElementById('expand-content').innerHTML = '';
 
@@ -553,6 +614,10 @@
         function goBackFromDetail() {
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
+            
+            if(lastView === 'review') renderReview(); // Ensure the view gets refreshed
+            if(lastView === 'tasks') renderTasks();
+            
             activeItem = null;
         }
 
@@ -701,6 +766,7 @@
             
             activeItem.MATCH = document.getElementById('in-match').value;
             activeItem.SPEC = document.getElementById('in-spec').value;
+            activeItem.CALIPER = document.getElementById('in-caliper').value;
             activeItem.PICK = document.getElementById('in-pick').value;
             activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value;
 
@@ -709,6 +775,7 @@
                 id: activeItem.UNIQUE_ID,
                 match: activeItem.MATCH,
                 spec: activeItem.SPEC,
+                caliper: activeItem.CALIPER,
                 pick: activeItem.PICK,
                 salesDesc: activeItem.SALES_NOTE,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
@@ -731,7 +798,6 @@
                     if (isComplete) {
                         activeItem.DATE_COMPLETED = new Date().toISOString();
                         goBackFromDetail();
-                        renderTasks(); // Refreshes view, filtering out the completed item
                     }
                 } else {
                     showToast("Error", data.message, true);
