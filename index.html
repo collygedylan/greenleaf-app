@@ -46,7 +46,8 @@
 
         .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer; flex-grow: 1;}
         .status-green { border-left-color: #22c55e; } 
-        .status-purple { border-left-color: #9333ea; } /* Purple border specifically for Low Stock */
+        .status-purple { border-left-color: #9333ea; } 
+        .status-orange { border-left-color: #f97316; } /* Orange border for Docks */
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
@@ -119,7 +120,9 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            <div class="drawer-item text-orange-600 font-bold" onclick="switchView('docks'); toggleMenu();"><i class="ph-bold ph-truck"></i> Docks</div>
             
+            <hr class="my-2">
             <div class="drawer-item text-purple-600 font-bold admin-only" onclick="switchView('sales-office'); toggleMenu();"><i class="ph-bold ph-briefcase"></i> Sales Office</div>
             <div class="drawer-item text-purple-600 font-bold dylan-only hidden" onclick="switchView('low-stock'); toggleMenu();"><i class="ph-bold ph-trend-down"></i> Low Stock List</div>
             <div class="drawer-item text-red-600 font-bold admin-only" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
@@ -139,6 +142,8 @@
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
                     
+                    <div onclick="switchView('docks')" class="home-btn col-span-2 border-orange-200 bg-orange-50 text-orange-700"><i class="ph-bold ph-truck text-3xl"></i><span class="font-bold">Docks</span></div>
+
                     <div onclick="switchView('sales-office')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 admin-only"><i class="ph-bold ph-briefcase text-3xl"></i><span class="font-bold">Sales Office</span></div>
                     
                     <div onclick="switchView('low-stock')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 dylan-only hidden"><i class="ph-bold ph-trend-down text-3xl"></i><span class="font-bold">Low Stock List</span></div>
@@ -155,6 +160,14 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div id="view-docks" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-orange-600 uppercase">Dock Loading</h2>
+                    <span class="text-xs font-bold text-gray-400" id="docks-crumb">Select a Dock</span>
+                </div>
+                <div id="docks-content"></div>
             </div>
 
             <div id="view-low-stock" class="hidden dylan-only">
@@ -294,6 +307,7 @@
             <div onclick="switchView('home')"><i class="ph-bold ph-house text-2xl text-gray-400"></i></div>
             <div onclick="switchView('drive')"><i class="ph-bold ph-car text-2xl text-gray-400"></i></div>
             <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
+            <div onclick="switchView('docks')"><i class="ph-bold ph-truck text-2xl text-gray-400"></i></div>
         </nav>
     </div>
 
@@ -331,6 +345,11 @@
         let reviewViewLevel = 0;
         let selectedReviewUser = null;
         let selectedSalesItems = new Set();
+        
+        // Docks State Variables
+        let dockViewLevel = 0;
+        let selectedDockNum = null;
+        let currentDockData = [];
 
         // --- 1. INITIALIZATION ---
         window.onload = function() {
@@ -449,7 +468,7 @@
 
         // --- 4. VIEW NAVIGATION ---
         function switchView(viewId) {
-            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail'].forEach(id => { 
+            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail','view-docks'].forEach(id => { 
                 document.getElementById(id).classList.add('hidden'); 
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
@@ -462,6 +481,7 @@
             if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
             if(viewId === 'sales-office') { selectedSalesItems.clear(); renderSalesOffice(); }
             if(viewId === 'low-stock') { resetLowStockView(); }
+            if(viewId === 'docks') { resetDockView(); }
         }
 
         function setTaskTab(tab) {
@@ -490,6 +510,92 @@
                 </div>
             </div>`;
         }
+
+        // --- 4B. DOCKS VIEW ---
+        function resetDockView() {
+            dockViewLevel = 0;
+            selectedDockNum = null;
+            currentDockData = [];
+            renderDocks();
+        }
+
+        function renderDocks() {
+            const container = document.getElementById('docks-content');
+            const crumb = document.getElementById('docks-crumb');
+            
+            if (dockViewLevel === 0) {
+                crumb.innerText = "Select a Dock";
+                // 4-column layout for high density on mobile screens
+                let html = '<div class="grid grid-cols-4 gap-2">';
+                for(let i=1; i<=56; i++) {
+                    html += `
+                    <div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDock(${i})">
+                        <i class="ph-bold ph-truck text-2xl text-orange-500 mb-1"></i>
+                        <div class="font-bold text-[10px] text-gray-700">DOCK ${i}</div>
+                    </div>`;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            } else if (dockViewLevel === 1) {
+                crumb.innerText = `Viewing Dock ${selectedDockNum}`;
+                
+                if (currentDockData.length === 0) {
+                    container.innerHTML = `<div class="back-btn" onclick="resetDockView()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">This dock is currently empty.</div>`;
+                    return;
+                }
+
+                let html = `<div class="back-btn" onclick="resetDockView()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
+                
+                currentDockData.forEach((item, index) => {
+                    // Smart fallbacks in case column headers change
+                    const name = item.COMMONNAME || item['PLANT NAME'] || item.DESC || item.DESCRIPTION || 'Unknown Item';
+                    const size = item.CONTSIZE || item.SIZE || item.CONTAINER || '-';
+                    const loc = item.LOCATIONCODE || item.LOC || item.LOCATION || 'No Loc';
+                    const qty = item.QTY || item.QUANTITY || item['ORDER QTY'] || '-';
+                    const customer = item.CUSTOMER || item['CUST NAME'] || item.CUST || '-';
+                    
+                    html += `
+                    <div class="inv-card status-orange mb-2" onclick="alert('Item: ${name}\\nSize: ${size}\\nLoc: ${loc}\\nQty: ${qty}\\nCustomer: ${customer}')">
+                        <div class="flex justify-between font-bold text-sm mb-1">
+                            <span class="text-orange-600 truncate pr-2">${name}</span>
+                            <span class="whitespace-nowrap">${size}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 flex justify-between">
+                            <span><span class="font-bold text-gray-700">Loc:</span> ${loc}</span>
+                            <span><span class="font-bold text-gray-700">Qty:</span> ${qty}</span>
+                        </div>
+                        <div class="text-[10px] text-gray-400 mt-1 uppercase truncate font-bold">Cust: ${customer}</div>
+                    </div>`;
+                });
+                
+                container.innerHTML = html;
+            }
+        }
+
+        function selectDock(num) {
+            selectedDockNum = num;
+            dockViewLevel = 1;
+            
+            const container = document.getElementById('docks-content');
+            container.innerHTML = `<div class="flex flex-col items-center justify-center p-10"><div class="spinner !border-orange-200 !border-t-orange-500"></div><div class="mt-4 text-xs font-bold text-gray-400">Fetching Dock ${num}...</div></div>`;
+            document.getElementById('docks-crumb').innerText = `Loading Dock ${num}...`;
+            
+            fetch(GOOGLE_SCRIPT_URL + "?action=getDockData&dock=Dock " + num)
+                .then(r => r.json())
+                .then(res => {
+                    if(res.status === 'success') {
+                        currentDockData = res.data;
+                        renderDocks();
+                    } else {
+                        showToast("Error", "Failed to load Dock data.", true);
+                        resetDockView();
+                    }
+                }).catch(err => {
+                    showToast("Error", "Network connection failed.", true);
+                    resetDockView();
+                });
+        }
+
 
         // --- 5A. LOW STOCK VIEW (DYLAN ONLY) ---
         function resetLowStockView() { 
@@ -818,7 +924,7 @@
             
             if (!activeItem) return;
 
-            ['view-drive','view-tasks','view-review','view-sales-office','view-low-stock'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-docks'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
             // Sync current items with object dictionary
@@ -873,6 +979,7 @@
             if(lastView === 'tasks') renderTasks();
             if(lastView === 'sales-office') renderSalesOffice();
             if(lastView === 'low-stock') renderLowStock();
+            if(lastView === 'docks') renderDocks();
             
             activeItem = null;
         }
