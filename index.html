@@ -215,7 +215,11 @@
                             <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing">
                         </div>
                     </div>
-                    <button id="btn-save" class="w-full bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg mt-4" onclick="saveData()">SAVE DATA</button>
+
+                    <div class="flex gap-2 mt-4">
+                        <button id="btn-save-draft" class="w-1/3 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md" onclick="saveData(false)">SAVE DRAFT</button>
+                        <button id="btn-save-complete" class="w-2/3 bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg" onclick="saveData(true)">MARK COMPLETE</button>
+                    </div>
                 </div>
             </div>
 
@@ -442,6 +446,9 @@
             let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(userToView.toLowerCase()));
 
             myItems = myItems.filter(i => {
+                // If it is already marked complete, hide it from the Tasks view
+                if (i.DATE_COMPLETED && i.DATE_COMPLETED !== "") return false;
+
                 const pri = parseFloat(i.PRIORITY);
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
                 const ss = parseFloat(i.SEASONSUPPLY) || 0;
@@ -601,8 +608,8 @@
 
         function uploadPhotoToDrive(base64Data, filename) {
             showToast("Uploading...", "Sending to Google Drive...", false);
-            const btn = document.getElementById('btn-save');
-            btn.innerText = "UPLOADING PHOTO...";
+            const btn = document.getElementById('btn-save-complete');
+            btn.innerText = "UPLOADING...";
             btn.disabled = true;
 
             // SMART ROUTER: Figure out which screen we are currently inside of
@@ -629,7 +636,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                btn.innerText = "SAVE DATA";
+                btn.innerText = "MARK COMPLETE";
                 btn.disabled = false;
                 if(data.status === 'success') {
                     let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
@@ -642,13 +649,13 @@
                     activeItem.SAVED_PHOTO_NAME = names.join(',');
                     
                     renderPhotoPreview(); 
-                    saveData(); 
+                    saveData(false); // Just save as draft when photo uploads so they don't lose it if they close the app
                 } else {
                     showToast("Error", "Upload failed.", true);
                 }
             })
             .catch(err => {
-                btn.innerText = "SAVE DATA";
+                btn.innerText = "MARK COMPLETE";
                 btn.disabled = false;
                 showToast("Error", "Network connection failed.", true);
             });
@@ -685,9 +692,12 @@
         }
 
         // --- 10. SAVE DATA LOGIC ---
-        function saveData() {
-            const btn = document.getElementById('btn-save');
-            btn.innerText = "SAVING...";
+        function saveData(isComplete = false) {
+            const btnDraft = document.getElementById('btn-save-draft');
+            const btnComp = document.getElementById('btn-save-complete');
+            
+            if (isComplete) btnComp.innerText = "SAVING..."; 
+            else btnDraft.innerText = "SAVING..."; 
             
             activeItem.MATCH = document.getElementById('in-match').value;
             activeItem.SPEC = document.getElementById('in-spec').value;
@@ -702,7 +712,8 @@
                 pick: activeItem.PICK,
                 salesDesc: activeItem.SALES_NOTE,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
-                photoName: activeItem.SAVED_PHOTO_NAME || ""
+                photoName: activeItem.SAVED_PHOTO_NAME || "",
+                isComplete: isComplete // Tells backend to stamp the Date
             };
 
             fetch(GOOGLE_SCRIPT_URL, {
@@ -711,15 +722,24 @@
             })
             .then(res => res.json())
             .then(data => {
-                btn.innerText = "SAVE DATA";
+                btnDraft.innerText = "SAVE DRAFT";
+                btnComp.innerText = "MARK COMPLETE";
+                
                 if(data.status === 'success') {
-                    showToast("Success", "Data saved to Google Sheet.");
+                    showToast("Success", isComplete ? "Task Completed!" : "Draft saved to Google Sheet.");
+                    
+                    if (isComplete) {
+                        activeItem.DATE_COMPLETED = new Date().toISOString();
+                        goBackFromDetail();
+                        renderTasks(); // Refreshes view, filtering out the completed item
+                    }
                 } else {
                     showToast("Error", data.message, true);
                 }
             })
             .catch(err => {
-                btn.innerText = "SAVE DATA";
+                btnDraft.innerText = "SAVE DRAFT";
+                btnComp.innerText = "MARK COMPLETE";
                 showToast("Network Error", "Could not reach server.", true);
             });
         }
