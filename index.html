@@ -44,7 +44,7 @@
         .drill-item:active { background: #f3f4f6; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
 
-        .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer;}
+        .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer; flex-grow: 1;}
         .status-green { border-left-color: #22c55e; } 
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
@@ -89,6 +89,18 @@
         </div>
     </div>
 
+    <div id="assign-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <h3 class="font-bold text-lg mb-4 text-[#007a4d]">Assign Selected Items To:</h3>
+            <div class="grid grid-cols-1 gap-3 mb-4">
+                <button class="bg-blue-50 text-blue-700 font-bold p-4 rounded-lg border border-blue-200 shadow-sm" onclick="confirmAssign('Dylan')">Dylan</button>
+                <button class="bg-blue-50 text-blue-700 font-bold p-4 rounded-lg border border-blue-200 shadow-sm" onclick="confirmAssign('Kayla')">Kayla</button>
+                <button class="bg-blue-50 text-blue-700 font-bold p-4 rounded-lg border border-blue-200 shadow-sm" onclick="confirmAssign('Morgan')">Morgan</button>
+            </div>
+            <button class="text-gray-500 font-bold py-2 px-4" onclick="closeAssignModal()">Cancel</button>
+        </div>
+    </div>
+
     <div id="app-wrapper" class="hidden h-full flex flex-col">
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
@@ -106,6 +118,7 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            <div class="drawer-item text-purple-600 font-bold admin-only" onclick="switchView('sales-office'); toggleMenu();"><i class="ph-bold ph-briefcase"></i> Sales Office</div>
             <div class="drawer-item text-red-600 font-bold admin-only" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
@@ -122,8 +135,26 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
+                    
+                    <div onclick="switchView('sales-office')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 admin-only"><i class="ph-bold ph-briefcase text-3xl"></i><span class="font-bold">Sales Office</span></div>
                     <div onclick="switchView('review')" class="home-btn col-span-2 text-red-600 border-red-200 bg-red-50 admin-only"><i class="ph-bold ph-warning-circle text-3xl"></i><span class="font-bold">Manager Review</span></div>
                 </div>
+            </div>
+
+            <div id="view-sales-office" class="hidden admin-only">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-purple-600 uppercase">Sales Office</h2>
+                    <span class="text-xs font-bold text-gray-400">Completed Season Items</span>
+                </div>
+                
+                <div id="sales-action-bar" class="hidden sticky top-0 z-40 bg-white p-3 rounded-lg shadow-md border border-purple-100 mb-4 flex gap-2">
+                    <button onclick="batchAction('copy')" class="flex-1 bg-gray-100 p-2 rounded-lg text-xs font-bold hover:bg-gray-200"><i class="ph-bold ph-copy block text-lg mb-1"></i> Copy</button>
+                    <button onclick="batchAction('email')" class="flex-1 bg-blue-100 text-blue-700 p-2 rounded-lg text-xs font-bold hover:bg-blue-200"><i class="ph-bold ph-envelope block text-lg mb-1"></i> Email</button>
+                    <button onclick="batchAction('text')" class="flex-1 bg-green-100 text-green-700 p-2 rounded-lg text-xs font-bold hover:bg-green-200"><i class="ph-bold ph-chat block text-lg mb-1"></i> Text</button>
+                    <button onclick="openAssignModal()" class="flex-1 bg-purple-600 text-white p-2 rounded-lg text-xs font-bold shadow-md"><i class="ph-bold ph-user-plus block text-lg mb-1"></i> Assign</button>
+                </div>
+
+                <div id="sales-office-content"></div>
             </div>
 
             <div id="view-drive" class="hidden">
@@ -219,7 +250,7 @@
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label>
-                            <input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50" placeholder="Type notes here...">
+                            <input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50 uppercase" oninput="this.value = this.value.toUpperCase()" placeholder="TYPE NOTES HERE...">
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
@@ -266,9 +297,10 @@
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
 
-        // Review State Variables
+        // Review & Sales Office State Variables
         let reviewViewLevel = 0;
         let selectedReviewUser = null;
+        let selectedSalesItems = new Set();
 
         // --- 1. INITIALIZATION ---
         window.onload = function() {
@@ -337,23 +369,18 @@
 
         // --- 4. VIEW NAVIGATION ---
         function switchView(viewId) {
-            ['view-home','view-drive','view-tasks','view-review','view-detail'].forEach(id => { 
+            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-detail'].forEach(id => { 
                 document.getElementById(id).classList.add('hidden'); 
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
             if(viewId === 'drive') resetDriveView(); 
             if(viewId === 'tasks') {
-                if (currentRole === 'Admin' && !taskViewTargetUser) {
-                    renderTeamSelector();
-                } else {
-                    renderTasks();
-                }
+                if (currentRole === 'Admin' && !taskViewTargetUser) renderTeamSelector();
+                else renderTasks();
             }
-            if(viewId === 'review') {
-                reviewViewLevel = 0;
-                renderReview();
-            }
+            if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
+            if(viewId === 'sales-office') { selectedSalesItems.clear(); renderSalesOffice(); }
         }
 
         function setTaskTab(tab) {
@@ -383,7 +410,106 @@
             </div>`;
         }
 
-        // --- 5. MANAGER REVIEW ---
+        // --- 5A. SALES OFFICE ---
+        function renderSalesOffice() {
+            const container = document.getElementById('sales-office-content');
+            
+            // Filter: Only Completed AND qualifies as a Season Sales Note (PTR > 10% Supply)
+            let officeItems = fullInventory.filter(i => {
+                if (!i.DATE_COMPLETED || i.DATE_COMPLETED === "") return false;
+                const ptr = parseFloat(i.PTRAVAILABLE) || 0;
+                const ss = parseFloat(i.SEASONSUPPLY) || 0;
+                return ptr > (ss * 0.10); 
+            });
+
+            if (officeItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed Season Sales Notes at this time.</div>`;
+                updateSalesActionBar();
+                return;
+            }
+
+            // Sort by Location
+            officeItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+
+            container.innerHTML = officeItems.map(i => {
+                const isChecked = selectedSalesItems.has(i.UNIQUE_ID) ? 'checked' : '';
+                return `
+                <div class="flex items-center gap-3 mb-2">
+                    <input type="checkbox" class="w-6 h-6 rounded border-gray-300 text-[#007a4d] focus:ring-[#007a4d]" ${isChecked} onchange="toggleSalesItem('${i.UNIQUE_ID}', this.checked)">
+                    ${generateCard(i, 'sales-office')}
+                </div>`;
+            }).join('');
+            
+            updateSalesActionBar();
+        }
+
+        function toggleSalesItem(id, isChecked) {
+            if (isChecked) selectedSalesItems.add(id);
+            else selectedSalesItems.delete(id);
+            updateSalesActionBar();
+        }
+
+        function updateSalesActionBar() {
+            const bar = document.getElementById('sales-action-bar');
+            if (selectedSalesItems.size > 0) bar.classList.remove('hidden');
+            else bar.classList.add('hidden');
+        }
+
+        // --- 5B. BATCH ACTIONS LOGIC ---
+        function getSelectedItemsText() {
+            let items = fullInventory.filter(i => selectedSalesItems.has(i.UNIQUE_ID));
+            return items.map(i => `${i.COMMONNAME} (${i.CONTSIZE}) - Loc: ${i.LOCATIONCODE} - Qty Avail: ${i.PTRAVAILABLE}\nSales Note: ${i.SALES_NOTE}`).join('\n\n');
+        }
+
+        function batchAction(action) {
+            const text = getSelectedItemsText();
+            if (action === 'copy') {
+                navigator.clipboard.writeText(text).then(() => showToast("Success", "Items copied to clipboard"));
+            } else if (action === 'email') {
+                window.location.href = `mailto:?subject=Sales Office Notes&body=${encodeURIComponent(text)}`;
+            } else if (action === 'text') {
+                window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
+            }
+        }
+
+        function openAssignModal() { document.getElementById('assign-modal').classList.remove('hidden'); }
+        function closeAssignModal() { document.getElementById('assign-modal').classList.add('hidden'); }
+
+        function confirmAssign(user) {
+            closeAssignModal();
+            showToast("Assigning...", "Updating Google Sheet...", false);
+            const ids = Array.from(selectedSalesItems);
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'batch_assign',
+                    ids: ids,
+                    assignTo: user
+                })
+            }).then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast("Success", `Assigned to ${user} and email sent!`);
+                    
+                    // Locally update the UI so they drop out of completed status
+                    ids.forEach(id => {
+                        let item = fullInventory.find(i => i.UNIQUE_ID === id);
+                        if (item) {
+                            item.ASSIGNEDTO = user;
+                            item.DATE_COMPLETED = ""; 
+                        }
+                    });
+                    
+                    selectedSalesItems.clear();
+                    renderSalesOffice();
+                } else {
+                    showToast("Error", "Assignment failed", true);
+                }
+            }).catch(err => showToast("Error", "Network error.", true));
+        }
+
+        // --- 5C. MANAGER REVIEW ---
         function renderReview() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
@@ -564,7 +690,7 @@
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) return;
 
-            ['view-drive','view-tasks','view-review'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-review','view-sales-office'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
             // Sync current items with object dictionary
@@ -617,6 +743,7 @@
             
             if(lastView === 'review') renderReview(); // Ensure the view gets refreshed
             if(lastView === 'tasks') renderTasks();
+            if(lastView === 'sales-office') renderSalesOffice();
             
             activeItem = null;
         }
@@ -685,7 +812,7 @@
             } else if (lastView === 'tasks') {
                 if (activeTaskTab === 'season') context = "season";
                 if (activeTaskTab === 'location') context = "location";
-            } else if (lastView === 'review') {
+            } else if (lastView === 'review' || lastView === 'sales-office') {
                 context = "request";
             }
 
@@ -768,7 +895,9 @@
             activeItem.SPEC = document.getElementById('in-spec').value;
             activeItem.CALIPER = document.getElementById('in-caliper').value;
             activeItem.PICK = document.getElementById('in-pick').value;
-            activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value;
+            
+            // Ensures text is strictly capitalized upon saving (acts as a backup to the visual HTML forcing)
+            activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value.toUpperCase();
 
             const payload = {
                 type: "update",
