@@ -433,7 +433,7 @@
         let selectedDockName = null;
         let selectedDockSize = null;
 
-        // --- Helper: Convert Drive Links to Tiny Thumbnails ---
+        // Helper: Convert Drive Links to Tiny Thumbnails
         function getDirectImageUrl(url) {
             if (!url) return "";
             let match = url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -444,7 +444,6 @@
             return url;
         }
 
-        // --- 1. INITIALIZATION ---
         window.onload = function() {
             fetch(GOOGLE_SCRIPT_URL + "?action=getAppUsers")
                 .then(response => response.json())
@@ -457,7 +456,6 @@
                 });
         };
 
-        // --- 2. LOGIN LOGIC ---
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
@@ -482,7 +480,6 @@
                 .then(response => response.json())
                 .then(res => {
                     if (res.status === 'success') {
-                        // Assign a purely unique DOM_ID to every row so the UI can independently select identical items
                         fullInventory = res.data.map((item, idx) => {
                             item.DOM_ID = 'fi_' + idx;
                             return item;
@@ -492,6 +489,7 @@
                             return item;
                         });
                         socInventory = res.socData || [];
+                        
                         applyRolePermissions();
                     } else {
                         showToast("Error", "Failed to load database.", true);
@@ -534,7 +532,6 @@
                 });
         }
 
-        // --- 3. UI PERMISSIONS ---
         function applyRolePermissions() {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
@@ -569,9 +566,8 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- 4. VIEW NAVIGATION & GLOBAL RE-RENDER ---
         function switchView(viewId) {
-            clearSelection(); // Exit multi-select whenever changing views
+            clearSelection(); 
             ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail','view-docks'].forEach(id => { 
                 document.getElementById(id).classList.add('hidden'); 
             });
@@ -611,7 +607,6 @@
             return match ? match[0] : loc.substring(0,2);
         }
 
-        // --- GLOBAL MULTI-SELECT AND HOLD TO SELECT LOGIC ---
         function startPress(e, domId) {
             if (isMultiSelectMode) return;
             isLongPress = false;
@@ -623,7 +618,7 @@
             
             pressTimer = setTimeout(() => {
                 isLongPress = true;
-                if (navigator.vibrate) navigator.vibrate(50); // Haptic buzz
+                if (navigator.vibrate) navigator.vibrate(50); 
                 enableMultiSelect(domId);
             }, 2000);
         }
@@ -632,7 +627,7 @@
             if(e.type === 'touchmove') {
                 let dx = Math.abs(e.touches[0].clientX - touchStartX);
                 let dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > 10 || dy > 10) cancelPress(); // Cancel if they scroll
+                if (dx > 10 || dy > 10) cancelPress(); 
             }
         }
 
@@ -701,17 +696,23 @@
             }
         }
 
-        // --- GLOBAL CARD GENERATOR (WITH CHECKBOXES & DOM_ID) ---
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
+            
+            // SPECIFICALLY ONLY USES NOTES/ACTIONS PHOTOS FOR THUMBNAILS
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
             
             if (photoLink) {
                 let firstUrl = photoLink.split(',')[0];
-                let urlMatch = firstUrl.match(/"([^"]+)"/);
+                let urlMatch = firstUrl.match(/"(http[^"]+)"/);
                 let cleanUrl = urlMatch ? urlMatch[1] : firstUrl;
-                let thumbUrl = getDirectImageUrl(cleanUrl);
                 
+                if (cleanUrl.startsWith('=HYPERLINK')) {
+                    let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
+                    if (backupMatch) cleanUrl = backupMatch[1];
+                }
+
+                let thumbUrl = getDirectImageUrl(cleanUrl);
                 if (thumbUrl.startsWith('http')) {
                     thumbHtml = `<div class="ml-3 flex-shrink-0"><img src="${thumbUrl}" class="w-12 h-12 rounded-md object-cover border border-gray-200" loading="lazy"></div>`;
                 }
@@ -720,7 +721,6 @@
             const isChecked = selectedItems.has(item.DOM_ID) ? 'checked' : '';
             const tagColor = item.FIELDTAGCOLOR || item['FIELD TAG COLOR'] || '-';
 
-            // Add touch and mouse event listeners for the 2-second hold using DOM_ID
             return `
             <div class="flex items-center w-full mb-2 item-row" data-dom-id="${item.DOM_ID}"
                  onmousedown="startPress(event, '${item.DOM_ID}')" 
@@ -755,8 +755,6 @@
                 </div>
             </div>`;
         }
-
-        // --- GLOBAL BATCH ACTIONS WITH DATA SOURCE PROMPT ---
         
         function initiateBatchAction(action) {
             pendingAction = action;
@@ -776,10 +774,8 @@
 
         function getSelectedItemsText(tabType) {
             let items = [];
-            // Map the selected DOM_IDs to the actual objects
             selectedItems.forEach(domId => {
-                let found = fullInventory.find(i => i.DOM_ID === domId) || 
-                            lowStockInventory.find(i => i.DOM_ID === domId);
+                let found = fullInventory.find(i => i.DOM_ID === domId) || lowStockInventory.find(i => i.DOM_ID === domId);
                 if (found) items.push(found);
             });
 
@@ -808,9 +804,15 @@
                 if (photo && photo.trim() !== "") {
                     let urls = photo.split(',');
                     urls.forEach((url, idx) => {
-                        let match = url.match(/"([^"]+)"/);
-                        let cleanUrl = match ? match[1] : url.trim();
-                        if(cleanUrl) returnText += `  Photo ${idx + 1}: ${cleanUrl}\n`;
+                        // BULLETPROOF HYPERLINK REGEX EXTRACTOR
+                        let cleanUrl = url.trim();
+                        let match = url.match(/"(http[^"]+)"/);
+                        if (match) cleanUrl = match[1];
+                        if (cleanUrl.startsWith('=HYPERLINK')) {
+                            let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
+                            if (backupMatch) cleanUrl = backupMatch[1];
+                        }
+                        if(cleanUrl.startsWith('http')) returnText += `  Photo ${idx + 1}: ${cleanUrl}\n`;
                     });
                 }
                 returnText += `\n`;
@@ -844,7 +846,6 @@
             closeAssignModal();
             showToast("Assigning...", "Updating Google Sheet...", false);
             
-            // Convert DOM_IDs back to UNIQUE_IDs for the backend
             const domIds = Array.from(selectedItems);
             const uniqueIds = [];
             let itemsToUpdate = [];
@@ -873,7 +874,6 @@
             }).catch(err => showToast("Error", "Network error.", true));
         }
 
-        // --- 4B. DOCKS VIEW ---
         function handleDocksSearch() {
             const term = document.getElementById('docks-search').value;
             if (term.length > 0 && dockViewLevel > 1) { 
@@ -893,23 +893,9 @@
             renderDocks();
         }
 
-        function selectDockNum(num) { 
-            selectedDockNum = num; 
-            dockViewLevel = 1; 
-            renderDocks(); 
-        }
-        
-        function selectDockName(name) { 
-            selectedDockName = name; 
-            dockViewLevel = 2; 
-            renderDocks(); 
-        }
-        
-        function selectDockSize(size) { 
-            selectedDockSize = size; 
-            dockViewLevel = 3; 
-            renderDocks(); 
-        }
+        function selectDockNum(num) { selectedDockNum = num; dockViewLevel = 1; renderDocks(); }
+        function selectDockName(name) { selectedDockName = name; dockViewLevel = 2; renderDocks(); }
+        function selectDockSize(size) { selectedDockSize = size; dockViewLevel = 3; renderDocks(); }
 
         function renderDocks() {
             const container = document.getElementById('docks-content');
@@ -971,7 +957,6 @@
             }
             else if (dockViewLevel === 2) {
                 crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > Sizes`;
-                
                 const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum && (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown') === selectedDockName);
                 const sizes = [...new Set(dockItems.map(i => i.CONTSIZE || i.SIZE || i.CONTAINER || '-'))].sort();
 
@@ -981,7 +966,6 @@
             }
             else if (dockViewLevel === 3) {
                 crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > ${selectedDockSize}`;
-                
                 let finalItems = fullInventory.filter(i => i.COMMONNAME === selectedDockName && i.CONTSIZE === selectedDockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
 
@@ -989,7 +973,6 @@
                      container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="p-8 text-center text-gray-400">This plant size was requested for the Dock, but no matching records exist in the Master Inventory.</div>`;
                      return;
                 }
-
                 container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'docks', 'status-orange')).join('');
             }
         }
@@ -1034,14 +1017,12 @@
                 crumb.innerText = `${selectedLowStockName} / ${selectedLowStockSize}`;
                 let finalItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName && i.CONTSIZE === selectedLowStockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToLowStockSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
             }
         }
 
         function renderSalesOffice() {
             const container = document.getElementById('sales-office-content');
-            
             let officeItems = fullInventory.filter(i => {
                 if (!i.DATE_COMPLETED || i.DATE_COMPLETED === "") return false;
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
@@ -1061,7 +1042,6 @@
         function renderReview() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
-            
             let completedItems = fullInventory.filter(i => i.DATE_COMPLETED && i.DATE_COMPLETED !== "");
             
             if (completedItems.length === 0) {
@@ -1073,7 +1053,6 @@
             if (reviewViewLevel === 0) {
                 crumb.innerText = `Completed Tasks by User`;
                 const users = [...new Set(completedItems.map(i => i.ASSIGNEDTO || "Unassigned"))].sort();
-                
                 container.innerHTML = users.map(u => {
                     const count = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === u).length;
                     return `<div class="drill-item" onclick="selectReviewUser('${u}')"><span class="font-bold text-lg">${u} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
@@ -1082,7 +1061,6 @@
                 crumb.innerText = `Review / ${selectedReviewUser}`;
                 let userItems = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === selectedReviewUser);
                 userItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReview()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>` + 
                 userItems.map(i => generateCard(i, 'review')).join('');
             }
@@ -1094,14 +1072,12 @@
             renderReview();
         }
 
-        // --- 6. DRIVE MODE ---
         function handleDriveSearch() {
             const term = document.getElementById('drive-search').value;
             if (term.length > 0 && driveViewLevel > 0) { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; }
             renderDrive();
         }
         
-        // Clears the search bar when you click a name so the sizes aren't overly filtered!
         function selectDriveName(name) { 
             selectedDriveName = name; 
             driveViewLevel = 1; 
@@ -1148,7 +1124,6 @@
             }
         }
 
-        // --- 7. TASKS MODE ---
         function renderTeamSelector() {
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
@@ -1210,10 +1185,8 @@
             if (taskViewLevel === 0) {
                 crumb.innerText = `${displayUser} / ${tabLabel} / Blocks`; 
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                
                 let html = "";
                 if(currentRole === 'Admin') html += `<div class="back-btn" onclick="taskViewTargetUser=null; renderTeamSelector();"><i class="ph-bold ph-arrow-left"></i> Change User</div>`;
-
                 html += blocks.map(b => {
                     const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
                     return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
@@ -1224,7 +1197,6 @@
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                 const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + 
                 locs.map(l => {
                     const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
@@ -1235,17 +1207,14 @@
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
                 let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
                 items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + 
                 items.map(i => generateCard(i, 'tasks')).join('');
             }
         }
 
-        // --- 8. DETAIL VIEW (Notes & Actions & Request & Accordion) ---
         function openDetail(uniqueId, sourceView) {
             lastView = sourceView;
             
-            // Search the master inventory first, but if coming from low-stock, check that specialized array
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) activeItem = lowStockInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) return;
@@ -1253,11 +1222,9 @@
             ['view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-docks'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
-            // Sync current items with object dictionary
             activeItem.SAVED_PHOTO_LINK = activeItem['PHOTO LINK'] || activeItem.PHOTOLINK || activeItem.SAVED_PHOTO_LINK || "";
             activeItem.SAVED_PHOTO_NAME = activeItem['PHOTO NAME'] || activeItem.PHOTONAME || activeItem.SAVED_PHOTO_NAME || "";
 
-            // Populate Overview
             document.getElementById('det-common').innerText = activeItem.COMMONNAME || "--";
             document.getElementById('det-size').innerText = activeItem.CONTSIZE || "--";
             document.getElementById('ov-loc').innerText = activeItem.LOCATIONCODE || "--";
@@ -1269,19 +1236,16 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
 
-            // Populate Action Inputs
             document.getElementById('in-match').value = activeItem.MATCH || activeItem.MATCHPCT || "";
             document.getElementById('in-spec').value = activeItem.SPEC || "";
             document.getElementById('in-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
             document.getElementById('in-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
             
-            // Populate Request Inputs
             document.getElementById('req-match').value = activeItem.REQ_MATCH || "";
             document.getElementById('req-spec').value = activeItem.REQ_SPEC || "";
             document.getElementById('req-pick').value = activeItem.REQ_PICK || "";
             document.getElementById('req-sales-desc').value = activeItem.REQ_SALES_NOTE || "";
 
-            // Caliper Visibility Logic
             const caliperSizes = ["7DP", "#7", "#10", "#15", "#25", "#45"];
             if (caliperSizes.includes(activeItem.CONTSIZE)) {
                 document.getElementById('container-caliper').classList.remove('hidden');
@@ -1339,10 +1303,8 @@
             document.getElementById('expand-content').innerHTML = html;
         }
 
-        // --- 9. PHOTO UPLOAD COMPRESSION & SMART ROUTING LOGIC ---
         function handlePhotoUpload(input) {
             if(!input.files || input.files.length === 0) return;
-            
             showToast("Processing...", "Compressing image...", false);
             const file = input.files[0];
             const reader = new FileReader();
@@ -1356,7 +1318,6 @@
                     
                     canvas.width = img.width * scale;
                     canvas.height = img.height * scale;
-                    
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
@@ -1380,7 +1341,6 @@
             btn.disabled = true;
 
             let context = "drive"; 
-            
             if (activeDetailTab === 'request') {
                 context = "request";
             } else {
@@ -1394,13 +1354,7 @@
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
-                body: JSON.stringify({ 
-                    type: "image", 
-                    image: base64Data, 
-                    mimeType: "image/jpeg", 
-                    filename: filename,
-                    folderContext: context 
-                })
+                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename, folderContext: context })
             })
             .then(res => res.json())
             .then(data => {
@@ -1422,7 +1376,6 @@
                         activeItem.SAVED_PHOTO_LINK = links.join(',');
                         activeItem.SAVED_PHOTO_NAME = names.join(',');
                     }
-                    
                     renderPhotoPreview(); 
                     saveData(false); 
                 } else {
@@ -1442,17 +1395,21 @@
             const reqPhotoDiv = document.getElementById('req-photo-preview'); 
             const reqPhotoList = document.getElementById('req-photo-list-container');
             
-            // Notes & Actions Photos
             if (activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK !== "") {
                 photoDiv.classList.remove('hidden'); 
                 const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
                 const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
                 let phHtml = "";
                 urls.forEach((url, i) => {
+                    let cleanUrl = url.trim();
+                    if (cleanUrl.startsWith('=HYPERLINK')) {
+                        let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
+                        if (backupMatch) cleanUrl = backupMatch[1];
+                    }
                     const dispName = names[i] || `Photo ${i+1}`; 
                     phHtml += `
                     <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                        <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
                             <i class="ph-fill ph-image text-2xl text-blue-500"></i>
                             <div class="flex-grow min-w-0">
                                 <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
@@ -1467,17 +1424,21 @@
                 photoDiv.classList.add('hidden'); 
             }
 
-            // Request Data Photos
             if (activeItem.REQ_PHOTO_LINK && activeItem.REQ_PHOTO_LINK !== "") {
                 reqPhotoDiv.classList.remove('hidden'); 
                 const urls = activeItem.REQ_PHOTO_LINK.split(','); 
                 const names = activeItem.REQ_PHOTO_NAME ? activeItem.REQ_PHOTO_NAME.split(',') : []; 
                 let phHtml = "";
                 urls.forEach((url, i) => {
+                    let cleanUrl = url.trim();
+                    if (cleanUrl.startsWith('=HYPERLINK')) {
+                        let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
+                        if (backupMatch) cleanUrl = backupMatch[1];
+                    }
                     const dispName = names[i] || `Req Photo ${i+1}`; 
                     phHtml += `
                     <div class="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">
-                        <a href="${url}" target="_blank" class="flex-grow flex items-center gap-3">
+                        <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
                             <i class="ph-fill ph-image text-2xl text-purple-600"></i>
                             <div class="flex-grow min-w-0">
                                 <div class="text-xs font-bold text-purple-700 truncate">${dispName}</div>
@@ -1493,20 +1454,14 @@
             }
         }
 
-        // --- 10. SAVE DATA LOGIC ---
         function saveData(isComplete = false) {
             let prefix = (activeDetailTab === 'request') ? 'req-' : 'in-';
-            
             const btnDraft = document.getElementById(prefix + 'btn-save-draft');
             const btnComp = document.getElementById(prefix + 'btn-save-complete');
             
-            if (isComplete) {
-                if(btnComp) btnComp.innerText = "SAVING..."; 
-            } else {
-                if(btnDraft) btnDraft.innerText = "SAVING..."; 
-            }
+            if (isComplete) { if(btnComp) btnComp.innerText = "SAVING..."; } 
+            else { if(btnDraft) btnDraft.innerText = "SAVING..."; }
             
-            // Sync current inputs to activeItem
             activeItem.MATCH = document.getElementById('in-match').value;
             activeItem.SPEC = document.getElementById('in-spec').value;
             activeItem.CALIPER = document.getElementById('in-caliper').value;
@@ -1529,7 +1484,6 @@
                 salesDesc: activeItem.SALES_NOTE,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "",
-                
                 reqMatch: activeItem.REQ_MATCH,
                 reqSpec: activeItem.REQ_SPEC,
                 reqCaliper: activeItem.REQ_CALIPER,
@@ -1537,7 +1491,6 @@
                 reqSalesDesc: activeItem.REQ_SALES_NOTE,
                 reqPhotoLink: activeItem.REQ_PHOTO_LINK || "",
                 reqPhotoName: activeItem.REQ_PHOTO_NAME || "",
-
                 isComplete: isComplete 
             };
 
@@ -1552,14 +1505,11 @@
                 
                 if(data.status === 'success') {
                     showToast("Success", isComplete ? "Task Completed!" : "Draft saved to Google Sheet.");
-                    
                     if (isComplete) {
                         activeItem.DATE_COMPLETED = new Date().toISOString();
                         goBackFromDetail();
                     }
-                } else {
-                    showToast("Error", data.message, true);
-                }
+                } else { showToast("Error", data.message, true); }
             })
             .catch(err => {
                 if(btnDraft) btnDraft.innerText = "SAVE DRAFT";
