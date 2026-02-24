@@ -213,7 +213,7 @@
             }).getAppUsers(); 
         };
 
-        // --- 2. LOGIN LOGIC ---
+        // --- 2. LOGIN LOGIC (Super Snitch Version) ---
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
@@ -223,14 +223,26 @@
                 return;
             }
 
-            const userMatch = appUsers.find(u => u.username === inputUser);
-
-            if (!userMatch || userMatch.password !== inputPass) {
-                showToast("Error", "Invalid Credentials.", true);
-                document.getElementById('pin-code').value = "";
+            if (appUsers.length === 0) {
+                showToast("Error", "Database empty. Did you deploy a New Version?", true);
                 return;
             }
 
+            const userMatch = appUsers.find(u => u.username === inputUser);
+
+            if (!userMatch) {
+                showToast("Error", "Username not found in Sheet.", true);
+                return;
+            }
+
+            // SUPER SNITCH: This will pop up on your screen and show you the exact mismatch
+            if (userMatch.password !== inputPass) {
+                alert(`MISMATCH DETECTED!\n\nGoogle Sheet Password: "${userMatch.password}"\nPassword you typed: "${inputPass}"`);
+                document.getElementById('pin-code').value = ""; // Wipes the box
+                return;
+            }
+
+            // --- SUCCESS ---
             currentUser = userMatch.username;
             currentRole = userMatch.role;
             document.getElementById('header-user').innerText = currentUser.toUpperCase();
@@ -238,7 +250,6 @@
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
 
-            // Fetch Master Data
             google.script.run.withSuccessHandler(function(response) {
                 const res = JSON.parse(response);
                 if (res.status === 'success') {
@@ -284,7 +295,7 @@
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            if(viewId === 'drive') resetDriveView(); // Always reset drive view when opening it
+            if(viewId === 'drive') resetDriveView(); 
             if(viewId === 'tasks') renderTasks();
         }
 
@@ -324,7 +335,7 @@
         function selectDriveName(name) {
             selectedDriveName = name;
             driveViewLevel = 1;
-            document.getElementById('drive-search').value = ""; // Clear search when drilling down
+            document.getElementById('drive-search').value = ""; 
             renderDrive();
         }
 
