@@ -188,7 +188,8 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrB-Evyw3PdGY-tNFd5JnVGSDw73pt2i-lzSthnWktaGdUqvOgtr3rUihA8dCNMn-z/exec";
+        // NEW GOOGLE SCRIPT URL PLUGGED IN HERE
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhJ_tytv5Rm2ag44liZAU6nsp0lQ7-9PLmjxrcuT1WA1WARubi7NyolYoTZ_qvZmzo/exec";
 
         let appUsers = [];
         let fullInventory = []; 
@@ -201,19 +202,23 @@
         let selectedDriveName = null;
         let selectedDriveSize = null;
 
-        // --- 1. INITIALIZATION ---
+        // --- 1. INITIALIZATION VIA FETCH API ---
         window.onload = function() {
-            google.script.run.withSuccessHandler(function(response) {
-                const res = JSON.parse(response);
-                if (res.status === 'success') {
-                    appUsers = res.data;
-                } else {
-                    showToast("Error", "Could not load users.", true);
-                }
-            }).getAppUsers(); 
+            fetch(GOOGLE_SCRIPT_URL + "?action=getAppUsers")
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        appUsers = res.data;
+                    } else {
+                        showToast("Error", "Could not load users.", true);
+                    }
+                })
+                .catch(err => {
+                    showToast("Network Error", "Failed to connect to backend.", true);
+                });
         };
 
-        // --- 2. LOGIN LOGIC (Super Snitch Version) ---
+        // --- 2. LOGIN LOGIC (Super Snitch Version via Fetch API) ---
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
@@ -250,15 +255,24 @@
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
 
-            google.script.run.withSuccessHandler(function(response) {
-                const res = JSON.parse(response);
-                if (res.status === 'success') {
-                    fullInventory = res.data;
-                    applyRolePermissions();
-                } else {
-                    showToast("Error", "Failed to load database.", true);
-                }
-            }).getInventoryData();
+            // Fetch Master Data via API instead of google.script.run
+            fetch(GOOGLE_SCRIPT_URL + "?action=getInventoryData")
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        fullInventory = res.data;
+                        applyRolePermissions();
+                    } else {
+                        showToast("Error", "Failed to load database.", true);
+                        document.getElementById('login-inputs').classList.remove('hidden');
+                        document.getElementById('loading-spinner').classList.add('hidden');
+                    }
+                })
+                .catch(err => {
+                    showToast("Network Error", "Failed to load inventory data.", true);
+                    document.getElementById('login-inputs').classList.remove('hidden');
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                });
         }
 
         // --- 3. UI PERMISSIONS ---
@@ -323,7 +337,6 @@
         // --- DRIVE MODE DRILL-DOWN LOGIC ---
         function handleDriveSearch() {
             const term = document.getElementById('drive-search').value;
-            // If they start typing a search, reset the drill-down to level 0 to search all names
             if (term.length > 0 && driveViewLevel > 0) {
                 driveViewLevel = 0; 
                 selectedDriveName = null;
@@ -366,7 +379,6 @@
             
             let filteredItems = fullInventory;
             
-            // Filter by search term if present
             if (term) {
                 filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term));
             }
@@ -378,7 +390,6 @@
             }
 
             if (driveViewLevel === 0) {
-                // LEVEL 0: Show Names
                 crumb.innerText = `Select Plant (${filteredItems.length} items)`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
                 
@@ -390,7 +401,6 @@
                 `).join('');
             } 
             else if (driveViewLevel === 1) {
-                // LEVEL 1: Show Sizes for selected Name
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
@@ -410,11 +420,9 @@
                 container.innerHTML = html;
             } 
             else if (driveViewLevel === 2) {
-                // LEVEL 2: Show specific Item Cards
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
                 
-                // Sort by Location code for easier viewing
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
 
                 let html = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>`;
