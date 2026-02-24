@@ -91,7 +91,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Authenticating...</div>
+                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Authenticating & Syncing...</div>
             </div>
         </div>
     </div>
@@ -381,10 +381,8 @@
     </div>
 
     <script>
-        // 🚨 MAKE SURE THIS URL MATCHES YOUR WEB APP URL 🚨
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhJ_tytv5Rm2ag44liZAU6nsp0lQ7-9PLmjxrcuT1WA1WARubi7NyolYoTZ_qvZmzo/exec";
 
-        let appUsers = [];
         let fullInventory = []; 
         let lowStockInventory = []; 
         let socInventory = []; 
@@ -438,56 +436,26 @@
             return url;
         }
 
-        // 🚨 CRITICAL FIX: ELIMINATED RACE CONDITION 🚨
-        // We no longer download passwords in the background. It is merged into the Login button click!
-        window.onload = function() {
-            // Keep window.onload empty to ensure fast page render.
-        };
-
+        // 🚨 SINGLE FAST LOGIN REQUEST 🚨
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
 
-            if (!inputUser || !inputPass) {
-                showToast("Error", "Please enter username and password", true);
-                return;
-            }
+            if (!inputUser || !inputPass) return;
 
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = "Authenticating...";
 
-            // STEP 1: Fetch Users Securely
-            fetch(GOOGLE_SCRIPT_URL + "?action=getAppUsers")
+            const loginUrl = `${GOOGLE_SCRIPT_URL}?action=login&username=${encodeURIComponent(inputUser)}&password=${encodeURIComponent(inputPass)}`;
+
+            fetch(loginUrl)
                 .then(response => response.json())
                 .then(res => {
                     if (res.status === 'success') {
-                        appUsers = res.data;
-                        const userMatch = appUsers.find(u => u.username === inputUser);
-
-                        if (!userMatch || userMatch.password !== inputPass) {
-                            alert(`MISMATCH DETECTED!\n\nGoogle Sheet Password: "${userMatch ? userMatch.password : 'N/A'}"\nPassword you typed: "${inputPass}"`);
-                            document.getElementById('pin-code').value = "";
-                            document.getElementById('login-inputs').classList.remove('hidden');
-                            document.getElementById('loading-spinner').classList.add('hidden');
-                            return;
-                        }
-
-                        currentUser = userMatch.username;
-                        currentRole = userMatch.role;
+                        currentUser = inputUser;
+                        currentRole = res.role;
                         document.getElementById('header-user').innerText = currentUser.toUpperCase();
-                        
-                        document.getElementById('loading-text').innerText = "Syncing Database...";
 
-                        // STEP 2: Fetch Inventory if Auth succeeds
-                        return fetch(GOOGLE_SCRIPT_URL + "?action=getInventoryData");
-                    } else {
-                        throw new Error(res.message || "Failed to load users");
-                    }
-                })
-                .then(response => response ? response.json() : null)
-                .then(res => {
-                    if (res && res.status === 'success') {
                         fullInventory = res.data.map((item, idx) => {
                             item.DOM_ID = 'fi_' + idx;
                             return item;
@@ -498,14 +466,15 @@
                         });
                         socInventory = res.socData || [];
                         applyRolePermissions();
-                    } else if (res) {
-                        showToast("Error", "Failed to load database.", true);
+                    } else {
+                        alert("MISMATCH DETECTED!\n\nIncorrect Username or Password.");
+                        document.getElementById('pin-code').value = "";
                         document.getElementById('login-inputs').classList.remove('hidden');
                         document.getElementById('loading-spinner').classList.add('hidden');
                     }
                 })
                 .catch(err => {
-                    showToast("Error", "Network connection failed. Verify URL & Permissions.", true);
+                    showToast("Error", "Network Error. Please try again.", true);
                     document.getElementById('login-inputs').classList.remove('hidden');
                     document.getElementById('loading-spinner').classList.add('hidden');
                 });
