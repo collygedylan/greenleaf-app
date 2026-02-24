@@ -566,7 +566,6 @@
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            // 🚨 THIS FIXES THE SEARCH CLEAR BUG - IT ONLY CLEARS WHEN SWITCHING TABS 🚨
             if(viewId === 'drive') {
                 document.getElementById('drive-search').value = "";
                 resetDriveView(); 
@@ -886,6 +885,7 @@
             selectedDockNum = null;
             selectedDockName = null;
             selectedDockSize = null;
+            document.getElementById('docks-search').value = "";
             renderDocks();
         }
 
@@ -947,7 +947,7 @@
                 
                 const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
                 
-                let html = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
+                let html = `<div class="back-btn" onclick="dockViewLevel=0; document.getElementById('docks-search').value=''; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
             }
@@ -1069,14 +1069,9 @@
             renderReview();
         }
 
-        // 🚨 THIS IS THE SEARCH FIX: It never deletes your text while drilling down! 🚨
         function handleDriveSearch() {
             const term = document.getElementById('drive-search').value;
-            if (driveViewLevel > 0) { 
-                driveViewLevel = 0; 
-                selectedDriveName = null; 
-                selectedDriveSize = null; 
-            }
+            if (term.length > 0 && driveViewLevel > 0) { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; }
             renderDrive();
         }
         
@@ -1086,24 +1081,9 @@
             renderDrive(); 
         }
         
-        function selectDriveSize(size) { 
-            selectedDriveSize = size; 
-            driveViewLevel = 2; 
-            renderDrive(); 
-        }
-        
-        function backToDriveSizes() { 
-            driveViewLevel = 1; 
-            selectedDriveSize = null; 
-            renderDrive(); 
-        }
-        
-        function resetDriveView() { 
-            driveViewLevel = 0; 
-            selectedDriveName = null; 
-            selectedDriveSize = null; 
-            renderDrive(); 
-        }
+        function selectDriveSize(size) { selectedDriveSize = size; driveViewLevel = 2; renderDrive(); }
+        function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDrive(); }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; document.getElementById('drive-search').value = ""; renderDrive(); }
 
         function renderDrive() {
             const container = document.getElementById('drive-content');
@@ -1351,10 +1331,19 @@
         function uploadPhotoToDrive(base64Data, filename) {
             showToast("Uploading...", "Sending to Google Drive...", false);
             
-            let btnId = (activeDetailTab === 'request') ? 'req-btn-save-complete' : 'btn-save-complete';
-            const btn = document.getElementById(btnId);
-            btn.innerText = "UPLOADING...";
-            btn.disabled = true;
+            // 🚨 THIS IS THE CRASH FIX! 🚨 
+            // It safely checks which button to disable based on what tab you are on.
+            let btn;
+            if (activeDetailTab === 'request') {
+                btn = document.getElementById('req-btn-save-draft');
+            } else {
+                btn = document.getElementById('btn-save-complete');
+            }
+            
+            if (btn) {
+                btn.innerText = "UPLOADING...";
+                btn.disabled = true;
+            }
 
             let context = "drive"; 
             if (activeDetailTab === 'request') {
@@ -1374,8 +1363,11 @@
             })
             .then(res => res.json())
             .then(data => {
-                btn.innerText = "MARK COMPLETE";
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerText = (activeDetailTab === 'request') ? "SAVE REQUEST DATA" : "MARK COMPLETE";
+                    btn.disabled = false;
+                }
+                
                 if(data.status === 'success') {
                     if (activeDetailTab === 'request') {
                         let links = activeItem.REQ_PHOTO_LINK ? activeItem.REQ_PHOTO_LINK.split(',') : [];
@@ -1399,8 +1391,10 @@
                 }
             })
             .catch(err => {
-                btn.innerText = "MARK COMPLETE";
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerText = (activeDetailTab === 'request') ? "SAVE REQUEST DATA" : "MARK COMPLETE";
+                    btn.disabled = false;
+                }
                 showToast("Error", "Network connection failed.", true);
             });
         }
@@ -1481,12 +1475,14 @@
         }
 
         function saveData(isComplete = false) {
-            let prefix = (activeDetailTab === 'request') ? 'req-' : 'in-';
-            const btnDraft = document.getElementById(prefix + 'btn-save-draft');
-            const btnComp = document.getElementById(prefix + 'btn-save-complete');
+            let btnDraft = activeDetailTab === 'request' ? document.getElementById('req-btn-save-draft') : document.getElementById('btn-save-draft');
+            let btnComp = activeDetailTab === 'request' ? null : document.getElementById('btn-save-complete');
             
-            if (isComplete) { if(btnComp) btnComp.innerText = "SAVING..."; } 
-            else { if(btnDraft) btnDraft.innerText = "SAVING..."; }
+            if (isComplete) { 
+                if(btnComp) btnComp.innerText = "SAVING..."; 
+            } else { 
+                if(btnDraft) btnDraft.innerText = "SAVING..."; 
+            }
             
             activeItem.MATCH = document.getElementById('in-match').value;
             activeItem.SPEC = document.getElementById('in-spec').value;
@@ -1526,7 +1522,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(btnDraft) btnDraft.innerText = "SAVE DRAFT";
+                if(btnDraft) btnDraft.innerText = (activeDetailTab === 'request') ? "SAVE REQUEST DATA" : "SAVE DRAFT";
                 if(btnComp) btnComp.innerText = "MARK COMPLETE";
                 
                 if(data.status === 'success') {
@@ -1538,7 +1534,7 @@
                 } else { showToast("Error", data.message, true); }
             })
             .catch(err => {
-                if(btnDraft) btnDraft.innerText = "SAVE DRAFT";
+                if(btnDraft) btnDraft.innerText = (activeDetailTab === 'request') ? "SAVE REQUEST DATA" : "SAVE DRAFT";
                 if(btnComp) btnComp.innerText = "MARK COMPLETE";
                 showToast("Network Error", "Could not reach server.", true);
             });
