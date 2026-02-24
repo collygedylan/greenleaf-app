@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC Sales PRO 2026</title>
+    <title>GNC Sales PRO 2026 - 001</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -83,7 +83,7 @@
 
     <div id="view-login">
         <div class="login-card">
-            <div class="text-3xl text-[#007a4d] font-bold mb-6">GNC SALES PRO 2026</div>
+            <div class="text-3xl text-[#007a4d] font-bold mb-6">GNC SALES PRO 2026 - 001</div>
             <div id="login-inputs">
                 <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME">
                 <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD">
@@ -125,7 +125,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">GNC Sales PRO 2026</div>
+                    <div class="text-[10px] opacity-80 leading-tight">GNC Sales PRO 2026 - 001</div>
                 </div>
             </div>
         </header>
@@ -150,7 +150,7 @@
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
-                    <h1 class="text-2xl font-bold">GNC SALES PRO 2026</h1>
+                    <h1 class="text-2xl font-bold">GNC SALES PRO 2026 - 001</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -383,6 +383,7 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhJ_tytv5Rm2ag44liZAU6nsp0lQ7-9PLmjxrcuT1WA1WARubi7NyolYoTZ_qvZmzo/exec";
 
+        let appUsers = [];
         let fullInventory = []; 
         let lowStockInventory = []; 
         let socInventory = []; 
@@ -436,15 +437,20 @@
             return url;
         }
 
-        // 🚨 SINGLE FAST LOGIN REQUEST 🚨
+        window.onload = function() {};
+
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
 
-            if (!inputUser || !inputPass) return;
+            if (!inputUser || !inputPass) {
+                showToast("Error", "Please enter username and password", true);
+                return;
+            }
 
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Authenticating & Syncing...";
 
             const loginUrl = `${GOOGLE_SCRIPT_URL}?action=login&username=${encodeURIComponent(inputUser)}&password=${encodeURIComponent(inputPass)}`;
 
@@ -677,6 +683,7 @@
             }
         }
 
+        // 🚨 ADDED LOTCODE & UPDATED CARD UI TO MATCH REQUIREMENTS 🚨
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
@@ -715,15 +722,17 @@
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between font-bold text-sm mb-1">
                             <span class="text-[#007a4d] truncate pr-2">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
-                            <span class="whitespace-nowrap">${item.CONTSIZE || '-'}</span>
+                            <span class="whitespace-nowrap bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs border border-gray-200">${item.CONTSIZE || '-'}</span>
                         </div>
                         <div class="text-[11px] text-gray-500 truncate mt-0.5">
                             <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | 
                             <span class="font-bold text-gray-800">QC: ${item.QUALITYCODE || '-'}</span> | 
                             <span class="font-bold text-purple-600">Tag: ${tagColor}</span>
                         </div>
-                        <div class="text-[11px] text-gray-500 truncate">
-                            Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'}
+                        <div class="text-[11px] text-gray-500 truncate mt-0.5">
+                            <span class="font-bold text-[#007a4d]">Qty: ${item.PTRAVAILABLE || '0'}</span> | 
+                            <span class="font-bold text-orange-600">Lot: ${item.LOTCODE || '-'}</span> | 
+                            Supply: ${item.SEASONSUPPLY || '0'}
                         </div>
                     </div>
                     ${thumbHtml}
