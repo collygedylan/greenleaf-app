@@ -150,7 +150,7 @@
             <div id="view-low-stock" class="hidden dylan-only">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-sm font-bold text-purple-600 uppercase">Low Stock Alerts</h2>
-                    <span class="text-xs font-bold text-gray-400">Action Required</span>
+                    <span class="text-xs font-bold text-gray-400" id="low-stock-crumb">Action Required</span>
                 </div>
                 <div id="low-stock-content"></div>
             </div>
@@ -292,7 +292,7 @@
 
         let appUsers = [];
         let fullInventory = []; 
-        let lowStockInventory = []; 
+        let lowStockInventory = []; // Holds items strictly from Low Stock sheet
         
         let currentUser = "";
         let currentRole = "";
@@ -311,6 +311,11 @@
         let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
+
+        // Low Stock State Variables
+        let lowStockViewLevel = 0;
+        let selectedLowStockName = null;
+        let selectedLowStockSize = null;
 
         // Review & Sales Office State Variables
         let reviewViewLevel = 0;
@@ -406,7 +411,7 @@
             }
             if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
             if(viewId === 'sales-office') { selectedSalesItems.clear(); renderSalesOffice(); }
-            if(viewId === 'low-stock') { renderLowStock(); }
+            if(viewId === 'low-stock') { resetLowStockView(); }
         }
 
         function setTaskTab(tab) {
@@ -437,15 +442,50 @@
         }
 
         // --- 5A. LOW STOCK VIEW (DYLAN ONLY) ---
+        function resetLowStockView() { 
+            lowStockViewLevel = 0; 
+            selectedLowStockName = null; 
+            selectedLowStockSize = null; 
+            renderLowStock(); 
+        }
+        function selectLowStockName(name) { selectedLowStockName = name; lowStockViewLevel = 1; renderLowStock(); }
+        function selectLowStockSize(size) { selectedLowStockSize = size; lowStockViewLevel = 2; renderLowStock(); }
+        function backToLowStockSizes() { lowStockViewLevel = 1; selectedLowStockSize = null; renderLowStock(); }
+
         function renderLowStock() {
             const container = document.getElementById('low-stock-content');
+            const crumb = document.getElementById('low-stock-crumb');
+            
             if (lowStockInventory.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-gray-400">No low stock items at this time.</div>`;
                 return;
             }
-            
-            // Pass the custom purple border class here
-            container.innerHTML = lowStockInventory.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
+
+            if (lowStockViewLevel === 0) {
+                crumb.innerText = "Select Plant";
+                const names = [...new Set(lowStockInventory.map(i => i.COMMONNAME))].sort();
+                container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectLowStockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
+            } 
+            else if (lowStockViewLevel === 1) {
+                crumb.innerText = selectedLowStockName;
+                const namedItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                let html = `<div class="back-btn" onclick="resetLowStockView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-purple-600 mb-4 px-2 text-xl border-b pb-2">${selectedLowStockName}</div>`;
+                html += sizes.map(s => {
+                    const count = namedItems.filter(i => i.CONTSIZE === s).length;
+                    return `<div class="drill-item" onclick="selectLowStockSize('${s}')"><span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
+                }).join('');
+                container.innerHTML = html;
+            } 
+            else if (lowStockViewLevel === 2) {
+                crumb.innerText = `${selectedLowStockName} / ${selectedLowStockSize}`;
+                let finalItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName && i.CONTSIZE === selectedLowStockSize);
+                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
+                // Uses status-purple to ensure the cards highlight as purple for Low Stock
+                container.innerHTML = `<div class="back-btn" onclick="backToLowStockSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
+            }
         }
 
         // --- 5B. SALES OFFICE ---
