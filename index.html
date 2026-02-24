@@ -406,34 +406,28 @@
         let pendingAction = null;
         let pendingTabType = null;
 
-        // Drive Mode State Variables
         let driveViewLevel = 0;
         let selectedDriveName = null;
         let selectedDriveSize = null;
 
-        // Tasks State Variables
         let activeTaskTab = "season";
         let taskViewTargetUser = null; 
         let taskViewLevel = 0; 
         let selectedTaskBlock = null;
         let selectedTaskLoc = null;
 
-        // Low Stock State Variables
         let lowStockViewLevel = 0;
         let selectedLowStockName = null;
         let selectedLowStockSize = null;
 
-        // Review & Sales Office State Variables
         let reviewViewLevel = 0;
         let selectedReviewUser = null;
         
-        // Docks State Variables
         let dockViewLevel = 0;
         let selectedDockNum = null;
         let selectedDockName = null;
         let selectedDockSize = null;
 
-        // Helper: Convert Drive Links to Tiny Thumbnails
         function getDirectImageUrl(url) {
             if (!url) return "";
             let match = url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -489,7 +483,6 @@
                             return item;
                         });
                         socInventory = res.socData || [];
-                        
                         applyRolePermissions();
                     } else {
                         showToast("Error", "Failed to load database.", true);
@@ -699,14 +692,14 @@
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
             
-            // SPECIFICALLY ONLY USES NOTES/ACTIONS PHOTOS FOR THUMBNAILS
+            // 🚨 ONLY USE NOTES & ACTIONS PHOTO FOR THUMBNAIL 🚨
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
             
             if (photoLink) {
                 let firstUrl = photoLink.split(',')[0];
+                let cleanUrl = firstUrl.trim();
                 let urlMatch = firstUrl.match(/"(http[^"]+)"/);
-                let cleanUrl = urlMatch ? urlMatch[1] : firstUrl;
-                
+                if (urlMatch) cleanUrl = urlMatch[1];
                 if (cleanUrl.startsWith('=HYPERLINK')) {
                     let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
                     if (backupMatch) cleanUrl = backupMatch[1];
@@ -804,7 +797,6 @@
                 if (photo && photo.trim() !== "") {
                     let urls = photo.split(',');
                     urls.forEach((url, idx) => {
-                        // BULLETPROOF HYPERLINK REGEX EXTRACTOR
                         let cleanUrl = url.trim();
                         let match = url.match(/"(http[^"]+)"/);
                         if (match) cleanUrl = match[1];
@@ -1017,6 +1009,7 @@
                 crumb.innerText = `${selectedLowStockName} / ${selectedLowStockSize}`;
                 let finalItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName && i.CONTSIZE === selectedLowStockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+                
                 container.innerHTML = `<div class="back-btn" onclick="backToLowStockSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
             }
         }
@@ -1402,22 +1395,27 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
+                    let match = cleanUrl.match(/"(http[^"]+)"/);
+                    if (match) cleanUrl = match[1];
                     if (cleanUrl.startsWith('=HYPERLINK')) {
                         let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
                         if (backupMatch) cleanUrl = backupMatch[1];
                     }
+                    
                     const dispName = names[i] || `Photo ${i+1}`; 
-                    phHtml += `
-                    <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
-                            <i class="ph-fill ph-image text-2xl text-blue-500"></i>
-                            <div class="flex-grow min-w-0">
-                                <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
-                                <div class="text-[10px] text-gray-400">Tap to view</div>
-                            </div>
-                            <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
-                        </a>
-                    </div>`;
+                    if(cleanUrl.startsWith('http')) {
+                        phHtml += `
+                        <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
+                                <i class="ph-fill ph-image text-2xl text-blue-500"></i>
+                                <div class="flex-grow min-w-0">
+                                    <div class="text-xs font-bold text-blue-600 truncate">${dispName}</div>
+                                    <div class="text-[10px] text-gray-400">Tap to view</div>
+                                </div>
+                                <i class="ph-bold ph-arrow-square-out text-gray-300"></i>
+                            </a>
+                        </div>`;
+                    }
                 });
                 photoList.innerHTML = phHtml; 
             } else { 
@@ -1431,22 +1429,27 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
+                    let match = cleanUrl.match(/"(http[^"]+)"/);
+                    if (match) cleanUrl = match[1];
                     if (cleanUrl.startsWith('=HYPERLINK')) {
                         let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
                         if (backupMatch) cleanUrl = backupMatch[1];
                     }
+
                     const dispName = names[i] || `Req Photo ${i+1}`; 
-                    phHtml += `
-                    <div class="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">
-                        <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
-                            <i class="ph-fill ph-image text-2xl text-purple-600"></i>
-                            <div class="flex-grow min-w-0">
-                                <div class="text-xs font-bold text-purple-700 truncate">${dispName}</div>
-                                <div class="text-[10px] text-gray-500">Tap to view</div>
-                            </div>
-                            <i class="ph-bold ph-arrow-square-out text-purple-400"></i>
-                        </a>
-                    </div>`;
+                    if(cleanUrl.startsWith('http')) {
+                        phHtml += `
+                        <div class="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">
+                            <a href="${cleanUrl}" target="_blank" class="flex-grow flex items-center gap-3">
+                                <i class="ph-fill ph-image text-2xl text-purple-600"></i>
+                                <div class="flex-grow min-w-0">
+                                    <div class="text-xs font-bold text-purple-700 truncate">${dispName}</div>
+                                    <div class="text-[10px] text-gray-500">Tap to view</div>
+                                </div>
+                                <i class="ph-bold ph-arrow-square-out text-purple-400"></i>
+                            </a>
+                        </div>`;
+                    }
                 });
                 reqPhotoList.innerHTML = phHtml; 
             } else { 
