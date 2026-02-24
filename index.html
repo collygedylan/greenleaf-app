@@ -164,7 +164,7 @@
                 </div>
 
                 <div id="admin-files-section" class="hidden admin-only mt-8">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Recently Processed Sheets</h2>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Recently Processed Source Files</h2>
                     <div id="admin-files-list" class="space-y-2">
                         <div class="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs">
                             <div class="spinner !w-4 !h-4 !border-2 !border-gray-200 !border-t-[#007a4d]"></div>
@@ -481,7 +481,7 @@
                 .then(response => response.json())
                 .then(res => {
                     if (res.status === 'success') {
-                        // NEW: Assign a purely unique DOM_ID to every row so the UI can independently select identical items
+                        // Assign a purely unique DOM_ID to every row so the UI can independently select identical items
                         fullInventory = res.data.map((item, idx) => {
                             item.DOM_ID = 'fi_' + idx;
                             return item;
@@ -1191,6 +1191,7 @@
         function openDetail(uniqueId, sourceView) {
             lastView = sourceView;
             
+            // Search the master inventory first, but if coming from low-stock, check that specialized array
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) activeItem = lowStockInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) return;
