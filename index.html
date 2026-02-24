@@ -8,14 +8,12 @@
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="GNC LOGO.png">
-    <link rel="apple-touch-icon" href="GNC LOGO.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <style>
-        :root { --brand-green: #007a4d; --brand-gold: #e3a000; --text-main: #111827; }
+        :root { --brand-green: #007a4d; --text-main: #111827; }
         body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
         
@@ -44,10 +42,9 @@
         .drill-item:active { background: #f3f4f6; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
 
-        .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; }
+        .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer;}
         .status-green { border-left-color: #22c55e; } 
-        .status-default { border-left-color: #e5e7eb; } 
-
+        
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
@@ -62,11 +59,13 @@
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
         .full-width { grid-column: span 2; }
 
-        /* LOADING SPINNER */
+        /* ACCORDION EXPAND STYLES */
+        .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
+        .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb; }
+        .expanded .expand-content { display: block; }
+
         .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #request-form-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; flex-direction: column; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -75,16 +74,12 @@
 
     <div id="view-login">
         <div class="login-card">
-            <div class="text-3xl text-[#007a4d] font-bold mb-6 flex flex-col items-center justify-center gap-3">
-                DC-01
-            </div>
-            
+            <div class="text-3xl text-[#007a4d] font-bold mb-6">DC-01</div>
             <div id="login-inputs">
                 <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME">
                 <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD">
                 <button class="w-full bg-[#007a4d] text-white font-bold py-3 rounded-lg shadow-md" onclick="handleLogin()">LOGIN</button>
             </div>
-            
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
                 <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Syncing Database...</div>
@@ -93,7 +88,6 @@
     </div>
 
     <div id="app-wrapper" class="hidden h-full flex flex-col">
-        
         <header class="nav-header sticky top-0 z-50 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
@@ -119,16 +113,10 @@
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
-                    <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md mx-auto">
                     <h1 class="text-2xl font-bold">DC-01</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
-                <div class="bg-white p-4 rounded-2xl mb-6 shadow-lg border border-gray-100">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2 mb-3"><i class="ph-fill ph-cloud-sun text-xl text-blue-500"></i> Local Weather</h2>
-                    <a class="weatherwidget-io" href="https://forecast7.com/en/35d76n94d97/park-hill/" data-label_1="PARK HILL, OK" data-theme="pure" >PARK HILL WEATHER</a>
-                </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
@@ -149,7 +137,7 @@
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
                 
-                <div id="team-selector" class="hidden mb-4 grid grid-cols-2 gap-2">
+                <div id="team-selector" class="hidden mb-4 grid grid-cols-1 gap-3">
                     </div>
                 
                 <div id="task-tabs-container" class="task-tabs">
@@ -178,6 +166,13 @@
                         <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                     </div>
+
+                    <div id="expand-section" class="mt-6">
+                        <div class="expand-trigger" onclick="toggleExpand()">
+                            <span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i>
+                        </div>
+                        <div id="expand-content" class="expand-content"></div>
+                    </div>
                 </div>
                 
                 <div id="det-actions-content" class="hidden py-4">
@@ -205,7 +200,7 @@
 
             <div id="view-review" class="hidden admin-only">
                 <h2 class="text-sm font-bold text-red-500 uppercase mb-4">Manager Review</h2>
-                <div id="review-content" class="text-gray-500 text-sm">Manager data goes here.</div>
+                <div id="review-content" class="text-gray-500 text-sm">Manager dashboard integration coming soon.</div>
             </div>
 
         </div>
@@ -216,8 +211,6 @@
             <div onclick="switchView('tasks')"><i class="ph-bold ph-clipboard-text text-2xl text-gray-400"></i></div>
         </nav>
     </div>
-
-    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhJ_tytv5Rm2ag44liZAU6nsp0lQ7-9PLmjxrcuT1WA1WARubi7NyolYoTZ_qvZmzo/exec";
@@ -247,11 +240,8 @@
             fetch(GOOGLE_SCRIPT_URL + "?action=getAppUsers")
                 .then(response => response.json())
                 .then(res => {
-                    if (res.status === 'success') {
-                        appUsers = res.data;
-                    } else {
-                        showToast("Error", "Could not load users.", true);
-                    }
+                    if (res.status === 'success') { appUsers = res.data; } 
+                    else { showToast("Error", "Could not load users.", true); }
                 });
         };
 
@@ -292,10 +282,8 @@
         function applyRolePermissions() {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
-
             const isAdmin = (currentRole === 'Admin');
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-            
             switchView('home');
         }
 
@@ -333,7 +321,7 @@
             activeTaskTab = tab;
             document.getElementById('tab-season').classList.toggle('active', tab === 'season');
             document.getElementById('tab-location').classList.toggle('active', tab === 'location');
-            taskViewLevel = 0; // reset drill down when switching tabs
+            taskViewLevel = 0; // reset drill down
             renderTasks();
         }
 
@@ -344,7 +332,7 @@
             return match ? match[0] : loc.substring(0,2);
         }
 
-        function generateCard(item, index, sourceView) {
+        function generateCard(item, sourceView) {
             return `
             <div class="inv-card status-green" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
                 <div class="flex justify-between font-bold text-sm mb-1">
@@ -399,7 +387,7 @@
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, null, 'drive')).join('');
+                container.innerHTML = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'drive')).join('');
             }
         }
 
@@ -408,14 +396,13 @@
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
             document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their assigned rows.</div>`;
-            document.getElementById('task-crumb').innerText = "Team View";
+            document.getElementById('task-crumb').innerText = "Admin Team View";
 
-            // Only show field reps for assignment views
-            const reps = appUsers.filter(u => u.role === 'Field Rep');
+            // Specifically explicitly requesting Dylan, Morgan, Kayla
+            const targetNames = ["Dylan", "Morgan", "Kayla"];
             let teamHtml = "";
-            reps.forEach(u => {
-                const displayName = u.username.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
-                teamHtml += `<div class="p-4 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-center font-bold cursor-pointer" onclick="setTaskUser('${u.username}')">${displayName}</div>`;
+            targetNames.forEach(name => {
+                teamHtml += `<div class="p-5 border border-blue-200 bg-blue-50 text-blue-800 rounded-lg text-center font-bold text-lg cursor-pointer" onclick="setTaskUser('${name}')">${name}</div>`;
             });
             document.getElementById('team-selector').innerHTML = teamHtml;
         }
@@ -438,14 +425,12 @@
             let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(userToView.toLowerCase()));
 
             // Filter 2: Season vs Location 
-            // In the Google Script, Season rows have Priority > 0 AND PtrAvailable > 10% of SeasonSupply
-            // Location rows have Priority > 0 AND PtrAvailable <= 10% of SeasonSupply
             myItems = myItems.filter(i => {
                 const pri = parseFloat(i.PRIORITY);
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
                 const ss = parseFloat(i.SEASONSUPPLY) || 0;
                 
-                if (isNaN(pri) || pri <= 0) return false; // Must have priority
+                if (isNaN(pri) || pri <= 0) return false; 
                 
                 const isSeason = ptr > (ss * 0.10);
                 if (activeTaskTab === 'season') return isSeason;
@@ -454,7 +439,7 @@
             });
 
             const displayUser = userToView.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            const tabLabel = (activeTaskTab === 'season') ? 'Season' : 'Location';
+            const tabLabel = (activeTaskTab === 'season') ? 'Season Notes' : 'Location Notes';
 
             if (myItems.length === 0) {
                 container.innerHTML = `<div class="back-btn" onclick="if(currentRole==='Admin'){taskViewTargetUser=null; renderTeamSelector();}"><i class="ph-bold ph-arrow-left"></i> Change User</div><div class="p-8 text-center text-gray-400">No tasks assigned here.</div>`;
@@ -474,7 +459,7 @@
 
                 html += blocks.map(b => {
                     const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
-                    return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
                 container.innerHTML = html;
             } 
@@ -487,7 +472,7 @@
                 container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + 
                 locs.map(l => {
                     const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
-                    return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right"></i></div>`;
+                    return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
             } 
             // LEVEL 2: Show Items (Accordion Leaves)
@@ -497,14 +482,14 @@
                 items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
                 
                 container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + 
-                items.map(i => generateCard(i, null, 'tasks')).join('');
+                items.map(i => generateCard(i, 'tasks')).join('');
             }
         }
 
         function selectTaskBlock(b) { selectedTaskBlock = b; taskViewLevel = 1; renderTasks(); }
         function selectTaskLoc(l) { selectedTaskLoc = l; taskViewLevel = 2; renderTasks(); }
 
-        // --- 8. DETAIL VIEW (Notes & Actions) ---
+        // --- 8. DETAIL VIEW (Notes & Actions & Accordion) ---
         function openDetail(uniqueId, sourceView) {
             lastView = sourceView;
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
@@ -523,12 +508,16 @@
             document.getElementById('ov-season').innerText = activeItem.SEASONSUPPLY || "--";
             document.getElementById('ov-prior').innerText = activeItem.PRIORITY || "--";
 
-            // Populate Action Inputs (Using values from the database!)
+            // Populate Action Inputs
             document.getElementById('in-match').value = activeItem.MATCH || activeItem.MATCHPCT || "";
             document.getElementById('in-spec').value = activeItem.SPEC || "";
             document.getElementById('in-pick').value = activeItem.PIC_NOTE || activeItem.PICKNOTE || activeItem.PICK || "";
             document.getElementById('in-sales-desc').value = activeItem.SALES_NOTE || activeItem.SALESNOTE || activeItem.SALESDESC || "";
             
+            // Close Accordion by default when opening a new item
+            document.getElementById('expand-section').classList.remove('expanded');
+            document.getElementById('expand-content').innerHTML = '';
+
             switchDetailTab('overview');
         }
 
@@ -545,7 +534,33 @@
             activeItem = null;
         }
 
-        // Send Data back to Google Sheet
+        // --- ACCORDION LOGIC ---
+        function toggleExpand() { 
+            const section = document.getElementById('expand-section'); 
+            if (!section.classList.contains('expanded')) { 
+                renderAllFields(); 
+            } 
+            section.classList.toggle('expanded'); 
+        }
+
+        function renderAllFields() {
+            if(!activeItem) return;
+            // Hide specific columns from the massive list if needed
+            const hiddenKeys = ['UNIQUE_ID', 'UNIQUEID', 'ASSIGNEDTO']; 
+            
+            let html = '<div class="grid grid-cols-1 gap-2">';
+            for (const [key, value] of Object.entries(activeItem)) { 
+                if(hiddenKeys.includes(key)) continue; 
+                html += `<div class="flex justify-between border-b border-gray-200 py-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase w-1/3 break-words">${key}</span>
+                            <span class="text-xs text-gray-800 font-semibold w-2/3 text-right break-words">${value || '-'}</span>
+                         </div>`; 
+            }
+            html += '</div>'; 
+            document.getElementById('expand-content').innerHTML = html;
+        }
+
+        // --- SAVE DATA LOGIC ---
         function saveData() {
             const btn = document.getElementById('btn-save');
             btn.innerText = "SAVING...";
