@@ -395,7 +395,6 @@
         let lastView = "";
         let activeDetailTab = "overview";
 
-        // GLOBAL MULTI-SELECT STATE
         let selectedItems = new Set();
         let isMultiSelectMode = false;
         let pressTimer = null;
@@ -492,7 +491,6 @@
 
         function fetchRecentFiles() {
             if (currentRole !== 'Admin') return;
-            
             fetch(GOOGLE_SCRIPT_URL + "?action=getRecentFiles")
                 .then(r => r.json())
                 .then(res => {
@@ -502,7 +500,6 @@
                             container.innerHTML = `<div class="bg-white p-4 rounded-xl border border-gray-100 text-center text-xs text-gray-400">No recent files found.</div>`;
                             return;
                         }
-                        
                         container.innerHTML = res.data.map(f => {
                             const d = new Date(f.date);
                             const dateStr = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
@@ -528,21 +525,17 @@
         function applyRolePermissions() {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
-            
             const isAdmin = (currentRole === 'Admin');
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-            
             if (isAdmin) {
                 document.getElementById('admin-files-section').classList.remove('hidden');
                 fetchRecentFiles();
             }
-
             const isDylan = (currentUser === 'dylan_collyge' || currentUser === 'dylan');
             document.querySelectorAll('.dylan-only').forEach(el => {
                 el.style.display = isDylan ? 'block' : 'none';
                 el.classList.remove('hidden'); 
             });
-
             switchView('home');
         }
 
@@ -609,12 +602,10 @@
         function startPress(e, domId) {
             if (isMultiSelectMode) return;
             isLongPress = false;
-            
             if(e.type === 'touchstart') {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
             }
-            
             pressTimer = setTimeout(() => {
                 isLongPress = true;
                 if (navigator.vibrate) navigator.vibrate(50); 
@@ -697,17 +688,13 @@
 
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
-            let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
             
+            let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
             if (photoLink) {
                 let firstUrl = photoLink.split(',')[0];
                 let cleanUrl = firstUrl.trim();
-                let urlMatch = firstUrl.match(/"(http[^"]+)"/);
+                let urlMatch = firstUrl.match(/(https?:\/\/[^"\s]+)/);
                 if (urlMatch) cleanUrl = urlMatch[1];
-                if (cleanUrl.startsWith('=HYPERLINK')) {
-                    let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
-                    if (backupMatch) cleanUrl = backupMatch[1];
-                }
 
                 let thumbUrl = getDirectImageUrl(cleanUrl);
                 if (thumbUrl.startsWith('http')) {
@@ -800,15 +787,14 @@
                 let photo = tabType === 'request' ? i.REQ_PHOTO_LINK : (i.SAVED_PHOTO_LINK || i['PHOTO LINK'] || i.PHOTOLINK);
                 if (photo && photo.trim() !== "") {
                     let urls = photo.split(',');
-                    urls.forEach((url, idx) => {
+                    let counter = 1;
+                    urls.forEach(url => {
                         let cleanUrl = url.trim();
-                        let match = url.match(/"(http[^"]+)"/);
-                        if (match) cleanUrl = match[1];
-                        if (cleanUrl.startsWith('=HYPERLINK')) {
-                            let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
-                            if (backupMatch) cleanUrl = backupMatch[1];
+                        let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
+                        if (match) {
+                            returnText += `  Photo ${counter}: ${match[1]}\n`;
+                            counter++;
                         }
-                        if(cleanUrl.startsWith('http')) returnText += `  Photo ${idx + 1}: ${cleanUrl}\n`;
                     });
                 }
                 returnText += `\n`;
@@ -900,7 +886,6 @@
             
             if (dockViewLevel === 0) {
                 crumb.innerText = "Select a Dock";
-                
                 let activeDocks = new Set();
                 if (term) {
                     socInventory.forEach(i => {
@@ -924,13 +909,10 @@
                 
                 if (activeDocks.size === 0) {
                     container.innerHTML = `<div class="p-8 text-center text-gray-400">No docks contain plants matching "${term}".</div>`;
-                } else {
-                    container.innerHTML = html;
-                }
+                } else { container.innerHTML = html; }
             } 
             else if (dockViewLevel === 1) {
                 crumb.innerText = `Dock ${selectedDockNum} > Plants`;
-                
                 let dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum);
                 
                 if (term) {
@@ -946,7 +928,6 @@
                 }
                 
                 const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
-                
                 let html = `<div class="back-btn" onclick="dockViewLevel=0; document.getElementById('docks-search').value=''; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
@@ -955,7 +936,6 @@
                 crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > Sizes`;
                 const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum && (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown') === selectedDockName);
                 const sizes = [...new Set(dockItems.map(i => i.CONTSIZE || i.SIZE || i.CONTAINER || '-'))].sort();
-
                 let html = `<div class="back-btn" onclick="dockViewLevel=1; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-orange-600 mb-4 px-2 text-xl border-b border-orange-100 pb-2">${selectedDockName}</div>`;
                 html += sizes.map(s => `<div class="drill-item" onclick="selectDockSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
@@ -1001,7 +981,6 @@
                 crumb.innerText = selectedLowStockName;
                 const namedItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
                 let html = `<div class="back-btn" onclick="resetLowStockView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-purple-600 mb-4 px-2 text-xl border-b pb-2">${selectedLowStockName}</div>`;
                 html += sizes.map(s => {
                     const count = namedItems.filter(i => i.CONTSIZE === s).length;
@@ -1013,7 +992,6 @@
                 crumb.innerText = `${selectedLowStockName} / ${selectedLowStockSize}`;
                 let finalItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName && i.CONTSIZE === selectedLowStockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToLowStockSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
             }
         }
@@ -1104,7 +1082,6 @@
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
                 let html = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedDriveName}</div>`;
                 html += sizes.map(s => {
                     const count = namedItems.filter(i => i.CONTSIZE === s).length;
@@ -1331,15 +1308,7 @@
         function uploadPhotoToDrive(base64Data, filename) {
             showToast("Uploading...", "Sending to Google Drive...", false);
             
-            // 🚨 THIS IS THE CRASH FIX! 🚨 
-            // It safely checks which button to disable based on what tab you are on.
-            let btn;
-            if (activeDetailTab === 'request') {
-                btn = document.getElementById('req-btn-save-draft');
-            } else {
-                btn = document.getElementById('btn-save-complete');
-            }
-            
+            let btn = activeDetailTab === 'request' ? document.getElementById('req-btn-save-draft') : document.getElementById('btn-save-complete');
             if (btn) {
                 btn.innerText = "UPLOADING...";
                 btn.disabled = true;
@@ -1412,12 +1381,8 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
-                    let match = cleanUrl.match(/"(http[^"]+)"/);
+                    let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
                     if (match) cleanUrl = match[1];
-                    if (cleanUrl.startsWith('=HYPERLINK')) {
-                        let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
-                        if (backupMatch) cleanUrl = backupMatch[1];
-                    }
                     
                     const dispName = names[i] || `Photo ${i+1}`; 
                     if(cleanUrl.startsWith('http')) {
@@ -1446,12 +1411,8 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
-                    let match = cleanUrl.match(/"(http[^"]+)"/);
+                    let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
                     if (match) cleanUrl = match[1];
-                    if (cleanUrl.startsWith('=HYPERLINK')) {
-                        let backupMatch = cleanUrl.match(/"(http[^"]+)"/);
-                        if (backupMatch) cleanUrl = backupMatch[1];
-                    }
 
                     const dispName = names[i] || `Req Photo ${i+1}`; 
                     if(cleanUrl.startsWith('http')) {
