@@ -46,6 +46,7 @@
 
         .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; cursor: pointer; flex-grow: 1;}
         .status-green { border-left-color: #22c55e; } 
+        .status-purple { border-left-color: #9333ea; } /* Purple border specifically for Low Stock */
         
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
@@ -118,7 +119,9 @@
             <div class="drawer-item" onclick="switchView('home'); toggleMenu();"><i class="ph-bold ph-house"></i> Home</div>
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
+            
             <div class="drawer-item text-purple-600 font-bold admin-only" onclick="switchView('sales-office'); toggleMenu();"><i class="ph-bold ph-briefcase"></i> Sales Office</div>
+            <div class="drawer-item text-purple-600 font-bold dylan-only hidden" onclick="switchView('low-stock'); toggleMenu();"><i class="ph-bold ph-trend-down"></i> Low Stock List</div>
             <div class="drawer-item text-red-600 font-bold admin-only" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
             <hr class="my-2">
             <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
@@ -137,8 +140,19 @@
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
                     
                     <div onclick="switchView('sales-office')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 admin-only"><i class="ph-bold ph-briefcase text-3xl"></i><span class="font-bold">Sales Office</span></div>
+                    
+                    <div onclick="switchView('low-stock')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 dylan-only hidden"><i class="ph-bold ph-trend-down text-3xl"></i><span class="font-bold">Low Stock List</span></div>
+                    
                     <div onclick="switchView('review')" class="home-btn col-span-2 text-red-600 border-red-200 bg-red-50 admin-only"><i class="ph-bold ph-warning-circle text-3xl"></i><span class="font-bold">Manager Review</span></div>
                 </div>
+            </div>
+
+            <div id="view-low-stock" class="hidden dylan-only">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-purple-600 uppercase">Low Stock Alerts</h2>
+                    <span class="text-xs font-bold text-gray-400">Action Required</span>
+                </div>
+                <div id="low-stock-content"></div>
             </div>
 
             <div id="view-sales-office" class="hidden admin-only">
@@ -153,7 +167,6 @@
                     <button onclick="batchAction('text')" class="flex-1 bg-green-100 text-green-700 p-2 rounded-lg text-xs font-bold hover:bg-green-200"><i class="ph-bold ph-chat block text-lg mb-1"></i> Text</button>
                     <button onclick="openAssignModal()" class="flex-1 bg-purple-600 text-white p-2 rounded-lg text-xs font-bold shadow-md"><i class="ph-bold ph-user-plus block text-lg mb-1"></i> Assign</button>
                 </div>
-
                 <div id="sales-office-content"></div>
             </div>
 
@@ -279,6 +292,8 @@
 
         let appUsers = [];
         let fullInventory = []; 
+        let lowStockInventory = []; 
+        
         let currentUser = "";
         let currentRole = "";
         
@@ -338,6 +353,7 @@
                 .then(res => {
                     if (res.status === 'success') {
                         fullInventory = res.data;
+                        lowStockInventory = res.lowStock || []; // Populate the specialized array
                         applyRolePermissions();
                     } else {
                         showToast("Error", "Failed to load database.", true);
@@ -349,8 +365,17 @@
         function applyRolePermissions() {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
+            
             const isAdmin = (currentRole === 'Admin');
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
+            
+            // Unhide elements tagged .dylan-only specifically for dylan_collyge
+            const isDylan = (currentUser === 'dylan_collyge' || currentUser === 'dylan');
+            document.querySelectorAll('.dylan-only').forEach(el => {
+                el.style.display = isDylan ? 'block' : 'none';
+                el.classList.remove('hidden'); // ensuring tailwind hidden doesn't conflict
+            });
+
             switchView('home');
         }
 
@@ -369,7 +394,7 @@
 
         // --- 4. VIEW NAVIGATION ---
         function switchView(viewId) {
-            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-detail'].forEach(id => { 
+            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail'].forEach(id => { 
                 document.getElementById(id).classList.add('hidden'); 
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
@@ -381,6 +406,7 @@
             }
             if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
             if(viewId === 'sales-office') { selectedSalesItems.clear(); renderSalesOffice(); }
+            if(viewId === 'low-stock') { renderLowStock(); }
         }
 
         function setTaskTab(tab) {
@@ -397,9 +423,9 @@
             return match ? match[0] : loc.substring(0,2);
         }
 
-        function generateCard(item, sourceView) {
+        function generateCard(item, sourceView, colorClass = 'status-green') {
             return `
-            <div class="inv-card status-green" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
+            <div class="inv-card ${colorClass}" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
                 <div class="flex justify-between font-bold text-sm mb-1">
                     <span class="text-[#007a4d]">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
                     <span>${item.CONTSIZE || '-'}</span>
@@ -410,11 +436,22 @@
             </div>`;
         }
 
-        // --- 5A. SALES OFFICE ---
+        // --- 5A. LOW STOCK VIEW (DYLAN ONLY) ---
+        function renderLowStock() {
+            const container = document.getElementById('low-stock-content');
+            if (lowStockInventory.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No low stock items at this time.</div>`;
+                return;
+            }
+            
+            // Pass the custom purple border class here
+            container.innerHTML = lowStockInventory.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
+        }
+
+        // --- 5B. SALES OFFICE ---
         function renderSalesOffice() {
             const container = document.getElementById('sales-office-content');
             
-            // Filter: Only Completed AND qualifies as a Season Sales Note (PTR > 10% Supply)
             let officeItems = fullInventory.filter(i => {
                 if (!i.DATE_COMPLETED || i.DATE_COMPLETED === "") return false;
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
@@ -428,7 +465,6 @@
                 return;
             }
 
-            // Sort by Location
             officeItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
 
             container.innerHTML = officeItems.map(i => {
@@ -455,7 +491,7 @@
             else bar.classList.add('hidden');
         }
 
-        // --- 5B. BATCH ACTIONS LOGIC ---
+        // --- 5C. BATCH ACTIONS LOGIC ---
         function getSelectedItemsText() {
             let items = fullInventory.filter(i => selectedSalesItems.has(i.UNIQUE_ID));
             return items.map(i => `${i.COMMONNAME} (${i.CONTSIZE}) - Loc: ${i.LOCATIONCODE} - Qty Avail: ${i.PTRAVAILABLE}\nSales Note: ${i.SALES_NOTE}`).join('\n\n');
@@ -482,17 +518,11 @@
             
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    type: 'batch_assign',
-                    ids: ids,
-                    assignTo: user
-                })
+                body: JSON.stringify({ type: 'batch_assign', ids: ids, assignTo: user })
             }).then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     showToast("Success", `Assigned to ${user} and email sent!`);
-                    
-                    // Locally update the UI so they drop out of completed status
                     ids.forEach(id => {
                         let item = fullInventory.find(i => i.UNIQUE_ID === id);
                         if (item) {
@@ -500,16 +530,13 @@
                             item.DATE_COMPLETED = ""; 
                         }
                     });
-                    
                     selectedSalesItems.clear();
                     renderSalesOffice();
-                } else {
-                    showToast("Error", "Assignment failed", true);
-                }
+                } else { showToast("Error", "Assignment failed", true); }
             }).catch(err => showToast("Error", "Network error.", true));
         }
 
-        // --- 5C. MANAGER REVIEW ---
+        // --- 5D. MANAGER REVIEW ---
         function renderReview() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
@@ -620,7 +647,12 @@
             const crumb = document.getElementById('task-crumb');
             
             let userToView = (currentRole === 'Admin') ? taskViewTargetUser : currentUser;
-            let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(userToView.toLowerCase()));
+            
+            // Map the system username to the display name used in the ASSIGNEDTO column
+            let searchName = userToView;
+            if (userToView === 'dylan_collyge') searchName = 'Dylan';
+
+            let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(searchName.toLowerCase()));
 
             myItems = myItems.filter(i => {
                 // If it is already marked complete, hide it from the Tasks view
@@ -638,7 +670,7 @@
                 return true;
             });
 
-            const displayUser = userToView.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const displayUser = searchName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
             const tabLabel = (activeTaskTab === 'season') ? 'Season Notes' : 'Location Notes';
 
             if (myItems.length === 0) {
@@ -687,10 +719,16 @@
         // --- 8. DETAIL VIEW (Notes & Actions & Accordion) ---
         function openDetail(uniqueId, sourceView) {
             lastView = sourceView;
+            
+            // Search the master inventory first, but if coming from low-stock, check that specialized array
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
+            if (!activeItem && sourceView === 'low-stock') {
+                activeItem = lowStockInventory.find(i => i.UNIQUE_ID === uniqueId);
+            }
+            
             if (!activeItem) return;
 
-            ['view-drive','view-tasks','view-review','view-sales-office'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['view-drive','view-tasks','view-review','view-sales-office','view-low-stock'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-detail').classList.remove('hidden');
             
             // Sync current items with object dictionary
@@ -741,9 +779,10 @@
             document.getElementById('view-detail').classList.add('hidden');
             document.getElementById('view-' + lastView).classList.remove('hidden');
             
-            if(lastView === 'review') renderReview(); // Ensure the view gets refreshed
+            if(lastView === 'review') renderReview(); 
             if(lastView === 'tasks') renderTasks();
             if(lastView === 'sales-office') renderSalesOffice();
+            if(lastView === 'low-stock') renderLowStock();
             
             activeItem = null;
         }
@@ -804,17 +843,14 @@
             btn.innerText = "UPLOADING...";
             btn.disabled = true;
 
-            // SMART ROUTER: Figure out which screen we are currently inside of
             let context = "drive"; // Default fallback
             
-            if (lastView === 'drive') {
-                context = "drive";
-            } else if (lastView === 'tasks') {
+            if (lastView === 'drive') context = "drive";
+            else if (lastView === 'tasks') {
                 if (activeTaskTab === 'season') context = "season";
                 if (activeTaskTab === 'location') context = "location";
-            } else if (lastView === 'review' || lastView === 'sales-office') {
-                context = "request";
-            }
+            } 
+            else if (lastView === 'review' || lastView === 'sales-office' || lastView === 'low-stock') context = "request";
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
@@ -823,7 +859,7 @@
                     image: base64Data, 
                     mimeType: "image/jpeg", 
                     filename: filename,
-                    folderContext: context  // <--- Tells Code.gs which folder to use!
+                    folderContext: context 
                 })
             })
             .then(res => res.json())
@@ -841,7 +877,7 @@
                     activeItem.SAVED_PHOTO_NAME = names.join(',');
                     
                     renderPhotoPreview(); 
-                    saveData(false); // Just save as draft when photo uploads so they don't lose it if they close the app
+                    saveData(false); 
                 } else {
                     showToast("Error", "Upload failed.", true);
                 }
@@ -895,8 +931,6 @@
             activeItem.SPEC = document.getElementById('in-spec').value;
             activeItem.CALIPER = document.getElementById('in-caliper').value;
             activeItem.PICK = document.getElementById('in-pick').value;
-            
-            // Ensures text is strictly capitalized upon saving (acts as a backup to the visual HTML forcing)
             activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value.toUpperCase();
 
             const payload = {
@@ -909,7 +943,7 @@
                 salesDesc: activeItem.SALES_NOTE,
                 photoLink: activeItem.SAVED_PHOTO_LINK || "", 
                 photoName: activeItem.SAVED_PHOTO_NAME || "",
-                isComplete: isComplete // Tells backend to stamp the Date
+                isComplete: isComplete 
             };
 
             fetch(GOOGLE_SCRIPT_URL, {
