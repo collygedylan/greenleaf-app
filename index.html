@@ -4,76 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GNC SALES PRO</title>
-    
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="GNC LOGO.png">
     <link rel="apple-touch-icon" href="GNC LOGO.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <style>
         :root { --brand-green: #007a4d; --text-main: #111827; }
-        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; }
+        body { font-family: "Amazon Ember", Arial, sans-serif; background-color: white; color: var(--text-main); overscroll-behavior-y: contain; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .nav-header { background: var(--brand-green); color: white; padding-top: max(10px, env(safe-area-inset-top)); }
-        
-        /* LOGIN STYLES */
         #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--brand-green); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; }
         .input-field { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
-
-        /* TOAST */
         #toast-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #16a34a; color: white; padding: 16px 24px; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); z-index: 11000; transition: top 0.5s; display: flex; align-items: center; gap: 12px; pointer-events: none; }
         #toast-notification.show { top: 20px; }
-        
-        /* SIDEBAR */
         #side-drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: left 0.3s; }
         #side-drawer.open { left: 0; }
         #drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
         #drawer-overlay.open { display: block; }
         .drawer-header { background: var(--brand-green); color: white; padding: 20px; font-weight: bold; font-size: 18px; }
         .drawer-item { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; align-items: center; gap: 12px; color: #374151; font-weight: 500; }
-
-        /* CARDS & UI */
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
-        
         .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; }
         .drill-item:active { background: #f3f4f6; }
         .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
-
         .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; background: white; cursor: pointer; flex-grow: 1; }
         .status-green { border-left-color: #22c55e; } 
         .status-purple { border-left-color: #9333ea; } 
         .status-orange { border-left-color: #f97316; } 
-        
         .task-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .task-tab { flex: 1; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
         .task-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-
         .detail-tabs { display: flex; border-bottom: 1px solid #e5e7eb; background: #f9fafb; margin-bottom: 10px; }
         .detail-tab { flex: 1; text-align: center; padding: 14px; font-size: 13px; font-weight: 700; color: #6b7280; cursor: pointer; border-bottom: 3px solid transparent; }
         .detail-tab.active { color: var(--brand-green); border-bottom-color: var(--brand-green); background: white; }
-        
         .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .overview-card { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .overview-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
         .overview-val { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
-        .full-width { grid-column: span 2; }
-
-        /* ACCORDION EXPAND STYLES */
         .expand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; border: 1px solid #e5e7eb; }
         .expand-content { display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb; }
         .expanded .expand-content { display: block; }
-
+        .card-checkbox-container { width: 0; overflow: hidden; opacity: 0; transition: width 0.3s, opacity 0.3s, margin 0.3s; }
+        body.multi-select-mode .card-checkbox-container { width: 24px; opacity: 1; margin-right: 12px; }
+        .item-row { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
-
     <div id="toast-notification"></div>
 
     <div id="view-login">
@@ -121,7 +103,6 @@
             <div class="drawer-item" onclick="switchView('drive'); toggleMenu();"><i class="ph-bold ph-car"></i> Drive Mode</div>
             <div class="drawer-item" onclick="switchView('tasks'); toggleMenu();"><i class="ph-bold ph-clipboard-text"></i> My Tasks</div>
             <div class="drawer-item text-orange-600 font-bold" onclick="switchView('docks'); toggleMenu();"><i class="ph-bold ph-truck"></i> Docks</div>
-            
             <hr class="my-2">
             <div class="drawer-item text-purple-600 font-bold admin-only" onclick="switchView('sales-office'); toggleMenu();"><i class="ph-bold ph-briefcase"></i> Sales Office</div>
             <div class="drawer-item text-purple-600 font-bold dylan-only hidden" onclick="switchView('low-stock'); toggleMenu();"><i class="ph-bold ph-trend-down"></i> Low Stock List</div>
@@ -131,33 +112,23 @@
         </div>
 
         <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-40 relative">
-            
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
                     <h1 class="text-2xl font-bold">GNC SALES PRO</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div onclick="switchView('tasks')" class="home-btn"><i class="ph-bold ph-clipboard-text text-3xl text-[#007a4d]"></i><span class="font-bold">Tasks</span></div>
                     <div onclick="switchView('drive')" class="home-btn"><i class="ph-bold ph-car text-3xl text-blue-600"></i><span class="font-bold">Drive Mode</span></div>
-                    
                     <div onclick="switchView('docks')" class="home-btn col-span-2 border-orange-200 bg-orange-50 text-orange-700"><i class="ph-bold ph-truck text-3xl"></i><span class="font-bold">Docks</span></div>
-
                     <div onclick="switchView('sales-office')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 admin-only"><i class="ph-bold ph-briefcase text-3xl"></i><span class="font-bold">Sales Office</span></div>
-                    
                     <div onclick="switchView('low-stock')" class="home-btn col-span-2 text-purple-600 border-purple-200 bg-purple-50 dylan-only hidden"><i class="ph-bold ph-trend-down text-3xl"></i><span class="font-bold">Low Stock List</span></div>
-                    
                     <div onclick="switchView('review')" class="home-btn col-span-2 text-red-600 border-red-200 bg-red-50 admin-only"><i class="ph-bold ph-warning-circle text-3xl"></i><span class="font-bold">Manager Review</span></div>
                 </div>
-
                 <div id="admin-files-section" class="hidden admin-only mt-8">
                     <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Recently Processed Sheets</h2>
                     <div id="admin-files-list" class="space-y-2">
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs">
-                            <div class="spinner !w-4 !h-4 !border-2 !border-gray-200 !border-t-[#007a4d]"></div>
-                            Loading files...
-                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs"><div class="spinner !w-4 !h-4 !border-2 !border-gray-200 !border-t-[#007a4d]"></div>Loading files...</div>
                     </div>
                 </div>
             </div>
@@ -198,9 +169,7 @@
                     <h2 class="text-sm font-bold text-gray-400 uppercase">My Tasks</h2>
                     <span id="task-crumb" class="text-xs font-bold text-[#007a4d]"></span>
                 </div>
-                
                 <div id="team-selector" class="hidden mb-4 grid grid-cols-1 gap-3"></div>
-                
                 <div id="task-tabs-container" class="task-tabs">
                     <div id="tab-season" class="task-tab active" onclick="setTaskTab('season')">Season Sales Notes</div>
                     <div id="tab-location" class="task-tab" onclick="setTaskTab('location')">Location Sales Notes</div>
@@ -220,12 +189,10 @@
                 <div class="back-btn" onclick="goBackFromDetail()"><i class="ph-bold ph-arrow-left"></i> Back</div>
                 <h1 id="det-common" class="text-2xl font-bold text-[#007a4d]">--</h1>
                 <p id="det-size" class="text-gray-500 font-bold mb-4">--</p>
-                
                 <div class="detail-tabs">
                     <div class="detail-tab active" onclick="switchDetailTab('overview')" id="dtab-overview">Overview</div>
                     <div class="detail-tab" onclick="switchDetailTab('actions')" id="dtab-actions">Notes & Actions</div>
                 </div>
-                
                 <div id="det-overview-content" class="py-4">
                     <div class="overview-grid">
                         <div class="overview-card"><div class="overview-label">Location</div><div id="ov-loc" class="overview-val">--</div></div>
@@ -235,7 +202,6 @@
                         <div class="overview-card"><div class="overview-label">Season Supply</div><div id="ov-season" class="overview-val">--</div></div>
                         <div class="overview-card"><div class="overview-label">Priority</div><div id="ov-prior" class="overview-val">--</div></div>
                     </div>
-
                     <div id="expand-section" class="mt-6">
                         <div class="expand-trigger" onclick="toggleExpand()">
                             <span>View All Excel Columns</span><i class="ph-bold ph-caret-down"></i>
@@ -243,14 +209,11 @@
                         <div id="expand-content" class="expand-content"></div>
                     </div>
                 </div>
-                
                 <div id="det-actions-content" class="hidden py-4">
-                    
                     <div id="photo-preview" class="mb-4 hidden">
                         <p class="text-[10px] font-bold text-blue-600 mb-2 uppercase">Photos on file</p>
                         <div id="photo-list-container" class="space-y-2"></div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-2 mb-4">
                         <label class="bg-green-50 border-2 border-dashed border-green-500 text-green-700 flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer">
                             <i class="ph-fill ph-camera text-3xl mb-1"></i>
@@ -263,37 +226,19 @@
                             <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
                         </label>
                     </div>
-
                     <div id="input-container">
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label>
-                            <input type="number" id="in-match" class="input-field" placeholder="e.g. 95">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label>
-                            <input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch">
-                        </div>
-                        <div id="container-caliper" class="hidden">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Caliper</label>
-                            <input type="text" id="in-caliper" class="input-field" placeholder="e.g. 2 inch">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label>
-                            <input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50 uppercase" oninput="this.value = this.value.toUpperCase()" placeholder="TYPE NOTES HERE...">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label>
-                            <input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing">
-                        </div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Match %</label><input type="number" id="in-match" class="input-field" placeholder="e.g. 95"></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Spec (Size/Dims)</label><input type="text" id="in-spec" class="input-field" placeholder="e.g. 24-30 inch"></div>
+                        <div id="container-caliper" class="hidden"><label class="text-[10px] font-bold text-gray-500 uppercase">Caliper</label><input type="text" id="in-caliper" class="input-field" placeholder="e.g. 2 inch"></div>
+                        <div><label class="text-[10px] font-bold text-green-700 uppercase">Sales Description</label><input type="text" id="in-sales-desc" class="input-field border-green-500 bg-green-50 uppercase" oninput="this.value = this.value.toUpperCase()" placeholder="TYPE NOTES HERE..."></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Pick Note</label><input type="text" id="in-pick" class="input-field" placeholder="e.g. Needs spacing"></div>
                     </div>
-
                     <div class="flex gap-2 mt-4">
                         <button id="btn-save-draft" class="w-1/3 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md" onclick="saveData(false)">SAVE DRAFT</button>
                         <button id="btn-save-complete" class="w-2/3 bg-[#007a4d] text-white font-bold py-4 rounded-xl shadow-lg" onclick="saveData(true)">MARK COMPLETE</button>
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div id="global-action-bar" class="hidden fixed bottom-[60px] left-0 w-full bg-white p-3 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.15)] z-[45] border-t border-gray-200">
@@ -324,55 +269,31 @@
         let fullInventory = []; 
         let lowStockInventory = []; 
         let socInventory = []; 
-        
         let currentUser = "";
         let currentRole = "";
-        
         let activeItem = null;
         let lastView = "";
 
-        // GLOBAL MULTI-SELECT STATE
         let selectedItems = new Set();
+        let isMultiSelectMode = false;
+        let pressTimer = null;
+        let isLongPress = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
 
-        // Drive Mode State Variables
-        let driveViewLevel = 0;
-        let selectedDriveName = null;
-        let selectedDriveSize = null;
+        let driveViewLevel = 0; let selectedDriveName = null; let selectedDriveSize = null;
+        let activeTaskTab = "season"; let taskViewTargetUser = null; let taskViewLevel = 0; let selectedTaskBlock = null; let selectedTaskLoc = null;
+        let lowStockViewLevel = 0; let selectedLowStockName = null; let selectedLowStockSize = null;
+        let reviewViewLevel = 0; let selectedReviewUser = null;
+        let dockViewLevel = 0; let selectedDockNum = null; let selectedDockName = null; let selectedDockSize = null;
 
-        // Tasks State Variables
-        let activeTaskTab = "season";
-        let taskViewTargetUser = null; 
-        let taskViewLevel = 0; 
-        let selectedTaskBlock = null;
-        let selectedTaskLoc = null;
-
-        // Low Stock State Variables
-        let lowStockViewLevel = 0;
-        let selectedLowStockName = null;
-        let selectedLowStockSize = null;
-
-        // Review & Sales Office State Variables
-        let reviewViewLevel = 0;
-        let selectedReviewUser = null;
-        
-        // Docks State Variables
-        let dockViewLevel = 0;
-        let selectedDockNum = null;
-        let selectedDockName = null;
-        let selectedDockSize = null;
-
-        // --- Helper: Convert Drive Links to Tiny Thumbnails ---
         function getDirectImageUrl(url) {
             if (!url) return "";
             let match = url.match(/id=([a-zA-Z0-9_-]+)/);
             if (!match) match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) {
-                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100`;
-            }
-            return url;
+            return match ? `https://drive.google.com/thumbnail?id=${match[1]}&sz=w100` : url;
         }
 
-        // --- 1. INITIALIZATION ---
         window.onload = function() {
             fetch(GOOGLE_SCRIPT_URL + "?action=getAppUsers")
                 .then(response => response.json())
@@ -382,11 +303,9 @@
                 });
         };
 
-        // --- 2. LOGIN LOGIC ---
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
             const inputPass = document.getElementById('pin-code').value.trim();
-
             if (!inputUser || !inputPass) return;
             const userMatch = appUsers.find(u => u.username === inputUser);
 
@@ -399,7 +318,6 @@
             currentUser = userMatch.username;
             currentRole = userMatch.role;
             document.getElementById('header-user').innerText = currentUser.toUpperCase();
-            
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
 
@@ -411,15 +329,12 @@
                         lowStockInventory = res.lowStock || [];
                         socInventory = res.socData || [];
                         applyRolePermissions();
-                    } else {
-                        showToast("Error", "Failed to load database.", true);
-                    }
+                    } else { showToast("Error", "Failed to load database.", true); }
                 });
         }
 
         function fetchRecentFiles() {
             if (currentRole !== 'Admin') return;
-            
             fetch(GOOGLE_SCRIPT_URL + "?action=getRecentFiles")
                 .then(r => r.json())
                 .then(res => {
@@ -429,7 +344,6 @@
                             container.innerHTML = `<div class="bg-white p-4 rounded-xl border border-gray-100 text-center text-xs text-gray-400">No recent files found.</div>`;
                             return;
                         }
-                        
                         container.innerHTML = res.data.map(f => {
                             const d = new Date(f.date);
                             const dateStr = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
@@ -443,34 +357,24 @@
                                 <i class="ph-bold ph-caret-right text-gray-300"></i>
                             </a>`;
                         }).join('');
-                    } else {
-                        container.innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold text-center">Failed to load files.</div>`;
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('admin-files-list').innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold text-center">Network Error.</div>`;
-                });
+                    } else { container.innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold text-center">Failed to load files.</div>`; }
+                }).catch(err => { container.innerHTML = `<div class="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold text-center">Network Error.</div>`; });
         }
 
-        // --- 3. UI PERMISSIONS ---
         function applyRolePermissions() {
             document.getElementById('view-login').style.display = 'none';
             document.getElementById('app-wrapper').classList.remove('hidden');
-            
             const isAdmin = (currentRole === 'Admin');
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-            
             if (isAdmin) {
                 document.getElementById('admin-files-section').classList.remove('hidden');
                 fetchRecentFiles();
             }
-
             const isDylan = (currentUser === 'dylan_collyge' || currentUser === 'dylan');
             document.querySelectorAll('.dylan-only').forEach(el => {
                 el.style.display = isDylan ? 'block' : 'none';
                 el.classList.remove('hidden'); 
             });
-
             switchView('home');
         }
 
@@ -487,18 +391,12 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- 4. VIEW NAVIGATION & GLOBAL RE-RENDER ---
         function switchView(viewId) {
-            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail','view-docks'].forEach(id => { 
-                document.getElementById(id).classList.add('hidden'); 
-            });
+            clearSelection();
+            ['view-home','view-drive','view-tasks','view-review','view-sales-office','view-low-stock','view-detail','view-docks'].forEach(id => { document.getElementById(id).classList.add('hidden'); });
             document.getElementById('view-' + viewId).classList.remove('hidden');
-            
             if(viewId === 'drive') resetDriveView(); 
-            if(viewId === 'tasks') {
-                if (currentRole === 'Admin' && !taskViewTargetUser) renderTeamSelector();
-                else renderTasks();
-            }
+            if(viewId === 'tasks') { if (currentRole === 'Admin' && !taskViewTargetUser) renderTeamSelector(); else renderTasks(); }
             if(viewId === 'review') { reviewViewLevel = 0; renderReview(); }
             if(viewId === 'sales-office') { renderSalesOffice(); }
             if(viewId === 'low-stock') { resetLowStockView(); }
@@ -514,71 +412,61 @@
             if(!document.getElementById('view-review').classList.contains('hidden')) renderReview();
         }
 
-        function setTaskTab(tab) {
-            activeTaskTab = tab;
-            document.getElementById('tab-season').classList.toggle('active', tab === 'season');
-            document.getElementById('tab-location').classList.toggle('active', tab === 'location');
-            taskViewLevel = 0; 
-            renderTasks();
+        function startPress(e, id) {
+            if (isMultiSelectMode) return;
+            isLongPress = false;
+            if(e.type === 'touchstart') { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+                enableMultiSelect(id);
+            }, 2000);
         }
 
-        function getLocPrefix(loc) {
-            if(!loc) return "Unassigned";
-            const match = loc.match(/^[A-Za-z]+/);
-            return match ? match[0] : loc.substring(0,2);
-        }
-
-        // --- GLOBAL CARD GENERATOR (WITH CHECKBOXES) ---
-        function generateCard(item, sourceView, colorClass = 'status-green') {
-            let thumbHtml = '';
-            let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
-            
-            if (photoLink) {
-                let firstUrl = photoLink.split(',')[0];
-                let urlMatch = firstUrl.match(/"([^"]+)"/);
-                let cleanUrl = urlMatch ? urlMatch[1] : firstUrl;
-                let thumbUrl = getDirectImageUrl(cleanUrl);
-                
-                if (thumbUrl.startsWith('http')) {
-                    thumbHtml = `<div class="ml-3 flex-shrink-0"><img src="${thumbUrl}" class="w-12 h-12 rounded-md object-cover border border-gray-200" loading="lazy"></div>`;
-                }
+        function checkMove(e) {
+            if(e.type === 'touchmove') {
+                let dx = Math.abs(e.touches[0].clientX - touchStartX);
+                let dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > 10 || dy > 10) cancelPress(); 
             }
-
-            const isChecked = selectedItems.has(item.UNIQUE_ID) ? 'checked' : '';
-
-            return `
-            <div class="flex items-center gap-3 w-full mb-2">
-                <input type="checkbox" class="w-6 h-6 rounded border-gray-300 text-[#007a4d] focus:ring-[#007a4d] flex-shrink-0 shadow-sm" 
-                       ${isChecked} 
-                       onclick="event.stopPropagation()" 
-                       onchange="toggleGlobalItem('${item.UNIQUE_ID}', this.checked)">
-                
-                <div class="inv-card ${colorClass} flex items-center justify-between flex-grow !mb-0" onclick="openDetail('${item.UNIQUE_ID}', '${sourceView}')">
-                    <div class="flex-grow min-w-0">
-                        <div class="flex justify-between font-bold text-sm mb-1">
-                            <span class="text-[#007a4d] truncate pr-2">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
-                            <span class="whitespace-nowrap">${item.CONTSIZE || '-'}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 truncate">
-                            <span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'}
-                        </div>
-                    </div>
-                    ${thumbHtml}
-                </div>
-            </div>`;
         }
 
-        // --- GLOBAL MULTI-SELECT LOGIC ---
-        function toggleGlobalItem(id, isChecked) {
-            if (isChecked) selectedItems.add(id);
-            else selectedItems.delete(id);
+        function cancelPress() { clearTimeout(pressTimer); }
+
+        function enableMultiSelect(firstId) {
+            isMultiSelectMode = true;
+            document.body.classList.add('multi-select-mode');
+            selectedItems.add(firstId);
             updateGlobalActionBar();
+            document.querySelectorAll('.item-row').forEach(row => {
+                const id = row.getAttribute('data-id');
+                const cb = row.querySelector('.card-checkbox');
+                if(cb) cb.checked = selectedItems.has(id);
+            });
         }
 
         function clearSelection() {
+            isMultiSelectMode = false;
+            document.body.classList.remove('multi-select-mode');
             selectedItems.clear();
             updateGlobalActionBar();
-            reRenderCurrentView(); 
+            document.querySelectorAll('.card-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function toggleGlobalItem(id, isChecked) {
+            if (isChecked) selectedItems.add(id); else selectedItems.delete(id);
+            updateGlobalActionBar();
+        }
+
+        function handleCardClick(id, sourceView) {
+            if (isLongPress) { isLongPress = false; return; }
+            if (isMultiSelectMode) {
+                const row = document.querySelector(`[data-id="${id}"]`);
+                if(row) {
+                    const cb = row.querySelector('.card-checkbox');
+                    if(cb) { cb.checked = !cb.checked; toggleGlobalItem(id, cb.checked); }
+                }
+            } else { openDetail(id, sourceView); }
         }
 
         function updateGlobalActionBar() {
@@ -586,44 +474,67 @@
             if (selectedItems.size > 0) {
                 bar.classList.remove('hidden');
                 document.getElementById('sel-count').innerText = selectedItems.size;
-            } else {
-                bar.classList.add('hidden');
+            } else { bar.classList.add('hidden'); }
+        }
+
+        function generateCard(item, sourceView, colorClass = 'status-green') {
+            let thumbHtml = '';
+            let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
+            if (photoLink) {
+                let firstUrl = photoLink.split(',')[0];
+                let urlMatch = firstUrl.match(/"([^"]+)"/);
+                let cleanUrl = urlMatch ? urlMatch[1] : firstUrl;
+                let thumbUrl = getDirectImageUrl(cleanUrl);
+                if (thumbUrl.startsWith('http')) {
+                    thumbHtml = `<div class="ml-3 flex-shrink-0"><img src="${thumbUrl}" class="w-12 h-12 rounded-md object-cover border border-gray-200" loading="lazy"></div>`;
+                }
             }
+            const isChecked = selectedItems.has(item.UNIQUE_ID) ? 'checked' : '';
+            return `
+            <div class="flex items-center w-full mb-2 item-row" data-id="${item.UNIQUE_ID}"
+                 onmousedown="startPress(event, '${item.UNIQUE_ID}')" onmouseup="cancelPress()" onmouseleave="cancelPress()" 
+                 ontouchstart="startPress(event, '${item.UNIQUE_ID}')" ontouchend="cancelPress()" ontouchcancel="cancelPress()" ontouchmove="checkMove(event)"
+                 onclick="handleCardClick('${item.UNIQUE_ID}', '${sourceView}')">
+                <div class="card-checkbox-container flex-shrink-0">
+                    <input type="checkbox" class="card-checkbox w-6 h-6 rounded border-gray-300 text-[#007a4d] focus:ring-[#007a4d] shadow-sm pointer-events-none" ${isChecked}>
+                </div>
+                <div class="inv-card ${colorClass} flex items-center justify-between flex-grow !mb-0 transition-transform active:scale-[0.99]">
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between font-bold text-sm mb-1">
+                            <span class="text-[#007a4d] truncate pr-2">${item.LOCATIONCODE || 'No Loc'} • ${item.COMMONNAME || 'Unknown'}</span>
+                            <span class="whitespace-nowrap">${item.CONTSIZE || '-'}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 truncate"><span class="font-bold text-blue-600">Pri: ${item.PRIORITY || '-'}</span> | Qty: ${item.PTRAVAILABLE || '0'} | Supply: ${item.SEASONSUPPLY || '0'}</div>
+                    </div>
+                    ${thumbHtml}
+                </div>
+            </div>`;
         }
 
         function getSelectedItemsText() {
             let items = [];
             selectedItems.forEach(id => {
-                let found = fullInventory.find(i => i.UNIQUE_ID === id) || 
-                            lowStockInventory.find(i => i.UNIQUE_ID === id);
+                let found = fullInventory.find(i => i.UNIQUE_ID === id) || lowStockInventory.find(i => i.UNIQUE_ID === id);
                 if (found) items.push(found);
             });
 
             return items.map(i => {
                 let txt = `${i.COMMONNAME || 'Unknown'} (${i.CONTSIZE || '-'}) | Loc: ${i.LOCATIONCODE || 'No Loc'} | Qty: ${i.PTRAVAILABLE || '0'}`;
-                
-                let match = i.MATCH || i.MATCHPCT;
-                if (match) txt += `\nMatch: ${match}%`;
-                
-                let spec = i.SPEC;
-                if (spec) txt += `\nSpec: ${spec}`;
-                
-                let caliper = i.CALIPER;
-                if (caliper) txt += `\nCaliper: ${caliper}`;
-                
-                let pick = i.PIC_NOTE || i.PICKNOTE || i.PICK;
-                if (pick) txt += `\nPick Note: ${pick}`;
-                
-                let sales = i.SALES_NOTE || i.SALESNOTE || i.SALESDESC;
-                if (sales) txt += `\nSales Note: ${sales}`;
+                let match = i.MATCH || i.MATCHPCT; if (match) txt += `\nMatch: ${match}%`;
+                let spec = i.SPEC; if (spec) txt += `\nSpec: ${spec}`;
+                let caliper = i.CALIPER; if (caliper) txt += `\nCaliper: ${caliper}`;
+                let pick = i.PIC_NOTE || i.PICKNOTE || i.PICK; if (pick) txt += `\nPick Note: ${pick}`;
+                let sales = i.SALES_NOTE || i.SALESNOTE || i.SALESDESC; if (sales) txt += `\nSales Note: ${sales}`;
                 
                 let photo = i.SAVED_PHOTO_LINK || i['PHOTO LINK'] || i.PHOTOLINK;
-                if (photo) {
-                    let firstUrl = photo.split(',')[0];
-                    let urlMatch = firstUrl.match(/"([^"]+)"/);
-                    txt += `\nPhoto Link: ${urlMatch ? urlMatch[1] : firstUrl}`;
+                if (photo && photo.trim() !== "") {
+                    let urls = photo.split(',');
+                    urls.forEach((url, idx) => {
+                        let match = url.match(/"([^"]+)"/);
+                        let cleanUrl = match ? match[1] : url.trim();
+                        if(cleanUrl) txt += `\nPhoto ${idx + 1}: ${cleanUrl}`;
+                    });
                 }
-
                 return txt;
             }).join('\n\n==========================\n\n');
         }
@@ -661,25 +572,14 @@
                     showToast("Success", `Assigned to ${user} and email sent!`);
                     ids.forEach(id => {
                         let item = fullInventory.find(i => i.UNIQUE_ID === id) || lowStockInventory.find(i => i.UNIQUE_ID === id);
-                        if (item) {
-                            item.ASSIGNEDTO = user;
-                            item.DATE_COMPLETED = ""; 
-                        }
+                        if (item) { item.ASSIGNEDTO = user; item.DATE_COMPLETED = ""; }
                     });
                     clearSelection(); 
                 } else { showToast("Error", "Assignment failed", true); }
             }).catch(err => showToast("Error", "Network error.", true));
         }
 
-        // --- 4B. DOCKS VIEW ---
-        function resetDockView() {
-            dockViewLevel = 0;
-            selectedDockNum = null;
-            selectedDockName = null;
-            selectedDockSize = null;
-            renderDocks();
-        }
-
+        function resetDockView() { dockViewLevel = 0; selectedDockNum = null; selectedDockName = null; selectedDockSize = null; renderDocks(); }
         function selectDockNum(num) { selectedDockNum = num; dockViewLevel = 1; renderDocks(); }
         function selectDockName(name) { selectedDockName = name; dockViewLevel = 2; renderDocks(); }
         function selectDockSize(size) { selectedDockSize = size; dockViewLevel = 3; renderDocks(); }
@@ -687,132 +587,92 @@
         function renderDocks() {
             const container = document.getElementById('docks-content');
             const crumb = document.getElementById('docks-crumb');
-            
             if (dockViewLevel === 0) {
                 crumb.innerText = "Select a Dock";
                 let html = '<div class="grid grid-cols-4 gap-2">';
                 for(let i=1; i<=56; i++) {
-                    html += `
-                    <div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDockNum(${i})">
-                        <i class="ph-bold ph-truck text-2xl text-orange-500 mb-1"></i>
-                        <div class="font-bold text-[10px] text-gray-700">DOCK ${i}</div>
-                    </div>`;
+                    html += `<div class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center cursor-pointer hover:bg-gray-50 active:scale-95 transition-transform" onclick="selectDockNum(${i})">
+                        <i class="ph-bold ph-truck text-2xl text-orange-500 mb-1"></i><div class="font-bold text-[10px] text-gray-700">DOCK ${i}</div></div>`;
                 }
                 html += '</div>';
                 container.innerHTML = html;
-            } 
-            else if (dockViewLevel === 1) {
+            } else if (dockViewLevel === 1) {
                 crumb.innerText = `Dock ${selectedDockNum} > Plants`;
                 const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum);
-                
                 if (dockItems.length === 0) {
                     container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div><div class="p-8 text-center text-gray-400">Dock ${selectedDockNum} is currently empty.</div>`;
                     return;
                 }
-                
                 const names = [...new Set(dockItems.map(i => i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown'))].sort();
-                
                 let html = `<div class="back-btn" onclick="dockViewLevel=0; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Docks</div>`;
                 html += names.map(n => `<div class="drill-item" onclick="selectDockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
-            }
-            else if (dockViewLevel === 2) {
+            } else if (dockViewLevel === 2) {
                 crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > Sizes`;
                 const dockItems = socInventory.filter(i => i.DOCK_NUM === selectedDockNum && (i.COMMONNAME || i['PLANT NAME'] || i.DESC || i.DESCRIPTION || 'Unknown') === selectedDockName);
                 const sizes = [...new Set(dockItems.map(i => i.CONTSIZE || i.SIZE || i.CONTAINER || '-'))].sort();
-
                 let html = `<div class="back-btn" onclick="dockViewLevel=1; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Plants</div><div class="font-bold text-orange-600 mb-4 px-2 text-xl border-b border-orange-100 pb-2">${selectedDockName}</div>`;
                 html += sizes.map(s => `<div class="drill-item" onclick="selectDockSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
-            }
-            else if (dockViewLevel === 3) {
+            } else if (dockViewLevel === 3) {
                 crumb.innerText = `Dock ${selectedDockNum} > ${selectedDockName} > ${selectedDockSize}`;
                 let finalItems = fullInventory.filter(i => i.COMMONNAME === selectedDockName && i.CONTSIZE === selectedDockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-
                 if (finalItems.length === 0) {
-                     container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="p-8 text-center text-gray-400">This plant size was requested for the Dock, but no matching records exist in the Master Inventory.</div>`;
+                     container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div><div class="p-8 text-center text-gray-400">No matching records exist in the Master Inventory.</div>`;
                      return;
                 }
-
                 container.innerHTML = `<div class="back-btn" onclick="dockViewLevel=2; renderDocks()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'docks', 'status-orange')).join('');
             }
         }
 
-
-        // --- 5A. LOW STOCK VIEW (DYLAN ONLY) ---
         function renderLowStock() {
             const container = document.getElementById('low-stock-content');
             const crumb = document.getElementById('low-stock-crumb');
-            
-            if (lowStockInventory.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No low stock items at this time.</div>`;
-                return;
-            }
-
+            if (lowStockInventory.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No low stock items at this time.</div>`; return; }
             if (lowStockViewLevel === 0) {
                 crumb.innerText = "Select Plant";
                 const names = [...new Set(lowStockInventory.map(i => i.COMMONNAME))].sort();
                 container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectLowStockName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
-            } 
-            else if (lowStockViewLevel === 1) {
+            } else if (lowStockViewLevel === 1) {
                 crumb.innerText = selectedLowStockName;
                 const namedItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
                 let html = `<div class="back-btn" onclick="resetLowStockView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-purple-600 mb-4 px-2 text-xl border-b pb-2">${selectedLowStockName}</div>`;
                 html += sizes.map(s => {
                     const count = namedItems.filter(i => i.CONTSIZE === s).length;
                     return `<div class="drill-item" onclick="selectLowStockSize('${s}')"><span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
                 container.innerHTML = html;
-            } 
-            else if (lowStockViewLevel === 2) {
+            } else if (lowStockViewLevel === 2) {
                 crumb.innerText = `${selectedLowStockName} / ${selectedLowStockSize}`;
                 let finalItems = lowStockInventory.filter(i => i.COMMONNAME === selectedLowStockName && i.CONTSIZE === selectedLowStockSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="backToLowStockSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>` + finalItems.map(i => generateCard(i, 'low-stock', 'status-purple')).join('');
             }
         }
 
-        // --- 5B. SALES OFFICE ---
         function renderSalesOffice() {
             const container = document.getElementById('sales-office-content');
-            
             let officeItems = fullInventory.filter(i => {
                 if (!i.DATE_COMPLETED || i.DATE_COMPLETED === "") return false;
                 const ptr = parseFloat(i.PTRAVAILABLE) || 0;
                 const ss = parseFloat(i.SEASONSUPPLY) || 0;
                 return ptr > (ss * 0.10); 
             });
-
-            if (officeItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed Season Sales Notes at this time.</div>`;
-                return;
-            }
-
+            if (officeItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed Season Sales Notes at this time.</div>`; return; }
             officeItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
             container.innerHTML = officeItems.map(i => generateCard(i, 'sales-office')).join('');
         }
 
-        // --- 5D. MANAGER REVIEW ---
         function renderReview() {
             const container = document.getElementById('review-content');
             const crumb = document.getElementById('review-crumb');
-            
             let completedItems = fullInventory.filter(i => i.DATE_COMPLETED && i.DATE_COMPLETED !== "");
-            
-            if (completedItems.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed tasks to review.</div>`;
-                crumb.innerText = "All Caught Up";
-                return;
-            }
-
+            if (completedItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No completed tasks to review.</div>`; crumb.innerText = "All Caught Up"; return; }
             if (reviewViewLevel === 0) {
                 crumb.innerText = `Completed Tasks by User`;
                 const users = [...new Set(completedItems.map(i => i.ASSIGNEDTO || "Unassigned"))].sort();
-                
                 container.innerHTML = users.map(u => {
                     const count = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === u).length;
                     return `<div class="drill-item" onclick="selectReviewUser('${u}')"><span class="font-bold text-lg">${u} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
@@ -821,54 +681,39 @@
                 crumb.innerText = `Review / ${selectedReviewUser}`;
                 let userItems = completedItems.filter(i => (i.ASSIGNEDTO || "Unassigned") === selectedReviewUser);
                 userItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
-                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReview()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>` + 
-                userItems.map(i => generateCard(i, 'review')).join('');
+                container.innerHTML = `<div class="back-btn" onclick="reviewViewLevel=0; renderReview()"><i class="ph-bold ph-arrow-left"></i> Back to Users</div>` + userItems.map(i => generateCard(i, 'review')).join('');
             }
         }
 
-        function selectReviewUser(u) {
-            selectedReviewUser = u;
-            reviewViewLevel = 1;
-            renderReview();
-        }
-
-        // --- 6. DRIVE MODE ---
         function handleDriveSearch() {
             const term = document.getElementById('drive-search').value;
             if (term.length > 0 && driveViewLevel > 0) { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; }
             renderDrive();
         }
+        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; document.getElementById('drive-search').value = ""; renderDrive(); }
         function selectDriveName(name) { selectedDriveName = name; driveViewLevel = 1; document.getElementById('drive-search').value = ""; renderDrive(); }
         function selectDriveSize(size) { selectedDriveSize = size; driveViewLevel = 2; renderDrive(); }
         function backToDriveSizes() { driveViewLevel = 1; selectedDriveSize = null; renderDrive(); }
-        function resetDriveView() { driveViewLevel = 0; selectedDriveName = null; selectedDriveSize = null; document.getElementById('drive-search').value = ""; renderDrive(); }
 
         function renderDrive() {
             const container = document.getElementById('drive-content');
             const crumb = document.getElementById('drive-crumb');
             const term = document.getElementById('drive-search').value.toLowerCase();
-            
             let filteredItems = fullInventory;
             if (term) { filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term)); }
-
             if (filteredItems.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`; crumb.innerText = "No Results"; return; }
-
             if (driveViewLevel === 0) {
                 crumb.innerText = `Select Plant (${filteredItems.length} items)`;
                 const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
                 container.innerHTML = names.map(n => `<div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')"><span class="font-bold text-lg">${n}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
-            } 
-            else if (driveViewLevel === 1) {
+            } else if (driveViewLevel === 1) {
                 crumb.innerText = selectedDriveName;
                 const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
                 const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
-                
                 let html = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div><div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedDriveName}</div>`;
                 html += sizes.map(s => `<div class="drill-item" onclick="selectDriveSize('${s}')"><span class="font-bold text-lg">${s}</span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`).join('');
                 container.innerHTML = html;
-            } 
-            else if (driveViewLevel === 2) {
+            } else if (driveViewLevel === 2) {
                 crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
                 let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
                 finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
@@ -876,13 +721,11 @@
             }
         }
 
-        // --- 7. TASKS MODE ---
         function renderTeamSelector() {
             document.getElementById('team-selector').classList.remove('hidden');
             document.getElementById('task-tabs-container').classList.add('hidden');
             document.getElementById('task-content').innerHTML = `<div class="p-8 text-center text-gray-400">Select a team member to view their assigned rows.</div>`;
             document.getElementById('task-crumb').innerText = "Admin Team View";
-
             const targetNames = ["Dylan", "Morgan", "Kayla"];
             let teamHtml = "";
             targetNames.forEach(name => {
@@ -905,20 +748,14 @@
         function renderTasks() {
             const container = document.getElementById('task-content');
             const crumb = document.getElementById('task-crumb');
-            
             let userToView = (currentRole === 'Admin') ? taskViewTargetUser : currentUser;
             let searchName = userToView === 'dylan_collyge' ? 'Dylan' : userToView;
-
             let myItems = fullInventory.filter(i => String(i.ASSIGNEDTO || "").toLowerCase().includes(searchName.toLowerCase()));
 
             myItems = myItems.filter(i => {
                 if (i.DATE_COMPLETED && i.DATE_COMPLETED !== "") return false;
-                const pri = parseFloat(i.PRIORITY);
-                const ptr = parseFloat(i.PTRAVAILABLE) || 0;
-                const ss = parseFloat(i.SEASONSUPPLY) || 0;
-                
+                const pri = parseFloat(i.PRIORITY); const ptr = parseFloat(i.PTRAVAILABLE) || 0; const ss = parseFloat(i.SEASONSUPPLY) || 0;
                 if (isNaN(pri) || pri <= 0) return false; 
-                
                 const isSeason = ptr > (ss * 0.10);
                 if (activeTaskTab === 'season') return isSeason;
                 if (activeTaskTab === 'location') return !isSeason;
@@ -937,41 +774,32 @@
             if (taskViewLevel === 0) {
                 crumb.innerText = `${displayUser} / ${tabLabel} / Blocks`; 
                 const blocks = [...new Set(myItems.map(i => i.BLOCKALPHA || "Unassigned"))].sort();
-                
                 let html = "";
                 if(currentRole === 'Admin') html += `<div class="back-btn" onclick="taskViewTargetUser=null; renderTeamSelector();"><i class="ph-bold ph-arrow-left"></i> Change User</div>`;
-
                 html += blocks.map(b => {
                     const count = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === b).length;
                     return `<div class="drill-item" onclick="selectTaskBlock('${b}')"><span class="font-bold text-lg">${b} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
                 container.innerHTML = html;
-            } 
-            else if (taskViewLevel === 1) {
+            } else if (taskViewLevel === 1) {
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock}`; 
                 const blockItems = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock);
                 const locs = [...new Set(blockItems.map(i => getLocPrefix(i.LOCATIONCODE)))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-                
                 container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=0; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Blocks</div>` + 
                 locs.map(l => {
                     const count = blockItems.filter(i => getLocPrefix(i.LOCATIONCODE) === l).length;
                     return `<div class="drill-item" onclick="selectTaskLoc('${l}')"><span class="font-bold text-lg">${l} <span class="text-gray-400 text-sm font-normal">(${count})</span></span><i class="ph-bold ph-caret-right text-gray-300"></i></div>`;
                 }).join('');
-            } 
-            else if (taskViewLevel === 2) {
+            } else if (taskViewLevel === 2) {
                 crumb.innerText = `${displayUser} / ${selectedTaskBlock} / ${selectedTaskLoc}`; 
                 let items = myItems.filter(i => (i.BLOCKALPHA || "Unassigned") === selectedTaskBlock && getLocPrefix(i.LOCATIONCODE) === selectedTaskLoc);
                 items.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
-                
-                container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + 
-                items.map(i => generateCard(i, 'tasks')).join('');
+                container.innerHTML = `<div class="back-btn" onclick="taskViewLevel=1; renderTasks()"><i class="ph-bold ph-arrow-left"></i> Back to Locs</div>` + items.map(i => generateCard(i, 'tasks')).join('');
             }
         }
 
-        // --- 8. DETAIL VIEW (Notes & Actions & Accordion) ---
         function openDetail(uniqueId, sourceView) {
             lastView = sourceView;
-            
             activeItem = fullInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) activeItem = lowStockInventory.find(i => i.UNIQUE_ID === uniqueId);
             if (!activeItem) return;
@@ -1007,7 +835,6 @@
 
             document.getElementById('expand-section').classList.remove('expanded');
             document.getElementById('expand-content').innerHTML = '';
-
             renderPhotoPreview();
             switchDetailTab('overview');
         }
@@ -1044,31 +871,23 @@
             document.getElementById('expand-content').innerHTML = html;
         }
 
-        // --- 9. PHOTO UPLOAD COMPRESSION & SMART ROUTING LOGIC ---
         function handlePhotoUpload(input) {
             if(!input.files || input.files.length === 0) return;
-            
             showToast("Processing...", "Compressing image...", false);
             const file = input.files[0];
             const reader = new FileReader();
-            
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1024; 
                     const scale = img.width > MAX_WIDTH ? (MAX_WIDTH / img.width) : 1;
-                    
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    
+                    canvas.width = img.width * scale; canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
                     const base64Data = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
                     const dateStr = new Date().toISOString().split('T')[0];
                     const filename = `${activeItem.COMMONNAME}_${activeItem.CONTSIZE}_${dateStr}.jpg`.replace(/[\/\s,]/g, '_');
-                    
                     uploadPhotoToDrive(base64Data, filename);
                 };
                 img.src = e.target.result;
@@ -1079,64 +898,36 @@
         function uploadPhotoToDrive(base64Data, filename) {
             showToast("Uploading...", "Sending to Google Drive...", false);
             const btn = document.getElementById('btn-save-complete');
-            btn.innerText = "UPLOADING...";
-            btn.disabled = true;
-
+            btn.innerText = "UPLOADING..."; btn.disabled = true;
             let context = "drive";
-            
             if (lastView === 'drive' || lastView === 'docks') context = "drive";
-            else if (lastView === 'tasks') {
-                if (activeTaskTab === 'season') context = "season";
-                if (activeTaskTab === 'location') context = "location";
-            } 
+            else if (lastView === 'tasks') { if (activeTaskTab === 'season') context = "season"; if (activeTaskTab === 'location') context = "location"; } 
             else if (lastView === 'review' || lastView === 'sales-office' || lastView === 'low-stock') context = "request";
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
-                body: JSON.stringify({ 
-                    type: "image", 
-                    image: base64Data, 
-                    mimeType: "image/jpeg", 
-                    filename: filename,
-                    folderContext: context 
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                btn.innerText = "MARK COMPLETE";
-                btn.disabled = false;
+                body: JSON.stringify({ type: "image", image: base64Data, mimeType: "image/jpeg", filename: filename, folderContext: context })
+            }).then(res => res.json()).then(data => {
+                btn.innerText = "MARK COMPLETE"; btn.disabled = false;
                 if(data.status === 'success') {
                     let links = activeItem.SAVED_PHOTO_LINK ? activeItem.SAVED_PHOTO_LINK.split(',') : [];
                     let names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : [];
-                    
-                    links.push(data.url);
-                    names.push(filename);
-                    
-                    activeItem.SAVED_PHOTO_LINK = links.join(',');
-                    activeItem.SAVED_PHOTO_NAME = names.join(',');
-                    
-                    renderPhotoPreview(); 
-                    saveData(false); 
-                } else {
-                    showToast("Error", "Upload failed.", true);
-                }
-            })
-            .catch(err => {
-                btn.innerText = "MARK COMPLETE";
-                btn.disabled = false;
-                showToast("Error", "Network connection failed.", true);
+                    links.push(data.url); names.push(filename);
+                    activeItem.SAVED_PHOTO_LINK = links.join(','); activeItem.SAVED_PHOTO_NAME = names.join(',');
+                    renderPhotoPreview(); saveData(false); 
+                } else { showToast("Error", "Upload failed.", true); }
+            }).catch(err => {
+                btn.innerText = "MARK COMPLETE"; btn.disabled = false; showToast("Error", "Network connection failed.", true);
             });
         }
 
         function renderPhotoPreview() {
             const photoDiv = document.getElementById('photo-preview'); 
             const photoList = document.getElementById('photo-list-container');
-            
             if (activeItem.SAVED_PHOTO_LINK && activeItem.SAVED_PHOTO_LINK !== "") {
                 photoDiv.classList.remove('hidden'); 
                 const urls = activeItem.SAVED_PHOTO_LINK.split(','); 
                 const names = activeItem.SAVED_PHOTO_NAME ? activeItem.SAVED_PHOTO_NAME.split(',') : []; 
-                
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     const dispName = names[i] || `Photo ${i+1}`; 
@@ -1153,18 +944,13 @@
                     </div>`;
                 });
                 photoList.innerHTML = phHtml; 
-            } else { 
-                photoDiv.classList.add('hidden'); 
-            }
+            } else { photoDiv.classList.add('hidden'); }
         }
 
-        // --- 10. SAVE DATA LOGIC ---
         function saveData(isComplete = false) {
             const btnDraft = document.getElementById('btn-save-draft');
             const btnComp = document.getElementById('btn-save-complete');
-            
-            if (isComplete) btnComp.innerText = "SAVING..."; 
-            else btnDraft.innerText = "SAVING..."; 
+            if (isComplete) btnComp.innerText = "SAVING..."; else btnDraft.innerText = "SAVING..."; 
             
             activeItem.MATCH = document.getElementById('in-match').value;
             activeItem.SPEC = document.getElementById('in-spec').value;
@@ -1173,42 +959,19 @@
             activeItem.SALES_NOTE = document.getElementById('in-sales-desc').value.toUpperCase();
 
             const payload = {
-                type: "update",
-                id: activeItem.UNIQUE_ID,
-                match: activeItem.MATCH,
-                spec: activeItem.SPEC,
-                caliper: activeItem.CALIPER,
-                pick: activeItem.PICK,
-                salesDesc: activeItem.SALES_NOTE,
-                photoLink: activeItem.SAVED_PHOTO_LINK || "", 
-                photoName: activeItem.SAVED_PHOTO_NAME || "",
-                isComplete: isComplete 
+                type: "update", id: activeItem.UNIQUE_ID, match: activeItem.MATCH, spec: activeItem.SPEC, caliper: activeItem.CALIPER,
+                pick: activeItem.PICK, salesDesc: activeItem.SALES_NOTE, photoLink: activeItem.SAVED_PHOTO_LINK || "", 
+                photoName: activeItem.SAVED_PHOTO_NAME || "", isComplete: isComplete 
             };
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                btnDraft.innerText = "SAVE DRAFT";
-                btnComp.innerText = "MARK COMPLETE";
-                
+            fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(data => {
+                btnDraft.innerText = "SAVE DRAFT"; btnComp.innerText = "MARK COMPLETE";
                 if(data.status === 'success') {
                     showToast("Success", isComplete ? "Task Completed!" : "Draft saved to Google Sheet.");
-                    
-                    if (isComplete) {
-                        activeItem.DATE_COMPLETED = new Date().toISOString();
-                        goBackFromDetail();
-                    }
-                } else {
-                    showToast("Error", data.message, true);
-                }
-            })
-            .catch(err => {
-                btnDraft.innerText = "SAVE DRAFT";
-                btnComp.innerText = "MARK COMPLETE";
-                showToast("Network Error", "Could not reach server.", true);
+                    if (isComplete) { activeItem.DATE_COMPLETED = new Date().toISOString(); goBackFromDetail(); }
+                } else { showToast("Error", data.message, true); }
+            }).catch(err => {
+                btnDraft.innerText = "SAVE DRAFT"; btnComp.innerText = "MARK COMPLETE"; showToast("Network Error", "Could not reach server.", true);
             });
         }
     </script>
