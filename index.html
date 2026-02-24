@@ -40,6 +40,10 @@
         .home-btn { background: white; padding: 24px; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; }
         .home-btn:active { background-color: #f9fafb; transform: scale(0.98); }
         
+        .drill-item { border-bottom: 1px solid #e5e7eb; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: white; transition: background 0.1s; user-select: none; }
+        .drill-item:active { background: #f3f4f6; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 20px; cursor: pointer; padding: 10px 0; }
+
         .inv-card { border: 1px solid #e5e7eb; border-left-width: 6px; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white; }
         .status-green { border-left-color: #22c55e; } 
         .status-default { border-left-color: #e5e7eb; } 
@@ -51,6 +55,9 @@
         /* LOADING SPINNER */
         .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Request Form Styles & List Item */
+        #request-form-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; flex-direction: column; }
     </style>
 </head>
 <body class="bg-gray-50 h-screen overflow-hidden">
@@ -123,6 +130,7 @@
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
+                    <img src="GNC LOGO.png" alt="Company Logo" class="h-24 w-auto object-contain mb-3 drop-shadow-md mx-auto">
                     <h1 class="text-2xl font-bold">DC</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
@@ -149,7 +157,8 @@
 
             <div id="view-drive" class="hidden">
                 <h2 class="text-sm font-bold text-blue-600 uppercase mb-4">Drive Mode</h2>
-                <input type="text" id="drive-search" class="input-field mb-4" placeholder="Search Inventory..." onkeyup="renderDrive()">
+                <input type="text" id="drive-search" class="input-field mb-2" placeholder="Search Names or Locs..." onkeyup="handleDriveSearch()">
+                <div id="drive-crumb" class="text-xs font-bold text-[#007a4d] mb-2"></div>
                 <div id="drive-content"></div>
             </div>
 
@@ -179,7 +188,6 @@
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');</script>
 
     <script>
-        // Here is your injected URL
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrB-Evyw3PdGY-tNFd5JnVGSDw73pt2i-lzSthnWktaGdUqvOgtr3rUihA8dCNMn-z/exec";
 
         let appUsers = [];
@@ -188,9 +196,13 @@
         let currentRole = "";
         let activeTaskTab = "season";
 
+        // Drive Mode State Variables
+        let driveViewLevel = 0;
+        let selectedDriveName = null;
+        let selectedDriveSize = null;
+
         // --- 1. INITIALIZATION ---
         window.onload = function() {
-            // Fetch users immediately so login is ready
             google.script.run.withSuccessHandler(function(response) {
                 const res = JSON.parse(response);
                 if (res.status === 'success') {
@@ -223,7 +235,6 @@
             currentRole = userMatch.role;
             document.getElementById('header-user').innerText = currentUser.toUpperCase();
             
-            // Show Loading State
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
 
@@ -246,7 +257,6 @@
 
             const isAdmin = (currentRole === 'Admin');
 
-            // Hide Admin-Only buttons if user is Field Rep
             document.querySelectorAll('.admin-only').forEach(el => {
                 el.style.display = isAdmin ? 'block' : 'none';
             });
@@ -274,7 +284,7 @@
             });
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            if(viewId === 'drive') renderDrive();
+            if(viewId === 'drive') resetDriveView(); // Always reset drive view when opening it
             if(viewId === 'tasks') renderTasks();
         }
 
@@ -299,22 +309,113 @@
             </div>`;
         }
 
-        function renderDrive() {
-            const container = document.getElementById('drive-content');
-            const term = document.getElementById('drive-search').value.toLowerCase();
-            
-            let items = fullInventory;
-            if (term) {
-                items = items.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term));
+        // --- DRIVE MODE DRILL-DOWN LOGIC ---
+        function handleDriveSearch() {
+            const term = document.getElementById('drive-search').value;
+            // If they start typing a search, reset the drill-down to level 0 to search all names
+            if (term.length > 0 && driveViewLevel > 0) {
+                driveViewLevel = 0; 
+                selectedDriveName = null;
+                selectedDriveSize = null;
             }
-            
-            // Limit to 50 items so the browser doesn't freeze
-            container.innerHTML = items.slice(0, 50).map(i => generateCard(i)).join('');
+            renderDrive();
         }
 
+        function selectDriveName(name) {
+            selectedDriveName = name;
+            driveViewLevel = 1;
+            document.getElementById('drive-search').value = ""; // Clear search when drilling down
+            renderDrive();
+        }
+
+        function selectDriveSize(size) {
+            selectedDriveSize = size;
+            driveViewLevel = 2;
+            renderDrive();
+        }
+
+        function backToDriveSizes() {
+            driveViewLevel = 1;
+            selectedDriveSize = null;
+            renderDrive();
+        }
+
+        function resetDriveView() {
+            driveViewLevel = 0;
+            selectedDriveName = null;
+            selectedDriveSize = null;
+            document.getElementById('drive-search').value = "";
+            renderDrive();
+        }
+
+        function renderDrive() {
+            const container = document.getElementById('drive-content');
+            const crumb = document.getElementById('drive-crumb');
+            const term = document.getElementById('drive-search').value.toLowerCase();
+            
+            let filteredItems = fullInventory;
+            
+            // Filter by search term if present
+            if (term) {
+                filteredItems = filteredItems.filter(i => (i.COMMONNAME||"").toLowerCase().includes(term) || (i.LOCATIONCODE||"").toLowerCase().includes(term));
+            }
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400">No items found.</div>`;
+                crumb.innerText = "No Results";
+                return;
+            }
+
+            if (driveViewLevel === 0) {
+                // LEVEL 0: Show Names
+                crumb.innerText = `Select Plant (${filteredItems.length} items)`;
+                const names = [...new Set(filteredItems.map(i => i.COMMONNAME))].sort();
+                
+                container.innerHTML = names.map(n => `
+                    <div class="drill-item" onclick="selectDriveName('${n.replace(/'/g, "\\'")}')">
+                        <span class="font-bold text-lg">${n}</span>
+                        <i class="ph-bold ph-caret-right text-gray-300"></i>
+                    </div>
+                `).join('');
+            } 
+            else if (driveViewLevel === 1) {
+                // LEVEL 1: Show Sizes for selected Name
+                crumb.innerText = selectedDriveName;
+                const namedItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName);
+                const sizes = [...new Set(namedItems.map(i => i.CONTSIZE))].sort();
+                
+                let html = `<div class="back-btn" onclick="resetDriveView()"><i class="ph-bold ph-arrow-left"></i> Back to Names</div>`;
+                html += `<div class="font-bold text-[#007a4d] mb-4 px-2 text-xl border-b pb-2">${selectedDriveName}</div>`;
+                
+                html += sizes.map(s => {
+                    const count = namedItems.filter(i => i.CONTSIZE === s).length;
+                    return `
+                    <div class="drill-item" onclick="selectDriveSize('${s}')">
+                        <span class="font-bold text-lg">${s} <span class="text-gray-400 text-sm font-normal">(${count})</span></span>
+                        <i class="ph-bold ph-caret-right text-gray-300"></i>
+                    </div>`;
+                }).join('');
+                
+                container.innerHTML = html;
+            } 
+            else if (driveViewLevel === 2) {
+                // LEVEL 2: Show specific Item Cards
+                crumb.innerText = `${selectedDriveName} / ${selectedDriveSize}`;
+                let finalItems = filteredItems.filter(i => i.COMMONNAME === selectedDriveName && i.CONTSIZE === selectedDriveSize);
+                
+                // Sort by Location code for easier viewing
+                finalItems.sort((a,b) => (a.LOCATIONCODE||"").localeCompare((b.LOCATIONCODE||""), undefined, {numeric: true}));
+
+                let html = `<div class="back-btn" onclick="backToDriveSizes()"><i class="ph-bold ph-arrow-left"></i> Back to Sizes</div>`;
+                html += finalItems.map(i => generateCard(i)).join('');
+                
+                container.innerHTML = html;
+            }
+        }
+
+        // --- TASKS LOGIC ---
         function renderTasks() {
             const container = document.getElementById('task-content');
-            
             let myItems = fullInventory;
 
             // FIELD REP FILTER: Only show items assigned to them
