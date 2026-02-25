@@ -1,12 +1,12 @@
 {
   "name": "Greenleaf Pro",
   "short_name": "Greenleaf",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#007a4d",
   "theme_color": "#007a4d",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "./",
   "icons": [
     {
       "src": "icon-192.png",
