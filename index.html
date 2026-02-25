@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GNC Sales PRO 2026 - 001</title>
+    <title>GNC PRO SALES 0050550</title>
     
     <meta name="theme-color" content="#007a4d">
     <meta name="mobile-web-app-capable" content="yes">
@@ -83,7 +83,7 @@
 
     <div id="view-login">
         <div class="login-card">
-            <div class="text-3xl text-[#007a4d] font-bold mb-6">GNC SALES PRO 2026 - 001</div>
+            <div class="text-3xl text-[#007a4d] font-bold mb-6">GNC PRO SALES 0050550</div>
             <div id="login-inputs">
                 <input type="text" id="username-input" class="input-field mb-4 text-center border-2" placeholder="USERNAME">
                 <input type="password" id="pin-code" class="input-field mb-4 text-center border-2 tracking-widest" placeholder="PASSWORD">
@@ -91,7 +91,7 @@
             </div>
             <div id="loading-spinner" class="hidden mt-6 flex flex-col items-center">
                 <div class="spinner"></div>
-                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Authenticating & Syncing...</div>
+                <div id="loading-text" class="text-white font-bold text-sm mt-3 text-center">Authenticating...</div>
             </div>
         </div>
     </div>
@@ -125,7 +125,7 @@
                 <i class="ph-bold ph-list menu-btn text-2xl cursor-pointer" onclick="toggleMenu()"></i>
                 <div class="flex flex-col">
                     <div class="font-bold text-lg leading-tight"><span id="header-user">User</span></div>
-                    <div class="text-[10px] opacity-80 leading-tight">GNC Sales PRO 2026 - 001</div>
+                    <div class="text-[10px] opacity-80 leading-tight">GNC PRO SALES 0050550</div>
                 </div>
             </div>
         </header>
@@ -143,14 +143,14 @@
             <div class="drawer-item text-purple-600 font-bold dylan-only hidden" onclick="switchView('low-stock'); toggleMenu();"><i class="ph-bold ph-trend-down"></i> Low Stock List</div>
             <div class="drawer-item text-red-600 font-bold admin-only" onclick="switchView('review'); toggleMenu();"><i class="ph-bold ph-warning-circle"></i> Manager Review</div>
             <hr class="my-2">
-            <div class="drawer-item text-red-600" onclick="location.reload()"><i class="ph-bold ph-sign-out"></i> Logout</div>
+            <div class="drawer-item text-red-600" onclick="logoutUser()"><i class="ph-bold ph-sign-out"></i> Logout</div>
         </div>
 
         <div id="main-scroll-area" class="flex-grow overflow-y-auto p-4 pb-40 relative">
             
             <div id="view-home" class="hidden">
                 <div class="bg-[#007a4d] text-white p-8 rounded-2xl mb-6 shadow-lg text-center">
-                    <h1 class="text-2xl font-bold">GNC SALES PRO 2026 - 001</h1>
+                    <h1 class="text-2xl font-bold">GNC PRO SALES 0050550</h1>
                     <p class="opacity-80 text-sm">Inventory Management</p>
                 </div>
                 
@@ -437,7 +437,23 @@
             return url;
         }
 
-        window.onload = function() {};
+        window.onload = function() {
+            // AUTO-LOGIN: Check for saved credentials
+            const savedUser = localStorage.getItem('gnc_user');
+            const savedPass = localStorage.getItem('gnc_pass');
+            
+            if (savedUser && savedPass) {
+                document.getElementById('username-input').value = savedUser;
+                document.getElementById('pin-code').value = savedPass;
+                handleLogin(); // Trigger login automatically
+            }
+        };
+
+        function logoutUser() {
+            localStorage.removeItem('gnc_user');
+            localStorage.removeItem('gnc_pass');
+            location.reload();
+        }
 
         function handleLogin() {
             const inputUser = document.getElementById('username-input').value.trim().toLowerCase();
@@ -450,30 +466,35 @@
 
             document.getElementById('login-inputs').classList.add('hidden');
             document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = "Authenticating & Syncing...";
+            document.getElementById('loading-text').innerText = "Authenticating...";
 
-            const loginUrl = `${GOOGLE_SCRIPT_URL}?action=login&username=${encodeURIComponent(inputUser)}&password=${encodeURIComponent(inputPass)}`;
+            // STEP 1: FAST AUTHENTICATION
+            const authUrl = `${GOOGLE_SCRIPT_URL}?action=auth&username=${encodeURIComponent(inputUser)}&password=${encodeURIComponent(inputPass)}`;
 
-            fetch(loginUrl)
+            fetch(authUrl)
                 .then(response => response.json())
                 .then(res => {
                     if (res.status === 'success') {
+                        // Save credentials for next time
+                        localStorage.setItem('gnc_user', inputUser);
+                        localStorage.setItem('gnc_pass', inputPass);
+
                         currentUser = inputUser;
                         currentRole = res.role;
-                        document.getElementById('header-user').innerText = currentUser.toUpperCase();
+                        
+                        // Show animated spinner next to username while background data loads
+                        document.getElementById('header-user').innerHTML = currentUser.toUpperCase() + ` <i class="ph-bold ph-spinner animate-spin text-sm text-yellow-300 inline-block ml-1"></i>`;
 
-                        fullInventory = res.data.map((item, idx) => {
-                            item.DOM_ID = 'fi_' + idx;
-                            return item;
-                        });
-                        lowStockInventory = (res.lowStock || []).map((item, idx) => {
-                            item.DOM_ID = 'ls_' + idx;
-                            return item;
-                        });
-                        socInventory = res.socData || [];
-                        applyRolePermissions();
+                        // INSTANTLY LET THEM IN
+                        applyRolePermissions(); 
+                        showToast("Syncing...", "Downloading inventory data...", false);
+
+                        // STEP 2: FETCH HEAVY DATA IN THE BACKGROUND
+                        fetchDataInBackground(inputUser, inputPass);
                     } else {
                         alert("MISMATCH DETECTED!\n\nIncorrect Username or Password.");
+                        localStorage.removeItem('gnc_user'); // Clear bad save
+                        localStorage.removeItem('gnc_pass');
                         document.getElementById('pin-code').value = "";
                         document.getElementById('login-inputs').classList.remove('hidden');
                         document.getElementById('loading-spinner').classList.add('hidden');
@@ -483,6 +504,38 @@
                     showToast("Error", "Network Error. Please try again.", true);
                     document.getElementById('login-inputs').classList.remove('hidden');
                     document.getElementById('loading-spinner').classList.add('hidden');
+                });
+        }
+
+        function fetchDataInBackground(user, pass) {
+            const dataUrl = `${GOOGLE_SCRIPT_URL}?action=get_data&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+            
+            fetch(dataUrl)
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        // Store the data
+                        fullInventory = res.data.map((item, idx) => {
+                            item.DOM_ID = 'fi_' + idx;
+                            return item;
+                        });
+                        lowStockInventory = (res.lowStock || []).map((item, idx) => {
+                            item.DOM_ID = 'ls_' + idx;
+                            return item;
+                        });
+                        socInventory = res.socData || [];
+
+                        // Remove the loading spinner from the header
+                        document.getElementById('header-user').innerText = currentUser.toUpperCase();
+                        showToast("Synced!", "Inventory is up to date.", false);
+
+                        // Refresh UI if they are already on a view that needs data
+                        reRenderCurrentView();
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('header-user').innerText = currentUser.toUpperCase() + " (Offline)";
+                    showToast("Sync Error", "Failed to load latest inventory.", true);
                 });
         }
 
