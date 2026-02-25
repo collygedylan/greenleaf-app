@@ -496,12 +496,14 @@
                 });
         }
 
+        // NEW: Check if biometrics are supported and enabled on app load
         document.addEventListener('DOMContentLoaded', async () => {
             if (window.PublicKeyCredential && localStorage.getItem('gnc_saved_user') && localStorage.getItem('gnc_saved_pin')) {
                 document.getElementById('btn-fingerprint').classList.remove('hidden');
             }
         });
 
+        // NEW: Setup Biometrics after manual login
         async function promptToEnableBiometrics(user, pass) {
             if (localStorage.getItem('gnc_saved_user') === user) return;
 
@@ -535,6 +537,7 @@
             }
         }
 
+        // NEW: Login using the saved fingerprint
         async function loginWithBiometric() {
             try {
                 const challenge = new Uint8Array(32);
