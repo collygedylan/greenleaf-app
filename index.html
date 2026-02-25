@@ -683,7 +683,6 @@
             }
         }
 
-        // 🚨 ADDED LOTCODE & UPDATED CARD UI TO MATCH REQUIREMENTS 🚨
         function generateCard(item, sourceView, colorClass = 'status-green') {
             let thumbHtml = '';
             let photoLink = item.SAVED_PHOTO_LINK || item['PHOTO LINK'] || item.PHOTOLINK || "";
@@ -691,7 +690,7 @@
             if (photoLink) {
                 let firstUrl = photoLink.split(',')[0];
                 let cleanUrl = firstUrl.trim();
-                let urlMatch = firstUrl.match(/(https?:\/\/[^"\s]+)/);
+                let urlMatch = firstUrl.match(/(https?:\/\/[^"\s>]+)/);
                 if (urlMatch) cleanUrl = urlMatch[1];
 
                 let thumbUrl = getDirectImageUrl(cleanUrl);
@@ -790,7 +789,7 @@
                     let counter = 1;
                     urls.forEach(url => {
                         let cleanUrl = url.trim();
-                        let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
+                        let match = cleanUrl.match(/(https?:\/\/[^"\s>]+)/);
                         if (match) {
                             returnText += `  Photo ${counter}: ${match[1]}\n`;
                             counter++;
@@ -1381,7 +1380,7 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
-                    let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
+                    let match = cleanUrl.match(/(https?:\/\/[^"\s>]+)/);
                     if (match) cleanUrl = match[1];
                     
                     const dispName = names[i] || `Photo ${i+1}`; 
@@ -1411,7 +1410,7 @@
                 let phHtml = "";
                 urls.forEach((url, i) => {
                     let cleanUrl = url.trim();
-                    let match = cleanUrl.match(/(https?:\/\/[^"\s]+)/);
+                    let match = cleanUrl.match(/(https?:\/\/[^"\s>]+)/);
                     if (match) cleanUrl = match[1];
 
                     const dispName = names[i] || `Req Photo ${i+1}`; 
