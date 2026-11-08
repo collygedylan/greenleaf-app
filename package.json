@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "acorn": "8.18.0",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.71.1",
+    "eslint-scope": "9.1.2"
+  },
+  "private": true,
+  "scripts": {
+    "check:engineering": "node scripts/anti-spaghetti-lock.mjs"
+  },
+  "type": "module",
+  "name": "greenleaf-engineering-contracts"
+}
